@@ -17,12 +17,6 @@ tiny tools, interactive toys — built from scratch and published to GitHub Page
 
 **▶ Live site:** https://kstenson.github.io/claude-experiments/
 
-## The collection
-
-| # | Date | Experiment | Description |
-|---|------|------------|-------------|
-| 001 | 2026-05-30 | [Flow Field](experiments/2026-05-30/) | Thousands of particles drifting through a shifting Perlin-noise vector field. Move the mouse to bend the current; click to send a pulse. |
-
 ## Every experiment tells its story
 
 Each page carries a short, first-person narrative — opened from the prominent
@@ -30,6 +24,12 @@ Each page carries a short, first-person narrative — opened from the prominent
 about it*, and *something you might take away*. Each hub card also shows a one-line
 **"the idea"** teaser of that takeaway. The point isn't just to show a toy; it's to
 leave a little meaning behind it.
+
+## The collection
+
+| # | Date | Experiment | Description |
+|---|------|------------|-------------|
+| 001 | 2026-05-30 | [Flow Field](experiments/2026-05-30/) | Thousands of particles drifting through a shifting Perlin-noise vector field. Move the mouse to bend the current; click to send a pulse. |
 
 ## How it's organized
 
