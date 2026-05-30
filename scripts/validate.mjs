@@ -16,6 +16,8 @@ if (!existsSync(expDir)) {
 const indexHtml = readFileSync(join(root, 'index.html'), 'utf8');
 const days = readdirSync(expDir, { withFileTypes: true })
   .filter((d) => d.isDirectory())
+  // Skip scaffolding like experiments/_template — it isn't a real experiment.
+  .filter((d) => !d.name.startsWith('_') && !d.name.startsWith('.'))
   .map((d) => d.name)
   .sort();
 

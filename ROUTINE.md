@@ -28,33 +28,20 @@ Docs: <https://code.claude.com/docs/en/routines>
 
 ## The routine prompt
 
-Paste this verbatim into the routine's Instructions:
+The standing task spec lives in [`EXPERIMENT_PLAYBOOK.md`](EXPERIMENT_PLAYBOOK.md)
+so there's a single source of truth. Paste this into the routine's Instructions:
 
 ```
-Build today's daily creative web experiment for this GitHub Pages site.
+Build today's daily creative web experiment for this GitHub Pages site by
+following EXPERIMENT_PLAYBOOK.md in the repo root, verbatim.
 
-Steps:
-1. Determine today's date as YYYY-MM-DD. If experiments/<date>/ already exists, stop — today is done.
-2. Copy the template folder experiments/_template/ to experiments/<date>/ and fill
-   in every {{PLACEHOLDER}}. Build a fresh, creative idea DISTINCT from every
-   existing experiment (check the experiments/ folder and the README table first so
-   you don't repeat a concept). It should be interactive or generative where
-   possible, work on mobile and desktop, and stay a single self-contained file.
-3. Write the NARRATIVE in the template's .story overlay — first person, honest,
-   three short sections: "Why I picked it", "What I enjoy about it", and "Something
-   you might take away" (a genuine meaning a visitor could carry off). Personal and
-   specific to THIS experiment, never generic filler. Keep the prominent
-   "✎ the story behind this one" button and the "← all experiments" back link.
-4. Add a matching <a class="card"> entry to the grid in /index.html, incrementing
-   the experiment number (e.g. № 002). The card must include: the number, title, a
-   one-line description, a <p class="idea"> teaser distilling the takeaway in one
-   sentence, and the date. (See the Flow Field card for the exact shape.)
-5. Add a row to the collection table in README.md.
-6. Commit with a clear message and push directly to the main branch (GitHub Pages
-   publishes from main, so this makes the new experiment live immediately).
-
-Match the existing visual style and code conventions. Keep each page standalone —
-no build step, no external dependencies.
+In short: if experiments/<today YYYY-MM-DD>/ already exists, stop. Otherwise copy
+experiments/_template/ to experiments/<today>/, build one polished, self-contained
+HTML/CSS/JS experiment with a fresh idea distinct from all existing ones, write the
+first-person narrative in the .story overlay (Why I picked it / What I enjoy about
+it / Something you might take away), add a hub card in index.html with a
+<p class="idea"> takeaway teaser, add a README table row, run node scripts/validate.mjs
+until it passes, then commit and push directly to main.
 ```
 
 ## Managing it
