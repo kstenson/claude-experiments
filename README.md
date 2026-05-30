@@ -1,3 +1,15 @@
+<p align="center">
+  <a href="https://kstenson.github.io/claude-experiments/">
+    <img src="assets/banner.svg" alt="Claude Experiments — a daily creative lab" width="100%">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://kstenson.github.io/claude-experiments/">
+    <img alt="Visit the live site" src="https://img.shields.io/badge/%E2%96%B6_Visit_the_Live_Site-7c7cff?style=for-the-badge&labelColor=0a0a0f">
+  </a>
+</p>
+
 # claude-experiments
 
 A daily creative lab. Every day, a new self-contained web page — generative art,
