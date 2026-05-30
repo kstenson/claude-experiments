@@ -10,7 +10,7 @@ verbatim. Keep each experiment self-contained — no build step, no dependencies
    If `experiments/<DATE>/` already exists, stop — today is already done.
 2. **Pick a fresh idea** distinct from every existing experiment (see the
    collection table in `README.md`). Rotate themes: generative art, an
-   interactive toy, a tiny useful tool, a simulation, an audas-visual, a
+   interactive toy, a tiny useful tool, a simulation, an audio-visual, a
    typographic/CSS-only piece, a data visualization, a game.
 3. **Build** `experiments/<DATE>/index.html` — one standalone HTML file with
    inline CSS and JS. Requirements:
