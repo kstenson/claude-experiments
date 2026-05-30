@@ -20,8 +20,10 @@ Docs: <https://code.claude.com/docs/en/routines>
    (everything is committed to the repo; the pages call no external APIs).
 5. **Select a trigger → Schedule → Daily**, set your preferred local time
    (entered in your zone, auto-converted).
-6. **Permissions:** leave branch pushes restricted to `claude/` — the prompt pushes
-   to a `claude/` branch, so the default is correct.
+6. **Permissions:** the prompt pushes directly to `main`, so under the
+   **Permissions** tab enable **Allow unrestricted branch pushes** for
+   `kstenson/claude-experiments`. (Without this, routines can only push to
+   `claude/`-prefixed branches and the daily experiment won't reach the live site.)
 7. **Create**, then **Run now** on the detail page to test it once.
 
 ## The routine prompt
@@ -48,7 +50,8 @@ Steps:
    one-line description, a <p class="idea"> teaser distilling the takeaway in one
    sentence, and the date. (See the Flow Field card for the exact shape.)
 5. Add a row to the collection table in README.md.
-6. Commit with a clear message and push to branch claude/github-pages-experiments-W9Ivr.
+6. Commit with a clear message and push directly to the main branch (GitHub Pages
+   publishes from main, so this makes the new experiment live immediately).
 
 Match the existing visual style and code conventions. Keep each page standalone —
 no build step, no external dependencies.
@@ -66,13 +69,16 @@ no build step, no external dependencies.
 
 ## Branching & publishing
 
-The routine pushes to `claude/github-pages-experiments-W9Ivr`. Since GitHub Pages
-publishes from `main`, either merge those daily branches periodically, or point the
-routine at a dedicated long-lived branch that Pages serves from (that requires
-enabling **Allow unrestricted branch pushes** for this repo in the routine's
-Permissions tab).
+GitHub Pages publishes from **`main`**, and the routine pushes directly to `main`,
+so each daily experiment goes live as soon as the run finishes — no merge step.
+This requires **Allow unrestricted branch pushes** to be enabled for the repo in
+the routine's **Permissions** tab (see step 6 above).
+
+If you'd rather review each one before it's public, change the prompt's final step
+to push to a `claude/`-prefixed branch instead and merge the PR yourself.
 
 ## Adding an experiment by hand
 
-Same five steps as the prompt above — create `experiments/<date>/index.html`, add a
-card to `index.html`, add a README row, commit, push.
+Same steps as the prompt above — copy `experiments/_template/` to
+`experiments/<date>/`, fill in the placeholders and narrative, add a card (with its
+`the idea` teaser) to `index.html`, add a README row, commit, and push to `main`.
