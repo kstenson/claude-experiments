@@ -65,15 +65,25 @@
     text-align: center;
   }
 
-  .about-link {
-    display: inline-block;
-    margin-top: 14px;
-    font-size: 0.82rem;
-    color: #b388ff;
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
     cursor: pointer;
-    border-bottom: 1px dashed rgba(179,136,255,0.5);
+    transition: background 0.2s ease, transform 0.1s ease;
   }
-  .about-link:hover { color: #d4b8ff; }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
 
   /* Narrative overlay */
   .story {
@@ -150,7 +160,7 @@
       <button id="palette">Shuffle palette</button>
       <button id="reset">Reset</button>
     </div>
-    <span class="about-link" id="openStory">✎ the story behind this one</span>
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
   </div>
 
   <p class="hint">move the mouse to bend the current · press <b>H</b> to hide panel · <b>click</b> to pulse</p>

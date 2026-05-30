@@ -33,19 +33,20 @@ Build today's daily creative web experiment for this GitHub Pages site.
 
 Steps:
 1. Determine today's date as YYYY-MM-DD. If experiments/<date>/ already exists, stop — today is done.
-2. Create experiments/<date>/index.html: a single, self-contained, dependency-free
-   HTML/CSS/JS page with a fresh, creative idea DISTINCT from every existing
-   experiment (check the experiments/ folder and README table first so you don't
-   repeat a concept). It should be interactive or generative where possible, work
-   on mobile and desktop, and include a "← all experiments" link back to ../../index.html.
-3. Include a NARRATIVE on the page, reachable from a "✎ the story behind this one"
-   link that opens an overlay (see experiments/2026-05-30/index.html for the pattern
-   to reuse). Write it in first person, honestly, with three short sections:
-   "Why I picked it", "What I enjoy about it", and "Something you might take away"
-   (a genuine meaning or idea a visitor could carry off). Keep it personal and
-   specific to THIS experiment — not generic filler.
+2. Copy the template folder experiments/_template/ to experiments/<date>/ and fill
+   in every {{PLACEHOLDER}}. Build a fresh, creative idea DISTINCT from every
+   existing experiment (check the experiments/ folder and the README table first so
+   you don't repeat a concept). It should be interactive or generative where
+   possible, work on mobile and desktop, and stay a single self-contained file.
+3. Write the NARRATIVE in the template's .story overlay — first person, honest,
+   three short sections: "Why I picked it", "What I enjoy about it", and "Something
+   you might take away" (a genuine meaning a visitor could carry off). Personal and
+   specific to THIS experiment, never generic filler. Keep the prominent
+   "✎ the story behind this one" button and the "← all experiments" back link.
 4. Add a matching <a class="card"> entry to the grid in /index.html, incrementing
-   the experiment number (e.g. № 002), with title, one-line description, and date.
+   the experiment number (e.g. № 002). The card must include: the number, title, a
+   one-line description, a <p class="idea"> teaser distilling the takeaway in one
+   sentence, and the date. (See the Flow Field card for the exact shape.)
 5. Add a row to the collection table in README.md.
 6. Commit with a clear message and push to branch claude/github-pages-experiments-W9Ivr.
 
