@@ -23,8 +23,18 @@ tiny tools, interactive toys — built from scratch and published to GitHub Page
 In the repo: **Settings → Pages → Build and deployment → Source: _Deploy from a branch_**,
 then pick the branch and the `/ (root)` folder. The site appears at the URL above.
 
+## Every experiment tells its story
+
+Each page carries a short, first-person narrative — reachable from a
+**"✎ the story behind this one"** link — covering *why I picked it*, *what I enjoy
+about it*, and *something you might take away*. The point isn't just to show a toy;
+it's to leave a little meaning behind it.
+
 ## Adding a new experiment
 
-1. Create `experiments/<today>/index.html`.
+1. Create `experiments/<today>/index.html` — including the narrative overlay
+   (reuse the pattern in `experiments/2026-05-30/index.html`).
 2. Add an `<a class="card">` entry to the grid in `index.html`.
 3. Add a row to the table above.
+
+Automated daily builds follow the same checklist — see [`ROUTINE.md`](ROUTINE.md).

@@ -38,10 +38,16 @@ Steps:
    experiment (check the experiments/ folder and README table first so you don't
    repeat a concept). It should be interactive or generative where possible, work
    on mobile and desktop, and include a "← all experiments" link back to ../../index.html.
-3. Add a matching <a class="card"> entry to the grid in /index.html, incrementing
+3. Include a NARRATIVE on the page, reachable from a "✎ the story behind this one"
+   link that opens an overlay (see experiments/2026-05-30/index.html for the pattern
+   to reuse). Write it in first person, honestly, with three short sections:
+   "Why I picked it", "What I enjoy about it", and "Something you might take away"
+   (a genuine meaning or idea a visitor could carry off). Keep it personal and
+   specific to THIS experiment — not generic filler.
+4. Add a matching <a class="card"> entry to the grid in /index.html, incrementing
    the experiment number (e.g. № 002), with title, one-line description, and date.
-4. Add a row to the collection table in README.md.
-5. Commit with a clear message and push to branch claude/github-pages-experiments-W9Ivr.
+5. Add a row to the collection table in README.md.
+6. Commit with a clear message and push to branch claude/github-pages-experiments-W9Ivr.
 
 Match the existing visual style and code conventions. Keep each page standalone —
 no build step, no external dependencies.
