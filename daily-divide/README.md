@@ -26,6 +26,10 @@ and openly refuses to score the second.
   refuses to adjudicate, because evidence can't.
 - **Bias watch** — the cognitive bias most clouding people's view of the issue, plus a
   concrete "tell" to catch it in yourself.
+- **The longer view (power test)** — the macro lens. People switch positions based on who
+  holds power, so each day finds the role-reversed historical precedent and documents
+  concrete position-flips on *both* sides. Selective principle is scored as a reasoning
+  problem, not as evidence about who's right on today's facts.
 - **Trend** — how the facts have leaned over time. A persistent drift to one pole is itself
   a finding (about the issues — or about the meter's own bias).
 
@@ -43,14 +47,22 @@ published (full protocol in [`SCORING.md`](SCORING.md)):
 
 1. **Read the source, not the snippet** — each cited page is actually opened and the
    confirming figure/quote is recorded as the claim's `evidence`.
-2. **Corroborate across ≥2 independent outlets** for any load-bearing claim (two reprints of
-   one wire story count as one); prefer a primary source — bill, ruling, transcript, data —
-   plus reporting.
-3. **Cite the page that truly contains the figure**, never one that merely sounds right.
-4. **Mark provenance honestly** — figures from a party to the dispute get lower `confidence`
+2. **Primary documents first** — for anything that has one, the cite is the statute or bill
+   text (Congress.gov, the U.S. Code), the roll-call record, the ruling, the official data,
+   or the actual letter/transcript. Reporting *characterizes* primary documents; we cite the
+   document and use reporting to corroborate. "What the law says" comes from the law.
+3. **Corroborate across the spectrum, not within one tribe** — a contested claim is backed by
+   a **right-trusted *and* a left-trusted** outlet plus a neutral wire/reference. A
+   fact-check sourced only to mainstream-left (or only to right) outlets is itself biased,
+   and the project is meant to be trustable across the divide. When a right outlet concedes a
+   point against the right (or vice versa), that's flagged — it's the strongest corroboration
+   there is.
+4. **Cite the page that truly contains the figure**, never one that merely sounds right.
+5. **Mark provenance honestly** — figures from a party to the dispute get lower `confidence`
    and an explicit caveat; conflicts and stale numbers are surfaced, not smoothed over.
-5. **No receipt, no claim** — anything that can't be quoted from a readable source is marked
-   `unverifiable` or dropped. If a publisher blocks automated fetching, the page says so.
+6. **No receipt, no claim** — anything that can't be quoted from a readable source is marked
+   `unverifiable` or dropped. If a publisher or government site blocks automated fetching
+   (403/451/503), the page says so and leans on readable corroboration.
 
 A short `verificationNote` on each day records how that day's claims were checked and flags
 anything that couldn't be read directly.

@@ -235,6 +235,53 @@ main { max-width: var(--max); margin: 0 auto; padding: 26px 20px 64px; }
 .biaswatch { border-color: #d9c9a0; background: linear-gradient(180deg, #fdf8ec, var(--panel)); }
 .biaswatch p { margin: 0; font-size: .98rem; }
 
+/* The longer view (power lens) */
+.powerlens { background: linear-gradient(180deg, #f3f1f8, var(--panel)); border-color: #d8d2e6; }
+.powerlens-thesis { margin: 0 0 18px; font-size: 1rem; color: var(--text); }
+.precedent {
+  background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--neutral);
+  border-radius: 12px; padding: 16px 18px; margin-bottom: 18px;
+}
+.precedent-eyebrow {
+  text-transform: uppercase; letter-spacing: .1em; font-size: .68rem; font-weight: 800;
+  color: var(--neutral); margin-bottom: 6px;
+}
+.precedent h3 { margin: 0 0 8px; font-size: 1.1rem; }
+.precedent p { margin: 0 0 8px; font-size: .93rem; color: var(--muted); }
+.precedent-mirror { color: var(--text) !important; font-style: italic; }
+.precedent-src, .flip-src, .longrun-src { font-size: .8rem; color: var(--faint); margin-top: 6px; }
+.precedent-src a, .flip-src a, .longrun-src a { color: var(--neutral); text-decoration: none; }
+.precedent-src a:hover, .flip-src a:hover, .longrun-src a:hover { text-decoration: underline; }
+.src-note { font-style: italic; }
+
+.flips { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.flip { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--panel); }
+.flip-left { border-top: 3px solid var(--left); }
+.flip-right { border-top: 3px solid var(--right); }
+.flip-who { font-weight: 800; font-size: .92rem; margin-bottom: 10px; }
+.flip-rows { display: flex; flex-direction: column; gap: 8px; }
+.flip-row { font-size: .88rem; line-height: 1.45; }
+.flip-tag {
+  display: inline-block; font-size: .64rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .05em; padding: 2px 7px; border-radius: 5px; margin-right: 6px; vertical-align: 1px;
+}
+.flip-tag.then { background: var(--elev); color: var(--muted); }
+.flip-tag.now { background: #efeaf6; color: #6a4fa0; }
+
+.longrun, .applied { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 4px; }
+.applied { background: var(--elev); margin: 14px -24px -22px; padding: 16px 24px 22px; border-radius: 0 0 var(--radius) var(--radius); }
+.longrun-label, .applied-label {
+  text-transform: uppercase; letter-spacing: .1em; font-size: .68rem; font-weight: 800;
+  color: var(--neutral); margin-bottom: 6px;
+}
+.longrun p, .applied p { margin: 0; font-size: .95rem; }
+.longrun p { color: var(--text); }
+.applied p { color: var(--muted); }
+
+@media (max-width: 680px) {
+  .flips { grid-template-columns: 1fr; }
+}
+
 /* History chart (reused pattern from World Mood Score) */
 .chart-wrap { position: relative; }
 .chart { width: 100%; height: auto; display: block; }

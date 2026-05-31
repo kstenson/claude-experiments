@@ -17,24 +17,33 @@ most-argued political issue and produce that file.**
    - primary sources where possible (bills, rulings, official data, transcripts).
    Find how each side **frames** the issue and the **checkable claims** each one leans on.
 4. **Verify every claim to the highest degree.** Follow the verification protocol in
-   `SCORING.md` for each fact: actually **open the source** (don't trust search snippets),
-   quote the confirming figure/wording in `evidence`, **corroborate load-bearing claims
-   across ≥2 independent outlets** (`corroboration`), cite the source that truly contains
-   the figure, and set `confidence` honestly. Mark party-to-conflict figures lower, surface
-   any source conflicts or staleness, and if a page can't be fetched, say so and downgrade
-   confidence. No quotable receipt → downgrade to `unverifiable` or drop the claim. Never
-   fabricate a quote, figure, or URL.
-5. **Score strictly against `SCORING.md`:**
+   `SCORING.md` for each fact: actually **open the source** (don't trust search snippets);
+   **go to primary documents first** (statute/bill text on Congress.gov & the U.S. Code,
+   roll-call records, rulings, official data, hearing transcripts, the actual letter/press
+   release) and use reporting only to corroborate; quote the confirming figure/wording in
+   `evidence`; **corroborate contested claims across the political spectrum** — a
+   right-trusted *and* a left-trusted outlet, plus a neutral wire/reference — not just within
+   one tribe; cite the source that truly contains the figure; and set `confidence` honestly.
+   Mark party-to-conflict figures lower, surface source conflicts or staleness, and if a page
+   can't be fetched (incl. government 403s), say so and downgrade confidence. No quotable
+   receipt → `unverifiable` or drop the claim. Never fabricate a quote, figure, or URL.
+5. **Run the power test (the longer view).** Ask whether each side would hold its position if
+   the other party held power, find the role-reversed historical precedent, and document
+   concrete position-flips on **both** sides — see `SCORING.md` → "The longer view." Record
+   it in `powerLens`. Selective constitutional conviction is a `reasoningHonesty` penalty,
+   not a needle mover.
+6. **Score strictly against `SCORING.md`:**
    - two sub-scores per side (`factualAccuracy`, `reasoningHonesty`) → blended `score`;
-   - `needle = right.score − left.score`, clamped −100…+100;
+   - `needle = right.score − left.score`, clamped −100…+100 (rests on present-tense facts);
    - 5–9 graded `facts` (with `confidence`, `evidence`, `corroboration`), covering **both** sides;
+   - a `powerLens` (thesis, precedent, two-sided `flips`, `longRun`, `appliedToScore`);
    - 3–5 `notAdjudicable` value questions;
    - one `biasWatch` paragraph with a concrete "tell";
    - a short `verificationNote` describing how the day's claims were checked.
-6. **Write** `data/YYYY-MM-DD.json` following the schema of the most recent file in `data/`.
-7. **Update** `data/manifest.json`: add today's date to the **front** of `days`, set
+7. **Write** `data/YYYY-MM-DD.json` following the schema of the most recent file in `data/`.
+8. **Update** `data/manifest.json`: add today's date to the **front** of `days`, set
    `updated` to today.
-8. **Commit and push** to `main` with a message like
+9. **Commit and push** to `main` with a message like
    `Daily Divide: YYYY-MM-DD — <topic> (needle NN)`. The push redeploys GitHub Pages.
 
 ## Rules

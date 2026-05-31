@@ -54,6 +54,7 @@ async function main() {
   renderFacts(TODAY);
   renderNotAdjudicable(TODAY);
   renderBiasWatch(TODAY);
+  renderPowerLens(TODAY);
   renderHistory(DAYS);
   renderSources(TODAY);
   app.setAttribute("aria-busy", "false");
@@ -177,6 +178,45 @@ function renderNotAdjudicable(day) {
 
 function renderBiasWatch(day) {
   document.getElementById("biasWatch").textContent = day.biasWatch || "";
+}
+
+function renderPowerLens(day) {
+  const panel = document.getElementById("powerLensPanel");
+  const pl = day.powerLens;
+  if (!pl) { panel.hidden = true; return; }
+  panel.hidden = false;
+
+  document.getElementById("powerThesis").textContent = pl.thesis || "";
+
+  const p = pl.precedent;
+  document.getElementById("precedent").innerHTML = p ? `
+    <div class="precedent-eyebrow">The mirror image</div>
+    <h3>${escapeHTML(p.case || "")}</h3>
+    ${p.what ? `<p>${escapeHTML(p.what)}</p>` : ""}
+    ${p.mirror ? `<p class="precedent-mirror">${escapeHTML(p.mirror)}</p>` : ""}
+    <div class="precedent-src">${srcLink(p)}${p.note ? ` · <span class="src-note">${escapeHTML(p.note)}</span>` : ""}${
+      (p.corroboration || []).length ? ` · also: ${(p.corroboration || []).map(srcLink).join(" · ")}` : ""
+    }</div>
+  ` : "";
+
+  const flips = pl.flips || [];
+  document.getElementById("flips").innerHTML = flips.map((f, i) => `
+    <div class="flip flip-${i % 2 === 0 ? "left" : "right"}">
+      <div class="flip-who">${escapeHTML(f.who || "")}</div>
+      <div class="flip-rows">
+        <div class="flip-row"><span class="flip-tag then">Then</span> ${escapeHTML(f.then || "")}</div>
+        <div class="flip-row"><span class="flip-tag now">Now</span> ${escapeHTML(f.now || "")}</div>
+      </div>
+      ${f.source ? `<div class="flip-src">${srcLink(f)}</div>` : ""}
+    </div>
+  `).join("");
+
+  document.getElementById("longRun").innerHTML = pl.longRun
+    ? `<div class="longrun-label">The durable story</div><p>${escapeHTML(pl.longRun)}</p>${pl.source ? `<div class="longrun-src">${srcLink(pl)}</div>` : ""}`
+    : "";
+  document.getElementById("appliedToScore").innerHTML = pl.appliedToScore
+    ? `<div class="applied-label">How this feeds the meter</div><p>${escapeHTML(pl.appliedToScore)}</p>`
+    : "";
 }
 
 function renderSources(day) {

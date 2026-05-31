@@ -83,22 +83,34 @@ Hold **every** claim to this before you publish it:
 1. **Read the source, don't trust the snippet.** Open the cited page (WebFetch) and confirm
    it actually contains the figure/quote. Search-result summaries are leads, not evidence.
    Put the confirming words in `evidence`.
-2. **Corroborate load-bearing claims across ≥2 independent outlets.** Two outlets reprinting
-   the same wire story is *one* source. Prefer a mix: a primary source (bill, ruling,
-   transcript, official data) plus reporting.
-3. **Cite the source that actually contains the figure.** If outlet A reports a number but
+2. **Go to primary documents first.** For anything that *has* a primary source, cite it: the
+   bill or statute text (Congress.gov, the U.S. Code), roll-call records (the House/Senate
+   Clerk), court rulings, official data, hearing transcripts, the actual letter/press
+   release/transcript of what someone said. News reporting *characterizes* primary
+   documents; cite the document, then use reporting to corroborate. "What the law says"
+   should come from the law, not from a columnist's summary of it.
+3. **Corroborate across the political spectrum, not just within it.** Two outlets reprinting
+   the same wire story is *one* source. For any load-bearing claim, corroborate across **≥2
+   independent outlets that include both a right-trusted and a left-trusted source** where
+   the claim is contested (e.g. Fox/WSJ/National Review/Washington Examiner *and*
+   NPR/NYT/CNN), plus a neutral wire/reference (Reuters, AP, Britannica) when possible. **A
+   fact-check sourced only to one side of the media spectrum is itself biased** — the whole
+   point of this project is to be trustable across the divide. When a right-leaning outlet
+   concedes a point against the right (or vice versa), say so; that is the strongest possible
+   corroboration.
+4. **Cite the source that actually contains the figure.** If outlet A reports a number but
    you can only verify it in outlet B, cite B. Never attribute a figure to a page that
    doesn't state it.
-4. **Mark provenance and confidence honestly.** Figures from a party to a dispute (a
+5. **Mark provenance and confidence honestly.** Figures from a party to a dispute (a
    government, a combatant, an advocacy NGO) get `low`/`medium` confidence and an explicit
    caveat. Independently verified + corroborated → `high`.
-5. **Surface conflicts and staleness, don't smooth them over.** If sources disagree (e.g.
+6. **Surface conflicts and staleness, don't smooth them over.** If sources disagree (e.g.
    13 vs. 15 dead) or a number is outdated, say so in `explanation` and reflect it in the
    `verdict`/`confidence` — a range beats false precision.
-6. **If a page can't be fetched** (paywall, publisher block / HTTP 451/503), say so in the
-   `explanation`, drop confidence accordingly, and lean on sources you *can* read. Never
+7. **If a page can't be fetched** (paywall, publisher block / HTTP 403/451/503), say so in
+   the `explanation`, drop confidence accordingly, and lean on sources you *can* read. Never
    present an unread page as if you verified it.
-7. **No receipt, no claim.** If you cannot quote supporting evidence from a readable source,
+8. **No receipt, no claim.** If you cannot quote supporting evidence from a readable source,
    either downgrade to `unverifiable` or drop the claim. Fabrication is disqualifying.
 
 Use the optional top-level `verificationNote` to tell readers, in one short paragraph, how
@@ -116,6 +128,38 @@ One short paragraph naming the **cognitive bias or framing most clouding people'
 this issue right now** — and a concrete "tell" a reader can watch for to catch it in
 themselves or in commentary. This is the experiment's whole point: surface the bias, don't
 just pick a winner.
+
+## The longer view — the power test (`powerLens`)
+
+The single most reliable bias on most political issues is that **people switch positions
+based on who holds power.** Today's day-by-day needle can't see that; this section is the
+macro lens that can. For every issue, run the **power test** and record it in `powerLens`:
+
+> Would each side hold this position if the other party controlled the relevant branch of
+> government? Find the moment in recent history when the roles *were* reversed, and show what
+> each side said then.
+
+Include:
+
+- `thesis` — one paragraph stating the power test and pointing to the role-reversed precedent.
+- `precedent` — the historical mirror image (`case`, `what` happened, the `mirror` that maps
+  it onto today, with `source`/`url` and corroboration). Prefer a primary or
+  cross-spectrum source.
+- `flips` — concrete, sourced position-reversals on **both** sides (name names and quote the
+  then-vs-now where you can). Document a left flip **and** a right flip; a one-sided
+  hypocrisy list is itself partisan. Ideally cite each flip to a source from the *other*
+  tribe (a right outlet documenting the left's flip, and vice versa).
+- `longRun` — the durable, above-the-fray through-line that survives once you strip out
+  who's in power, and what it predicts when power changes hands next.
+- `appliedToScore` — how the power test feeds the meter. **Selective constitutional
+  conviction is a `reasoningHonesty` problem:** if a side's stated principle would flip with
+  the partisan label, it doesn't earn a reasoning-honesty bonus for that principle, and the
+  inconsistency belongs in its `weakestPoint`. The needle should rest on present-tense,
+  checkable facts — not on either side's professed sincerity.
+
+This section is *not* false balance: documenting that both sides flip does not mean both
+sides are equally right on today's facts. Keep the two separate — the power test scores
+*consistency of principle*; the meter scores *who is correct on the checkable facts now*.
 
 ## Topic selection
 
