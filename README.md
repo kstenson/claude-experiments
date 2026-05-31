@@ -13,6 +13,7 @@ self-contained and publishes to GitHub Pages.
 | [World Mood Score](world-mode-score/) | Daily AI-generated global mood dashboard. Scores the day 0–100 across five dimensions and seven regions, citing every source. | `world-mode-score/` |
 | [Song Bird](song-bird/) | Each day's World Mood Score becomes a song — lyrics and music composed to match the tone, synthesized live in the browser with Tone.js. | `song-bird/` |
 | [Daily Divide](daily-divide/) | One contested political issue a day, scored on the facts. A left–right meter weighs each side's checkable claims and reasoning, sets the values disagreements aside, and names the bias clouding the debate. | `daily-divide/` |
+| [UK Politics Fact-Check League](factcheck-league/) | The most-discussed claim in UK politics each day, fact-checked against primary sources and scored 0–100 on a truth meter, with a running cross-party league table of everyone featured. | `factcheck-league/` |
 
 ## How it's organized
 
@@ -27,6 +28,11 @@ self-determination/            ← daily generative art experiments
 world-mode-score/              ← daily mood dashboard
 song-bird/                     ← daily generative music
 daily-divide/                  ← daily political fact meter
+factcheck-league/              ← daily UK claim fact-check + league table
+  index.html                   ← truth meter + league (renders from JSON)
+  data/entries.json            ← one entry per day; league computed client-side
+  PROMPT.md                    ← the daily fact-check workflow
+  validate.mjs                 ← data linter
 ```
 
 Each project has its own README with details on how it works and how
