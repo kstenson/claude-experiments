@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reaction Diffusion — Experiment 002</title>
+<meta name="description" content="Gray-Scott reaction diffusion: two virtual chemicals produce leopard spots, coral branches, mazes, and worms. Click to paint new seeds." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  canvas { display: block; position: fixed; inset: 0; cursor: crosshair; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 300px;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.3rem; margin: 12px 0 5px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 14px; }
+
+  .presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 13px;
+  }
+  .preset-btn {
+    background: rgba(124,124,255,0.10);
+    border: 1px solid rgba(124,124,255,0.28);
+    color: #c8c8f0;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    text-align: center;
+  }
+  .preset-btn:hover { background: rgba(124,124,255,0.20); border-color: rgba(124,124,255,0.5); }
+  .preset-btn.active {
+    background: rgba(124,124,255,0.28);
+    border-color: rgba(124,124,255,0.72);
+    color: #a8a8ff;
+    font-weight: 600;
+  }
+
+  .ctrl { margin-bottom: 10px; }
+  .ctrl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #b9b9cc; margin-bottom: 5px; }
+  .ctrl label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; }
+
+  .btns { display: flex; gap: 8px; margin-top: 4px; }
+  .action-btn {
+    flex: 1;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #cfcfff;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.80rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .action-btn:hover { background: rgba(124,124,255,0.26); }
+  .action-btn:active { transform: scale(0.96); }
+
+  .story-btn {
+    margin-top: 13px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5,5,10,0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.38); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Reaction Diffusion</h1>
+    <p class="sub">Experiment № 002 · May 31, 2026</p>
+
+    <div class="presets" id="presets">
+      <button class="preset-btn active" data-preset="0">Coral</button>
+      <button class="preset-btn" data-preset="1">Spots</button>
+      <button class="preset-btn" data-preset="2">Maze</button>
+      <button class="preset-btn" data-preset="3">Worms</button>
+    </div>
+
+    <div class="ctrl">
+      <label>Speed <span id="vSpeed">5</span>×</label>
+      <input type="range" id="sSpeed" min="1" max="12" step="1" value="5" />
+    </div>
+    <div class="ctrl">
+      <label>Brush <span id="vBrush">6</span></label>
+      <input type="range" id="sBrush" min="2" max="20" step="1" value="6" />
+    </div>
+
+    <div class="btns">
+      <button class="action-btn" id="btnClear">Clear</button>
+      <button class="action-btn" id="btnReseed">Reseed</button>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">click or drag to seed reactions · press H to hide panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 002 · The story</p>
+      <h2>Reaction Diffusion</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Two imaginary chemicals, two rules: spread slowly through space, and react with each other on contact. Alan Turing proposed exactly this mechanism in 1952 to explain how animals get their spots and stripes — two years before anyone knew the structure of DNA, a decade before computers could really run the simulation. The model is called reaction diffusion, and the patterns it produces are called Turing patterns. I wanted to watch the moment when the equations find their shape.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The pattern forms from noise and then crystallizes. First there is static, then something the chemistry "decides" — and suddenly you have leopard spots, or coral branches, or a labyrinth. It isn't drawn; it precipitates. Changing the feed and kill rates by a tenth of a percent turns one creature into a completely different one. Spots become worms become bubbles. The whole parameter space is a hidden zoo of forms, most of which have never been seen in nature but feel like they could have been.</p>
+      <p>Painting new seeds into the running simulation is the other thing I keep coming back to. You put down a droplet and watch the chemistry consume it, spread it, shape it into something you didn't design. It feels less like drawing and more like gardening.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Turing's 1952 paper was titled "The Chemical Basis of Morphogenesis" — the chemistry of shape formation. His argument: you don't need a blueprint for a leopard's spots. You need a local reaction and a diffusion gradient, and the pattern emerges on its own. The leopard doesn't store a spot map; the spot map is what happens when the chemistry runs.</p>
+      <p>This idea became a seed of complexity science: that global, specific order can arise from simple local rules, with no central plan and no designer. The implication outruns biology — it's a lens for thinking about cities, ecosystems, languages, markets. Pattern, it turns out, is often less designed than grown.</p>
+
+      <button class="close" id="closeStory">Back to the petri dish</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Gray-Scott Reaction Diffusion ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    // Simulation runs at 1/SCALE of display resolution; drawImage scales up smoothly.
+    const SCALE = 3;
+    const Du = 0.16, Dv = 0.08;
+
+    const PRESETS = [
+      { f: 0.054, k: 0.063 }, // Coral
+      { f: 0.035, k: 0.065 }, // Spots
+      { f: 0.030, k: 0.057 }, // Maze
+      { f: 0.058, k: 0.065 }, // Worms
+    ];
+
+    let f = PRESETS[0].f, k = PRESETS[0].k;
+    let speed = 5, brushR = 6;
+    let GW, GH;
+    let U, V, nU, nV;
+
+    // Off-screen canvas for the simulation frame; gets scaled to the main canvas.
+    const simCanvas = document.createElement('canvas');
+    const sc = simCanvas.getContext('2d');
+    let imgData, px;
+
+    function resize() {
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+      GW = Math.ceil(innerWidth / SCALE);
+      GH = Math.ceil(innerHeight / SCALE);
+      simCanvas.width = GW;
+      simCanvas.height = GH;
+      imgData = sc.createImageData(GW, GH);
+      px = imgData.data;
+      reset();
+    }
+
+    function reset() {
+      const n = GW * GH;
+      U = new Float32Array(n);
+      V = new Float32Array(n);
+      nU = new Float32Array(n);
+      nV = new Float32Array(n);
+      U.fill(1);
+      // Scatter random seed blobs across the grid.
+      for (let i = 0; i < 24; i++) {
+        paint(
+          (Math.random() * GW) | 0,
+          (Math.random() * GH) | 0,
+          3 + ((Math.random() * 5) | 0)
+        );
+      }
+    }
+
+    // Paint a circular region of V=1, U=0 at simulation coordinates (cx, cy).
+    function paint(cx, cy, r) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (dx * dx + dy * dy <= r * r) {
+            const x = (cx + dx + GW) % GW;
+            const y = (cy + dy + GH) % GH;
+            const i = y * GW + x;
+            V[i] = 1;
+            U[i] = 0;
+          }
+        }
+      }
+    }
+
+    // One Euler step of the Gray-Scott equations.
+    function step() {
+      for (let y = 0; y < GH; y++) {
+        const ym = ((y - 1 + GH) % GH) * GW;
+        const yp = ((y + 1) % GH) * GW;
+        const yc = y * GW;
+        for (let x = 0; x < GW; x++) {
+          const xm = (x - 1 + GW) % GW;
+          const xp = (x + 1) % GW;
+          const i = yc + x;
+          const u = U[i], v = V[i];
+          const lU = U[yc + xm] + U[yc + xp] + U[ym + x] + U[yp + x] - 4 * u;
+          const lV = V[yc + xm] + V[yc + xp] + V[ym + x] + V[yp + x] - 4 * v;
+          const uvv = u * v * v;
+          let nu = u + Du * lU - uvv + f * (1 - u);
+          let nv = v + Dv * lV + uvv - (f + k) * v;
+          if (nu < 0) nu = 0; else if (nu > 1) nu = 1;
+          if (nv < 0) nv = 0; else if (nv > 1) nv = 1;
+          nU[i] = nu;
+          nV[i] = nv;
+        }
+      }
+      // Swap buffers.
+      let tmp = U; U = nU; nU = tmp;
+      tmp = V; V = nV; nV = tmp;
+    }
+
+    // Map V concentration → RGB using the house accent palette.
+    // 0 → #05050a (dark), 0.35 → #7c7cff (purple), 0.70 → #ff7cc3 (pink), 1 → white
+    function draw() {
+      const n = GW * GH;
+      for (let i = 0; i < n; i++) {
+        const v = V[i];
+        const p = i * 4;
+        let r, g, b;
+        if (v < 0.35) {
+          const t = v * 2.857143;
+          r = 5 + 119 * t;
+          g = r;
+          b = 10 + 245 * t;
+        } else if (v < 0.70) {
+          const t = (v - 0.35) * 2.857143;
+          r = 124 + 131 * t;
+          g = 124;
+          b = 255 - 60 * t;
+        } else {
+          const t = (v - 0.70) * 3.333333;
+          r = 255;
+          g = 124 + 131 * t;
+          b = 195 + 60 * t;
+        }
+        px[p]     = r;
+        px[p + 1] = g;
+        px[p + 2] = b;
+        px[p + 3] = 255;
+      }
+      sc.putImageData(imgData, 0, 0);
+      // Smooth bilinear upscale to the display canvas.
+      ctx.drawImage(simCanvas, 0, 0, GW, GH, 0, 0, canvas.width, canvas.height);
+    }
+
+    function loop() {
+      for (let i = 0; i < speed; i++) step();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // ---- Preset buttons ----
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const p = PRESETS[+btn.dataset.preset];
+        f = p.f; k = p.k;
+        reset();
+      });
+    });
+
+    // ---- Sliders ----
+    const slSpeed = document.getElementById('sSpeed');
+    slSpeed.addEventListener('input', () => {
+      speed = +slSpeed.value;
+      document.getElementById('vSpeed').textContent = speed;
+    });
+    const slBrush = document.getElementById('sBrush');
+    slBrush.addEventListener('input', () => {
+      brushR = +slBrush.value;
+      document.getElementById('vBrush').textContent = brushR;
+    });
+
+    // ---- Action buttons ----
+    document.getElementById('btnClear').addEventListener('click', () => {
+      U.fill(1);
+      V.fill(0);
+    });
+    document.getElementById('btnReseed').addEventListener('click', reset);
+
+    // ---- Mouse / touch painting ----
+    let painting = false;
+
+    function simCoords(e) {
+      const pt = e.touches ? e.touches[0] : e;
+      return [(pt.clientX / SCALE) | 0, (pt.clientY / SCALE) | 0];
+    }
+
+    function onPaint(e) {
+      const [sx, sy] = simCoords(e);
+      paint(sx, sy, brushR);
+    }
+
+    canvas.addEventListener('mousedown', e => { painting = true; onPaint(e); });
+    canvas.addEventListener('mousemove', e => { if (painting) onPaint(e); });
+    canvas.addEventListener('mouseup', () => { painting = false; });
+    canvas.addEventListener('mouseleave', () => { painting = false; });
+    canvas.addEventListener('touchstart', e => { painting = true; onPaint(e); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { if (painting) onPaint(e); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchend', () => { painting = false; });
+
+    window.addEventListener('resize', resize);
+    resize();
+    loop();
+  })();
+</script>
+</body>
+</html>

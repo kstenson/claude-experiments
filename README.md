@@ -29,6 +29,7 @@ leave a little meaning behind it.
 
 | # | Date | Experiment | Description |
 |---|------|------------|-------------|
+| 002 | 2026-05-31 | [Reaction Diffusion](experiments/2026-05-31/) | Two virtual chemicals produce leopard spots, coral, mazes, or worms depending on feed vs. kill rate — Turing's 1952 morphogenesis model. Click to paint new seeds. |
 | 001 | 2026-05-30 | [Flow Field](experiments/2026-05-30/) | Thousands of particles drifting through a shifting Perlin-noise vector field. Move the mouse to bend the current; click to send a pulse. |
 
 ## How it's organized
