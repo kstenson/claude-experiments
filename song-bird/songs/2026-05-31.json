@@ -22,52 +22,13 @@
     "bpm": 96,
     "swing": 0.1
   },
-  "fx": {
-    "reverb": 0.38,
-    "filter": 2400
-  },
-  "chords": {
-    "subdivision": "1m",
-    "steps": [
-      ["D3", "F3", "A3", "C4"],
-      ["G3", "B3", "D4", "F4"],
-      ["A3", "C4", "E4", "G4"],
-      ["C3", "E3", "G3", "B3"]
-    ]
-  },
-  "bass": {
-    "subdivision": "4n",
-    "steps": [
-      "D2", "D2", "A2", "C3",
-      "G2", "G2", "D2", "F2",
-      "A2", "A2", "E2", "G2",
-      "C2", "C2", "G2", "B2"
-    ]
-  },
-  "melody": {
-    "subdivision": "8n",
-    "steps": [
-      "D4", null, "F4", "A4", null, "C5", "B4", null,
-      "A4", null, "B4", null, "A4", "G4", null, "F4",
-      "A4", null, "C5", "D5", null, "C5", "A4", null,
-      "G4", null, "F4", "A4", null, "G4", null, null
-    ]
-  },
-  "drums": {
-    "subdivision": "8n",
-    "kick": [
-      "x", null, null, null, "x", null, null, null,
-      "x", null, null, null, "x", null, null, null,
-      "x", null, null, null, "x", null, null, null,
-      "x", null, null, null, "x", null, null, null
-    ],
-    "hat": [
-      null, "x", null, "x", null, "x", null, "x",
-      null, "x", null, "x", null, "x", null, "x",
-      null, "x", null, "x", null, "x", null, "x",
-      null, "x", null, "x", null, "x", null, "x"
-    ]
-  },
+  "samples": [
+    "github:tidalcycles/dirt-samples"
+  ],
+  "sampleSources": [
+    "Dirt-Samples (tidalcycles)"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ bd ~ ~ ~, ~ hh ~ hh ~ hh ~ hh, ~ ~ ~ ~ cp ~ ~ ~\").bank(\"RolandTR808\").gain(0.65), note(\"<[d3,f3,a3,c4] [g3,b3,d4,f4] [a3,c4,e4,g4] [c3,e3,g3,b3]>\").s(\"sawtooth\").attack(0.5).decay(0.4).sustain(0.6).release(2).lpf(2400).gain(0.3).room(0.38).rsize(3), note(\"d2 d2 a2 c3 g2 g2 d2 f2 a2 a2 e2 g2 c2 c2 g2 b2\").s(\"sawtooth\").lpf(600).attack(0.02).decay(0.15).sustain(0.5).release(0.3).gain(0.5), note(\"d4 ~ f4 a4 ~ c5 b4 ~ a4 ~ b4 ~ a4 g4 ~ f4 a4 ~ c5 d5 ~ c5 a4 ~ g4 ~ f4 a4 ~ g4 ~ ~\").s(\"triangle\").attack(0.02).decay(0.15).sustain(0.35).release(0.5).lpf(3200).gain(0.5).delay(0.25).delaytime(0.312).room(0.25))",
   "lyrics": [
     {
       "section": "Verse 1",

@@ -1,18 +1,22 @@
-/* Song Bird engine
- * Loads song.json and (1) renders the page, (2) builds a Tone.js arrangement
- * that is synthesized live in the browser. No audio files are used.
+/* Song Bird engine — Strudel edition
  *
- * song.json is regenerated daily; this engine never changes — it just
- * interprets whatever the day's data describes.
+ * Loads a daily song JSON and builds a live Strudel pattern from it.
+ * Samples are loaded from the internet on demand; no audio files ship
+ * with the site.
+ *
+ * The JSON schema carries a `pattern` string (Strudel code) plus metadata
+ * (mood, lyrics, palette). This engine evaluates the pattern and wires up
+ * play/pause and the day picker.
  */
 
 let SONG = null;
-let built = false;
 let playing = false;
+let strudelReady = false;
 
 const $ = (id) => document.getElementById(id);
 
-// Cache-bust so freshly regenerated files are picked up.
+/* ---- Data loading --------------------------------------------------- */
+
 async function loadJSON(url) {
   const res = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now());
   if (!res.ok) throw new Error("Could not load " + url);
@@ -27,6 +31,8 @@ async function loadSong(date) {
   return loadJSON("songs/" + date + ".json");
 }
 
+/* ---- Theme ---------------------------------------------------------- */
+
 function applyTheme(song) {
   const p = (song.mood && song.mood.palette) || {};
   const root = document.documentElement.style;
@@ -36,6 +42,8 @@ function applyTheme(song) {
   if (p.accent2) root.setProperty("--accent2", p.accent2);
   if (p.text) root.setProperty("--text", p.text);
 }
+
+/* ---- Render --------------------------------------------------------- */
 
 function render(song) {
   $("title").textContent = song.title || "Untitled";
@@ -49,7 +57,6 @@ function render(song) {
   $("mood-label").textContent = (song.mood && song.mood.label) || "";
   $("summary").textContent = (song.mood && song.mood.summary) || "";
 
-  // Mood score is -1..1; map to 0..100% of the bar.
   const score = (song.mood && typeof song.mood.score === "number") ? song.mood.score : 0;
   $("mood-fill").style.width = Math.round(((score + 1) / 2) * 100) + "%";
 
@@ -76,6 +83,13 @@ function render(song) {
     });
     wrap.appendChild(block);
   });
+
+  // Show sample sources if present
+  const sampleInfo = $("sample-info");
+  if (sampleInfo && song.sampleSources && song.sampleSources.length) {
+    sampleInfo.textContent = "samples: " + song.sampleSources.join(", ");
+    sampleInfo.hidden = false;
+  }
 }
 
 function renderHistory(index, currentDate) {
@@ -83,7 +97,6 @@ function renderHistory(index, currentDate) {
   const sel = $("history");
   if (!wrap || !sel) return;
   const days = (index && index.days) || [];
-  // Only show the picker once there's more than one day to browse.
   if (days.length < 2) { wrap.hidden = true; return; }
   wrap.hidden = false;
   sel.innerHTML = "";
@@ -98,127 +111,61 @@ function renderHistory(index, currentDate) {
     sel.appendChild(opt);
   });
   sel.onchange = () => {
-    // Navigate by date; a reload cleanly resets the audio engine.
     window.location.search = "?date=" + encodeURIComponent(sel.value);
   };
 }
 
-/* ---- Audio arrangement ---------------------------------------------- */
+/* ---- Strudel playback ----------------------------------------------- */
 
-function buildArrangement(song) {
-  const style = song.style || {};
-  const fx = song.fx || {};
+async function ensureStrudel() {
+  if (strudelReady) return;
+  await initStrudel();
+  strudelReady = true;
+}
 
-  Tone.Transport.bpm.value = style.bpm || 90;
-  Tone.Transport.swing = style.swing || 0;
-  Tone.Transport.swingSubdivision = "8n";
+async function buildAndPlay(song) {
+  await ensureStrudel();
 
-  // Master FX chain: gentle compression -> filter -> reverb -> out
-  const reverb = new Tone.Reverb({ decay: 3.5, wet: clamp(fx.reverb, 0, 0.9, 0.3) }).toDestination();
-  const filter = new Tone.Filter(clamp(fx.filter, 200, 12000, 3000), "lowpass").connect(reverb);
-  const master = new Tone.Compressor(-18, 3).connect(filter);
-
-  const parts = [];
-
-  // Pad / chords
-  if (song.chords && song.chords.steps && song.chords.steps.length) {
-    const pad = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: "fatsawtooth", count: 3, spread: 22 },
-      envelope: { attack: 0.6, decay: 0.3, sustain: 0.7, release: 2.2 },
-      volume: -16,
-    }).connect(master);
-    const seq = new Tone.Sequence(
-      (time, chord) => { if (chord) pad.triggerAttackRelease(chord, "1m", time, 0.6); },
-      song.chords.steps,
-      song.chords.subdivision || "1m"
-    );
-    seq.start(0);
-    parts.push(seq, pad);
-  }
-
-  // Bass
-  if (song.bass && song.bass.steps && song.bass.steps.length) {
-    const bass = new Tone.MonoSynth({
-      oscillator: { type: "square" },
-      filter: { Q: 2, type: "lowpass" },
-      envelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.4 },
-      filterEnvelope: { attack: 0.02, decay: 0.2, baseFrequency: 120, octaves: 2.5 },
-      volume: -14,
-    }).connect(master);
-    const seq = new Tone.Sequence(
-      (time, note) => { if (note) bass.triggerAttackRelease(note, "8n", time); },
-      song.bass.steps,
-      song.bass.subdivision || "4n"
-    );
-    seq.start(0);
-    parts.push(seq, bass);
-  }
-
-  // Melody / lead
-  if (song.melody && song.melody.steps && song.melody.steps.length) {
-    const lead = new Tone.Synth({
-      oscillator: { type: "triangle" },
-      envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.6 },
-      volume: -10,
-    }).connect(master);
-    const seq = new Tone.Sequence(
-      (time, note) => { if (note) lead.triggerAttackRelease(note, "8n", time, 0.8); },
-      song.melody.steps,
-      song.melody.subdivision || "8n"
-    );
-    seq.start(0);
-    parts.push(seq, lead);
-  }
-
-  // Drums (optional)
-  if (song.drums) {
-    const sub = song.drums.subdivision || "8n";
-    if (song.drums.kick) {
-      const kick = new Tone.MembraneSynth({ volume: -8 }).connect(master);
-      const seq = new Tone.Sequence(
-        (time, hit) => { if (hit) kick.triggerAttackRelease("C1", "8n", time); },
-        song.drums.kick, sub
-      );
-      seq.start(0);
-      parts.push(seq, kick);
-    }
-    if (song.drums.hat) {
-      const hat = new Tone.NoiseSynth({
-        noise: { type: "white" },
-        envelope: { attack: 0.001, decay: 0.05, sustain: 0 },
-        volume: -22,
-      }).connect(master);
-      const seq = new Tone.Sequence(
-        (time, hit) => { if (hit) hat.triggerAttackRelease("16n", time); },
-        song.drums.hat, sub
-      );
-      seq.start(0);
-      parts.push(seq, hat);
+  // Load any sample packs declared in the song
+  if (song.samples) {
+    for (const src of song.samples) {
+      if (typeof src === "string") {
+        // GitHub shorthand or strudel.json URL
+        await samples(src);
+      } else if (typeof src === "object" && src.map && src.url) {
+        // Explicit mapping: { map: { kick: "path.wav" }, url: "https://..." }
+        await samples(src.map, src.url);
+      }
     }
   }
 
-  return parts;
-}
+  // Set tempo — Strudel uses cycles per minute; 1 cycle = 1 bar = 4 beats
+  const bpm = (song.style && song.style.bpm) || 90;
 
-function clamp(v, lo, hi, fallback) {
-  if (typeof v !== "number" || isNaN(v)) return fallback;
-  return Math.min(hi, Math.max(lo, v));
+  // Evaluate the pattern string.
+  // song.pattern is a JS expression that uses Strudel globals (note, s, stack, etc.)
+  // and returns a Pattern. We eval it in the global scope where initStrudel() has
+  // already registered all functions.
+  try {
+    const pat = (0, eval)(song.pattern);
+    pat.cpm(bpm / 4).play();
+  } catch (e) {
+    console.error("Pattern evaluation failed:", e);
+    $("summary").textContent = "Could not play pattern: " + e.message;
+  }
 }
-
-/* ---- Wiring --------------------------------------------------------- */
 
 async function togglePlay() {
   const btn = $("play");
+
   if (!playing) {
-    await Tone.start();
-    if (!built) { buildArrangement(SONG); built = true; }
-    Tone.Transport.start();
+    await buildAndPlay(SONG);
     playing = true;
     btn.classList.add("playing");
     btn.querySelector(".play-icon").textContent = "❚❚";
     btn.querySelector(".play-label").textContent = "Pause";
   } else {
-    Tone.Transport.pause();
+    hush();
     playing = false;
     btn.classList.remove("playing");
     btn.querySelector(".play-icon").textContent = "►";
@@ -226,13 +173,14 @@ async function togglePlay() {
   }
 }
 
+/* ---- Init ----------------------------------------------------------- */
+
 (async function init() {
   try {
     const index = await loadIndex();
     const days = (index && index.days) || [];
     if (!days.length) throw new Error("No songs in the archive yet.");
 
-    // Pick the requested day (?date=YYYY-MM-DD) if valid, else the newest.
     const want = new URLSearchParams(window.location.search).get("date");
     const date = days.some((d) => d.date === want) ? want : days[0].date;
 
