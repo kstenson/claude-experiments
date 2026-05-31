@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Song Bird — the world, set to music</title>
+  <meta name="description" content="A daily generative song and lyrics, composed from the tone of the day." />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Tone.js: in-browser synthesis, no audio files needed.
+       Self-hosted so audio works even when external CDNs are blocked;
+       falls back to the CDN only if the local copy is missing. -->
+  <script src="tone.min.js"></script>
+  <script>
+    window.Tone || document.write(
+      '<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"><\/script>'
+    );
+  </script>
+</head>
+<body>
+  <main class="stage">
+    <header class="head">
+      <p class="kicker">SONG BIRD</p>
+      <h1 id="title">…</h1>
+      <p class="date"><span id="date">…</span> · <span id="genre">…</span></p>
+    </header>
+
+    <section class="player">
+      <button id="play" class="play" aria-label="Play the song of the day">
+        <span class="play-icon">►</span>
+        <span class="play-label">Play today's song</span>
+      </button>
+      <div class="meta">
+        <span id="mood-label" class="mood">…</span>
+        <div class="bar" title="Mood score"><div id="mood-fill" class="bar-fill"></div></div>
+      </div>
+    </section>
+
+    <section class="summary">
+      <p id="summary">…</p>
+    </section>
+
+    <nav id="archive" class="archive" hidden>
+      <label for="history">Previous days</label>
+      <select id="history" aria-label="Browse previous days"></select>
+    </nav>
+
+    <section id="lyrics" class="lyrics"></section>
+
+    <footer class="foot">
+      <p>
+        Composed by Claude from
+        <a id="source" href="#" target="_blank" rel="noopener">the day's reading</a>.
+        Music synthesized live in your browser with Tone.js — no audio files.
+      </p>
+      <p class="fine">Regenerated daily · <span id="genby"></span></p>
+    </footer>
+  </main>
+
+  <script src="engine.js"></script>
+</body>
+</html>

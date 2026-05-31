@@ -1,0 +1,100 @@
+{
+  "date": "2026-05-30",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "The Day Holds Its Breath",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": 0.06,
+    "summary": "A watchful day balanced on a knife's edge — a paper-thin U.S.–Iran ceasefire and climate alarms pull down while tentative Hormuz talks, record markets, and a run of public-health and science wins pull up, leaving real danger and real hope with no resolution yet.",
+    "palette": {
+      "bg": "#131826",
+      "bg2": "#241a33",
+      "accent": "#f2b66d",
+      "accent2": "#6fb6c9",
+      "text": "#e8edf4"
+    }
+  },
+  "style": {
+    "genre": "downtempo / dark electronic",
+    "key": "A",
+    "scale": "dorian",
+    "bpm": 92,
+    "swing": 0.12
+  },
+  "fx": {
+    "reverb": 0.42,
+    "filter": 2200
+  },
+  "chords": {
+    "subdivision": "1m",
+    "steps": [
+      ["A3", "C4", "E4", "G4"],
+      ["D3", "F#3", "A3", "C4"],
+      ["E3", "G3", "B3", "D4"],
+      ["G3", "B3", "D4", "F#4"]
+    ]
+  },
+  "bass": {
+    "subdivision": "4n",
+    "steps": [
+      "A2", "A2", "E2", "G2",
+      "D2", "D2", "A2", "C3",
+      "E2", "E2", "B2", "D3",
+      "G2", "G2", "D2", "F#2"
+    ]
+  },
+  "melody": {
+    "subdivision": "8n",
+    "steps": [
+      "E4", null, "G4", "A4", null, "B4", "A4", null,
+      "F#4", null, "A4", null, "F#4", "E4", null, "D4",
+      "E4", null, "G4", "B4", null, "A4", "G4", null,
+      "F#4", null, "D4", "E4", null, "F#4", null, null
+    ]
+  },
+  "drums": {
+    "subdivision": "8n",
+    "kick": [
+      "x", null, null, null, "x", null, null, null,
+      "x", null, null, null, "x", null, null, null,
+      "x", null, null, null, "x", null, null, null,
+      "x", null, null, null, "x", null, "x", null
+    ],
+    "hat": [
+      null, "x", null, "x", null, "x", null, "x",
+      null, "x", null, "x", null, "x", null, "x",
+      null, "x", null, "x", null, "x", null, "x",
+      null, "x", null, "x", null, "x", null, "x"
+    ]
+  },
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Four hundred names the wire won't stop counting,",
+        "a ceasefire only paper believes.",
+        "Gaza under orders, Beirut under thunder —",
+        "the strait still holds, if hope still breathes."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Algeria wakes to eyes that can see,",
+        "the Nikkei climbs to a number like a prayer.",
+        "In a lab the light is learning to think,",
+        "while the heat keeps rising everywhere."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "So we hold the day like a glass too full —",
+        "real danger, real morning, no answer yet.",
+        "Cloud on the water, sun on the rail,",
+        "caught between the siren and the sunset."
+      ]
+    }
+  ]
+}

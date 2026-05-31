@@ -1,49 +1,31 @@
-<p align="center">
-  <a href="https://kstenson.github.io/claude-experiments/">
-    <img src="assets/banner.svg" alt="Claude Experiments — a daily creative lab" width="100%">
-  </a>
-</p>
+# The Lab — Claude Experiments
 
-<p align="center">
-  <a href="https://kstenson.github.io/claude-experiments/">
-    <img alt="Visit the live site" src="https://img.shields.io/badge/%E2%96%B6_Visit_the_Live_Site-7c7cff?style=for-the-badge&labelColor=0a0a0f">
-  </a>
-</p>
+A collection of ongoing experiments built with Claude. Each project is
+self-contained and publishes to GitHub Pages.
 
-# claude-experiments
+**Live site:** https://kstenson.github.io/claude-experiments/
 
-A daily creative lab. Every day, a new self-contained web page — generative art,
-tiny tools, interactive toys — built from scratch and published to GitHub Pages.
+## Projects
 
-**▶ Live site:** https://kstenson.github.io/claude-experiments/
-
-## Every experiment tells its story
-
-Each page carries a short, first-person narrative — opened from the prominent
-**"✎ the story behind this one"** button — covering *why I picked it*, *what I enjoy
-about it*, and *something you might take away*. Each hub card also shows a one-line
-**"the idea"** teaser of that takeaway. The point isn't just to show a toy; it's to
-leave a little meaning behind it.
-
-## The collection
-
-| # | Date | Experiment | Description |
-|---|------|------------|-------------|
-| 002 | 2026-05-31 | [Reaction Diffusion](experiments/2026-05-31/) | Two virtual chemicals produce leopard spots, coral, mazes, or worms depending on feed vs. kill rate — Turing's 1952 morphogenesis model. Click to paint new seeds. |
-| 001 | 2026-05-30 | [Flow Field](experiments/2026-05-30/) | Thousands of particles drifting through a shifting Perlin-noise vector field. Move the mouse to bend the current; click to send a pulse. |
+| Project | What it does | Path |
+|---------|-------------|------|
+| [Self-Determination](self-determination/) | A new standalone generative art page every day — flow fields, reaction diffusion, interactive toys. | `self-determination/` |
+| [World Mood Score](world-mode-score/) | Daily AI-generated global mood dashboard. Scores the day 0–100 across five dimensions and seven regions, citing every source. | `world-mode-score/` |
+| [Song Bird](song-bird/) | Each day's World Mood Score becomes a song — lyrics and music composed to match the tone, synthesized live in the browser with Tone.js. | `song-bird/` |
 
 ## How it's organized
 
-- `index.html` — the gallery hub that links to every experiment.
-- `experiments/YYYY-MM-DD/index.html` — one folder per day, each a standalone page
-  with no build step and no dependencies (just open it in a browser).
-- `experiments/_template/` — the scaffold every new experiment starts from.
+```
+index.html                     ← the lab hub (links to all projects)
+self-determination/            ← daily generative art experiments
+  index.html                   ← experiment gallery
+  experiments/YYYY-MM-DD/      ← one folder per day
+  experiments/_template/       ← scaffold for new experiments
+  EXPERIMENT_PLAYBOOK.md       ← instructions for adding experiments
+  scripts/validate.mjs         ← experiment validator
+world-mode-score/              ← daily mood dashboard
+song-bird/                     ← daily generative music
+```
 
-## Adding a new experiment
-
-Follow [`EXPERIMENT_PLAYBOOK.md`](EXPERIMENT_PLAYBOOK.md) — the standing task spec:
-copy the template, build the page, write its narrative, register it on the hub with
-a "the idea" teaser, add a table row, and run `node scripts/validate.mjs`.
-
-New pages are added automatically each day by a scheduled routine; see
-[`ROUTINE.md`](ROUTINE.md).
+Each project has its own README with details on how it works and how
+its daily routine runs.

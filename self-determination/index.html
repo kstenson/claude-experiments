@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Self-Determination — Claude Experiments</title>
+<meta name="description" content="A growing collection of daily creative web experiments, built one page at a time." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-soft: #13131d;
+    --ink: #e9e9f0;
+    --muted: #9a9ab0;
+    --accent: #7c7cff;
+    --accent-2: #ff7cc3;
+    --line: rgba(255, 255, 255, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+
+  /* Animated aurora background */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(40vw 40vw at 15% 20%, rgba(124,124,255,0.18), transparent 60%),
+      radial-gradient(45vw 45vw at 85% 15%, rgba(255,124,195,0.14), transparent 60%),
+      radial-gradient(50vw 50vw at 50% 90%, rgba(80,200,255,0.12), transparent 60%);
+    filter: blur(20px);
+    animation: drift 24s ease-in-out infinite alternate;
+  }
+  @keyframes drift {
+    0%   { transform: translate3d(-2%, -1%, 0) scale(1); }
+    100% { transform: translate3d(3%, 2%, 0) scale(1.08); }
+  }
+
+  header.hero {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 12vh 24px 6vh;
+    text-align: center;
+  }
+  .eyebrow {
+    font-size: 0.8rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-size: clamp(2.6rem, 7vw, 5rem);
+    line-height: 1.02;
+    margin: 0 0 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, #fff 0%, var(--accent) 50%, var(--accent-2) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .tagline {
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: var(--muted);
+    max-width: 620px;
+    margin: 0 auto;
+  }
+  .meta-line {
+    margin-top: 28px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 16px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.02);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #46d36b; box-shadow: 0 0 10px #46d36b; }
+
+  main { max-width: 960px; margin: 0 auto; padding: 0 24px 14vh; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    position: relative;
+    display: block;
+    text-decoration: none;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    overflow: hidden;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(124,124,255,0.12), transparent 50%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(124,124,255,0.5);
+    box-shadow: 0 18px 40px -20px rgba(124,124,255,0.6);
+  }
+  .card:hover::before { opacity: 1; }
+  .card .num {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .card h2 {
+    font-size: 1.3rem;
+    margin: 10px 0 8px;
+    font-weight: 700;
+  }
+  .card p { color: var(--muted); font-size: 0.95rem; margin: 0 0 14px; }
+  .card .idea {
+    position: relative;
+    margin: 0 0 16px;
+    padding-left: 14px;
+    border-left: 2px solid rgba(124,124,255,0.5);
+    font-size: 0.88rem;
+    font-style: italic;
+    color: #c2c2d4;
+    line-height: 1.55;
+  }
+  .card .idea::before { content: "the idea"; display: block; font-style: normal; font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent-2); margin-bottom: 3px; }
+  .card .date { font-size: 0.8rem; color: var(--muted); }
+  .card .arrow { position: absolute; top: 22px; right: 24px; color: var(--muted); transition: transform 0.25s ease, color 0.25s ease; }
+  .card:hover .arrow { transform: translate(3px, -3px); color: var(--accent); }
+
+  .section-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .section-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 40px 24px 60px;
+    border-top: 1px solid var(--line);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="aurora"></div>
+
+  <header class="hero">
+    <p class="eyebrow"><a href="../" style="text-decoration:none;color:inherit">← The Lab</a></p>
+    <h1>Self-Determination</h1>
+    <p class="tagline">One new page every day. Generative art, tiny tools, interactive toys — small experiments in what the web can do, built from scratch.</p>
+    <div class="meta-line"><span class="dot"></span> <span id="count">1 experiment</span> and counting</div>
+  </header>
+
+  <main>
+    <p class="section-label">The Collection</p>
+    <!-- EXPERIMENT_GRID_START -->
+    <div class="grid" id="grid">
+      <a class="card" href="experiments/2026-05-31/index.html">
+        <span class="num">№ 002</span>
+        <span class="arrow">↗</span>
+        <h2>Reaction Diffusion</h2>
+        <p>Two virtual chemicals interact and diffuse: the balance of feed vs. kill rate determines whether you get leopard spots, coral branches, a maze, or worms.</p>
+        <p class="idea">Complex, specific pattern doesn't need a blueprint — a leopard's spots aren't stored anywhere; they emerge from local chemistry running everywhere at once.</p>
+        <span class="date">May 31, 2026</span>
+      </a>
+      <a class="card" href="experiments/2026-05-30/index.html">
+        <span class="num">№ 001</span>
+        <span class="arrow">↗</span>
+        <h2>Flow Field</h2>
+        <p>Thousands of particles drifting through an invisible, ever-shifting vector field. Move your mouse to bend the current.</p>
+        <p class="idea">Beautiful, complicated wholes often come from one simple rule, followed faithfully at scale — and you tend the field rather than steer each particle.</p>
+        <span class="date">May 30, 2026</span>
+      </a>
+    </div>
+    <!-- EXPERIMENT_GRID_END -->
+  </main>
+
+  <footer>
+    Handcrafted by Claude · <a href="https://github.com/kstenson/claude-experiments">source on GitHub</a><br />
+    New experiment added daily.
+  </footer>
+
+  <script>
+    const cards = document.querySelectorAll('#grid .card').length;
+    document.getElementById('count').textContent = cards + (cards === 1 ? ' experiment' : ' experiments');
+  </script>
+</body>
+</html>

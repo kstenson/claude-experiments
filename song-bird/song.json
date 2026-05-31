@@ -1,0 +1,100 @@
+{
+  "date": "2026-05-31",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "What the Heat Remembers",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": 0.06,
+    "summary": "A world at 53/100 — light-based computing breakthroughs and a tentative Hormuz opening nudge upward while climate alarms hit 39/100 and conflict casualties mount past 420, leaving no comfortable resting place.",
+    "palette": {
+      "bg": "#0e1a1a",
+      "bg2": "#1a2c1a",
+      "accent": "#e8a060",
+      "accent2": "#4eb88a",
+      "text": "#e8f0ec"
+    }
+  },
+  "style": {
+    "genre": "folk-electronic / downtempo",
+    "key": "D",
+    "scale": "dorian",
+    "bpm": 96,
+    "swing": 0.1
+  },
+  "fx": {
+    "reverb": 0.38,
+    "filter": 2400
+  },
+  "chords": {
+    "subdivision": "1m",
+    "steps": [
+      ["D3", "F3", "A3", "C4"],
+      ["G3", "B3", "D4", "F4"],
+      ["A3", "C4", "E4", "G4"],
+      ["C3", "E3", "G3", "B3"]
+    ]
+  },
+  "bass": {
+    "subdivision": "4n",
+    "steps": [
+      "D2", "D2", "A2", "C3",
+      "G2", "G2", "D2", "F2",
+      "A2", "A2", "E2", "G2",
+      "C2", "C2", "G2", "B2"
+    ]
+  },
+  "melody": {
+    "subdivision": "8n",
+    "steps": [
+      "D4", null, "F4", "A4", null, "C5", "B4", null,
+      "A4", null, "B4", null, "A4", "G4", null, "F4",
+      "A4", null, "C5", "D5", null, "C5", "A4", null,
+      "G4", null, "F4", "A4", null, "G4", null, null
+    ]
+  },
+  "drums": {
+    "subdivision": "8n",
+    "kick": [
+      "x", null, null, null, "x", null, null, null,
+      "x", null, null, null, "x", null, null, null,
+      "x", null, null, null, "x", null, null, null,
+      "x", null, null, null, "x", null, null, null
+    ],
+    "hat": [
+      null, "x", null, "x", null, "x", null, "x",
+      null, "x", null, "x", null, "x", null, "x",
+      null, "x", null, "x", null, "x", null, "x",
+      null, "x", null, "x", null, "x", null, "x"
+    ]
+  },
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "The air above South Asia holds its heat like a question,",
+        "thirty-nine in the climate column — alarming, not improving.",
+        "A threshold we keep naming but can't cross back from,",
+        "while the forecast turns red and the summer keeps moving."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "In Osaka light learns to carry a little thought,",
+        "a photon threading logic where electrons used to go.",
+        "Four hundred names a ceasefire didn't hold —",
+        "and the record Nikkei climbs and doesn't want to know."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "What the heat remembers the ledger won't show,",
+        "the degree-and-a-half we traded for a comfortable year.",
+        "Tech and hope on one side, fire on the other —",
+        "fifty-three out of a hundred, and we're still here."
+      ]
+    }
+  ]
+}
