@@ -115,6 +115,109 @@ function renderHistory(index, currentDate) {
   };
 }
 
+/* ---- Spoken word ---------------------------------------------------- */
+
+const synth = window.speechSynthesis;
+let speechQueue = [];
+let speechTimer = null;
+let currentUtterance = null;
+
+function buildSpeechQueue(song) {
+  const lines = [];
+  (song.lyrics || []).forEach((sec) => {
+    // Add a longer pause before each section
+    lines.push({ pause: 2500 });
+    (sec.lines || []).forEach((line) => {
+      lines.push({ text: line });
+    });
+  });
+  return lines;
+}
+
+function getSpeechParams(song) {
+  // Map mood score (-1..1) to speech characteristics
+  const score = (song.mood && typeof song.mood.score === "number") ? song.mood.score : 0;
+  const bpm = (song.style && song.style.bpm) || 90;
+
+  // Slower BPM → slower speech. Score affects pitch slightly.
+  const rate = Math.max(0.6, Math.min(1.0, bpm / 120));
+  const pitch = Math.max(0.7, Math.min(1.2, 0.95 + score * 0.15));
+
+  return { rate, pitch };
+}
+
+function highlightLine(lineText) {
+  const allLines = document.querySelectorAll(".lyric-line");
+  allLines.forEach((el) => {
+    if (el.textContent === lineText) {
+      el.classList.add("speaking");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      el.classList.remove("speaking");
+    }
+  });
+}
+
+function clearHighlights() {
+  document.querySelectorAll(".lyric-line.speaking").forEach((el) => {
+    el.classList.remove("speaking");
+  });
+}
+
+function speakNext() {
+  if (!playing || speechQueue.length === 0) {
+    clearHighlights();
+    return;
+  }
+
+  const item = speechQueue.shift();
+
+  if (item.pause) {
+    clearHighlights();
+    speechTimer = setTimeout(speakNext, item.pause);
+    return;
+  }
+
+  const params = getSpeechParams(SONG);
+  const utt = new SpeechSynthesisUtterance(item.text);
+  utt.rate = params.rate;
+  utt.pitch = params.pitch;
+  utt.volume = 0.85;
+
+  // Try to pick a good voice
+  const voices = synth.getVoices();
+  const preferred = voices.find((v) => /samantha|daniel|karen|google.*us/i.test(v.name));
+  if (preferred) utt.voice = preferred;
+
+  utt.onstart = () => highlightLine(item.text);
+  utt.onend = () => {
+    // Pause between lines — proportional to line length for natural pacing
+    const gap = Math.min(1800, 400 + item.text.length * 12);
+    speechTimer = setTimeout(speakNext, gap);
+  };
+  utt.onerror = () => {
+    speechTimer = setTimeout(speakNext, 500);
+  };
+
+  currentUtterance = utt;
+  synth.speak(utt);
+}
+
+function startSpeech(song) {
+  stopSpeech();
+  speechQueue = buildSpeechQueue(song);
+  // Let the instrumental establish for a few seconds before voice enters
+  speechTimer = setTimeout(speakNext, 4000);
+}
+
+function stopSpeech() {
+  synth.cancel();
+  clearTimeout(speechTimer);
+  speechQueue = [];
+  currentUtterance = null;
+  clearHighlights();
+}
+
 /* ---- Strudel playback ----------------------------------------------- */
 
 async function ensureStrudel() {
@@ -160,12 +263,14 @@ async function togglePlay() {
 
   if (!playing) {
     await buildAndPlay(SONG);
+    startSpeech(SONG);
     playing = true;
     btn.classList.add("playing");
     btn.querySelector(".play-icon").textContent = "❚❚";
     btn.querySelector(".play-label").textContent = "Pause";
   } else {
     hush();
+    stopSpeech();
     playing = false;
     btn.classList.remove("playing");
     btn.querySelector(".play-icon").textContent = "►";

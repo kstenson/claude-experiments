@@ -149,7 +149,12 @@ h1 {
   font-size: 1.25rem;
   line-height: 1.7;
   margin: 0;
-  opacity: 0.9;
+  opacity: 0.5;
+  transition: opacity 0.4s ease, color 0.4s ease;
+}
+.lyric-line.speaking {
+  opacity: 1;
+  color: var(--accent);
 }
 
 .foot {
