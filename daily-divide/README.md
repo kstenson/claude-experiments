@@ -30,6 +30,10 @@ and openly refuses to score the second.
   holds power, so each day finds the role-reversed historical precedent and documents
   concrete position-flips on *both* sides. Selective principle is scored as a reasoning
   problem, not as evidence about who's right on today's facts.
+- **Not in isolation** — most issues are instances of a wider pattern, and treating each as a
+  one-off is its own bias. Where relevant, the issue is situated against the same actor's
+  other actions (e.g. an administration's other military campaigns), each cited. Context that
+  reframes the stakes — never a thumb on the needle.
 - **Trend** — how the facts have leaned over time. A persistent drift to one pole is itself
   a finding (about the issues — or about the meter's own bias).
 

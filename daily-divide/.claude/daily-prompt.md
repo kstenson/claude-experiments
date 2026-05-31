@@ -23,17 +23,22 @@ Steps:
    surface conflicts/staleness; and if a page can't be fetched (paywall/government HTTP
    403/451/503), say so and downgrade confidence. No quotable receipt → mark `unverifiable`
    or drop it. Never fabricate a quote, figure, or URL.
-5. RUN THE POWER TEST (the longer view): would each side hold this position if the other
-   party held power? Find the role-reversed historical precedent and document concrete
-   position-flips on BOTH sides (ideally each cited to a source from the other tribe).
-   Record it in `powerLens`. Selective constitutional conviction is a reasoningHonesty
-   penalty, not a needle mover — keep the needle on present-tense facts.
+5. TAKE THE LONGER VIEW (both in SCORING.md):
+   - POWER TEST (`powerLens`): would each side hold this position if the other party held
+     power? Find the role-reversed precedent; document concrete flips on BOTH sides (ideally
+     each cited to a source from the other tribe).
+   - DON'T GRADE IN ISOLATION (`pattern`): where the issue is one instance of a broader
+     pattern (e.g. a string of similar actions by the same administration), situate it with
+     other verified, cross-spectrum-sourced instances and name the recurring question.
+   Both reframe the stakes (reasoningHonesty may reflect them) but are NOT needle movers —
+   keep the needle on present-tense facts.
 6. Score per SCORING.md: two sub-scores per side (factualAccuracy, reasoningHonesty) →
    blended score; needle = right.score − left.score (clamp −100…+100); 5–9 graded `facts`
    (each with confidence, evidence, corroboration) covering both sides; a `powerLens`
-   (thesis, precedent, two-sided flips, longRun, appliedToScore); 3–5 `notAdjudicable`
-   value questions; one `biasWatch` paragraph with a concrete "tell"; a short
-   `verificationNote` on how claims were checked.
+   (thesis, precedent, two-sided flips, longRun, appliedToScore); a `pattern` (thesis,
+   sourced campaigns/instances, takeaway) where the issue isn't a one-off; 3–5
+   `notAdjudicable` value questions; one `biasWatch` paragraph with a concrete "tell"; a
+   short `verificationNote` on how claims were checked.
 7. Write `daily-divide/data/<today>.json` matching the schema of the most recent file in
    `daily-divide/data/`. Never fabricate a claim, source, or URL.
 8. Add today's date to the front of `days` in `daily-divide/data/manifest.json` and set

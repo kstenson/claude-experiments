@@ -27,16 +27,20 @@ most-argued political issue and produce that file.**
    Mark party-to-conflict figures lower, surface source conflicts or staleness, and if a page
    can't be fetched (incl. government 403s), say so and downgrade confidence. No quotable
    receipt → `unverifiable` or drop the claim. Never fabricate a quote, figure, or URL.
-5. **Run the power test (the longer view).** Ask whether each side would hold its position if
-   the other party held power, find the role-reversed historical precedent, and document
-   concrete position-flips on **both** sides — see `SCORING.md` → "The longer view." Record
-   it in `powerLens`. Selective constitutional conviction is a `reasoningHonesty` penalty,
-   not a needle mover.
+5. **Take the longer view.** Two parts, both in `SCORING.md`:
+   - **Power test** (`powerLens`): would each side hold its position if the other party held
+     power? Find the role-reversed precedent and document concrete flips on **both** sides.
+   - **Don't grade in isolation** (`pattern`): where the issue is one instance of a broader
+     pattern (e.g. a string of similar actions by the same administration), situate it with
+     other verified, cross-spectrum-sourced instances and name the recurring question.
+   Both are context that reframe the stakes — `reasoningHonesty` may reflect them, but they
+   are **not** needle movers; the needle stays on present-tense facts.
 6. **Score strictly against `SCORING.md`:**
    - two sub-scores per side (`factualAccuracy`, `reasoningHonesty`) → blended `score`;
    - `needle = right.score − left.score`, clamped −100…+100 (rests on present-tense facts);
    - 5–9 graded `facts` (with `confidence`, `evidence`, `corroboration`), covering **both** sides;
    - a `powerLens` (thesis, precedent, two-sided `flips`, `longRun`, `appliedToScore`);
+   - a `pattern` (thesis, sourced `campaigns`/instances, `takeaway`) where the issue isn't a one-off;
    - 3–5 `notAdjudicable` value questions;
    - one `biasWatch` paragraph with a concrete "tell";
    - a short `verificationNote` describing how the day's claims were checked.

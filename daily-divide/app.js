@@ -55,6 +55,7 @@ async function main() {
   renderNotAdjudicable(TODAY);
   renderBiasWatch(TODAY);
   renderPowerLens(TODAY);
+  renderPattern(TODAY);
   renderHistory(DAYS);
   renderSources(TODAY);
   app.setAttribute("aria-busy", "false");
@@ -216,6 +217,32 @@ function renderPowerLens(day) {
     : "";
   document.getElementById("appliedToScore").innerHTML = pl.appliedToScore
     ? `<div class="applied-label">How this feeds the meter</div><p>${escapeHTML(pl.appliedToScore)}</p>`
+    : "";
+}
+
+function renderPattern(day) {
+  const panel = document.getElementById("patternPanel");
+  const pat = day.pattern;
+  if (!pat) { panel.hidden = true; return; }
+  panel.hidden = false;
+
+  document.getElementById("patternThesis").textContent = pat.thesis || "";
+
+  const camps = pat.campaigns || [];
+  document.getElementById("campaigns").innerHTML = camps.map((c) => {
+    const corr = (c.corroboration || []).filter((x) => x && (x.source || x.url));
+    return `<div class="campaign">
+      <div class="campaign-head">
+        <span class="campaign-where">${escapeHTML(c.where || "")}</span>
+        ${c.authorization ? `<span class="campaign-auth">${escapeHTML(c.authorization)}</span>` : ""}
+      </div>
+      ${c.what ? `<p class="campaign-what">${escapeHTML(c.what)}</p>` : ""}
+      <div class="campaign-src">${srcLink(c)}${corr.length ? ` · also: ${corr.map(srcLink).join(" · ")}` : ""}</div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("patternTakeaway").innerHTML = pat.takeaway
+    ? `<div class="takeaway-label">The recurring question</div><p>${escapeHTML(pat.takeaway)}</p>${pat.source ? `<div class="longrun-src">${srcLink(pat)}</div>` : ""}`
     : "";
 }
 

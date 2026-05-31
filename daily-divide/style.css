@@ -278,6 +278,35 @@ main { max-width: var(--max); margin: 0 auto; padding: 26px 20px 64px; }
 .longrun p { color: var(--text); }
 .applied p { color: var(--muted); }
 
+/* Not in isolation (pattern) */
+.pattern { background: linear-gradient(180deg, #f1f4f6, var(--panel)); border-color: #cdd9dd; }
+.pattern-thesis { margin: 0 0 18px; font-size: 1rem; }
+.campaigns { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.campaign {
+  border: 1px solid var(--line); border-left: 4px solid var(--neutral);
+  border-radius: 12px; padding: 14px 16px; background: var(--panel);
+}
+.campaign-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 6px;
+}
+.campaign-where { font-weight: 800; font-size: .98rem; }
+.campaign-auth {
+  font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .03em;
+  padding: 2px 8px; border-radius: 5px; background: var(--right-soft); color: var(--right-deep);
+  white-space: nowrap;
+}
+.campaign-what { margin: 0 0 8px; font-size: .9rem; color: var(--muted); }
+.campaign-src { font-size: .8rem; color: var(--faint); }
+.campaign-src a { color: var(--neutral); text-decoration: none; }
+.campaign-src a:hover { text-decoration: underline; }
+.pattern-takeaway { border-top: 1px solid var(--line); padding-top: 14px; }
+.takeaway-label {
+  text-transform: uppercase; letter-spacing: .1em; font-size: .68rem; font-weight: 800;
+  color: var(--neutral); margin-bottom: 6px;
+}
+.pattern-takeaway p { margin: 0; font-size: .95rem; }
+
 @media (max-width: 680px) {
   .flips { grid-template-columns: 1fr; }
 }

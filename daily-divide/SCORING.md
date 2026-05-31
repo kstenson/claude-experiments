@@ -161,6 +161,25 @@ This section is *not* false balance: documenting that both sides flip does not m
 sides are equally right on today's facts. Keep the two separate — the power test scores
 *consistency of principle*; the meter scores *who is correct on the checkable facts now*.
 
+### Don't grade the issue in isolation (`pattern`)
+
+Most issues are not one-offs; they're instances of a wider pattern, and **treating each one
+as an isolated, self-justifying event is itself a common bias** (it keeps the argument off
+the trend). Where an issue is part of a broader pattern — a string of similar actions by the
+same administration, a multi-year policy trajectory, a repeated tactic — situate it. Record
+it in `pattern`:
+
+- `thesis` — how this issue fits the larger pattern, and why isolation distorts it.
+- `campaigns` (or analogous items) — the other instances, each with `where`/`what`, an
+  at-a-glance status flag (e.g. `authorization`), and a **real, verified** `source`/`url`
+  plus cross-spectrum `corroboration`. Same verification bar as `facts`.
+- `takeaway` — the recurring question underneath the whole pattern, and the "one-off" tell to
+  watch for.
+
+Like the power test, the pattern is **context that reframes the stakes, not a thumb on the
+needle.** The needle still rests on the present issue's checkable facts. Skip this section
+only when an issue genuinely stands alone.
+
 ## Topic selection
 
 Pick the issue that is **genuinely the most-argued political topic of the day**, US or
