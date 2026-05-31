@@ -1,0 +1,129 @@
+{
+  "date": "2026-05-31",
+  "score": 48,
+  "label": "Heavy going",
+  "emoji": "🌥️",
+  "summary": "The war defines the day. Trump says he is in 'no hurry' to close a deal with Iran, deflating hopes that the tentative ceasefire framework would firm up this weekend. Israel expands its ground operation in Lebanon while European leaders condemn the advance, and the US strikes a fourth alleged drug boat in the Pacific this week, bringing the campaign's death toll to 205.\n\nEurope's economy is buckling under the weight of the conflict: the eurozone composite PMI fell to a 31-month low of 47.5, France is in its deepest contraction since COVID lockdowns, and inflation is accelerating for the seventh straight month. US PCE inflation rose to 3.8%, the highest since May 2023, even as equities hit records — the Dow closed above 51,000 for the first time.\n\nBut there is genuine light. An experimental pancreatic cancer drug nearly doubled survival time in a 500-patient trial, a major breakthrough after decades of failed attempts at the target. East Asia is baking under unprecedented heat records, yet the clean-energy transition keeps accelerating — solar overtook coal globally for the first time in 2025, and China's solar capacity is set to pass coal this year. The mood is strained: the war is grinding, the economy is cracking, but science and energy keep delivering.",
+  "dimensions": {
+    "conflict": 32,
+    "economy": 48,
+    "climate": 38,
+    "humanInterest": 65,
+    "techProgress": 78
+  },
+  "regions": {
+    "northAmerica": 52,
+    "southAmerica": 50,
+    "europe": 40,
+    "africa": 50,
+    "middleEast": 30,
+    "asia": 50,
+    "oceania": 58
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Trump says he's in 'no hurry' to make a deal as US-Iran war drags into fourth month without agreement",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/05/31/still-no-deal-to-end-us-iran-war-trump-says-hes-not-in-a-hurry.html",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Israel expands Lebanon ground operation; European leaders condemn advance as 'scorched earth' policy",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/5/31/iran-war-live-lebanon-accuses-israel-of-scorched-earth-policy",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "US strike on alleged drug boat kills 3 in Pacific, fourth attack this week — campaign death toll reaches 205",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/05/31/nx-s1-5841876/us-strike-drug-boat-kills-3-pacific-ocean",
+      "dimension": "conflict",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Eurozone PMI falls to 31-month low of 47.5 as Iran war drives deepening economic contraction across Europe",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/business/2026/05/21/europe-flashes-recession-warning-as-activity-slumps-due-to-iran-war",
+      "dimension": "economy",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "US PCE inflation rises to 3.8% annually, highest since May 2023, as energy costs persist",
+      "source": "Crestwood Advisors",
+      "url": "https://www.crestwoodadvisors.com/may-2026-economic-and-market-update/",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Dow closes above 51,000 for the first time; S&P 500 seals ninth consecutive weekly gain",
+      "source": "Crestwood Advisors",
+      "url": "https://www.crestwoodadvisors.com/may-2026-economic-and-market-update/",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Unprecedented heat wave smashes over 100 temperature records across Japan and China in May",
+      "source": "Climate and Economy",
+      "url": "https://climateandeconomy.com/2026/05/26/26th-may-2026-todays-round-up-of-climate-news/",
+      "dimension": "climate",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Experimental pancreatic cancer pill nearly doubles survival time in 500-patient trial — first drug to hit long-elusive target",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/05/31/health/pancreatic-cancer-drug",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Solar overtook coal globally for first time in 2025; China's solar capacity on track to surpass coal in 2026",
+      "source": "Ember",
+      "url": "https://ember-energy.org/latest-insights/global-electricity-review-2026/2025-in-review/",
+      "dimension": "climate"
+    },
+    {
+      "direction": "up",
+      "headline": "Researchers develop brine-free solar desalination system that turns seawater to drinking water using laser-etched metal",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "down",
+      "headline": "Afghan refugees' lorry overturns on highway in eastern Afghanistan, killing at least 22",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/5/31/iran-war-live-lebanon-accuses-israel-of-scorched-earth-policy",
+      "dimension": "humanInterest",
+      "region": "asia"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "BBC",
+    "Al Jazeera",
+    "CNN",
+    "CNBC",
+    "Euronews",
+    "The Washington Post",
+    "S&P Global",
+    "Ember",
+    "ScienceDaily",
+    "Good News Network",
+    "Global Positive News",
+    "Climate and Economy",
+    "Crestwood Advisors",
+    "Times of Israel"
+  ]
+}
