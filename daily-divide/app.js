@@ -129,24 +129,44 @@ function renderSummary(day) {
   root.innerHTML = paras.map((p) => `<p>${escapeHTML(p)}</p>`).join("");
 }
 
+function srcLink(s) {
+  return s && s.url
+    ? `<a href="${escapeHTML(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(s.source || "source")} ↗</a>`
+    : escapeHTML((s && s.source) || "");
+}
+
 function factHTML(f) {
   const v = f.verdict || "unverifiable";
+  const conf = (f.confidence || "").toLowerCase();
   const sideTag = f.side ? `<span class="fact-side ${f.side}">${f.side}</span>` : "";
-  const src = f.url
-    ? `<div class="fact-src"><a href="${escapeHTML(f.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(f.source || "source")} ↗</a></div>`
-    : (f.source ? `<div class="fact-src">${escapeHTML(f.source)}</div>` : "");
+  const confChip = conf ? `<span class="conf conf-${conf}" title="Verification confidence">${conf} confidence</span>` : "";
+
+  const primary = f.url
+    ? `<a href="${escapeHTML(f.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(f.source || "source")} ↗</a>`
+    : escapeHTML(f.source || "");
+  const corr = (f.corroboration || []).filter((c) => c && (c.source || c.url));
+  const corrHTML = corr.length
+    ? `<span class="fact-corr">· also: ${corr.map(srcLink).join(" · ")}</span>`
+    : "";
+
   return `<li class="fact">
     <div class="fact-top">
       <span class="fact-claim">${escapeHTML(f.claim)}${sideTag}</span>
       <span class="badge ${v}">${VERDICT_LABEL[v] || v}</span>
     </div>
+    ${f.evidence ? `<blockquote class="fact-evidence">${escapeHTML(f.evidence)}</blockquote>` : ""}
     ${f.explanation ? `<p class="fact-exp">${escapeHTML(f.explanation)}</p>` : ""}
-    ${src}
+    <div class="fact-src">${confChip}<span class="fact-cite">${primary} ${corrHTML}</span></div>
   </li>`;
 }
 
 function renderFacts(day) {
   document.getElementById("facts").innerHTML = (day.facts || []).map(factHTML).join("");
+  const note = document.getElementById("verificationNote");
+  if (note) {
+    if (day.verificationNote) { note.textContent = day.verificationNote; note.hidden = false; }
+    else { note.hidden = true; }
+  }
 }
 
 function renderNotAdjudicable(day) {

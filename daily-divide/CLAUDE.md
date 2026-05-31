@@ -16,16 +16,25 @@ most-argued political issue and produce that file.**
    - left-leaning and right-leaning outlets *and* wire services / nonpartisan reporting;
    - primary sources where possible (bills, rulings, official data, transcripts).
    Find how each side **frames** the issue and the **checkable claims** each one leans on.
-4. **Score strictly against `SCORING.md`:**
+4. **Verify every claim to the highest degree.** Follow the verification protocol in
+   `SCORING.md` for each fact: actually **open the source** (don't trust search snippets),
+   quote the confirming figure/wording in `evidence`, **corroborate load-bearing claims
+   across ≥2 independent outlets** (`corroboration`), cite the source that truly contains
+   the figure, and set `confidence` honestly. Mark party-to-conflict figures lower, surface
+   any source conflicts or staleness, and if a page can't be fetched, say so and downgrade
+   confidence. No quotable receipt → downgrade to `unverifiable` or drop the claim. Never
+   fabricate a quote, figure, or URL.
+5. **Score strictly against `SCORING.md`:**
    - two sub-scores per side (`factualAccuracy`, `reasoningHonesty`) → blended `score`;
    - `needle = right.score − left.score`, clamped −100…+100;
-   - 5–9 graded `facts` with real source URLs, covering **both** sides;
+   - 5–9 graded `facts` (with `confidence`, `evidence`, `corroboration`), covering **both** sides;
    - 3–5 `notAdjudicable` value questions;
-   - one `biasWatch` paragraph with a concrete "tell."
-5. **Write** `data/YYYY-MM-DD.json` following the schema of the most recent file in `data/`.
-6. **Update** `data/manifest.json`: add today's date to the **front** of `days`, set
+   - one `biasWatch` paragraph with a concrete "tell";
+   - a short `verificationNote` describing how the day's claims were checked.
+6. **Write** `data/YYYY-MM-DD.json` following the schema of the most recent file in `data/`.
+7. **Update** `data/manifest.json`: add today's date to the **front** of `days`, set
    `updated` to today.
-7. **Commit and push** to `main` with a message like
+8. **Commit and push** to `main` with a message like
    `Daily Divide: YYYY-MM-DD — <topic> (needle NN)`. The push redeploys GitHub Pages.
 
 ## Rules

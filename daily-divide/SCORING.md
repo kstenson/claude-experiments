@@ -60,12 +60,49 @@ List **5–9** of the issue's most load-bearing *checkable* claims. Each entry:
 - `side` — `left` | `right` | `both` | `neither` (who is making/relying on it).
 - `verdict` — one of: `supported`, `mostly-supported`, `mixed`, `mostly-false`, `false`,
   `unverifiable`.
-- `explanation` — what the evidence actually shows, including necessary caveats (e.g. a
-  casualty figure that comes from one party to the conflict).
-- `source` + `url` — a **real, working** link to reporting or primary data. Never fabricate
-  a headline or URL. If you can't source it, drop the claim.
+- `confidence` — `high` | `medium` | `low`: how sure you are *after* verification (see the
+  protocol below). High = directly read in a primary/authoritative source **and**
+  corroborated independently; low = single-source, party-to-conflict, or could not be
+  directly read.
+- `evidence` — the **direct quote or specific figure** from the source that establishes the
+  claim. This is the receipt; a claim with no quotable evidence is not yet verified.
+- `explanation` — what the evidence actually shows, including caveats, the strongest
+  *contrary* evidence, and any source conflict (e.g. tallies that differ by date).
+- `source` + `url` — the **primary / most authoritative** real, working link. Never
+  fabricate a headline, quote, or URL. If you can't source it, drop the claim.
+- `corroboration` — an array of `{ source, url }` for **independent** outlets that confirm
+  the same fact. Required (≥1) for any load-bearing claim; `[]` only when the source is
+  itself primary (e.g. the bill text, a court ruling, official data).
 
 Grade claims from **both** sides. A day where you only fact-checked one side is a biased day.
+
+### The verification protocol (this is the "highest degree" bar)
+
+Hold **every** claim to this before you publish it:
+
+1. **Read the source, don't trust the snippet.** Open the cited page (WebFetch) and confirm
+   it actually contains the figure/quote. Search-result summaries are leads, not evidence.
+   Put the confirming words in `evidence`.
+2. **Corroborate load-bearing claims across ≥2 independent outlets.** Two outlets reprinting
+   the same wire story is *one* source. Prefer a mix: a primary source (bill, ruling,
+   transcript, official data) plus reporting.
+3. **Cite the source that actually contains the figure.** If outlet A reports a number but
+   you can only verify it in outlet B, cite B. Never attribute a figure to a page that
+   doesn't state it.
+4. **Mark provenance and confidence honestly.** Figures from a party to a dispute (a
+   government, a combatant, an advocacy NGO) get `low`/`medium` confidence and an explicit
+   caveat. Independently verified + corroborated → `high`.
+5. **Surface conflicts and staleness, don't smooth them over.** If sources disagree (e.g.
+   13 vs. 15 dead) or a number is outdated, say so in `explanation` and reflect it in the
+   `verdict`/`confidence` — a range beats false precision.
+6. **If a page can't be fetched** (paywall, publisher block / HTTP 451/503), say so in the
+   `explanation`, drop confidence accordingly, and lean on sources you *can* read. Never
+   present an unread page as if you verified it.
+7. **No receipt, no claim.** If you cannot quote supporting evidence from a readable source,
+   either downgrade to `unverifiable` or drop the claim. Fabrication is disqualifying.
+
+Use the optional top-level `verificationNote` to tell readers, in one short paragraph, how
+the day's claims were checked and to flag any sources you couldn't read directly.
 
 ## Values set aside (`notAdjudicable`)
 

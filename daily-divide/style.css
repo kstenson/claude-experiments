@@ -193,10 +193,33 @@ main { max-width: var(--max); margin: 0 auto; padding: 26px 20px 64px; }
 .fact-side.right { background: var(--right-soft); color: var(--right-deep); }
 .fact-side.both { background: #efeaf6; color: #6a4fa0; }
 .fact-side.neither { background: #eceef3; color: #5a6377; }
+.fact-evidence {
+  margin: 10px 0 0; padding: 8px 12px; border-left: 3px solid var(--line-strong);
+  background: var(--elev); border-radius: 0 8px 8px 0;
+  color: var(--text); font-size: .88rem; font-style: italic;
+}
 .fact-exp { color: var(--muted); font-size: .9rem; margin: 8px 0 0; }
-.fact-src { font-size: .82rem; margin-top: 6px; }
+.fact-src {
+  font-size: .82rem; margin-top: 8px; display: flex; flex-wrap: wrap;
+  align-items: baseline; gap: 8px;
+}
 .fact-src a { color: var(--left-deep); text-decoration: none; }
 .fact-src a:hover { text-decoration: underline; }
+.fact-cite { color: var(--muted); }
+.fact-corr { color: var(--faint); }
+.conf {
+  font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+  padding: 2px 7px; border-radius: 5px; white-space: nowrap;
+}
+.conf-high { background: #e6f6ec; color: #157a3a; }
+.conf-medium { background: #fbf2e0; color: #99670a; }
+.conf-low { background: #fce8e8; color: #b32424; }
+
+.verification-note {
+  margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 10px; background: var(--elev);
+  color: var(--muted); font-size: .85rem; line-height: 1.5;
+}
 
 /* Set aside */
 .setaside { background: var(--elev); }

@@ -20,7 +20,8 @@ and openly refuses to score the second.
 - **Two side cards** — each side's framing, a **factual-accuracy** score, a
   **reasoning-honesty** score, a blended score, and its single strongest and weakest point.
 - **The checkable claims** — the load-bearing factual assertions from *both* sides, each
-  graded (supported → false) with a real, clickable source.
+  graded (supported → false), shown with the **direct quote** that establishes it, a
+  **confidence** level, and **independent corroborating sources**. (See "Verification standard" below.)
 - **Set aside** — the genuine *value* disagreements underneath, which the meter deliberately
   refuses to adjudicate, because evidence can't.
 - **Bias watch** — the cognitive bias most clouding people's view of the issue, plus a
@@ -34,6 +35,25 @@ For each side: `score = round(0.6 × factualAccuracy + 0.4 × reasoningHonesty)`
 (facts weighted above rhetoric). Then `needle = right.score − left.score`, clamped to
 −100…+100. The full rubric — and the honesty guardrails that keep it from becoming a
 partisan scoreboard — live in [`SCORING.md`](SCORING.md).
+
+## Verification standard
+
+Credibility lives or dies on the facts, so every claim is held to a strict bar before it's
+published (full protocol in [`SCORING.md`](SCORING.md)):
+
+1. **Read the source, not the snippet** — each cited page is actually opened and the
+   confirming figure/quote is recorded as the claim's `evidence`.
+2. **Corroborate across ≥2 independent outlets** for any load-bearing claim (two reprints of
+   one wire story count as one); prefer a primary source — bill, ruling, transcript, data —
+   plus reporting.
+3. **Cite the page that truly contains the figure**, never one that merely sounds right.
+4. **Mark provenance honestly** — figures from a party to the dispute get lower `confidence`
+   and an explicit caveat; conflicts and stale numbers are surfaced, not smoothed over.
+5. **No receipt, no claim** — anything that can't be quoted from a readable source is marked
+   `unverifiable` or dropped. If a publisher blocks automated fetching, the page says so.
+
+A short `verificationNote` on each day records how that day's claims were checked and flags
+anything that couldn't be read directly.
 
 ## How it works
 

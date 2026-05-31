@@ -12,15 +12,24 @@ Steps:
 3. Research BOTH sides across an ideologically diverse source set (left- and right-leaning
    outlets, wire services, and primary sources where possible). Find each side's framing and
    the checkable claims it leans on.
-4. Score per SCORING.md: two sub-scores per side (factualAccuracy, reasoningHonesty) →
+4. VERIFY every claim to the highest degree, per the verification protocol in SCORING.md:
+   actually OPEN each cited source (WebFetch — don't trust search snippets); quote the
+   confirming figure/wording in `evidence`; corroborate load-bearing claims across ≥2
+   INDEPENDENT outlets (`corroboration`); cite the source that truly contains the figure;
+   set `confidence` (high/medium/low) honestly; mark party-to-conflict figures lower;
+   surface any source conflicts or staleness; and if a page can't be fetched (paywall/HTTP
+   451/503), say so and downgrade confidence. No quotable receipt → mark `unverifiable` or
+   drop it. Never fabricate a quote, figure, or URL.
+5. Score per SCORING.md: two sub-scores per side (factualAccuracy, reasoningHonesty) →
    blended score; needle = right.score − left.score (clamp −100…+100); 5–9 graded `facts`
-   with real working URLs covering both sides; 3–5 `notAdjudicable` value questions; one
-   `biasWatch` paragraph with a concrete "tell."
-5. Write `daily-divide/data/<today>.json` matching the schema of the most recent file in
+   (each with confidence, evidence, corroboration) covering both sides; 3–5 `notAdjudicable`
+   value questions; one `biasWatch` paragraph with a concrete "tell"; a short
+   `verificationNote` on how claims were checked.
+6. Write `daily-divide/data/<today>.json` matching the schema of the most recent file in
    `daily-divide/data/`. Never fabricate a claim, source, or URL.
-6. Add today's date to the front of `days` in `daily-divide/data/manifest.json` and set
+7. Add today's date to the front of `days` in `daily-divide/data/manifest.json` and set
    `updated`.
-7. Commit (`Daily Divide: <date> — <topic> (needle NN)`) and push to `main` (Pages publishes
+8. Commit (`Daily Divide: <date> — <topic> (needle NN)`) and push to `main` (Pages publishes
    from `main`).
 
 Do not edit past data files. Do not touch index.html / app.js / style.css.
