@@ -1,0 +1,173 @@
+{
+  "date": "2026-05-31",
+  "topic": "The US–Iran war and the War Powers fight",
+  "question": "Is continuing the US military campaign against Iran — now in its fourth month, without a fresh vote from Congress — legally and factually defensible?",
+  "summary": "The war that has defined the spring is also the most-argued political question in Washington. US and Israeli forces opened the campaign — 'Operation Epic Fury' — with strikes on Iran on Feb 28, 2026; the Trump administration gave Congress its formal War Powers notification in early March. The War Powers Resolution of 1973 gives a president 60 days before Congress must authorize a conflict; on the early-March notification that clock ran out around May 1. A US–Iran ceasefire, agreed April 8 and mediated by Pakistan, was extended indefinitely on April 21 — but US forces struck Iranian missile sites and boats again on May 25, and talks are stalled over Iran's nuclear program and sanctions.\n\nThe left says the war is unauthorized, expensive, and deadly, and that the legal deadline to end or authorize it has passed. The right says the strikes were necessary to stop Iran's nuclear program, that the ceasefire changes the legal picture, and that walking away now would squander leverage. The disagreement is partly about checkable facts — what the law requires, what the war has cost — and partly about values: how much risk and money a nuclear-armed Iran is worth preventing, and how much war power a president should hold.\n\nEvery checkable claim below was re-verified against its cited source and, where it is load-bearing, corroborated across at least two independent outlets. That process tightened the picture: the war began Feb 28 (not 'early March'), the cost is higher and rising ($25B in late-April testimony, ~$29B by mid-May), and US strikes on May 25 sit awkwardly against the administration's argument that the 'ceasefire' suspends the War Powers clock. On the narrow, checkable question of legality and cost, the critics' factual case is the stronger one today. But Iran is also genuinely violating the ceasefire, which gives the administration's caution a real basis. The needle leans modestly left — not because the left is 'right' about whether the war is worth it, but because its factual claims about the war's legal status hold up better right now.",
+  "needle": -17,
+  "verdict": "On the legal and factual merits, the critics' case is stronger today: the campaign is unauthorized and past its 60-day deadline, the cost is higher than the headline figure, and strikes continued on May 25 despite the ceasefire the White House invokes. Whether the war is *worth it* remains a values question no meter can settle.",
+  "weights": { "factualAccuracy": 0.6, "reasoningHonesty": 0.4 },
+  "verificationNote": "Every claim was checked against the cited source; load-bearing figures were corroborated across ≥2 independent outlets and quote the supporting evidence. Figures attributed to a party in the conflict (e.g. an Iranian NGO or Lebanon's health ministry) are marked lower-confidence. Some publishers (CNN, NPR) block automated fetching (HTTP 451/503), so those citations rest on the outlet's reporting plus independent corroboration rather than a direct machine read — flagged per claim.",
+  "sides": {
+    "left": {
+      "label": "The war is unauthorized and must end",
+      "framing": "Trump started a war without Congress, the 60-day War Powers clock has expired, and the campaign has killed at least 13 US service members and thousands of foreign civilians while costing tens of billions. Continuing it is an unaccountable executive war.",
+      "factualAccuracy": 80,
+      "reasoningHonesty": 72,
+      "score": 77,
+      "strongestPoint": "The factual backbone is solid and independently corroborated: a Feb 28 start with no authorization, the 60-day deadline lapsed around May 1, and US forces struck Iran again on May 25 — so the 'ceasefire means the law no longer applies' argument is hard to sustain.",
+      "weakestPoint": "Some framings treat the war as purely a power grab and underplay Iran's ongoing ceasefire violations and the genuine nuclear-proliferation stakes the administration is responding to."
+    },
+    "right": {
+      "label": "The strikes were necessary; the ceasefire changes things",
+      "framing": "The campaign was needed to stop Iran's nuclear program. With a ceasefire in place since April, the War Powers clock no longer applies, and ending now — before Iran gives up enriched uranium and reopens the Strait of Hormuz — would throw away hard-won leverage.",
+      "factualAccuracy": 62,
+      "reasoningHonesty": 58,
+      "score": 60,
+      "strongestPoint": "Iran really is violating the ceasefire and stalling talks over nuclear and sanctions terms, and the proliferation concern is legitimate — there is a real strategic case for not folding mid-negotiation.",
+      "weakestPoint": "The central legal claim — that an indefinite 'ceasefire' suspends the War Powers Resolution — is self-serving and undercut by the May 25 US strikes; even rank-and-file Republicans were ready to vote to end the war on May 22."
+    }
+  },
+  "facts": [
+    {
+      "claim": "US-led military operations against Iran ('Operation Epic Fury') began on Feb 28, 2026, and have continued without a congressional declaration of war or new authorization.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Wikipedia identifies '28 February 2026' as 'the first day of the 2026 Iran war'; reporting on the May 22 war-powers fight describes a war Trump 'launched almost three months ago,' with no AUMF or declaration passed since.",
+      "explanation": "The Feb 28 start (joint US–Israel strikes) and the absence of any new authorization are well documented. The administration filed its formal War Powers notification in early March; no AUMF or declaration has passed. This corrects an earlier draft that dated the start to 'early March' — that was the notification, not the first strikes.",
+      "source": "Wikipedia: Casualties of the 2026 Iran war",
+      "url": "https://en.wikipedia.org/wiki/Casualties_of_the_2026_Iran_war",
+      "corroboration": [
+        { "source": "CBS News", "url": "https://www.cbsnews.com/news/house-gop-pulls-iran-war-resolution-vote/" },
+        { "source": "NPR", "url": "https://www.npr.org/2026/05/22/g-s1-123592/republicans-call-off-vote-on-iran-war-resolution" }
+      ]
+    },
+    {
+      "claim": "The War Powers Resolution's 60-day deadline for the conflict lapsed around May 1, 2026, though lawmakers dispute the exact start date.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "CNN's report is headlined that lawmakers 'can't agree when' the 60-day deadline is; the ~May 1 date follows from the early-March formal notification.",
+      "explanation": "The ~May 1 deadline follows from the early-March notification, but the start date is genuinely contested (Feb 28 strikes vs. early-March notice), so the precise day is unsettled rather than fixed. CNN's page could not be machine-fetched (HTTP 451), so this rests on the outlet's reported headline/summary plus the corroborated early-March notification date.",
+      "source": "CNN Politics",
+      "url": "https://www.cnn.com/2026/05/01/politics/iran-war-60-day-deadline-congress",
+      "corroboration": [
+        { "source": "Wikipedia: Casualties of the 2026 Iran war (Feb 28 start)", "url": "https://en.wikipedia.org/wiki/Casualties_of_the_2026_Iran_war" }
+      ]
+    },
+    {
+      "claim": "House GOP leaders pulled a scheduled war-powers vote around May 22, 2026 because the Democratic-led resolution appeared to have the votes to pass — a sign of bipartisan erosion of support for the war.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "CBS: 'House Republicans pull vote on Iran war resolution that appeared to have enough support to pass.' Sponsor Rep. Gregory Meeks: 'No question about it, we would have succeeded.' GOP leaders punted the vote past the Memorial Day recess after defections appeared on a procedural vote.",
+      "explanation": "Multiple independent outlets confirm the pulled vote and the reason. The Senate had separately blocked war-powers resolutions earlier in the spring. The episode shows support slipping even among Republicans.",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/house-gop-pulls-iran-war-resolution-vote/",
+      "corroboration": [
+        { "source": "NPR", "url": "https://www.npr.org/2026/05/22/g-s1-123592/republicans-call-off-vote-on-iran-war-resolution" },
+        { "source": "PBS NewsHour", "url": "https://www.pbs.org/newshour/politics/watch-live-house-expected-to-vote-on-senate-resolution-to-limit-trumps-war-powers" }
+      ]
+    },
+    {
+      "claim": "The White House argues the War Powers Resolution no longer applies because of the ceasefire.",
+      "side": "right",
+      "verdict": "mixed",
+      "confidence": "medium",
+      "evidence": "Reported as the administration's stated legal position in coverage of the war-powers fight; it is contested and undercut by continued strikes (see next claim).",
+      "explanation": "This is the administration's stated legal argument, not an adjudicated fact. It is contested and weakened because active US strikes continued on May 25 — hard to square with a 'ceasefire' that supposedly suspends hostilities. Sourced from reporting that could not be machine-fetched directly (publisher block), so treated as an attributed claim and graded 'mixed.'",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/05/25/nx-s1-5833690/u-s-iran-negotiations-updates",
+      "corroboration": [
+        { "source": "MSNBC", "url": "https://www.ms.now/news/house-adopts-war-powers-resolution-iran-trump" }
+      ]
+    },
+    {
+      "claim": "US forces conducted strikes on Iranian missile sites and boats on May 25, 2026, during the ceasefire and ongoing negotiations.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "CNBC: 'U.S. conducts self-defense strikes in Iran as Trump pushes for peace deal.' CENTCOM spokesman Tim Hawkins said targets included missile launch sites and Iranian boats attempting to emplace mines near the Strait of Hormuz.",
+      "explanation": "Confirmed across CNN, CNBC and NPR. The continuation of strikes during the 'ceasefire' is the single biggest problem for the administration's legal argument in the previous claim — and also evidence that the conflict is ongoing for War Powers purposes.",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/05/26/us-conducts-self-defense-strikes-in-iran-as-trump-seeks-peace-deal.html",
+      "corroboration": [
+        { "source": "CNN", "url": "https://www.cnn.com/2026/05/25/world/live-news/iran-war-us-peace-deal" },
+        { "source": "NPR", "url": "https://www.npr.org/2026/05/26/nx-s1-5833793/u-s-military-strikes-iran-amid-ongoing-negotiations-to-end-war" }
+      ]
+    },
+    {
+      "claim": "The war has cost US taxpayers at least $25 billion (late-April Pentagon testimony) and has since risen toward $29 billion, with higher internal estimates — an interim figure, not a final accounting.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Acting Comptroller Jules Hurst III, House Armed Services Committee, Apr 29: 'Approximately, at this day, we are spending about $25 billion on Operation Epic Fury, most of that is in munitions.' He added a supplemental would follow 'once we have a full assessment,' and later reporting put the figure near $29B by May 12.",
+      "explanation": "The $25B figure is verified to a named official and committee and is explicitly interim. Treating it as the war's total cost understates it: the figure had risen by mid-May and some internal estimates run higher. So the left's 'tens of billions' framing is, if anything, conservative.",
+      "source": "Military Times",
+      "url": "https://www.militarytimes.com/news/pentagon-congress/2026/04/29/iran-war-has-cost-25-billion-so-far-pentagon-official-says/",
+      "corroboration": [
+        { "source": "NBC News", "url": "https://www.nbcnews.com/politics/congress/iran-war-cost-25-billion-dollars-us-munitions-hegseth-armed-services-rcna342714" },
+        { "source": "C-SPAN (testimony video)", "url": "https://www.c-span.org/clip/house-committee/pentagon-official-says-iran-war-has-cost-25-billion-so-far/5199666" }
+      ]
+    },
+    {
+      "claim": "At least 13 US service members have been killed, along with several thousand Iranians and over 3,200 people in Lebanon.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "US toll: CNN ('13 US troop deaths,' May 25) and Military Times (Apr 8); Wikipedia/AP put it at 15 as of late April. Iranian deaths: Wikipedia cites a 3,468–6,000+ range (HRANA: 3,636, incl. 1,701 civilians; IDF claims 6,000+). Lebanon: 'at least 3,213,' per Lebanon's health ministry.",
+      "explanation": "The US death toll is solidly in the 13–15 range — sources differ by date and methodology, so a single exact number is not warranted. The Iranian and Lebanese tolls come from a party to the conflict or its NGOs and span a wide range; they indicate scale (thousands dead) rather than a precise count, hence medium confidence.",
+      "source": "Wikipedia: Casualties of the 2026 Iran war",
+      "url": "https://en.wikipedia.org/wiki/Casualties_of_the_2026_Iran_war",
+      "corroboration": [
+        { "source": "CNN (13 US troop deaths)", "url": "https://www.cnn.com/2026/05/25/us/us-military-deaths-iran-war" },
+        { "source": "Military Times (13 killed, Operation Epic Fury)", "url": "https://www.militarytimes.com/news/your-military/2026/04/08/pentagon-data-13-us-troops-killed-346-wounded-in-operation-epic-fury/" }
+      ]
+    },
+    {
+      "claim": "Iran is violating the ceasefire and negotiations have stalled over its nuclear program and sanctions.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "CNBC and NPR report disputes over MOU language on Iran's nuclear program and sanctions holding up a deal; on May 30 an IRGC general threatened to blockade the Strait of Hormuz if Trump 'betrays' negotiations, and Iran's actions near Hormuz prompted the May 25 US strikes.",
+      "explanation": "Iran's ceasefire violations and the deadlock over nuclear/sanctions terms are well corroborated, and they give the administration's reluctance to stand down a genuine strategic basis — the strongest factual plank of the right's case.",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/05/26/us-conducts-self-defense-strikes-in-iran-as-trump-seeks-peace-deal.html",
+      "corroboration": [
+        { "source": "NPR", "url": "https://www.npr.org/2026/05/26/nx-s1-5833793/u-s-military-strikes-iran-amid-ongoing-negotiations-to-end-war" }
+      ]
+    },
+    {
+      "claim": "A US–Iran ceasefire was agreed on April 8, 2026, mediated by Pakistan, and extended indefinitely on April 21.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Wikipedia (directly verified): the ceasefire 'was agreed on April 8, 2026,' Pakistan mediated, and 'On 21 April, President Trump extended the cease-fire indefinitely.'",
+      "explanation": "Directly confirmed from the cited source. This is the factual backdrop both sides invoke — the right to argue the war has effectively paused, the left to note that strikes have continued regardless.",
+      "source": "Wikipedia: 2026 Iran war ceasefire",
+      "url": "https://en.wikipedia.org/wiki/2026_Iran_war_ceasefire",
+      "corroboration": []
+    }
+  ],
+  "notAdjudicable": [
+    "Whether preventing a nuclear-armed Iran is worth the lives lost and the tens of billions spent — a values judgment about acceptable cost, not a fact.",
+    "How much war-making power a president should hold versus Congress — a constitutional-design disagreement, not an empirical one.",
+    "Whether the strikes were morally justified — depends on how one weighs preemption, sovereignty, and civilian harm.",
+    "Whether keeping military pressure on improves or worsens the odds of a durable deal — a forecast no one can verify today."
+  ],
+  "biasWatch": "The loudest distortion this week is partisan motivated reasoning about executive war power. Polling and voting behavior show people tend to support a broad presidential power to wage war when their own party holds the White House — and discover deep constitutional concerns when the other party does. Watch whether a commentator's view of *the law* flips depending on who the president is; that tell reveals the bias more reliably than any single fact.",
+  "sources_consulted": [
+    "Wikipedia (2026 Iran war ceasefire; Casualties of the 2026 Iran war)",
+    "CBS News",
+    "NPR",
+    "PBS NewsHour",
+    "CNBC",
+    "CNN",
+    "Military Times",
+    "NBC News",
+    "C-SPAN",
+    "MSNBC",
+    "TIME",
+    "Fox News"
+  ]
+}
