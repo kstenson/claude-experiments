@@ -88,12 +88,16 @@
     display: block;
     text-decoration: none;
     color: inherit;
-    padding: 28px 0;
-    border-bottom: 1px solid var(--rule-light);
+    padding: 24px 28px;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    margin-bottom: 16px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
-  .entry:first-child {
-    padding-top: 8px;
+  .entry:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 12px rgba(26, 107, 92, 0.08);
   }
 
   .entry:hover h2 {
