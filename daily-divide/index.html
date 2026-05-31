@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Divide</title>
+  <meta name="description" content="One contested political issue a day, scored on the facts. A left–right meter that adjudicates checkable claims and reasoning quality — and sets values disagreements aside." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
+</head>
+<body>
+  <main id="app" aria-busy="true">
+    <header class="masthead">
+      <div class="brand">⚖️ <span>Daily Divide</span></div>
+      <div class="date" id="date">—</div>
+    </header>
+
+    <section class="intro">
+      <div class="eyebrow" id="eyebrow">Today's contested issue</div>
+      <h1 class="topic" id="topic">Loading…</h1>
+      <p class="question" id="question"></p>
+    </section>
+
+    <section class="panel meter-panel" aria-label="The meter">
+      <div class="meter">
+        <div class="meter-ends">
+          <span class="end-left">LEFT</span>
+          <span class="end-mid">truth</span>
+          <span class="end-right">RIGHT</span>
+        </div>
+        <div class="meter-track">
+          <div class="meter-grad"></div>
+          <div class="meter-center-tick" aria-hidden="true"></div>
+          <div class="meter-needle" id="needle"><span class="needle-knob"></span></div>
+        </div>
+        <div class="meter-scale"><span>−100</span><span>0</span><span>+100</span></div>
+      </div>
+      <div class="meter-read" id="meterRead"></div>
+      <p class="verdict" id="verdict"></p>
+    </section>
+
+    <section class="sides" aria-label="The two sides">
+      <article class="side side-left" id="sideLeft"></article>
+      <article class="side side-right" id="sideRight"></article>
+    </section>
+
+    <section class="panel" aria-label="Today's briefing">
+      <h2>The briefing</h2>
+      <div class="summary" id="summary"></div>
+    </section>
+
+    <section class="panel" aria-label="Fact check">
+      <div class="panel-head">
+        <h2>The checkable claims</h2>
+        <div class="chart-caption">Each claim graded against the evidence</div>
+      </div>
+      <ul class="facts" id="facts"></ul>
+    </section>
+
+    <section class="panel setaside" aria-label="Set aside">
+      <h2>Set aside — these are values, not facts</h2>
+      <p class="setaside-note">A meter can score what's checkable. These questions are genuine disagreements about what we should value — no amount of evidence settles them, so the meter deliberately leaves them alone.</p>
+      <ul class="setaside-list" id="notAdjudicable"></ul>
+    </section>
+
+    <section class="panel biaswatch" aria-label="Bias watch">
+      <h2>🔍 Bias watch</h2>
+      <p id="biasWatch"></p>
+    </section>
+
+    <section class="panel" aria-label="Lean over time">
+      <div class="panel-head">
+        <h2>Which way the facts have leaned</h2>
+        <div class="chart-caption" id="historyCaption"></div>
+      </div>
+      <div class="chart-wrap">
+        <svg class="chart" id="historyChart" viewBox="0 0 720 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Daily meter lean over time"></svg>
+        <div class="chart-tip" id="historyTip" hidden></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div id="sources" class="sources"></div>
+      <p class="disclaimer">
+        An editorial, AI-generated reading regenerated daily. The meter scores the
+        <em>factual accuracy</em> and <em>reasoning honesty</em> of each side's framing of
+        one issue — it does not declare which side's <em>values</em> are correct, because
+        that isn't a thing facts can decide. Every claim links a real source so the
+        judgment is auditable. Past days are never re-scored.
+        <a href="https://github.com/kstenson/claude-experiments/tree/main/daily-divide">Source &amp; method</a>.
+      </p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

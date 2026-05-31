@@ -1,0 +1,111 @@
+{
+  "date": "2026-05-31",
+  "topic": "The US–Iran war and the War Powers fight",
+  "question": "Is continuing the US military campaign against Iran — now in its fourth month, without a fresh vote from Congress — legally and factually defensible?",
+  "summary": "The war that has defined the spring is also the most-argued political question in Washington. President Trump launched the campaign against Iran in early March without a congressional declaration or new authorization. The War Powers Resolution of 1973 gives a president 60 days before Congress must authorize a conflict; that clock ran out around May 1. A US–Iran ceasefire has held, shakily, since early April, but US forces struck Iran again on May 25 and negotiations are at a self-described 'strategic deadlock.'\n\nThe left says the war is unauthorized, expensive, and deadly, and that the legal deadline to end or authorize it has passed. The right says the strikes were necessary to stop Iran's nuclear program, that the ceasefire changes the legal picture, and that walking away now would squander leverage. The disagreement is partly about checkable facts — what the law requires, what the war has cost — and partly about values: how much risk and money a nuclear-armed Iran is worth preventing, and how much war power a president should hold.\n\nOn the narrow, checkable question of legality and cost, the critics' factual case is the stronger one today: the campaign began without authorization, the 60-day window has lapsed, and active strikes continue despite the 'ceasefire' the White House cites to argue the law no longer applies. But Iran is also violating that ceasefire, which gives the administration's caution a real basis. The needle leans modestly left — not because the left is 'right' about whether the war is worth it, but because its factual claims about the war's legal status hold up better right now.",
+  "needle": -17,
+  "verdict": "On the legal and factual merits, the critics' case is stronger today: the campaign is unauthorized and past its 60-day deadline, and strikes continue despite the ceasefire the White House invokes. Whether the war is *worth it* remains a values question no meter can settle.",
+  "weights": { "factualAccuracy": 0.6, "reasoningHonesty": 0.4 },
+  "sides": {
+    "left": {
+      "label": "The war is unauthorized and must end",
+      "framing": "Trump started a war without Congress, the 60-day War Powers clock has expired, and the campaign has cost 13 US lives, thousands of foreign civilians, and over $25 billion. Continuing it is an unaccountable executive war.",
+      "factualAccuracy": 80,
+      "reasoningHonesty": 72,
+      "score": 77,
+      "strongestPoint": "The factual backbone is solid: no authorization, the 60-day deadline lapsed around May 1, and US forces struck Iran again on May 25 — so the 'ceasefire means the law no longer applies' argument is hard to sustain.",
+      "weakestPoint": "Some framings treat the war as purely a power grab and underplay Iran's ongoing ceasefire violations and the genuine nuclear-proliferation stakes the administration is responding to."
+    },
+    "right": {
+      "label": "The strikes were necessary; the ceasefire changes things",
+      "framing": "The campaign was needed to stop Iran's nuclear program. With a ceasefire in place since April, the War Powers clock no longer applies, and ending now — before Iran gives up enriched uranium and reopens the Strait of Hormuz — would throw away hard-won leverage.",
+      "factualAccuracy": 62,
+      "reasoningHonesty": 58,
+      "score": 60,
+      "strongestPoint": "Iran really is violating the ceasefire and stalling talks, and the proliferation concern is legitimate — there is a real strategic case for not folding mid-negotiation.",
+      "weakestPoint": "The central legal claim — that an indefinite 'ceasefire' suspends the War Powers Resolution — is self-serving and undercut by continued US strikes; even rank-and-file Republicans are now breaking with it."
+    }
+  },
+  "facts": [
+    {
+      "claim": "Trump launched the military campaign against Iran in early March 2026 without a congressional declaration of war or new authorization.",
+      "side": "left",
+      "verdict": "supported",
+      "explanation": "The administration's own formal notification to Congress dates to early March; there has been no AUMF or declaration since.",
+      "source": "CNN Politics",
+      "url": "https://www.cnn.com/2026/05/01/politics/iran-war-60-day-deadline-congress"
+    },
+    {
+      "claim": "The War Powers Resolution's 60-day deadline for the conflict arrived around May 1, 2026.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "explanation": "Based on the early-March notification the deadline lands near May 1, but lawmakers genuinely dispute the start date, so the exact day is contested rather than settled.",
+      "source": "CNN Politics",
+      "url": "https://www.cnn.com/2026/05/01/politics/iran-war-60-day-deadline-congress"
+    },
+    {
+      "claim": "Congress has repeatedly failed to pass a resolution forcing an end to the war.",
+      "side": "both",
+      "verdict": "supported",
+      "explanation": "The Senate blocked a War Powers resolution for a fourth time in April, and House GOP leaders called off a scheduled vote on May 22 when they could not muster the votes to dismiss it.",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/05/22/g-s1-123592/republicans-call-off-vote-on-iran-war-resolution"
+    },
+    {
+      "claim": "The White House argues the War Powers Resolution no longer applies because of the ceasefire.",
+      "side": "right",
+      "verdict": "mixed",
+      "explanation": "This is the administration's stated legal position, but it is contested and weakened by the fact that US forces struck Iran again on May 25 — active hostilities undercut the 'ceasefire' premise.",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/05/25/nx-s1-5833690/u-s-iran-negotiations-updates"
+    },
+    {
+      "claim": "The conflict has cost US taxpayers over $25 billion.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "explanation": "This reflects Pentagon estimates provided to lawmakers; it is an official estimate rather than an audited final figure.",
+      "source": "Wikipedia: 2026 Iran war ceasefire",
+      "url": "https://en.wikipedia.org/wiki/2026_Iran_war_ceasefire"
+    },
+    {
+      "claim": "Thirteen US service members and several thousand Iranians have been killed.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "explanation": "The US service-member toll is reported at 13; the Iranian toll (3,000+) comes from an Iranian official and cannot be independently verified, so the foreign-casualty figure carries more uncertainty.",
+      "source": "Wikipedia: 2026 Iran war ceasefire",
+      "url": "https://en.wikipedia.org/wiki/2026_Iran_war_ceasefire"
+    },
+    {
+      "claim": "Iran is violating the ceasefire and negotiations have stalled.",
+      "side": "right",
+      "verdict": "supported",
+      "explanation": "Reporting describes Iran flouting ceasefire terms while the administration holds back, and Iran itself called the talks a 'strategic deadlock' over enrichment.",
+      "source": "CNN Politics",
+      "url": "https://www.cnn.com/2026/05/26/politics/us-iran-ceasefire-violation-responses"
+    },
+    {
+      "claim": "A growing number of Republicans, not just Democrats, are willing to defy Trump on the war.",
+      "side": "left",
+      "verdict": "supported",
+      "explanation": "GOP leaders pulled the May 22 vote precisely because rank-and-file Republicans were prepared to back the resolution, signaling slipping support within the president's own party.",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/05/22/g-s1-123592/republicans-call-off-vote-on-iran-war-resolution"
+    }
+  ],
+  "notAdjudicable": [
+    "Whether preventing a nuclear-armed Iran is worth 13 US lives, thousands of foreign deaths, and $25B+ — a values judgment about acceptable cost, not a fact.",
+    "How much war-making power a president should hold versus Congress — a constitutional-design disagreement, not an empirical one.",
+    "Whether the strikes were morally justified — depends on how one weighs preemption, sovereignty, and civilian harm.",
+    "Whether keeping military pressure on improves or worsens the odds of a durable deal — a forecast no one can verify today."
+  ],
+  "biasWatch": "The loudest distortion this week is partisan motivated reasoning about executive war power. Polling and voting behavior show people tend to support a broad presidential power to wage war when their own party holds the White House — and discover deep constitutional concerns when the other party does. Watch whether a commentator's view of *the law* flips depending on who the president is; that tell reveals the bias more reliably than any single fact.",
+  "sources_consulted": [
+    "CNN Politics",
+    "NPR",
+    "PBS NewsHour",
+    "TIME",
+    "NBC News",
+    "Fox News",
+    "Wikipedia (2026 Iran war ceasefire)"
+  ]
+}
