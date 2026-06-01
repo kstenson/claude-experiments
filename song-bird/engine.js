@@ -123,10 +123,44 @@ let speechTimer = null;
 let currentUtterance = null;
 let cachedVoices = [];
 
+// User voice preferences, persisted across visits. rate/pitch are null when the
+// listener wants the mood-derived "auto" value; voiceURI null means auto-pick.
+const VOICE_KEY = "songbird.voice";
+const voicePrefs = loadVoicePrefs();
+
+function loadVoicePrefs() {
+  const defaults = { enabled: true, voiceURI: null, rate: null, pitch: null };
+  try {
+    return Object.assign(defaults, JSON.parse(localStorage.getItem(VOICE_KEY) || "{}"));
+  } catch (e) {
+    return defaults;
+  }
+}
+
+function saveVoicePrefs() {
+  try {
+    localStorage.setItem(VOICE_KEY, JSON.stringify(voicePrefs));
+  } catch (e) {
+    /* storage unavailable (private mode) — preferences just won't persist */
+  }
+}
+
+// Resolve the SpeechSynthesisVoice to use: the user's pick if set and still
+// present, otherwise a sensible default, otherwise the browser default.
+function pickVoice() {
+  const voices = cachedVoices.length ? cachedVoices : (synth ? synth.getVoices() : []);
+  if (voicePrefs.voiceURI) {
+    const chosen = voices.find((v) => v.voiceURI === voicePrefs.voiceURI);
+    if (chosen) return chosen;
+  }
+  return voices.find((v) => /samantha|daniel|karen|google.*us/i.test(v.name)) || null;
+}
+
 // Voices populate asynchronously in most browsers — getVoices() is often empty
 // on first call until the "voiceschanged" event fires. Cache them as they load.
 function loadVoices() {
   cachedVoices = synth ? synth.getVoices() : [];
+  populateVoiceSelect();
 }
 if (synth) {
   loadVoices();
@@ -162,8 +196,9 @@ function buildSpeechQueue(song) {
   return lines;
 }
 
-function getSpeechParams(song) {
-  // Map mood score (-1..1) to speech characteristics
+// The mood-derived "auto" speech characteristics — the default the sliders
+// fall back to when the user hasn't overridden them.
+function autoSpeechParams(song) {
   const score = (song.mood && typeof song.mood.score === "number") ? song.mood.score : 0;
   const bpm = (song.style && song.style.bpm) || 90;
 
@@ -172,6 +207,14 @@ function getSpeechParams(song) {
   const pitch = Math.max(0.7, Math.min(1.2, 0.95 + score * 0.15));
 
   return { rate, pitch };
+}
+
+function getSpeechParams(song) {
+  const auto = autoSpeechParams(song);
+  return {
+    rate: voicePrefs.rate != null ? voicePrefs.rate : auto.rate,
+    pitch: voicePrefs.pitch != null ? voicePrefs.pitch : auto.pitch,
+  };
 }
 
 function highlightLine(lineText) {
@@ -215,10 +258,8 @@ function speakNext() {
   utt.pitch = params.pitch;
   utt.volume = 0.85;
 
-  // Try to pick a good voice
-  const voices = cachedVoices.length ? cachedVoices : synth.getVoices();
-  const preferred = voices.find((v) => /samantha|daniel|karen|google.*us/i.test(v.name));
-  if (preferred) utt.voice = preferred;
+  const chosen = pickVoice();
+  if (chosen) utt.voice = chosen;
 
   utt.onstart = () => highlightLine(item.text);
   utt.onend = () => {
@@ -236,6 +277,7 @@ function speakNext() {
 
 function startSpeech(song) {
   stopSpeech();
+  if (!voicePrefs.enabled) return;
   speechQueue = buildSpeechQueue(song);
   // Let the instrumental establish for a few seconds before voice enters
   speechTimer = setTimeout(speakNext, 4000);
@@ -247,6 +289,93 @@ function stopSpeech() {
   speechQueue = [];
   currentUtterance = null;
   clearHighlights();
+}
+
+/* ---- Voice controls ------------------------------------------------- */
+
+function populateVoiceSelect() {
+  const sel = $("voice-select");
+  if (!sel) return;
+  const voices = cachedVoices;
+  // English voices first (most relevant), then the rest — both alphabetical.
+  const sorted = [...voices].sort((a, b) => {
+    const ae = /^en/i.test(a.lang) ? 0 : 1;
+    const be = /^en/i.test(b.lang) ? 0 : 1;
+    return ae - be || a.name.localeCompare(b.name);
+  });
+  sel.innerHTML = "";
+  const auto = document.createElement("option");
+  auto.value = "";
+  auto.textContent = "Auto (best available)";
+  sel.appendChild(auto);
+  sorted.forEach((v) => {
+    const opt = document.createElement("option");
+    opt.value = v.voiceURI;
+    opt.textContent = `${v.name} (${v.lang})`;
+    sel.appendChild(opt);
+  });
+  sel.value = voicePrefs.voiceURI || "";
+}
+
+// Sync slider positions / labels to the effective values (override or auto).
+function refreshVoiceUI() {
+  const enabled = $("voice-enabled");
+  const rate = $("voice-rate");
+  const pitch = $("voice-pitch");
+  if (!enabled || !rate || !pitch) return;
+  const eff = getSpeechParams(SONG || {});
+  enabled.checked = voicePrefs.enabled;
+  rate.value = eff.rate;
+  pitch.value = eff.pitch;
+  $("rate-val").textContent = `${Number(eff.rate).toFixed(2)}×`;
+  $("pitch-val").textContent = Number(eff.pitch).toFixed(2);
+}
+
+function initVoiceControls() {
+  const panel = $("voice-panel");
+  if (!panel) return;
+
+  // No speech support at all — hide the panel rather than show dead controls.
+  if (!synth) { panel.hidden = true; return; }
+
+  populateVoiceSelect();
+  refreshVoiceUI();
+
+  $("voice-enabled").addEventListener("change", (e) => {
+    voicePrefs.enabled = e.target.checked;
+    saveVoicePrefs();
+    // Apply immediately if a song is playing.
+    if (playing) {
+      if (voicePrefs.enabled) startSpeech(SONG);
+      else stopSpeech();
+    }
+  });
+
+  $("voice-select").addEventListener("change", (e) => {
+    voicePrefs.voiceURI = e.target.value || null;
+    saveVoicePrefs();
+  });
+
+  $("voice-rate").addEventListener("input", (e) => {
+    voicePrefs.rate = Number(e.target.value);
+    $("rate-val").textContent = `${voicePrefs.rate.toFixed(2)}×`;
+    saveVoicePrefs();
+  });
+
+  $("voice-pitch").addEventListener("input", (e) => {
+    voicePrefs.pitch = Number(e.target.value);
+    $("pitch-val").textContent = voicePrefs.pitch.toFixed(2);
+    saveVoicePrefs();
+  });
+
+  $("voice-reset").addEventListener("click", () => {
+    voicePrefs.rate = null;
+    voicePrefs.pitch = null;
+    voicePrefs.voiceURI = null;
+    saveVoicePrefs();
+    $("voice-select").value = "";
+    refreshVoiceUI();
+  });
 }
 
 /* ---- Strudel playback ----------------------------------------------- */
@@ -351,6 +480,7 @@ async function togglePlay() {
     applyTheme(SONG);
     render(SONG);
     renderHistory(index, date);
+    initVoiceControls();
     $("play").addEventListener("click", togglePlay);
   } catch (e) {
     $("title").textContent = "Couldn't load today's song";
