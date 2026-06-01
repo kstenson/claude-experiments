@@ -6,6 +6,7 @@
   <title>Song Bird — the world, set to music</title>
   <meta name="description" content="A daily generative song and lyrics, composed from the tone of the day." />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../shared/history-nav.css" />
   <!-- Strudel: live-coded music patterns with internet samples -->
   <script src="https://unpkg.com/@strudel/web@1.0.3"></script>
 </head>
@@ -33,10 +34,7 @@
       <p id="summary">…</p>
     </section>
 
-    <nav id="archive" class="archive" hidden>
-      <label for="history">Previous days</label>
-      <select id="history" aria-label="Browse previous days"></select>
-    </nav>
+    <div id="historyNav"></div>
 
     <section id="lyrics" class="lyrics"></section>
 
@@ -51,6 +49,7 @@
     </footer>
   </main>
 
+  <script src="../shared/history-nav.js"></script>
   <script src="engine.js"></script>
 </body>
 </html>

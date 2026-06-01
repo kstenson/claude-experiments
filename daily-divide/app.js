@@ -33,6 +33,20 @@ function escapeHTML(s) {
   ));
 }
 
+// Render a single day's edition into the page.
+function renderDay(day) {
+  renderIntro(day);
+  renderMeter(day);
+  renderSides(day);
+  renderSummary(day);
+  renderFacts(day);
+  renderNotAdjudicable(day);
+  renderBiasWatch(day);
+  renderPowerLens(day);
+  renderPattern(day);
+  renderSources(day);
+}
+
 async function main() {
   const app = document.getElementById("app");
   try {
@@ -47,17 +61,18 @@ async function main() {
     return;
   }
 
-  renderIntro(TODAY);
-  renderMeter(TODAY);
-  renderSides(TODAY);
-  renderSummary(TODAY);
-  renderFacts(TODAY);
-  renderNotAdjudicable(TODAY);
-  renderBiasWatch(TODAY);
-  renderPowerLens(TODAY);
-  renderPattern(TODAY);
+  // The trend chart always shows the full series; only the day panels switch.
   renderHistory(DAYS);
-  renderSources(TODAY);
+
+  // Shared history navigator: browse any past day via ◀ ▶, picker, or #date URL.
+  const byDate = Object.fromEntries(DAYS.map((d) => [d.date, d]));
+  HistoryNav.mount({
+    container: document.getElementById("historyNav"),
+    label: "issue",
+    days: DAYS.map((d) => ({ date: d.date, label: d.topic })),
+    onSelect: (date) => renderDay(byDate[date] || TODAY),
+  });
+
   app.setAttribute("aria-busy", "false");
 }
 

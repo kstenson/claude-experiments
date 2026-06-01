@@ -83,6 +83,7 @@
     padding:12px 14px;font-size:13px;margin-top:18px}
   .backlink{font-size:13px}
 </style>
+<link rel="stylesheet" href="../shared/history-nav.css" />
 </head>
 <body>
 <div class="wrap">
@@ -120,7 +121,8 @@
   <!-- RECENT -->
   <section class="card">
     <span class="pill">Every claim checked</span>
-    <div class="fc-hint">Click any claim to see the full verdict, evidence and sources.</div>
+    <div class="fc-hint">Jump to a day, or click any claim to see the full verdict, evidence and sources.</div>
+    <div id="historyNav"></div>
     <div id="recent"></div>
   </section>
 
@@ -154,6 +156,7 @@
   </footer>
 </div>
 
+<script src="../shared/history-nav.js"></script>
 <script>
 const $ = (s,r=document)=>r.querySelector(s);
 const PARTY = {
@@ -206,6 +209,29 @@ fetch('data/entries.json').then(r=>r.json()).then(data=>{
 
   // ---- Recent ----
   renderRecent(entries.filter(e=>e!==hero), scale);
+
+  // ---- Jump-to-day nav (shared history navigator) ----
+  // Lists every checked claim by date; selecting one opens + scrolls to it
+  // (or the hero card for the latest/headline claim). Uses no #hash so it
+  // doesn't fight in-page anchors.
+  const navHost = document.getElementById('historyNav');
+  if (navHost && window.HistoryNav) {
+    HistoryNav.mount({
+      container: navHost,
+      label: 'claim',
+      useHash: false,
+      days: entries.map(e=>({ date:e.date, label:`${e.speaker} — ${e.verdict}` })),
+      onSelect: (date)=>{
+        const e = entries.find(x=>x.date===date) || entries[0];
+        if (e === hero){
+          document.getElementById('hero').scrollIntoView({behavior:'smooth', block:'start'});
+        } else {
+          const el = document.getElementById('day-'+(e.id||e.date));
+          if (el){ el.open = true; el.scrollIntoView({behavior:'smooth', block:'center'}); }
+        }
+      }
+    });
+  }
 
   // ---- bands + legend + notice ----
   $('#bands').innerHTML = scale.map(b=>
@@ -280,7 +306,7 @@ function renderRecent(entries, scale){
     .sort((a,b)=>b.date.localeCompare(a.date))
     .map(e=>{
       const b = bandFor(e.score, scale);
-      return `<details class="fc-item">
+      return `<details class="fc-item" id="day-${esc(e.id||e.date)}" data-date="${esc(e.date)}">
         <summary>
           <span class="avgchip" style="background:${b.color}">${e.score}</span>
           <span class="fc-text">

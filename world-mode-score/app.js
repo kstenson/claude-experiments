@@ -27,6 +27,7 @@ const SVGNS = "http://www.w3.org/2000/svg";
 // Module state shared with the region modal.
 let DAYS = [];        // full day objects, oldest -> newest
 let TODAY = null;     // most recent day
+let VIEW = null;      // currently-viewed day (defaults to TODAY)
 
 // Map a 0-100 score to a colour from red (bad) through amber to green (good).
 function scoreColor(v) {
@@ -61,15 +62,31 @@ async function main() {
     return;
   }
 
-  renderHero(TODAY, DAYS);
+  // The trend chart always shows the full series; the dashboard switches day.
   renderHistoryChart(DAYS);
-  renderDimensions(TODAY);
-  renderRegions(TODAY);
-  renderSummary(TODAY);
-  renderDrivers(TODAY);
-  renderSources(TODAY);
   initModal();
+
+  // Shared history navigator: browse any past day via ◀ ▶, picker, or #date URL.
+  const byDate = Object.fromEntries(DAYS.map((d) => [d.date, d]));
+  HistoryNav.mount({
+    container: document.getElementById("historyNav"),
+    label: "day",
+    days: DAYS.map((d) => ({ date: d.date, label: `${d.label || ""} (${d.score})`.trim() })),
+    onSelect: (date) => renderDay(byDate[date] || TODAY),
+  });
+
   app.setAttribute("aria-busy", "false");
+}
+
+// Render one day's dashboard (everything except the full-series trend chart).
+function renderDay(day) {
+  VIEW = day;
+  renderHero(day, DAYS);
+  renderDimensions(day);
+  renderRegions(day);
+  renderSummary(day);
+  renderDrivers(day);
+  renderSources(day);
 }
 
 function renderHero(day, days) {
@@ -87,12 +104,14 @@ function renderHero(day, days) {
   });
 
   const delta = document.getElementById("delta");
-  if (days.length >= 2) {
-    const diff = day.score - days[days.length - 2].score;
+  delta.classList.remove("up", "down");
+  const idx = days.findIndex((d) => d.date === day.date);
+  if (idx > 0) {
+    const diff = day.score - days[idx - 1].score;
     if (diff === 0) {
-      delta.textContent = "Unchanged from yesterday";
+      delta.textContent = "Unchanged from the day before";
     } else {
-      delta.textContent = `${diff > 0 ? "▲ +" : "▼ −"}${Math.abs(diff)} from yesterday`;
+      delta.textContent = `${diff > 0 ? "▲ +" : "▼ −"}${Math.abs(diff)} from the day before`;
       delta.classList.add(diff > 0 ? "up" : "down");
     }
   } else {
@@ -300,7 +319,7 @@ function initModal() {
 
 function openRegion(key) {
   const name = REGION_LABEL[key] || key;
-  const todayVal = TODAY.regions?.[key] ?? 0;
+  const todayVal = (VIEW || TODAY).regions?.[key] ?? 0;
   const color = scoreColor(todayVal);
 
   document.getElementById("modalTitle").textContent = name;

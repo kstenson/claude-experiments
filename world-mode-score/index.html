@@ -6,6 +6,7 @@
   <title>World Mood Score</title>
   <meta name="description" content="A daily dashboard for the mood of the world, built from a broad set of news sources." />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../shared/history-nav.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>" />
 </head>
 <body>
@@ -15,6 +16,8 @@
       <div class="brand">🌍 <span>World Mood Score</span></div>
       <div class="date" id="date">—</div>
     </header>
+
+    <div id="historyNav"></div>
 
     <section class="hero" aria-label="Headline mood">
       <div class="gauge">
@@ -99,6 +102,7 @@
     </div>
   </div>
 
+  <script src="../shared/history-nav.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

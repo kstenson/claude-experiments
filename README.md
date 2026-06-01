@@ -33,7 +33,16 @@ factcheck-league/              ← daily UK claim fact-check + league table
   data/entries.json            ← one entry per day; league computed client-side
   PROMPT.md                    ← the daily fact-check workflow
   validate.mjs                 ← data linter
+shared/                        ← common building blocks used across experiments
+  history-nav.js / .css        ← the "browse past days" navigator
 ```
 
 Each project has its own README with details on how it works and how
 its daily routine runs.
+
+## Browsing history
+
+Every daily experiment shares one **history navigator** (`shared/history-nav.js`)
+so you can step through past days the same way everywhere: ◀ older / a date
+picker / newer ▶, a **Latest** button, and a shareable `#YYYY-MM-DD` link. See
+[`shared/README.md`](shared/README.md).

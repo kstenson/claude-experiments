@@ -93,26 +93,24 @@ function render(song) {
 }
 
 function renderHistory(index, currentDate) {
-  const wrap = $("archive");
-  const sel = $("history");
-  if (!wrap || !sel) return;
+  const container = $("historyNav");
+  if (!container || !window.HistoryNav) return;
   const days = (index && index.days) || [];
-  if (days.length < 2) { wrap.hidden = true; return; }
-  wrap.hidden = false;
-  sel.innerHTML = "";
-  days.forEach((d) => {
-    const opt = document.createElement("option");
-    opt.value = d.date;
-    const label = new Date(d.date + "T00:00:00").toLocaleDateString(undefined, {
-      month: "short", day: "numeric", year: "numeric",
-    });
-    opt.textContent = label + " — " + (d.title || "Untitled");
-    if (d.date === currentDate) opt.selected = true;
-    sel.appendChild(opt);
+  if (days.length < 2) { container.hidden = true; return; }
+  container.hidden = false;
+  // Switching songs reloads the page (Strudel playback can't be swapped live),
+  // so the shared nav drives the ?date= query param rather than a #hash.
+  HistoryNav.mount({
+    container,
+    label: "song",
+    useHash: false,
+    current: currentDate,
+    days: days.map((d) => ({ date: d.date, label: d.title || "Untitled" })),
+    onSelect: (date) => {
+      if (date === currentDate) return;
+      window.location.search = "?date=" + encodeURIComponent(date);
+    },
   });
-  sel.onchange = () => {
-    window.location.search = "?date=" + encodeURIComponent(sel.value);
-  };
 }
 
 /* ---- Spoken word ---------------------------------------------------- */
