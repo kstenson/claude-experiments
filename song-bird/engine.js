@@ -255,23 +255,32 @@ function stopSpeech() {
 // machines, a multi-sampled piano, the VCSL orchestral set, EmuSP12, the classic
 // Dirt-Samples, and mridangam. Without this, @strudel/web only registers bare
 // oscillators — which is exactly why songs sounded like generic synth "tones".
-// Loading it here unlocks real sampled instruments and makes .bank() work.
-function loadDefaultSamples() {
+// Loaded *after* init (never via initStrudel's prebake): a failed sample fetch
+// must never abort init, or the core scope functions (stack, note, s) never get
+// registered and every pattern dies with "Can't find variable: stack".
+async function loadDefaultSamples() {
   const ds = "https://raw.githubusercontent.com/felixroos/dough-samples/main/";
-  return Promise.all([
-    samples(`${ds}tidal-drum-machines.json`),
-    samples(`${ds}piano.json`),
-    samples(`${ds}Dirt-Samples.json`),
-    samples(`${ds}EmuSP12.json`),
-    samples(`${ds}vcsl.json`),
-    samples(`${ds}mridangam.json`),
-  ]);
+  const files = [
+    "tidal-drum-machines.json", "piano.json", "Dirt-Samples.json",
+    "EmuSP12.json", "vcsl.json", "mridangam.json",
+  ];
+  // Load each independently so one bad fetch doesn't sink the rest.
+  await Promise.all(
+    files.map((f) =>
+      Promise.resolve(samples(ds + f)).catch((e) =>
+        console.warn("Sample pack failed to load:", f, e)
+      )
+    )
+  );
 }
 
 async function ensureStrudel() {
   if (strudelReady) return;
-  await initStrudel({ prebake: loadDefaultSamples });
+  // Plain init first — this is what registers the Strudel globals (stack, note,
+  // s, …) that the pattern eval depends on. Only then enrich with samples.
+  await initStrudel();
   strudelReady = true;
+  await loadDefaultSamples();
 }
 
 async function buildAndPlay(song) {
