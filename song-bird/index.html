@@ -30,6 +30,29 @@
       </div>
     </section>
 
+    <details id="voice-panel" class="voice-panel">
+      <summary><span class="gear">𝄞</span> Voice</summary>
+      <div class="voice-grid">
+        <label class="voice-row toggle">
+          <input type="checkbox" id="voice-enabled" checked />
+          <span>Speak the lyrics</span>
+        </label>
+        <label class="voice-row">
+          <span class="voice-name">Voice</span>
+          <select id="voice-select" aria-label="Choose a voice"></select>
+        </label>
+        <label class="voice-row">
+          <span>Speed <em id="rate-val"></em></span>
+          <input type="range" id="voice-rate" min="0.5" max="1.4" step="0.05" aria-label="Speech speed" />
+        </label>
+        <label class="voice-row">
+          <span>Pitch <em id="pitch-val"></em></span>
+          <input type="range" id="voice-pitch" min="0.5" max="1.5" step="0.05" aria-label="Speech pitch" />
+        </label>
+        <button type="button" id="voice-reset" class="voice-reset">Reset to mood default</button>
+      </div>
+    </details>
+
     <section class="summary">
       <p id="summary">…</p>
     </section>
