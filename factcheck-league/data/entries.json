@@ -10,14 +10,43 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-05-31",
+    "lastUpdated": "2026-06-01",
     "note": "Today's edition was compiled while live news retrieval was degraded. Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-01",
+      "date": "2026-06-01",
+      "headline": true,
+      "topic": "Net migration since the Conservatives left office",
+      "claim": "Net migration is now at 171,000, down from a high of 944,000 under the Conservatives.",
+      "speaker": "Shabana Mahmood",
+      "party": "Labour",
+      "role": "Home Secretary",
+      "discussionScore": 90,
+      "discussionNote": "Immigration is the single most-cited issue facing Britain in the May 2026 Ipsos Issues Index (41%). The ONS released the year-ending-December-2025 net migration figure on 21 May 2026, and the government's framing of the fall remains the dominant political talking point into early June, repeated by the Home Secretary and contested by Reform UK.",
+      "score": 90,
+      "verdict": "True",
+      "explanation": "Both numbers match the official ONS estimates. Provisional net migration for the year ending December 2025 was 171,000, and the revised peak under the Conservatives was 944,000 in the year ending March 2023 — an 82% fall, exactly as stated. The only caveat is that the 171,000 figure is provisional and the ONS has a track record of revising recent net-migration estimates upwards as more complete data arrive, so the precise figure may rise somewhat.",
+      "evidence": [
+        "ONS Long-term international migration, provisional (released 21 May 2026): net migration 171,000 for year ending December 2025, down from a revised 331,000 for year ending December 2024.",
+        "ONS revised the peak to 944,000 in the year ending March 2023 (up from a previous estimate of 906,000 in year ending June 2023) — the high point reached under the Conservative government.",
+        "171,000 vs 944,000 is a fall of roughly 82%, consistent with the Home Secretary's accompanying claim of 'down 82%'.",
+        "Main driver: non-EU+ work-related arrivals fell about 47% in 2025; the YE Dec 2025 level is the lowest since early 2021.",
+        "Caveat: the 171,000 figure is provisional; the ONS has repeatedly revised recent estimates upward (e.g. YE June 2023 was revised up by 166,000), so the final figure may be higher."
+      ],
+      "confidence": "High — figures taken directly from ONS provisional migration statistics and corroborated by the Migration Observatory and House of Commons Library.",
+      "sources": [
+        { "title": "ONS — Long-term international migration, provisional: year ending December 2025 (21 May 2026)", "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingdecember2025" },
+        { "title": "ONS blog — Net migration continues to fall (21 May 2026)", "url": "https://blog.ons.gov.uk/2026/05/21/net-migration-continues-to-fall/" },
+        { "title": "Migration Observatory — Net migration to the UK", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/long-term-international-migration-flows-to-and-from-the-uk/" },
+        { "title": "Shabana Mahmood (X) — 'Net migration is now at 171,000, down from a high of 944,000 under the Conservatives'", "url": "https://x.com/ShabanaMahmood/status/2057384020472713376" }
+      ]
+    },
+    {
       "id": "2026-05-31",
       "date": "2026-05-31",
-      "headline": true,
+      "headline": false,
       "topic": "Cost of housing asylum seekers in hotels",
       "claim": "Housing asylum seekers in hotels costs the UK taxpayer around £8 million a day.",
       "speaker": "Rishi Sunak",

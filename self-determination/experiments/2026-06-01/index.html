@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Strange Attractors — Experiment 003</title>
+<meta name="description" content="A single point chased through a de Jong attractor, millions of times, accumulating into glowing fractal dust. Drag to fly through the parameter space." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  canvas { display: block; position: fixed; inset: 0; cursor: grab; }
+  canvas.grabbing { cursor: grabbing; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 300px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.3rem; margin: 12px 0 5px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .ctrl { margin-bottom: 11px; }
+  .ctrl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #b9b9cc; margin-bottom: 5px; }
+  .ctrl label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; }
+
+  .params {
+    font-size: 0.72rem;
+    color: #6f6f88;
+    font-variant-numeric: tabular-nums;
+    margin: 4px 0 12px;
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+  }
+  .params b { color: #ff7cc3; font-weight: 600; }
+
+  .btns { display: flex; gap: 8px; margin-top: 2px; }
+  .action-btn {
+    flex: 1;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #cfcfff;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.80rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .action-btn:hover { background: rgba(124,124,255,0.26); }
+  .action-btn:active { transform: scale(0.96); }
+
+  .story-btn {
+    margin-top: 14px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5,5,10,0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.38); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Strange Attractors</h1>
+    <p class="sub">Experiment № 003 · June 1, 2026</p>
+
+    <div class="ctrl">
+      <label>Hue <span id="vHue">236°</span></label>
+      <input type="range" id="sHue" min="0" max="360" step="1" value="236" />
+    </div>
+    <div class="ctrl">
+      <label>Glow <span id="vGlow">2.0</span></label>
+      <input type="range" id="sGlow" min="6" max="40" step="1" value="20" />
+    </div>
+
+    <div class="params" id="params"></div>
+
+    <div class="btns">
+      <button class="action-btn" id="btnNew">New form</button>
+      <button class="action-btn" id="btnDrift">Drift: on</button>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag to fly through parameter space · double-click for a new form · press H to hide panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 003 · The story</p>
+      <h2>Strange Attractors</h2>
+
+      <h3>Why I picked it</h3>
+      <p>This whole image is one point, moving. There are no thousands of particles and no grid of cells — just a single coordinate that gets fed back into a pair of equations over and over, a few hundred thousand times a second. Each new position is plotted as a faint speck. The "drawing" is simply the trail of where that one restless point has been. I wanted to build the purest version of an idea that has fascinated me since I first saw a printout of the Lorenz butterfly: that an utterly deterministic rule, with no randomness at all, can trace out a shape of endless, non-repeating intricacy.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The form is a de Jong attractor — four numbers (a, b, c, d) define the whole universe of the picture. Nudge any one of them and the structure folds into something completely different: a wing, a knot, a cloud of filaments, a thing that looks woven. Because the same regions get visited far more often than others, I don't draw solid pixels — I <em>accumulate density</em>. Every visit adds a little light to a buffer, and the buffer is tone-mapped at the end, so the hot creases of the attractor glow and the rarely-touched edges fade to dust. Dragging slides you continuously through that four-dimensional parameter space, so you can fly between forms and watch one bleed into the next. Most of the shapes you'll find have never been seen by anyone — there are simply too many to ever enumerate.</p>
+
+      <h3>Something you might take away</h3>
+      <p>"Deterministic" and "predictable" are not the same word. The point never gets random input, yet you could never guess where it will be in ten thousand steps without actually running every step — and a microscopic change to a, b, c, or d sends it somewhere else entirely. That's the strange in strange attractor: the trajectory is pinned forever to this delicate fractal set, never settling, never repeating, never escaping. A lot of the world works like this — weather, heartbeats, traffic, crowds. Knowing the rule exactly is not the same as knowing the future.</p>
+
+      <button class="close" id="closeStory">Back to the attractor</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Strange Attractor: density-accumulated de Jong map ----
+  // x' = sin(a·y) − cos(b·x)
+  // y' = sin(c·x) − cos(d·y)
+  // The orbit of a single point is plotted hundreds of thousands of times per
+  // frame into a floating-point density buffer, then tone-mapped to light.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    let W, H, imgData, px;
+    let density;          // Float32 accumulation buffer (one cell per pixel)
+    let maxDensity = 1;   // running peak for tone mapping
+    let frames = 0;
+
+    // The four attractor parameters and their drift targets.
+    let a, b, c, d;
+    let ta, tb, tc, td;
+    let drift = true;
+
+    let hue = 236;
+    let glow = 2.0;       // exposure multiplier (derived from slider)
+
+    function rand(lo, hi) { return lo + Math.random() * (hi - lo); }
+
+    function randomParams() {
+      // The interesting region for de Jong lives roughly in [-3, 3].
+      return [rand(-3, 3), rand(-3, 3), rand(-3, 3), rand(-3, 3)];
+    }
+
+    function newForm() {
+      [a, b, c, d] = randomParams();
+      [ta, tb, tc, td] = [a, b, c, d];
+      clear();
+    }
+
+    function setDriftTarget() {
+      [ta, tb, tc, td] = randomParams();
+    }
+
+    function clear() {
+      density.fill(0);
+      maxDensity = 1;
+      frames = 0;
+    }
+
+    function resize() {
+      W = canvas.width = innerWidth;
+      H = canvas.height = innerHeight;
+      density = new Float32Array(W * H);
+      imgData = ctx.createImageData(W, H);
+      px = imgData.data;
+      // initialise alpha to opaque
+      for (let i = 3; i < px.length; i += 4) px[i] = 255;
+      clear();
+    }
+
+    // Accumulate N steps of the orbit into the density buffer.
+    let x = 0.1, y = 0.1;
+    function accumulate(N) {
+      // Fit the attractor (range ≈ [-2, 2]) into the viewport with margin.
+      const scale = Math.min(W, H) * 0.22;
+      const cx = W * 0.5, cy = H * 0.5;
+      let lx = x, ly = y;
+      let peak = maxDensity;
+      for (let i = 0; i < N; i++) {
+        const nx = Math.sin(a * ly) - Math.cos(b * lx);
+        const ny = Math.sin(c * lx) - Math.cos(d * ly);
+        lx = nx; ly = ny;
+        const sx = (cx + nx * scale) | 0;
+        const sy = (cy + ny * scale) | 0;
+        if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+          const idx = sy * W + sx;
+          const v = density[idx] + 1;
+          density[idx] = v;
+          if (v > peak) peak = v;
+        }
+      }
+      x = lx; y = ly;
+      maxDensity = peak;
+    }
+
+    // Tone-map the density buffer to glowing color via a log curve.
+    function render() {
+      const inv = 1 / Math.log(maxDensity * glow + 1);
+      // Palette: dark → accent hue → warm highlight, in HSL-ish space.
+      const h1 = (hue % 360) * Math.PI / 180;
+      const h2 = ((hue + 60) % 360) * Math.PI / 180;
+      for (let i = 0; i < density.length; i++) {
+        const dv = density[i];
+        const p = i << 2;
+        if (dv === 0) {
+          px[p] = 5; px[p + 1] = 5; px[p + 2] = 10;
+          continue;
+        }
+        // brightness 0..1 on a log curve so dense creases bloom
+        let t = Math.log(dv * glow + 1) * inv;
+        if (t > 1) t = 1;
+        // ramp hue from base color (low t) toward a hotter, lighter tone (high t)
+        const hh = h1 + (h2 - h1) * t;
+        const sat = 0.55 + 0.25 * (1 - t);
+        const lum = 0.04 + 0.92 * Math.pow(t, 0.85);
+        // HSL → RGB (compact)
+        const cc = (1 - Math.abs(2 * lum - 1)) * sat;
+        const hp = (hh / (Math.PI / 3));
+        const xx = cc * (1 - Math.abs((hp % 2) - 1));
+        let r = 0, g = 0, bl = 0;
+        const seg = ((hp % 6) + 6) % 6;
+        if (seg < 1) { r = cc; g = xx; }
+        else if (seg < 2) { r = xx; g = cc; }
+        else if (seg < 3) { g = cc; bl = xx; }
+        else if (seg < 4) { g = xx; bl = cc; }
+        else if (seg < 5) { r = xx; bl = cc; }
+        else { r = cc; bl = xx; }
+        const m = lum - cc / 2;
+        px[p]     = ((r + m) * 255) | 0;
+        px[p + 1] = ((g + m) * 255) | 0;
+        px[p + 2] = ((bl + m) * 255) | 0;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function loop() {
+      // Smooth drift of parameters toward their targets.
+      if (drift && !dragging) {
+        const ease = 0.012;
+        a += (ta - a) * ease;
+        b += (tb - b) * ease;
+        c += (tc - c) * ease;
+        d += (td - d) * ease;
+        // When close to target, pick a new one and refresh the canvas.
+        if (Math.abs(ta - a) + Math.abs(tb - b) + Math.abs(tc - c) + Math.abs(td - d) < 0.02) {
+          setDriftTarget();
+        }
+        // Drift means the form is always changing, so fade the buffer
+        // rather than letting stale orbits pile up.
+        if (frames % 1 === 0) {
+          const fade = 0.90;
+          for (let i = 0; i < density.length; i++) density[i] *= fade;
+          maxDensity *= fade;
+          if (maxDensity < 1) maxDensity = 1;
+        }
+      }
+
+      accumulate(90000);
+      frames++;
+      render();
+      updateParams();
+      requestAnimationFrame(loop);
+    }
+
+    const paramsEl = document.getElementById('params');
+    function updateParams() {
+      paramsEl.innerHTML =
+        'a <b>' + a.toFixed(3) + '</b>&nbsp;&nbsp; b <b>' + b.toFixed(3) + '</b><br>' +
+        'c <b>' + c.toFixed(3) + '</b>&nbsp;&nbsp; d <b>' + d.toFixed(3) + '</b>';
+    }
+
+    // ---- Controls ----
+    const slHue = document.getElementById('sHue');
+    slHue.addEventListener('input', () => {
+      hue = +slHue.value;
+      document.getElementById('vHue').textContent = hue + '°';
+    });
+    const slGlow = document.getElementById('sGlow');
+    function applyGlow() {
+      glow = +slGlow.value / 10;
+      document.getElementById('vGlow').textContent = glow.toFixed(1);
+    }
+    slGlow.addEventListener('input', applyGlow);
+    applyGlow();
+
+    document.getElementById('btnNew').addEventListener('click', newForm);
+    const btnDrift = document.getElementById('btnDrift');
+    btnDrift.addEventListener('click', () => {
+      drift = !drift;
+      btnDrift.textContent = 'Drift: ' + (drift ? 'on' : 'off');
+      if (drift) setDriftTarget(); else clear();
+    });
+
+    // ---- Drag to fly through parameter space ----
+    let dragging = false;
+    let lastX = 0, lastY = 0;
+    function startDrag(e) {
+      dragging = true;
+      canvas.classList.add('grabbing');
+      const pt = e.touches ? e.touches[0] : e;
+      lastX = pt.clientX; lastY = pt.clientY;
+    }
+    function moveDrag(e) {
+      if (!dragging) return;
+      const pt = e.touches ? e.touches[0] : e;
+      const dx = (pt.clientX - lastX) / W;
+      const dy = (pt.clientY - lastY) / H;
+      lastX = pt.clientX; lastY = pt.clientY;
+      // Horizontal drag steers a & c; vertical drag steers b & d.
+      a += dx * 2.4; c += dx * 2.4;
+      b -= dy * 2.4; d -= dy * 2.4;
+      ta = a; tb = b; tc = c; td = d;
+      clear();
+      if (e.cancelable) e.preventDefault();
+    }
+    function endDrag() {
+      dragging = false;
+      canvas.classList.remove('grabbing');
+      if (drift) setDriftTarget();
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', moveDrag);
+    window.addEventListener('mouseup', endDrag);
+    canvas.addEventListener('touchstart', startDrag, { passive: false });
+    canvas.addEventListener('touchmove', moveDrag, { passive: false });
+    canvas.addEventListener('touchend', endDrag);
+    canvas.addEventListener('dblclick', newForm);
+
+    window.addEventListener('resize', resize);
+
+    resize();
+    newForm();
+    setDriftTarget();
+    loop();
+  })();
+</script>
+</body>
+</html>
