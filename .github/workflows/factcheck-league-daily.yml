@@ -1,0 +1,35 @@
+name: Fact-Check League
+
+on:
+  push:
+    paths:
+      - 'factcheck-league/**'
+  pull_request:
+    paths:
+      - 'factcheck-league/**'
+  # Daily cadence. The fact-finding step needs judgement, so the recommended
+  # daily driver is a scheduled "Claude Code on the web" session running
+  # factcheck-league/PROMPT.md. This scheduled job validates the latest data
+  # and surfaces a reminder if today's entry hasn't landed yet.
+  schedule:
+    - cron: '0 7 * * *'   # 07:00 UTC daily
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate entries.json
+        run: node factcheck-league/validate.mjs
+      - name: Check today's entry exists (schedule only, non-blocking)
+        if: github.event_name == 'schedule'
+        run: |
+          TODAY=$(date -u +%F)
+          if grep -q "\"date\": \"$TODAY\"" factcheck-league/data/entries.json; then
+            echo "✅ Today's entry ($TODAY) is present."
+          else
+            echo "::warning::No fact-check entry for $TODAY yet. Run factcheck-league/PROMPT.md to add today's edition."
+          fi

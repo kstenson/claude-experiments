@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "title": "UK Politics Fact-Check League",
+    "description": "A daily fact-check of the most-discussed claim in UK politics, scored on a 0-100 truth meter, with a running league table of everyone featured.",
+    "scoringScale": [
+      { "band": "True", "min": 90, "max": 100, "color": "#1a7f37" },
+      { "band": "Mostly True", "min": 70, "max": 89, "color": "#4caf50" },
+      { "band": "Half True / Needs Context", "min": 50, "max": 69, "color": "#c9a227" },
+      { "band": "Mostly False", "min": 30, "max": 49, "color": "#e8800c" },
+      { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
+      { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
+    ],
+    "lastUpdated": "2026-05-31",
+    "note": "Today's edition was compiled while live news retrieval was degraded. Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
+  },
+  "entries": [
+    {
+      "id": "2026-05-31",
+      "date": "2026-05-31",
+      "headline": true,
+      "topic": "Cost of housing asylum seekers in hotels",
+      "claim": "Housing asylum seekers in hotels costs the UK taxpayer around £8 million a day.",
+      "speaker": "Rishi Sunak",
+      "party": "Conservative",
+      "role": "Then Prime Minister; figure still widely repeated across the right in 2026 immigration debate",
+      "discussionScore": 92,
+      "discussionNote": "Immigration is the single most-cited issue facing Britain in the May 2026 Ipsos Issues Index (41%, up 9 points), and the '£8 million a day' figure remains the most repeated number in that debate.",
+      "score": 55,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The figure was accurate at its peak but is out of date as a present-tense claim. At the height of hotel use (June 2023) about 51,000 asylum seekers were in 400+ hotels, and in 2023/24 the Home Office spent roughly £3bn on hotels — about £8.3m a day. But by 2024/25 hotel spend had fallen to about £2.1bn, or roughly £5.77m a day (down ~17%). So 'around £8 million a day' was true two years ago, not for the latest year.",
+      "evidence": [
+        "Home Office 2023/24 accounts: ~£4.7bn on asylum support, of which ~£3bn on hotels ≈ £8.3m/day.",
+        "Peak June 2023: ~51,000 asylum seekers in 400+ hotels.",
+        "Home Office 2024/25: ~£2.1bn on hotels ≈ £5.77m/day, a ~17% fall year-on-year.",
+        "Average hotel cost ~£170 per person per night in 2024/25 vs ~£27 for non-hotel accommodation; nightly rates fell from £162 (Apr 2024) to £119 (Mar 2025).",
+        "Hotels were 76% of asylum accommodation cost but housed only ~35% of supported people in 2024/25.",
+        "NAO: the asylum accommodation contracts, originally estimated at £4.5bn, are now projected to cost £15.3bn over ten years."
+      ],
+      "confidence": "High — corroborated across the National Audit Office, the Migration Observatory and Full Fact.",
+      "sources": [
+        { "title": "Full Fact — Housing asylum seekers in hotels costs around £8 million a day", "url": "https://fullfact.org/immigration/sunak-8m-asylum-hotels/" },
+        { "title": "Migration Observatory — Asylum accommodation in the UK", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/asylum-accommodation-in-the-uk/" },
+        { "title": "NAO — The Home Office's management of asylum accommodation contracts (HC 874, 7 May 2025)", "url": "https://www.nao.org.uk/wp-content/uploads/2025/05/home-offices-asylum-accommodation-contracts.pdf" },
+        { "title": "NAO — An analysis of the asylum system (10 Dec 2025)", "url": "https://www.nao.org.uk/wp-content/uploads/2025/12/an-analysis-of-the-asylum-system.pdf" },
+        { "title": "Ipsos — Immigration seen as the biggest issue facing Britain (May 2026)", "url": "https://www.ipsos.com/en-uk/immigration-seen-biggest-issue-facing-britain-public-concern-rises" }
+      ]
+    },
+    {
+      "id": "seed-starmer-jobs",
+      "date": "2026-05-28",
+      "headline": false,
+      "topic": "Employment vs pre-pandemic",
+      "claim": "There are more people in work than there were before the pandemic.",
+      "speaker": "Keir Starmer",
+      "party": "Labour",
+      "role": "Prime Minister",
+      "discussionScore": 70,
+      "score": 40,
+      "verdict": "Mostly False",
+      "explanation": "The claim counts only employees, not the self-employed. Including the self-employed, total employment is around 600,000 lower than before the pandemic, so the headline framing is misleading.",
+      "evidence": [
+        "The 'more people in work' figure relies on the employee count only.",
+        "Total employment (employees plus self-employed) is roughly 600,000 below the pre-pandemic level."
+      ],
+      "confidence": "Medium-High — per Full Fact; reconfirm latest ONS Labour Market figures.",
+      "sources": [
+        { "title": "Full Fact — Prime Minister's Questions fact-checked", "url": "https://fullfact.org/pmqs-fact-checked/" }
+      ]
+    },
+    {
+      "id": "seed-blair-disability",
+      "date": "2026-05-28",
+      "headline": false,
+      "topic": "Disability benefit spending vs defence",
+      "claim": "Disability benefit spending could exceed defence spending by the end of the decade.",
+      "speaker": "Tony Blair",
+      "party": "Labour",
+      "role": "Former Prime Minister",
+      "discussionScore": 60,
+      "score": 78,
+      "verdict": "Mostly True",
+      "explanation": "The direction is correct but the timeframe understates reality: spending on these benefits has, on some measures, already exceeded defence spending rather than waiting until the end of the decade.",
+      "evidence": [
+        "Full Fact found the threshold the claim projects for the future has, on some measures, already been crossed."
+      ],
+      "confidence": "Medium — per Full Fact (28 May 2026); reconfirm exact spending definitions.",
+      "sources": [
+        { "title": "Full Fact — Latest fact checks", "url": "https://fullfact.org/latest/" }
+      ]
+    },
+    {
+      "id": "seed-tice-netzero",
+      "date": "2026-05-20",
+      "topic": "Cost of scrapping net zero",
+      "headline": false,
+      "claim": "Scrapping net zero would save tens of billions and help fund roughly £70bn a year of tax cuts.",
+      "speaker": "Richard Tice",
+      "party": "Reform UK",
+      "role": "Deputy Leader, Reform UK",
+      "discussionScore": 65,
+      "score": 30,
+      "verdict": "Mostly False",
+      "explanation": "Independent analysts dispute that abandoning net zero produces savings on this scale, and the wider £70bn tax-cut costing is contested. Several net-zero programmes are projected to create jobs and investment rather than only impose costs.",
+      "evidence": [
+        "Reform's manifesto proposes ~£70bn/year in tax cuts, partly funded by cancelling net-zero goals — a costing contested by independent analysts.",
+        "Government Clean Energy Jobs Plan projects 800,000 clean-energy jobs by 2030; TUC Cymru warned Reform's stance risks ~40,000 manufacturing jobs in Wales."
+      ],
+      "confidence": "Medium — claim direction well documented; savings figures contested. Reconfirm against costings.",
+      "sources": [
+        { "title": "Full Fact — Reform UK", "url": "https://fullfact.org/reform-uk/" },
+        { "title": "Friends of the Earth — Fact check: Net Zero and UK jobs", "url": "https://policy.friendsoftheearth.uk/insight/fact-check-net-zero-and-uk-jobs" }
+      ]
+    },
+    {
+      "id": "seed-streeting-nhs",
+      "date": "2025-04-01",
+      "topic": "Size of the NHS waiting list",
+      "headline": false,
+      "claim": "Around 7 million people are on the NHS England waiting list.",
+      "speaker": "Wes Streeting",
+      "party": "Labour",
+      "role": "Then Health Secretary",
+      "discussionScore": 55,
+      "score": 50,
+      "verdict": "Half True / Needs Context",
+      "explanation": "This conflates cases with people. There are about 7.4 million cases (treatments) on the list but only about 6.3 million people, because many are waiting for more than one treatment. Quoting ~7 million people overstates the number of individuals affected.",
+      "evidence": [
+        "NHS England (Jan 2025): ~6.3 million people on the list, ~7.4 million cases/treatments.",
+        "Full Fact flagged the health secretary repeatedly overstating the number of people."
+      ],
+      "confidence": "High — per Full Fact and NHS England statistics.",
+      "sources": [
+        { "title": "Full Fact — Health secretary again overstates size of NHS waiting list", "url": "https://fullfact.org/live/2025/apr/streeting-nhs-seven-million-waiting-list/" }
+      ]
+    }
+  ]
+}
