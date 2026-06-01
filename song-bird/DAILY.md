@@ -64,20 +64,34 @@ Map the page's numeric score (if any) onto `mood.score` in **-1..1**
 The engine uses [@strudel/web](https://strudel.cc). The `pattern` field in the
 JSON is a JS expression evaluated at runtime. All Strudel globals are available.
 
-### Loading samples
+### The preloaded instrument library (use it!)
 
-Declare sample sources in the `samples` array. The engine loads them before
-evaluating the pattern:
+The engine already preloads the **full Strudel default library** on first play —
+the same set the official strudel.cc REPL uses:
+
+- **Sampled piano** — `s("piano")`. Use this for piano-led songs, not a
+  sawtooth pretending to be one.
+- **Real drum machines** — `.bank("RolandTR808")`, `"RolandTR909"`,
+  `"AkaiLinn"`, `"RhythmAce"`, etc., on top of `s("bd sd hh rim cp")`.
+- **VCSL** — an orchestral/acoustic multisample set (mallets, strings,
+  guitars, winds). Reference instruments by name, e.g. `s("vibraphone")`.
+- **EmuSP12**, **Dirt-Samples**, and **mridangam** for extra texture.
+
+You do **not** need to list any of these in `samples` — they're always loaded.
+Reach for sampled instruments first; raw oscillators (`sawtooth`, `sine`,
+`triangle`, `square`) are for *supporting pads and sub-bass only*.
+
+### Loading extra samples
+
+Only declare a `samples` array when you want something *beyond* the default
+library. The engine loads it before evaluating the pattern:
 
 ```json
 "samples": [
   "github:tidalcycles/dirt-samples",
-  { "map": { "piano": "piano/C3.wav" }, "url": "https://example.com/sounds/" }
+  { "map": { "harp": "harp/C3.wav" }, "url": "https://example.com/sounds/" }
 ]
 ```
-
-Inside the pattern, use `s("bd sd hh cp")` with `.bank("RolandTR808")` for
-built-in drum machines, or reference any sample name loaded via `samples`.
 
 ### Building layers with stack()
 
@@ -111,9 +125,12 @@ stack(
 |----------|---------|
 | `note("c4 e4 g4")` | Pitched pattern (mini-notation) |
 | `s("bd sd hh")` | Sample/synth trigger |
+| `s("piano")` | Sampled piano (preloaded) |
 | `stack(a, b, c)` | Layer patterns simultaneously |
-| `.bank("RolandTR808")` | Use a built-in sample bank |
-| `.s("sawtooth")` | Oscillator type (sawtooth, square, triangle, sine) |
+| `.bank("RolandTR808")` | Use a built-in drum machine |
+| `.s("sawtooth")` | Oscillator type (sawtooth, square, triangle, sine) — pads/bass only |
+| `.lpf(sine.range(400,2000).slow(8))` | Modulate any param with a signal (sine/saw/perlin) |
+| `.off(0.125, x => x.gain(0.2))` | Layer a shifted, transformed copy (echoes, harmonies) |
 | `.gain(0.5)` | Volume (0–1) |
 | `.lpf(2000)` | Low-pass filter cutoff Hz |
 | `.hpf(200)` | High-pass filter cutoff Hz |
@@ -147,10 +164,15 @@ stack(
 
 ### Tips for good patterns
 
-- **Vary the sources.** Don't use only synth oscillators — mix in samples from
-  Dirt-Samples or other internet sources. Use `.bank()` for drums.
+- **Lead with sampled instruments.** Carry melody and harmony on `s("piano")`,
+  VCSL instruments, or real drum machines. A song built only from `sawtooth`/
+  `sine`/`triangle` oscillators sounds like generic synth tones — reserve raw
+  oscillators for pads and sub-bass under the real instruments.
+- **Modulate, don't set-and-forget.** Drive a filter or gain with a slow signal
+  (`lpf(sine.range(500,1600).slow(12))`) so the sound breathes.
+- **Use the full toolbox.** `.jux(rev)` for stereo width, `.off()` for echoes
+  and harmonies, `.euclid()`/`(3,8)` for rhythm, `.room()`/`.delay()` for space.
 - **Keep it musical.** Stay in the chosen key/scale across all layers.
-- **Use effects.** Reverb, delay, and filter make patterns feel alive.
 - **Rests matter.** Use `~` generously — space is part of music.
 - **The pattern must be a single expression** that returns a Pattern (no
   semicolons, no variable declarations). Use `stack()` to combine layers.
