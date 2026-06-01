@@ -121,6 +121,34 @@ const synth = window.speechSynthesis;
 let speechQueue = [];
 let speechTimer = null;
 let currentUtterance = null;
+let cachedVoices = [];
+
+// Voices populate asynchronously in most browsers — getVoices() is often empty
+// on first call until the "voiceschanged" event fires. Cache them as they load.
+function loadVoices() {
+  cachedVoices = synth ? synth.getVoices() : [];
+}
+if (synth) {
+  loadVoices();
+  synth.addEventListener("voiceschanged", loadVoices);
+}
+
+// Browsers only let speech begin from a user gesture. Our voice enters a few
+// seconds *after* the play click (on a timer), which browsers treat as "not a
+// gesture" and silently drop — that's why TTS appeared dead. Speaking a
+// near-silent utterance synchronously inside the click unlocks the channel so
+// the real, delayed lines play.
+function primeSpeech() {
+  if (!synth) return;
+  try {
+    synth.resume();
+    const warm = new SpeechSynthesisUtterance(" ");
+    warm.volume = 0;
+    synth.speak(warm);
+  } catch (e) {
+    /* speech unsupported — fail quietly */
+  }
+}
 
 function buildSpeechQueue(song) {
   const lines = [];
@@ -178,6 +206,9 @@ function speakNext() {
     return;
   }
 
+  // Chrome quietly suspends the speech queue between utterances; nudge it awake.
+  synth.resume();
+
   const params = getSpeechParams(SONG);
   const utt = new SpeechSynthesisUtterance(item.text);
   utt.rate = params.rate;
@@ -185,7 +216,7 @@ function speakNext() {
   utt.volume = 0.85;
 
   // Try to pick a good voice
-  const voices = synth.getVoices();
+  const voices = cachedVoices.length ? cachedVoices : synth.getVoices();
   const preferred = voices.find((v) => /samantha|daniel|karen|google.*us/i.test(v.name));
   if (preferred) utt.voice = preferred;
 
@@ -220,9 +251,26 @@ function stopSpeech() {
 
 /* ---- Strudel playback ----------------------------------------------- */
 
+// The same instrument library the official Strudel REPL loads: authentic drum
+// machines, a multi-sampled piano, the VCSL orchestral set, EmuSP12, the classic
+// Dirt-Samples, and mridangam. Without this, @strudel/web only registers bare
+// oscillators — which is exactly why songs sounded like generic synth "tones".
+// Loading it here unlocks real sampled instruments and makes .bank() work.
+function loadDefaultSamples() {
+  const ds = "https://raw.githubusercontent.com/felixroos/dough-samples/main/";
+  return Promise.all([
+    samples(`${ds}tidal-drum-machines.json`),
+    samples(`${ds}piano.json`),
+    samples(`${ds}Dirt-Samples.json`),
+    samples(`${ds}EmuSP12.json`),
+    samples(`${ds}vcsl.json`),
+    samples(`${ds}mridangam.json`),
+  ]);
+}
+
 async function ensureStrudel() {
   if (strudelReady) return;
-  await initStrudel();
+  await initStrudel({ prebake: loadDefaultSamples });
   strudelReady = true;
 }
 
@@ -262,6 +310,7 @@ async function togglePlay() {
   const btn = $("play");
 
   if (!playing) {
+    primeSpeech();
     await buildAndPlay(SONG);
     startSpeech(SONG);
     playing = true;
