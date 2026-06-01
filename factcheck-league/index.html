@@ -45,6 +45,23 @@
   ul.ev li{margin:4px 0}
   .sources a{display:block;font-size:14px;margin:5px 0}
   .conf{font-size:13px;color:var(--muted);margin-top:10px;font-style:italic}
+  /* expandable recent items (override generic details/summary rules) */
+  .fc-item{border-top:none;margin-top:0;padding-top:0;border-bottom:1px solid var(--line)}
+  .fc-item:last-child{border-bottom:none}
+  .fc-item>summary{display:flex;gap:12px;align-items:flex-start;padding:14px 0;cursor:pointer;
+    font-weight:400;list-style:none;outline:none}
+  .fc-item>summary::-webkit-details-marker{display:none}
+  .fc-item>summary:hover .fc-claim{color:var(--accent)}
+  .fc-item>summary:focus-visible{box-shadow:0 0 0 2px var(--accent);border-radius:8px}
+  .fc-text{flex:1 1 auto;min-width:0}
+  .fc-claim{display:block;transition:color .12s}
+  .fc-sub{display:block;margin-top:4px}
+  .fc-chevron{flex:0 0 auto;color:var(--muted);transition:transform .2s ease;margin-top:3px;font-size:13px}
+  .fc-item[open] .fc-chevron{transform:rotate(180deg)}
+  .fc-item .avgchip{margin-top:2px;flex:0 0 auto}
+  .fc-detail{padding:2px 0 18px;animation:fcOpen .18s ease}
+  @keyframes fcOpen{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .fc-hint{font-size:13px;color:var(--muted);margin:8px 0 2px}
   /* league */
   table{width:100%;border-collapse:collapse;margin-top:6px;font-size:15px}
   th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
@@ -102,7 +119,8 @@
 
   <!-- RECENT -->
   <section class="card">
-    <span class="pill">Recently checked</span>
+    <span class="pill">Every claim checked</span>
+    <div class="fc-hint">Click any claim to see the full verdict, evidence and sources.</div>
     <div id="recent"></div>
   </section>
 
@@ -148,6 +166,19 @@ const esc = s => (s==null?"":String(s)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&
 
 function bandFor(score, scale){
   return scale.find(b=>score>=b.min && score<=b.max) || scale[scale.length-1];
+}
+
+// Shared full fact-check breakdown (verdict, evidence, confidence, sources),
+// used by both the hero card and every expandable item in the list.
+function detailHTML(e){
+  const ev = (e.evidence||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+  const src = (e.sources||[]).map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">↗ ${esc(s.title)}</a>`).join('');
+  return `
+    <h3>Verdict</h3>
+    <p style="margin:0">${esc(e.explanation)}</p>
+    ${ev?`<h3>Evidence</h3><ul class="ev">${ev}</ul>`:""}
+    ${e.confidence?`<div class="conf">Confidence: ${esc(e.confidence)}</div>`:""}
+    ${src?`<h3>Sources</h3><div class="sources">${src}</div>`:""}`;
 }
 
 fetch('data/entries.json').then(r=>r.json()).then(data=>{
@@ -207,15 +238,7 @@ function renderHero(e, scale){
       <span class="verdictBand" style="background:${b.color}">${esc(e.verdict)}</span>
       <span class="small">/ 100 truth score</span>
     </div>
-    <div class="why">
-      <h3>Verdict</h3>
-      <p style="margin:0">${esc(e.explanation)}</p>
-      <h3>Evidence</h3>
-      <ul class="ev">${(e.evidence||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
-      <div class="conf">Confidence: ${esc(e.confidence)}</div>
-      <h3>Sources</h3>
-      <div class="sources">${(e.sources||[]).map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">↗ ${esc(s.title)}</a>`).join('')}</div>
-    </div>`;
+    <div class="why">${detailHTML(e)}</div>`;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ $('#needle').style.left = e.score + '%'; }));
 }
 
@@ -257,16 +280,23 @@ function renderRecent(entries, scale){
     .sort((a,b)=>b.date.localeCompare(a.date))
     .map(e=>{
       const b = bandFor(e.score, scale);
-      return `<div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)">
-        <span class="avgchip" style="background:${b.color};margin-top:2px">${e.score}</span>
-        <div>
-          <div>“${esc(e.claim)}”</div>
-          <div class="small" style="margin-top:3px">
-            <span class="partytag" style="background:${partyColor(e.party)};font-size:10px">${esc(e.party)}</span>
-            <b>${esc(e.speaker)}</b> · ${esc(e.verdict)} · ${esc(e.date)}
-          </div>
+      return `<details class="fc-item">
+        <summary>
+          <span class="avgchip" style="background:${b.color}">${e.score}</span>
+          <span class="fc-text">
+            <span class="fc-claim">“${esc(e.claim)}”</span>
+            <span class="small fc-sub">
+              <span class="partytag" style="background:${partyColor(e.party)};font-size:10px">${esc(e.party)}</span>
+              <b>${esc(e.speaker)}</b> · ${esc(e.verdict)} · ${esc(e.date)}
+            </span>
+          </span>
+          <span class="fc-chevron" aria-hidden="true">▾</span>
+        </summary>
+        <div class="fc-detail why">
+          ${e.discussionNote?`<div class="conf" style="margin-top:0">📣 Why it was discussed: ${esc(e.discussionNote)}</div>`:""}
+          ${detailHTML(e)}
         </div>
-      </div>`;
+      </details>`;
     }).join('');
 }
 </script>
