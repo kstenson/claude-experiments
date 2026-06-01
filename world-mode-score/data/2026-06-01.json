@@ -1,0 +1,147 @@
+{
+  "date": "2026-06-01",
+  "score": 45,
+  "label": "Heavy going",
+  "emoji": "🌥️",
+  "summary": "The Middle East still anchors the day on the downside. The US-Iran ceasefire is fraying again: Washington struck Iranian air defences and drones after accusing Tehran of downing a US MQ-1 over international waters, and the Revolutionary Guards say they hit back at a US-used air base. In Lebanon, Israel has pushed past the Litani toward the Zahrani, raised its flag over Beaufort Castle and now holds nearly a fifth of the country; the Lebanese health ministry counts 3,355 dead and more than a million displaced. Sudan's war grinds on in Kordofan with no peace in sight.\n\nThe economy leans the other way. US and Japanese equities sit at record highs — the Nikkei jumped 4.72% on the week — on hopes the Strait of Hormuz reopens and on the relentless AI cycle, and Kevin Warsh was sworn in as Fed chair. Goldman sees sturdy 2.8% global growth this year, though the ECB warns the Middle East energy shock is proving large and persistent. Climate is the harder counterweight: a record-shattering May heat dome killed at least seven people across Europe and pushed the UK to 34.8C, South Asia is enduring 46C-plus, and the WMO expects a developing El Niño to drive new heat records.\n\nThere is real light away from the front lines. Japanese researchers unveiled vitamin K-based compounds that may help regenerate lost neurons, and a Texas A&M nasal spray appears to reverse aspects of brain aging. Ethiopia held a general election with 50-million-plus registered voters, though observers call it a low-competition exercise with Tigray excluded. Kruger National Park marked its centenary. The headline lands at 45 — uneasy and mixed — held down by an escalating regional war and a brutal heat season, lifted by buoyant markets and steady scientific progress.",
+  "dimensions": {
+    "conflict": 30,
+    "economy": 55,
+    "climate": 35,
+    "humanInterest": 48,
+    "techProgress": 75
+  },
+  "regions": {
+    "northAmerica": 54,
+    "southAmerica": 52,
+    "europe": 42,
+    "africa": 48,
+    "middleEast": 27,
+    "asia": 52,
+    "oceania": 58
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "US strikes Iranian air defences and drones after accusing Tehran of downing an MQ-1; IRGC says it hit back at a US-used air base",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/5/26/us-strikes-iran-again-what-we-know-and-is-the-ceasefire-over",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Israeli forces push past Lebanon's Litani toward the Zahrani, now occupying nearly a fifth of the country",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/5/31/israeli-forces-push-past-lebanons-litani-river-how-significant-is-it",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Sudan's nearly three-year civil war intensifies in Kordofan with little hope of a peace deal",
+      "source": "Foreign Policy",
+      "url": "https://foreignpolicy.com/2025/12/31/africa-2026-predictions-elections-ethiopia-insecurity/",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "US and Japanese equities close at record highs on Hormuz-reopening hopes and AI momentum; Nikkei up 4.72% on the week",
+      "source": "T. Rowe Price",
+      "url": "https://www.troweprice.com/personal-investing/resources/insights/global-markets-weekly-update.html",
+      "dimension": "economy",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Goldman Sachs economists project sturdy 2.8% global growth in 2026, above consensus, led by a US rebound",
+      "source": "J.P. Morgan / Goldman Sachs",
+      "url": "https://www.goldmansachs.com/insights/outlooks/2026-outlooks",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "ECB warns the Middle East energy price shock has been large and 'highly persistent', weighing on confidence and growth",
+      "source": "T. Rowe Price",
+      "url": "https://www.troweprice.com/personal-investing/resources/insights/global-markets-weekly-update.html",
+      "dimension": "economy",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Record-shattering May heat dome kills at least seven in Europe; UK hits hottest May day ever at 34.8C",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/05/26/climate/europe-heat-climate-intl",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Strong El Niño may stretch into 2028 as UN warns climate change will smash heat records over the next five years",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/05/28/strong-el-nino-may-stretch-to-2028-as-un-warns-climate-change-to-smash-heat-records-in-nex",
+      "dimension": "climate"
+    },
+    {
+      "direction": "up",
+      "headline": "Japanese researchers create vitamin K-based compounds that may help the brain regenerate lost neurons",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/",
+      "dimension": "techProgress",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Texas A&M nasal spray appears to reverse brain aging by calming inflammation and restoring energy systems",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/",
+      "dimension": "techProgress",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Ethiopia votes amid fragmented opposition and excluded Tigray, in what observers call a low-competition exercise",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/5/29/ethiopia-to-vote-on-june-1-as-abiys-ruling-party-eyes-landslide",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "Kruger National Park marks 100 years as one of Africa's largest protected wildlife reserves",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/",
+      "dimension": "humanInterest",
+      "region": "africa"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "BBC",
+    "Al Jazeera",
+    "CNN",
+    "CNBC",
+    "Euronews",
+    "Xinhua",
+    "Bloomberg",
+    "South China Morning Post",
+    "Foreign Policy",
+    "Chatham House",
+    "allAfrica",
+    "T. Rowe Price",
+    "Goldman Sachs",
+    "J.P. Morgan",
+    "ScienceDaily",
+    "Space.com",
+    "Nature",
+    "Good News Network",
+    "Global Good News",
+    "Rio Times",
+    "MercoPress",
+    "Wikipedia"
+  ]
+}
