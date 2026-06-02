@@ -10,14 +10,45 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-01",
+    "lastUpdated": "2026-06-02",
     "note": "Today's edition was compiled while live news retrieval was degraded. Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-02",
+      "date": "2026-06-02",
+      "headline": true,
+      "topic": "UK economic growth vs the G7",
+      "claim": "We now have the fastest-growing economy in the G7, net migration has fallen and NHS waiting lists are at their lowest level in three-and-a-half years.",
+      "speaker": "Keir Starmer",
+      "party": "Labour",
+      "role": "Prime Minister",
+      "discussionScore": 88,
+      "discussionNote": "Starmer is repeating this line — delivered to reporters outside Downing Street — as the centrepiece of his defence of his record amid a Labour leadership crisis (around 30 MPs pressing for a timetable to go, and a 18 June Greater Manchester by-election that could trigger a contest). With his approval ratings at a 50-year low for a PM at this stage, the 'fastest-growing economy in the G7' boast is the most-scrutinised factual claim in UK politics this week, amplified by Bloomberg, GB News and broadsheet coverage.",
+      "score": 72,
+      "verdict": "Mostly True",
+      "explanation": "On the latest single quarter the claim holds: ONS figures (released 14 May 2026) show UK GDP grew 0.6% in Q1 2026 (Jan-Mar), the highest of the G7 countries that had reported — ahead of the US (0.5%), Germany (0.3%), Italy (0.2%) and France (0.0%). But it needs three caveats. Japan had not yet published comparable Q1 2026 data when the claim was made, so 'fastest in the G7' was not fully confirmable. It is one quarter, not a trend: Full Fact's tracker rates the government's 'highest sustained growth in the G7' pledge as 'off track', noting the UK had joint second-lowest G7 growth in the final quarter of 2025. And there is a recognised pattern of strong UK first quarters that peter out (seen in 2024 and 2025). On full-year 2025 growth (1.4%) the UK trailed both the US (2.1%) and Canada (1.7%).",
+      "evidence": [
+        "ONS GDP first quarterly estimate (released 14 May 2026): UK real GDP +0.6% in Q1 2026, following revised +0.2% in Q4 2025.",
+        "ONS G7 comparison in the same bulletin: UK 0.6%, US 0.5%, Germany 0.3%, Italy 0.2%, France 0.0% — UK highest of those reporting.",
+        "Japan had not yet released comparable Q1 2026 figures, so the full G7 ranking was incomplete when the claim was made (Full Fact tracker, updated 19 May 2026).",
+        "Full Fact rates the manifesto pledge of the 'highest sustained growth in the G7' as 'appears off track': the UK had joint second-lowest G7 growth in Q4 2025 and did not lead on real GDP per head in two of the three preceding quarters.",
+        "Full-year 2025 growth: UK 1.4%, behind the US (2.1%) and Canada (1.7%), ahead of France, Germany and Italy.",
+        "Commentators note a pattern of strong UK Q1 growth that fades later in the year (2024 and 2025), so a single quarter overstates the durability of the lead."
+      ],
+      "confidence": "High — Q1 2026 figures taken directly from the ONS quarterly GDP bulletin and corroborated by Full Fact's government tracker and House of Commons Library GDP comparisons.",
+      "sources": [
+        { "title": "ONS — GDP first quarterly estimate, UK: January to March 2026 (released 14 May 2026)", "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpfirstquarterlyestimateuk/januarytomarch2026" },
+        { "title": "Full Fact — Is the government on course to secure 'the highest sustained growth in the G7'?", "url": "https://fullfact.org/government-tracker/sustained-G7-growth/" },
+        { "title": "The London Economic — UK expected to have fastest economic growth of G7 nations so far in 2026 (14 May 2026)", "url": "https://www.thelondoneconomic.com/news/uk-economy-growth-figures-start-of-2026-406166/" },
+        { "title": "House of Commons Library — GDP international comparisons: Economic indicators", "url": "https://commonslibrary.parliament.uk/research-briefings/sn02784/" },
+        { "title": "Bloomberg — Britain's Economy Turns Sour Just as Starmer Had a Reason to Brag (22 May 2026)", "url": "https://www.bloomberg.com/news/articles/2026-05-22/britain-s-economy-turns-sour-just-as-starmer-had-a-reason-to-brag" }
+      ]
+    },
+    {
       "id": "2026-06-01",
       "date": "2026-06-01",
-      "headline": true,
+      "headline": false,
       "topic": "Net migration since the Conservatives left office",
       "claim": "Net migration is now at 171,000, down from a high of 944,000 under the Conservatives.",
       "speaker": "Shabana Mahmood",
