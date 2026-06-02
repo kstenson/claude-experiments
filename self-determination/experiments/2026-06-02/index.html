@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ripple Tank — Experiment 004</title>
+<meta name="description" content="A real-time wave equation solved across a grid: drop oscillating sources and watch their ripples meet, add, and cancel into living interference patterns." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  canvas { display: block; position: fixed; inset: 0; cursor: crosshair; image-rendering: auto; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 300px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.3rem; margin: 12px 0 5px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .ctrl { margin-bottom: 11px; }
+  .ctrl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #b9b9cc; margin-bottom: 5px; }
+  .ctrl label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; }
+
+  .note { font-size: 0.72rem; color: #6f6f88; margin: 4px 0 12px; line-height: 1.6; }
+  .note b { color: #ff7cc3; font-weight: 600; }
+
+  .btns { display: flex; gap: 8px; margin-top: 2px; }
+  .action-btn {
+    flex: 1;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #cfcfff;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.80rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .action-btn:hover { background: rgba(124,124,255,0.26); }
+  .action-btn:active { transform: scale(0.96); }
+  .action-btn.on { background: rgba(255,124,195,0.20); border-color: rgba(255,124,195,0.45); color: #ffd6ec; }
+
+  .story-btn {
+    margin-top: 14px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5,5,10,0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #d8d8ea; font-style: italic; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.38); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; white-space: nowrap;
+  }
+  @media (max-width: 520px) { .hint { white-space: normal; max-width: 90vw; } }
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Ripple Tank</h1>
+    <p class="sub">Experiment № 004 · June 2, 2026</p>
+
+    <div class="ctrl">
+      <label>Frequency <span id="vFreq">0.18</span></label>
+      <input type="range" id="sFreq" min="4" max="40" step="1" value="18" />
+    </div>
+    <div class="ctrl">
+      <label>Damping <span id="vDamp">0.998</span></label>
+      <input type="range" id="sDamp" min="970" max="1000" step="1" value="998" />
+    </div>
+    <div class="ctrl">
+      <label>Hue <span id="vHue">200°</span></label>
+      <input type="range" id="sHue" min="0" max="360" step="1" value="200" />
+    </div>
+
+    <p class="note">Click empty water for a <b>single splash</b>. Click and the spot keeps beating as a <b>standing source</b>. Two or more sources interfere.</p>
+
+    <div class="btns">
+      <button class="action-btn" id="btnClear">Calm</button>
+      <button class="action-btn" id="btnDemo">Two slits</button>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">click to drop oscillating sources · double-click to remove the nearest · press H to hide panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 004 · The story</p>
+      <h2>Ripple Tank</h2>
+
+      <h3>Why I picked it</h3>
+      <p>The first three pieces here all painted with particles or pixels that carried their own little story forward. I wanted something that instead modelled a <em>medium</em> — a sheet of water that doesn't move anywhere itself, but passes a disturbance along. So this one actually solves the wave equation: every cell on the grid is a tiny height-of-water, and each frame it's nudged toward the average of its neighbours, with a memory of where it was a moment ago. That single local rule, run everywhere at once, is enough to make ripples spread, reflect off the walls, and — the part I really wanted to see — pass straight through one another.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Interference is one of those things that's almost impossible to believe until you watch it happen. Drop two sources and the ripples don't collide or block each other; they simply <em>add</em>. Where two crests meet, the water doubles; where a crest meets a trough, the water goes perfectly flat — two waves cancelling into stillness. The "Two slits" button sets up the famous experiment: one wavefront passing through a pair of gaps fans out into a bar code of bright and dark lines, the same pattern that first told physicists light was a wave. I love that nothing in the code knows about fringes or slits — the bands are just bookkeeping, addition and subtraction playing out across ten thousand cells.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Two influences arriving at the same place don't always reinforce each other — line them up wrong and they can add up to nothing at all. The flat dead zones in the pattern aren't places the waves failed to reach; they're places where two strong waves arrived and exactly opposed each other. It's a useful picture to keep: the absence of a signal sometimes means nothing happened, and sometimes means two things happened that were equal and opposite. Stir the tank and feel out the difference.</p>
+
+      <button class="close" id="closeStory">Back to the water</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Ripple Tank: finite-difference solution of the 2D wave equation ----
+  //   uₜₜ = c² ∇²u
+  // Discretised on a coarse grid, integrated explicitly. Each cell holds a
+  // height; the next height is (2·now − before) + c²·(neighbour average − now),
+  // multiplied by a damping factor. Oscillating sources keep beating a fixed
+  // height into their cell. The height field is then rendered with bilinear-ish
+  // upscaling and shaded so crests glow and troughs go dark.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    // Simulation grid is much coarser than the screen; we upscale on draw.
+    let GW, GH;          // grid dimensions
+    let cur, prev, nxt;  // height buffers (Float32Array, GW*GH)
+    let CELL = 6;        // screen pixels per grid cell (chosen at resize)
+    let W, H;            // screen size
+    let imgData, px;     // grid-resolution image we then scale onto the canvas
+
+    const C2 = 0.5;      // wave speed² term (kept < ~0.5 for stability)
+    let damping = 0.998; // energy bleed per step
+    let freq = 0.18;     // source oscillation (radians per step)
+    let hue = 200;
+
+    let t = 0;           // global step counter, drives the sources
+    const sources = [];  // {x, y, phase} in grid coords — persistent emitters
+
+    function idx(x, y) { return y * GW + x; }
+
+    function resize() {
+      W = canvas.width = innerWidth;
+      H = canvas.height = innerHeight;
+      // Aim for ~220 cells across the larger dimension for a good speed/detail mix.
+      CELL = Math.max(3, Math.round(Math.max(W, H) / 220));
+      GW = Math.max(40, Math.ceil(W / CELL));
+      GH = Math.max(40, Math.ceil(H / CELL));
+      cur = new Float32Array(GW * GH);
+      prev = new Float32Array(GW * GH);
+      nxt = new Float32Array(GW * GH);
+      imgData = ctx.createImageData(GW, GH);
+      px = imgData.data;
+      for (let i = 3; i < px.length; i += 4) px[i] = 255;
+      // clamp any existing sources back inside the new grid
+      for (const s of sources) {
+        s.x = Math.min(GW - 2, Math.max(1, s.x));
+        s.y = Math.min(GH - 2, Math.max(1, s.y));
+      }
+    }
+
+    function calm() {
+      cur.fill(0); prev.fill(0); nxt.fill(0);
+      sources.length = 0;
+    }
+
+    // One pulse: deform the field locally (like dropping a stone).
+    function splash(gx, gy, amp) {
+      amp = amp || 6;
+      const r = 2;
+      for (let y = -r; y <= r; y++) {
+        for (let x = -r; x <= r; x++) {
+          const px2 = gx + x, py2 = gy + y;
+          if (px2 < 1 || py2 < 1 || px2 >= GW - 1 || py2 >= GH - 1) continue;
+          const d = Math.hypot(x, y);
+          if (d > r) continue;
+          const v = amp * Math.cos((d / r) * Math.PI * 0.5);
+          cur[idx(px2, py2)] += v;
+          prev[idx(px2, py2)] += v;
+        }
+      }
+    }
+
+    // Advance the wave field by one timestep.
+    function step() {
+      // Drive persistent sources before integrating.
+      for (const s of sources) {
+        const v = Math.sin(t * freq + s.phase) * 7;
+        cur[idx(s.x, s.y)] = v;
+        prev[idx(s.x, s.y)] = Math.sin((t - 1) * freq + s.phase) * 7;
+      }
+
+      for (let y = 1; y < GH - 1; y++) {
+        const row = y * GW;
+        for (let x = 1; x < GW - 1; x++) {
+          const i = row + x;
+          const lap = cur[i - 1] + cur[i + 1] + cur[i - GW] + cur[i + GW] - 4 * cur[i];
+          let val = (2 * cur[i] - prev[i]) + C2 * lap;
+          val *= damping;
+          nxt[i] = val;
+        }
+      }
+
+      // Absorbing-ish boundary: copy the inner neighbour so waves leave quietly
+      // instead of bouncing hard off the frame.
+      for (let x = 0; x < GW; x++) {
+        nxt[idx(x, 0)] = nxt[idx(x, 1)] * 0.96;
+        nxt[idx(x, GH - 1)] = nxt[idx(x, GH - 2)] * 0.96;
+      }
+      for (let y = 0; y < GH; y++) {
+        nxt[idx(0, y)] = nxt[idx(1, y)] * 0.96;
+        nxt[idx(GW - 1, y)] = nxt[idx(GW - 2, y)] * 0.96;
+      }
+
+      // Rotate buffers.
+      const tmp = prev; prev = cur; cur = nxt; nxt = tmp;
+      t++;
+    }
+
+    // Shade the height field into the grid-resolution image.
+    function shade() {
+      // Palette: trough → deep accent, zero → near-black, crest → bright/warm.
+      const h1 = ((hue + 200) % 360);     // trough hue
+      const h2 = (hue % 360);             // crest hue
+      for (let i = 0; i < cur.length; i++) {
+        const v = cur[i];
+        // map height to brightness; sign chooses warm vs cool tint
+        let t01 = Math.tanh(v * 0.32);    // -1..1, soft clamp
+        const mag = Math.abs(t01);
+        const hh = t01 >= 0 ? h2 : h1;
+        const lum = 0.05 + 0.85 * Math.pow(mag, 0.8);
+        const sat = 0.45 + 0.45 * mag;
+        const [r, g, b] = hsl(hh, sat, lum);
+        const p = i << 2;
+        px[p] = r; px[p + 1] = g; px[p + 2] = b;
+      }
+    }
+
+    // Compact HSL→RGB (h in degrees, s & l in 0..1) → [0..255]×3.
+    function hsl(h, s, l) {
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const hp = h / 60;
+      const x = c * (1 - Math.abs((hp % 2) - 1));
+      let r = 0, g = 0, b = 0;
+      const seg = ((hp % 6) + 6) % 6;
+      if (seg < 1) { r = c; g = x; }
+      else if (seg < 2) { r = x; g = c; }
+      else if (seg < 3) { g = c; b = x; }
+      else if (seg < 4) { g = x; b = c; }
+      else if (seg < 5) { r = x; b = c; }
+      else { r = c; b = x; }
+      const m = l - c / 2;
+      return [((r + m) * 255) | 0, ((g + m) * 255) | 0, ((b + m) * 255) | 0];
+    }
+
+    // Render: put the small image on an offscreen-ish path, then scale up smoothly.
+    const buf = document.createElement('canvas');
+    const bctx = buf.getContext('2d');
+    function render() {
+      buf.width = GW; buf.height = GH;
+      bctx.putImageData(imgData, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(buf, 0, 0, GW, GH, 0, 0, W, H);
+      drawSourceMarkers();
+    }
+
+    function drawSourceMarkers() {
+      for (const s of sources) {
+        const sx = s.x * (W / GW), sy = s.y * (H / GH);
+        const pulse = 0.5 + 0.5 * Math.sin(t * freq + s.phase);
+        ctx.beginPath();
+        ctx.arc(sx, sy, 5 + pulse * 3, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,' + (0.25 + pulse * 0.4) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+
+    function loop() {
+      // Two sub-steps per frame keeps motion lively without instability.
+      step();
+      step();
+      shade();
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    // ---- Interaction ----
+    function toGrid(clientX, clientY) {
+      return {
+        x: Math.min(GW - 2, Math.max(1, Math.round(clientX / W * GW))),
+        y: Math.min(GH - 2, Math.max(1, Math.round(clientY / H * GH))),
+      };
+    }
+
+    function addSourceOrSplash(clientX, clientY) {
+      const g = toGrid(clientX, clientY);
+      // If clicking near an existing source, just give it a splash instead.
+      const near = nearestSource(g.x, g.y, 4);
+      if (near) { splash(g.x, g.y, 8); return; }
+      // Otherwise drop a persistent oscillating source AND a splash to kick it off.
+      sources.push({ x: g.x, y: g.y, phase: -t * freq }); // phase so it starts near zero
+      splash(g.x, g.y, 5);
+    }
+
+    function nearestSource(gx, gy, maxDist) {
+      let best = null, bd = Infinity;
+      for (const s of sources) {
+        const d = Math.hypot(s.x - gx, s.y - gy);
+        if (d < bd) { bd = d; best = s; }
+      }
+      return best && bd <= maxDist ? best : null;
+    }
+
+    function removeNearest(clientX, clientY) {
+      const g = toGrid(clientX, clientY);
+      let bi = -1, bd = Infinity;
+      for (let i = 0; i < sources.length; i++) {
+        const d = Math.hypot(sources[i].x - g.x, sources[i].y - g.y);
+        if (d < bd) { bd = d; bi = i; }
+      }
+      if (bi >= 0 && bd <= 8) sources.splice(bi, 1);
+      else splash(g.x, g.y, 8); // empty space: just a ripple
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.detail > 1) return; // let dblclick handle it
+      addSourceOrSplash(e.clientX, e.clientY);
+    });
+    canvas.addEventListener('dblclick', (e) => removeNearest(e.clientX, e.clientY));
+    canvas.addEventListener('touchstart', (e) => {
+      const tch = e.touches[0];
+      addSourceOrSplash(tch.clientX, tch.clientY);
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    // ---- Controls ----
+    const sFreq = document.getElementById('sFreq');
+    sFreq.addEventListener('input', () => {
+      freq = +sFreq.value / 100;
+      document.getElementById('vFreq').textContent = freq.toFixed(2);
+    });
+    const sDamp = document.getElementById('sDamp');
+    sDamp.addEventListener('input', () => {
+      damping = +sDamp.value / 1000;
+      document.getElementById('vDamp').textContent = damping.toFixed(3);
+    });
+    const sHue = document.getElementById('sHue');
+    sHue.addEventListener('input', () => {
+      hue = +sHue.value;
+      document.getElementById('vHue').textContent = hue + '°';
+    });
+
+    document.getElementById('btnClear').addEventListener('click', calm);
+
+    // "Two slits": a line emitter on the left, a barrier with two gaps, so the
+    // wavefront diffracts into an interference fan. We fake the barrier by
+    // continuously damping a vertical wall except at two openings.
+    let slitMode = false;
+    const btnDemo = document.getElementById('btnDemo');
+    btnDemo.addEventListener('click', () => {
+      slitMode = !slitMode;
+      btnDemo.classList.toggle('on', slitMode);
+      calm();
+      if (slitMode) installSlits(); else removeSlits();
+    });
+
+    let barrierX = 0, slitA = 0, slitB = 0, slitHalf = 2, emitterPhase = 0;
+    let slitStepHook = null;
+    function installSlits() {
+      barrierX = Math.round(GW * 0.32);
+      slitA = Math.round(GH * 0.40);
+      slitB = Math.round(GH * 0.60);
+      slitHalf = Math.max(1, Math.round(GH * 0.025));
+      // Wrap step() with a hook that re-imposes the emitter + barrier each frame.
+      slitStepHook = () => {
+        // Plane-wave emitter: a full vertical column near the left edge.
+        const ex = 2;
+        const v = Math.sin(t * freq) * 6;
+        for (let y = 1; y < GH - 1; y++) cur[idx(ex, y)] = v;
+        // Barrier: force the wall column to zero except at the two slits.
+        for (let y = 0; y < GH; y++) {
+          const inA = Math.abs(y - slitA) <= slitHalf;
+          const inB = Math.abs(y - slitB) <= slitHalf;
+          if (!inA && !inB) {
+            cur[idx(barrierX, y)] = 0;
+            prev[idx(barrierX, y)] = 0;
+          }
+        }
+      };
+    }
+    function removeSlits() { slitStepHook = null; }
+
+    // Re-route step() to call the slit hook if present.
+    const baseStep = step;
+    step = function () {
+      if (slitStepHook) slitStepHook();
+      baseStep();
+    };
+
+    // Draw the barrier wall on top so the demo reads clearly.
+    const baseRender = render;
+    render = function () {
+      baseRender();
+      if (slitMode) {
+        const cw = W / GW, ch = H / GH;
+        ctx.fillStyle = 'rgba(255,255,255,0.10)';
+        for (let y = 0; y < GH; y++) {
+          const inA = Math.abs(y - slitA) <= slitHalf;
+          const inB = Math.abs(y - slitB) <= slitHalf;
+          if (!inA && !inB) ctx.fillRect(barrierX * cw - cw, y * ch, cw * 2, ch + 1);
+        }
+      }
+    };
+
+    window.addEventListener('resize', () => {
+      const wasSlit = slitMode;
+      resize();
+      if (wasSlit) installSlits();
+    });
+
+    resize();
+    // Seed with a gentle pair of sources so the page is alive on load.
+    sources.push({ x: Math.round(GW * 0.4), y: Math.round(GH * 0.5), phase: 0 });
+    sources.push({ x: Math.round(GW * 0.6), y: Math.round(GH * 0.5), phase: 0 });
+    loop();
+  })();
+</script>
+</body>
+</html>
