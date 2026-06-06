@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<!--
+  Experiment 005 — Voronoi Diagram
+  Click to place seed points; drag to move them.
+  Each pixel is coloured by its nearest seed.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Voronoi Diagram — Experiment 005</title>
+<meta name="description" content="Interactive Voronoi diagram — click to place seeds and watch coloured regions form as each pixel finds its nearest neighbour. Drag seeds to reshape the tessellation in real time." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  .stage canvas { width: 100%; height: 100%; display: block; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .controls label {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.82rem; color: #c7c7d6;
+  }
+  .controls input[type="range"] {
+    width: 120px; accent-color: #7c7cff;
+  }
+  .controls button {
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.3);
+    color: #cfcfff; border-radius: 8px; padding: 8px 12px;
+    font-size: 0.82rem; cursor: pointer; transition: background 0.2s;
+  }
+  .controls button:hover { background: rgba(124,124,255,0.28); }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">&larr; all experiments</a>
+    <h1>Voronoi Diagram</h1>
+    <p class="sub">Experiment &numero; 005 &middot; June 3, 2026</p>
+
+    <div class="controls">
+      <label>Edge glow <input type="range" id="edgeGlow" min="0" max="100" value="60" /></label>
+      <label>Palette <select id="palette" style="background:#1a1a2e;color:#cfcfff;border:1px solid rgba(124,124,255,0.3);border-radius:6px;padding:4px 8px;font-size:0.82rem;">
+        <option value="neon">Neon</option>
+        <option value="pastel">Pastel</option>
+        <option value="warm">Warm</option>
+        <option value="ice">Ice</option>
+      </select></label>
+      <button id="btnClear">Clear all seeds</button>
+      <button id="btnRandom">Random seeds (12)</button>
+    </div>
+
+    <button class="story-btn" id="openStory">&#9998; the story behind this one</button>
+  </div>
+
+  <p class="hint">Click to place seeds &middot; drag to move them &middot; press H to toggle UI</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment &numero; 005 &middot; The story</p>
+      <h2>Voronoi Diagram</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Voronoi tessellations are one of those ideas that appear everywhere once you start looking: in giraffe skin, cracked mud, soap bubbles, cell biology, even the large-scale structure of the universe. After four experiments driven by fields, diffusion, orbits, and waves, I wanted something rooted in a simpler question &mdash; "which point is closest?" &mdash; and let that one rule tile the whole plane.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>There is something deeply satisfying about dragging a single seed and watching every region in the diagram ripple outward to accommodate it. The geometry is instant and total: move one point and the entire partition reorganises. The edge glow makes the boundaries feel alive, like stained-glass lines catching light. And because you build the diagram yourself, click by click, each one feels like it belongs to you.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Boundaries aren't drawn by rulers &mdash; they emerge from proximity. Every Voronoi edge is the set of points equidistant from two seeds; the borders define themselves. It is a useful metaphor: influence doesn't need walls, just presence. Move closer and the territory shifts on its own.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- VORONOI EXPERIMENT ----
+  (() => {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    // --- Seeds ---
+    let seeds = [];
+    let dragging = null;
+    let needsRedraw = true;
+
+    // --- Palettes ---
+    const palettes = {
+      neon: [
+        [124,124,255], [255,124,195], [80,220,200], [255,200,80],
+        [180,100,255], [100,255,160], [255,100,100], [100,180,255],
+        [220,255,100], [255,160,220], [100,255,255], [200,140,80]
+      ],
+      pastel: [
+        [180,180,255], [255,180,210], [180,230,220], [255,225,170],
+        [210,180,255], [180,255,200], [255,180,180], [180,210,255],
+        [230,255,180], [255,200,230], [180,245,245], [230,200,170]
+      ],
+      warm: [
+        [255,100,80], [255,160,60], [255,200,80], [220,80,100],
+        [255,120,140], [200,100,60], [255,80,120], [240,160,100],
+        [200,140,80], [255,100,160], [220,180,60], [180,80,80]
+      ],
+      ice: [
+        [100,180,255], [80,220,240], [140,160,255], [100,240,220],
+        [160,200,255], [80,200,200], [120,140,255], [100,220,180],
+        [180,220,255], [80,240,200], [140,180,240], [100,200,240]
+      ]
+    };
+
+    let currentPalette = 'neon';
+    let edgeGlow = 0.6;
+
+    function resize() {
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      needsRedraw = true;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function seedColor(i) {
+      const pal = palettes[currentPalette];
+      return pal[i % pal.length];
+    }
+
+    // --- Render Voronoi via brute-force on ImageData (downscaled for perf) ---
+    function render() {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      if (seeds.length === 0) {
+        ctx.fillStyle = '#05050a';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.font = `${16 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('Click anywhere to place your first seed', w / 2, h / 2);
+        return;
+      }
+
+      // Downscale for performance
+      const scale = Math.max(1, Math.ceil(dpr));
+      const sw = Math.ceil(w / scale);
+      const sh = Math.ceil(h / scale);
+
+      const imgData = ctx.createImageData(sw, sh);
+      const data = imgData.data;
+
+      // Precompute seed positions in canvas coords
+      const sx = seeds.map(s => s.x * dpr);
+      const sy = seeds.map(s => s.y * dpr);
+      const n = seeds.length;
+      const glowStrength = edgeGlow;
+
+      for (let py = 0; py < sh; py++) {
+        const cy = py * scale;
+        for (let px = 0; px < sw; px++) {
+          const cx = px * scale;
+
+          // Find nearest and second-nearest seed
+          let minD = Infinity, minI = 0;
+          let secD = Infinity;
+          for (let i = 0; i < n; i++) {
+            const dx = cx - sx[i];
+            const dy = cy - sy[i];
+            const d = dx * dx + dy * dy;
+            if (d < minD) {
+              secD = minD;
+              minD = d;
+              minI = i;
+            } else if (d < secD) {
+              secD = d;
+            }
+          }
+
+          const col = seedColor(minI);
+          const idx = (py * sw + px) * 4;
+
+          // Edge detection: ratio of distances
+          const r1 = Math.sqrt(minD);
+          const r2 = Math.sqrt(secD);
+          const edgeFactor = (r2 - r1) / (r2 + r1 + 0.001);
+
+          // Darken interior, brighten edges
+          const baseBright = 0.35 + 0.25 * edgeFactor;
+          const edgeBright = glowStrength * Math.max(0, 1 - edgeFactor * 8);
+
+          const brightness = baseBright + edgeBright;
+
+          data[idx]     = Math.min(255, col[0] * brightness);
+          data[idx + 1] = Math.min(255, col[1] * brightness);
+          data[idx + 2] = Math.min(255, col[2] * brightness);
+          data[idx + 3] = 255;
+        }
+      }
+
+      // Draw downscaled then upscale
+      const offscreen = new OffscreenCanvas(sw, sh);
+      const octx = offscreen.getContext('2d');
+      octx.putImageData(imgData, 0, 0);
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(offscreen, 0, 0, sw, sh, 0, 0, w, h);
+
+      // Draw seed points
+      for (let i = 0; i < n; i++) {
+        const x = sx[i], y = sy[i];
+        const col = seedColor(i);
+
+        // Outer glow
+        ctx.beginPath();
+        ctx.arc(x, y, 8 * dpr, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},0.3)`;
+        ctx.fill();
+
+        // Inner dot
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5 * dpr, 0, Math.PI * 2);
+        ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+        ctx.fill();
+
+        // White center
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5 * dpr, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+      }
+    }
+
+    // --- Animation loop ---
+    function loop() {
+      if (needsRedraw) {
+        render();
+        needsRedraw = false;
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    // --- Interaction ---
+    function getPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      return { x: t.clientX, y: t.clientY };
+    }
+
+    function findSeed(x, y, threshold) {
+      for (let i = 0; i < seeds.length; i++) {
+        const dx = seeds[i].x - x;
+        const dy = seeds[i].y - y;
+        if (dx * dx + dy * dy < threshold * threshold) return i;
+      }
+      return -1;
+    }
+
+    let pointerDown = false;
+    let pointerMoved = false;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      const pos = getPos(e);
+      pointerDown = true;
+      pointerMoved = false;
+
+      const idx = findSeed(pos.x, pos.y, 24);
+      if (idx >= 0) {
+        dragging = idx;
+        canvas.setPointerCapture(e.pointerId);
+      }
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!pointerDown) return;
+      pointerMoved = true;
+      if (dragging !== null) {
+        const pos = getPos(e);
+        seeds[dragging].x = pos.x;
+        seeds[dragging].y = pos.y;
+        needsRedraw = true;
+      }
+    });
+
+    canvas.addEventListener('pointerup', (e) => {
+      if (dragging === null && !pointerMoved) {
+        const pos = getPos(e);
+        seeds.push({ x: pos.x, y: pos.y });
+        needsRedraw = true;
+      }
+      dragging = null;
+      pointerDown = false;
+      pointerMoved = false;
+    });
+
+    // Prevent context menu on long press (mobile)
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // --- Controls ---
+    document.getElementById('edgeGlow').addEventListener('input', (e) => {
+      edgeGlow = e.target.value / 100;
+      needsRedraw = true;
+    });
+
+    document.getElementById('palette').addEventListener('change', (e) => {
+      currentPalette = e.target.value;
+      needsRedraw = true;
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      seeds = [];
+      needsRedraw = true;
+    });
+
+    document.getElementById('btnRandom').addEventListener('click', () => {
+      seeds = [];
+      const margin = 60;
+      for (let i = 0; i < 12; i++) {
+        seeds.push({
+          x: margin + Math.random() * (window.innerWidth - margin * 2),
+          y: margin + Math.random() * (window.innerHeight - margin * 2)
+        });
+      }
+      needsRedraw = true;
+    });
+
+    // Start with a few random seeds so the page isn't empty
+    seeds = [];
+    for (let i = 0; i < 6; i++) {
+      seeds.push({
+        x: 80 + Math.random() * (window.innerWidth - 160),
+        y: 80 + Math.random() * (window.innerHeight - 160)
+      });
+    }
+    needsRedraw = true;
+  })();
+</script>
+</body>
+</html>

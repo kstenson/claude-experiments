@@ -1,0 +1,59 @@
+{
+  "date": "2026-06-05",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Persepolis in the Rain",
+  "mood": {
+    "label": "Somber defiance",
+    "score": -0.4,
+    "summary": "Twenty-one dead in Lebanon as the ceasefire dissolves on contact, the US strikes Iranian radar while Congress votes to end the war it started, Ebola spreads in Congo, and Marjane Satrapi — who drew the human face of Iran for the world — dies at 56.",
+    "palette": {
+      "bg": "#0d0d12",
+      "bg2": "#161420",
+      "accent": "#6a4a8a",
+      "accent2": "#4a7a6a",
+      "text": "#d8d0e0"
+    }
+  },
+  "style": {
+    "genre": "slow ballad / piano-led",
+    "key": "D",
+    "scale": "aeolian",
+    "bpm": 68,
+    "swing": 0.08
+  },
+  "samples": [],
+  "sampleSources": [
+    "Strudel default library — sampled piano, vibraphone (VCSL), RolandTR808"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~ ~ ~, ~ ~ ~ ~ hh ~ ~ ~ ~ ~ ~ ~ hh ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ cp\").bank(\"RolandTR808\").gain(0.35).room(0.3).hpf(100), note(\"d1 ~ ~ ~ ~ ~ ~ ~ a1 ~ ~ ~ ~ ~ ~ ~ d1 ~ ~ ~ ~ ~ ~ ~ c2 ~ ~ ~ ~ ~ ~ ~\").s(\"sine\").attack(0.02).release(1.2).lpf(280).gain(0.55), note(\"<[d3,f3,a3] [a2,c3,e3] [bb2,d3,f3] [c3,e3,g3]>\").s(\"piano\").gain(0.5).room(0.6).rsize(6).pan(0.46), note(\"d4 ~ ~ f4 ~ ~ e4 ~ ~ d4 ~ c4 ~ ~ ~ ~ a4 ~ ~ ~ g4 ~ f4 ~ ~ e4 ~ d4 ~ ~ ~ ~\").s(\"piano\").gain(0.35).room(0.55).pan(0.52).delay(0.3).delaytime(0.44), note(\"<[d4,f4,a4,c5] [a3,c4,e4,g4] [bb3,d4,f4,a4] [c4,e4,g4,bb4]>\").s(\"sawtooth\").attack(2).decay(0.5).sustain(0.6).release(4).lpf(sine.range(300,900).slow(18)).gain(0.08).room(0.7).rsize(8), note(\"a4 ~ ~ ~ ~ ~ ~ ~ f4 ~ ~ ~ ~ ~ ~ ~ g4 ~ ~ ~ ~ ~ ~ ~ a4 ~ ~ ~ ~ ~ ~ ~\").s(\"vibraphone\").gain(0.2).room(0.5).pan(0.42).delay(0.25).delaytime(0.55))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "She drew the revolution in a schoolgirl's face,",
+        "black ink on white, the veil a frame for eyes that wouldn't close.",
+        "Now Marjane sleeps while the country she escaped",
+        "trades radar stations for the peace nobody chose."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Twenty-one in southern Lebanon who woke up wrong,",
+        "a ceasefire word that Hezbollah never signed.",
+        "In the Congo a virus learns a faster song,",
+        "and the House votes to end what the House never designed."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Persepolis in the rain, the pages running black,",
+        "every panel is a person we can't draw back.",
+        "The votes are cast, the strikes are launched, the dead are counted twice —",
+        "somber defiance is the only honest price."
+      ]
+    }
+  ]
+}

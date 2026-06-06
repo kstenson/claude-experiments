@@ -1,0 +1,59 @@
+{
+  "date": "2026-06-04",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Strait and Narrow",
+  "mood": {
+    "label": "Tense and volatile",
+    "score": -0.3,
+    "summary": "A world at war on multiple fronts — Iran closes the Strait of Hormuz, Hezbollah rejects a ceasefire as an Israeli soldier dies on its first day, Iranian missiles strike Kuwait, and the AI governance clock starts ticking while the real clocks count casualties.",
+    "palette": {
+      "bg": "#12090e",
+      "bg2": "#1e1018",
+      "accent": "#c44a3f",
+      "accent2": "#7a5a8a",
+      "text": "#e0d4d8"
+    }
+  },
+  "style": {
+    "genre": "dark electronic / post-punk",
+    "key": "B",
+    "scale": "phrygian",
+    "bpm": 104,
+    "swing": 0.05
+  },
+  "samples": [],
+  "sampleSources": [
+    "Strudel default library — sampled piano, vibraphone (VCSL), RolandTR808"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~, ~ ~ hh ~ ~ ~ hh ~ ~ ~ hh ~ ~ ~ hh ~, ~ ~ ~ ~ cp ~ ~ ~ ~ ~ ~ ~ cp ~ ~ ~\").bank(\"RolandTR808\").gain(0.55).room(0.15).hpf(120), note(\"b1 ~ ~ ~ ~ ~ ~ ~ c2 ~ ~ ~ ~ ~ ~ ~ b1 ~ ~ ~ ~ ~ ~ ~ a1 ~ ~ ~ ~ ~ ~ ~\").s(\"sine\").attack(0.01).release(0.6).lpf(300).gain(0.6), note(\"<[b2,d3,f3] [c3,e3,g3] [a2,c3,e3] [b2,d3,f3]>\").s(\"piano\").gain(0.4).room(0.5).rsize(4).pan(0.45), note(\"<[b3,d4,f4,a4] [c4,e4,g4,b4] [a3,c4,e4,g4] [b3,d4,f4,a4]>\").s(\"sawtooth\").attack(1.2).decay(0.4).sustain(0.5).release(3).lpf(sine.range(350,1100).slow(14)).gain(0.1).room(0.6).rsize(6), note(\"b4 ~ ~ d5 ~ c5 ~ ~ b4 ~ a4 ~ ~ ~ ~ ~ f4 ~ ~ e4 ~ d4 ~ ~ c5 ~ b4 ~ ~ a4 ~ ~\").s(\"vibraphone\").gain(0.28).room(0.45).pan(0.4).delay(0.2).delaytime(0.29).off(0.125, x => x.gain(0.1).pan(0.62).lpf(1500)), note(\"f4 ~ ~ ~ ~ ~ ~ ~ e4 ~ ~ ~ ~ ~ ~ ~ d4 ~ ~ ~ ~ ~ ~ ~ f4 ~ ~ ~ ~ ~ ~ ~\").s(\"piano\").gain(0.22).room(0.55).pan(0.58).delay(0.25).delaytime(0.45))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "The strait goes quiet, the tankers hold their breath,",
+        "a price on every barrel, a cost no ledger keeps.",
+        "One soldier down in Lebanon on ceasefire's opening day —",
+        "a truce is just a word when the ground beneath it creeps."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "A missile finds the runway at the edge of Kuwait,",
+        "Bahrain intercepts the rest before the sirens fade.",
+        "In Washington they sign a page on thinking machines,",
+        "thirty days to screen the mind that humans never made."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Strait and narrow, the passage closing down,",
+        "every handshake hides a fist beneath the table.",
+        "We build the ceasefire out of paper and goodwill —",
+        "tense and volatile, but talking while we're able."
+      ]
+    }
+  ]
+}

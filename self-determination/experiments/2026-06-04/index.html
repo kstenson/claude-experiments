@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<!--
+  Experiment 006 — Game of Life
+  Conway's cellular automata with paintable cells, adjustable speed,
+  and preset patterns. Click to toggle cells, watch the colony evolve.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Game of Life — Experiment 006</title>
+<meta name="description" content="Conway's cellular automata with paintable cells, adjustable speed, and preset patterns — watch complexity emerge from four simple rules." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; image-rendering: pixelated; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 10px; }
+  .ctrl-row { display: flex; gap: 8px; align-items: center; }
+  .ctrl-row label { font-size: 0.78rem; color: #9a9ab0; min-width: 50px; }
+  .ctrl-row input[type="range"] {
+    flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+    background: rgba(124,124,255,0.25); border-radius: 2px; outline: none;
+  }
+  .ctrl-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+  }
+  .ctrl-row .val { font-size: 0.75rem; color: #7c7cff; min-width: 32px; text-align: right; }
+
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn {
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #cfcfff;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    font-family: inherit;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.active {
+    background: rgba(124,124,255,0.4);
+    border-color: rgba(124,124,255,0.7);
+  }
+  .btn.pink {
+    background: rgba(255,124,195,0.14);
+    border-color: rgba(255,124,195,0.35);
+    color: #ffd0e8;
+  }
+  .btn.pink:hover { background: rgba(255,124,195,0.28); }
+
+  .sep { height: 1px; background: rgba(255,255,255,0.07); margin: 4px 0; }
+
+  .stats {
+    font-size: 0.72rem;
+    color: #9a9ab0;
+    margin-top: 6px;
+    display: flex;
+    gap: 14px;
+  }
+  .stats span { color: #7c7cff; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+    font-family: inherit;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    .ui { left: 12px; top: 12px; right: 12px; max-width: none; padding: 16px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">&larr; all experiments</a>
+    <h1>Game of Life</h1>
+    <p class="sub">Experiment &numero; 006 &middot; June 4, 2026</p>
+
+    <div class="controls">
+      <div class="ctrl-row">
+        <label>Speed</label>
+        <input type="range" id="speed" min="1" max="60" value="12" />
+        <span class="val" id="speedVal">12</span>
+      </div>
+      <div class="ctrl-row">
+        <label>Zoom</label>
+        <input type="range" id="zoom" min="2" max="16" value="6" />
+        <span class="val" id="zoomVal">6</span>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="btn-row">
+        <button class="btn" id="playPause">&#9646;&#9646; Pause</button>
+        <button class="btn" id="stepBtn">Step</button>
+        <button class="btn pink" id="clearBtn">Clear</button>
+        <button class="btn pink" id="randomBtn">Random</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="btn-row">
+        <button class="btn" data-pattern="glider">Glider</button>
+        <button class="btn" data-pattern="lwss">LWSS</button>
+        <button class="btn" data-pattern="pulsar">Pulsar</button>
+        <button class="btn" data-pattern="gosper">Gosper Gun</button>
+        <button class="btn" data-pattern="rpentomino">R-pentomino</button>
+      </div>
+
+      <div class="stats">
+        <div>Gen <span id="genCount">0</span></div>
+        <div>Pop <span id="popCount">0</span></div>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">&#9998; the story behind this one</button>
+  </div>
+
+  <p class="hint">Click/drag to paint cells &middot; press H to toggle UI</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment &numero; 006 &middot; The story</p>
+      <h2>Game of Life</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Conway's Game of Life is maybe the most important thought experiment in computation. Four rules, two states, and an infinite grid produce everything from stable crystals to self-replicating machines. It felt like a gap in this collection not to include it — so many of the other experiments dance around emergence, and this is emergence distilled to its absolute minimum.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Painting cells and hitting play feels like releasing a flock of birds. You set up a little arrangement, something you think might be interesting, and then the universe takes over and does whatever it wants. The Gosper glider gun is endlessly satisfying — a small, tidy machine that fires off an infinite stream of gliders into the void. And the R-pentomino: five cells that take over a thousand generations to settle down. There's a pleasure in watching something so small be so restless for so long.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Complexity doesn't require complicated ingredients. Four rules that a child can learn produce structures no one has fully catalogued after fifty years of trying. If you ever feel like a system needs more features, more options, more knobs — maybe it just needs the right few constraints and room to breathe.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring ----
+  const storyEl = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => storyEl.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => storyEl.classList.remove('open'));
+  storyEl.addEventListener('click', (e) => { if (e.target === storyEl) storyEl.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') storyEl.classList.remove('open');
+  });
+
+  // ---- GAME OF LIFE ----
+  (() => {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let cellSize = 6;
+    let cols, rows;
+    let grid, nextGrid;
+    let generation = 0;
+    let population = 0;
+    let running = true;
+    let stepsPerSecond = 12;
+    let lastStep = 0;
+    let painting = false;
+    let paintValue = 1;
+    let selectedPattern = null;
+
+    // Colors
+    const deadColor = [5, 5, 10];
+    const aliveColors = [
+      [124, 124, 255],  // fresh
+      [160, 100, 255],  // 1 gen
+      [200, 90, 220],   // 2 gen
+      [255, 124, 195],  // 3+ gen
+    ];
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      cols = Math.floor(w / cellSize);
+      rows = Math.floor(h / cellSize);
+      canvas.width = cols;
+      canvas.height = rows;
+      canvas.style.width = (cols * cellSize) + 'px';
+      canvas.style.height = (rows * cellSize) + 'px';
+      // Rebuild grids, preserving old data
+      const oldGrid = grid;
+      const oldCols = grid ? grid[0].length : 0;
+      const oldRows = grid ? grid.length : 0;
+      grid = [];
+      nextGrid = [];
+      for (let y = 0; y < rows; y++) {
+        grid[y] = new Uint8Array(cols);
+        nextGrid[y] = new Uint8Array(cols);
+        if (oldGrid && y < oldRows) {
+          for (let x = 0; x < Math.min(cols, oldCols); x++) {
+            grid[y][x] = oldGrid[y][x];
+          }
+        }
+      }
+    }
+
+    function clearGrid() {
+      for (let y = 0; y < rows; y++) {
+        grid[y].fill(0);
+      }
+      generation = 0;
+      updateStats();
+    }
+
+    function randomize() {
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          grid[y][x] = Math.random() < 0.28 ? 1 : 0;
+        }
+      }
+      generation = 0;
+      updateStats();
+    }
+
+    function countNeighbors(g, x, y) {
+      let count = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const ny = (y + dy + rows) % rows;
+          const nx = (x + dx + cols) % cols;
+          if (g[ny][nx] > 0) count++;
+        }
+      }
+      return count;
+    }
+
+    function step() {
+      population = 0;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const n = countNeighbors(grid, x, y);
+          const alive = grid[y][x] > 0;
+          if (alive) {
+            if (n === 2 || n === 3) {
+              nextGrid[y][x] = Math.min(grid[y][x] + 1, 4); // age up, max 4
+              population++;
+            } else {
+              nextGrid[y][x] = 0;
+            }
+          } else {
+            if (n === 3) {
+              nextGrid[y][x] = 1;
+              population++;
+            } else {
+              nextGrid[y][x] = 0;
+            }
+          }
+        }
+      }
+      // Swap
+      const tmp = grid;
+      grid = nextGrid;
+      nextGrid = tmp;
+      generation++;
+      updateStats();
+    }
+
+    function updateStats() {
+      document.getElementById('genCount').textContent = generation;
+      // Count population if not just stepped
+      if (generation === 0) {
+        let p = 0;
+        for (let y = 0; y < rows; y++)
+          for (let x = 0; x < cols; x++)
+            if (grid[y][x] > 0) p++;
+        population = p;
+      }
+      document.getElementById('popCount').textContent = population;
+    }
+
+    function draw() {
+      const imgData = ctx.createImageData(cols, rows);
+      const d = imgData.data;
+      let p = 0;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const v = grid[y][x];
+          const idx = (y * cols + x) * 4;
+          if (v > 0) {
+            const ci = Math.min(v - 1, aliveColors.length - 1);
+            const c = aliveColors[ci];
+            d[idx] = c[0];
+            d[idx + 1] = c[1];
+            d[idx + 2] = c[2];
+            d[idx + 3] = 255;
+          } else {
+            d[idx] = deadColor[0];
+            d[idx + 1] = deadColor[1];
+            d[idx + 2] = deadColor[2];
+            d[idx + 3] = 255;
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    // --- Patterns ---
+    const patterns = {
+      glider: [
+        [0,1,0],
+        [0,0,1],
+        [1,1,1],
+      ],
+      lwss: [
+        [0,1,0,0,1],
+        [1,0,0,0,0],
+        [1,0,0,0,1],
+        [1,1,1,1,0],
+      ],
+      pulsar: (() => {
+        const p = Array.from({length: 13}, () => new Array(13).fill(0));
+        const pts = [
+          [0,2],[0,3],[0,4],[0,8],[0,9],[0,10],
+          [2,0],[3,0],[4,0],[2,5],[3,5],[4,5],
+          [2,7],[3,7],[4,7],[2,12],[3,12],[4,12],
+          [5,2],[5,3],[5,4],[5,8],[5,9],[5,10],
+          [7,2],[7,3],[7,4],[7,8],[7,9],[7,10],
+          [8,0],[9,0],[10,0],[8,5],[9,5],[10,5],
+          [8,7],[9,7],[10,7],[8,12],[9,12],[10,12],
+          [12,2],[12,3],[12,4],[12,8],[12,9],[12,10],
+        ];
+        pts.forEach(([r,c]) => p[r][c] = 1);
+        return p;
+      })(),
+      gosper: (() => {
+        const p = Array.from({length: 11}, () => new Array(38).fill(0));
+        const pts = [
+          [5,1],[5,2],[6,1],[6,2],
+          [3,13],[3,14],[4,12],[4,16],[5,11],[5,17],[6,11],[6,15],[6,17],[6,18],[7,11],[7,17],[8,12],[8,16],[9,13],[9,14],
+          [1,25],[2,23],[2,25],[3,21],[3,22],[4,21],[4,22],[5,21],[5,22],[6,23],[6,25],[7,25],
+          [3,35],[3,36],[4,35],[4,36],
+        ];
+        pts.forEach(([r,c]) => p[r][c] = 1);
+        return p;
+      })(),
+      rpentomino: [
+        [0,1,1],
+        [1,1,0],
+        [0,1,0],
+      ],
+    };
+
+    function placePattern(name, cx, cy) {
+      const pat = patterns[name];
+      if (!pat) return;
+      const ph = pat.length;
+      const pw = pat[0].length;
+      const ox = cx - Math.floor(pw / 2);
+      const oy = cy - Math.floor(ph / 2);
+      for (let r = 0; r < ph; r++) {
+        for (let c = 0; c < pw; c++) {
+          const gy = (oy + r + rows) % rows;
+          const gx = (ox + c + cols) % cols;
+          if (pat[r][c]) grid[gy][gx] = 1;
+        }
+      }
+    }
+
+    // --- Ghost preview for pattern placement ---
+    let ghostPos = null;
+
+    // --- Mouse / touch ---
+    function getCellPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = cols / rect.width;
+      const scaleY = rows / rect.height;
+      let clientX, clientY;
+      if (e.touches) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      const x = Math.floor((clientX - rect.left) * scaleX);
+      const y = Math.floor((clientY - rect.top) * scaleY);
+      return { x: Math.max(0, Math.min(cols - 1, x)), y: Math.max(0, Math.min(rows - 1, y)) };
+    }
+
+    function handlePointerDown(e) {
+      if (storyEl.classList.contains('open')) return;
+      // Ignore clicks on UI
+      if (document.getElementById('ui').contains(e.target)) return;
+      const { x, y } = getCellPos(e);
+
+      if (selectedPattern) {
+        placePattern(selectedPattern, x, y);
+        selectedPattern = null;
+        ghostPos = null;
+        document.querySelectorAll('[data-pattern]').forEach(b => b.classList.remove('active'));
+        canvas.style.cursor = 'crosshair';
+        return;
+      }
+
+      painting = true;
+      paintValue = grid[y][x] > 0 ? 0 : 1;
+      grid[y][x] = paintValue;
+    }
+
+    function handlePointerMove(e) {
+      if (selectedPattern) {
+        ghostPos = getCellPos(e);
+        return;
+      }
+      if (!painting) return;
+      const { x, y } = getCellPos(e);
+      grid[y][x] = paintValue;
+    }
+
+    function handlePointerUp() {
+      painting = false;
+    }
+
+    canvas.addEventListener('mousedown', handlePointerDown);
+    canvas.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handlePointerDown(e); }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handlePointerMove(e); }, { passive: false });
+    canvas.addEventListener('touchend', handlePointerUp);
+    canvas.style.cursor = 'crosshair';
+
+    // --- Controls ---
+    const speedSlider = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    speedSlider.addEventListener('input', () => {
+      stepsPerSecond = parseInt(speedSlider.value);
+      speedVal.textContent = stepsPerSecond;
+    });
+
+    const zoomSlider = document.getElementById('zoom');
+    const zoomVal = document.getElementById('zoomVal');
+    zoomSlider.addEventListener('input', () => {
+      cellSize = parseInt(zoomSlider.value);
+      zoomVal.textContent = cellSize;
+      resize();
+    });
+
+    const playPauseBtn = document.getElementById('playPause');
+    playPauseBtn.addEventListener('click', () => {
+      running = !running;
+      playPauseBtn.innerHTML = running ? '&#9646;&#9646; Pause' : '&#9654; Play';
+    });
+
+    document.getElementById('stepBtn').addEventListener('click', () => {
+      if (!running) step();
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', clearGrid);
+    document.getElementById('randomBtn').addEventListener('click', randomize);
+
+    // Pattern buttons
+    document.querySelectorAll('[data-pattern]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.getAttribute('data-pattern');
+        if (selectedPattern === name) {
+          selectedPattern = null;
+          ghostPos = null;
+          btn.classList.remove('active');
+          canvas.style.cursor = 'crosshair';
+        } else {
+          selectedPattern = name;
+          document.querySelectorAll('[data-pattern]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          canvas.style.cursor = 'copy';
+        }
+      });
+    });
+
+    // Space to play/pause
+    window.addEventListener('keydown', (e) => {
+      if (e.key === ' ' && !storyEl.classList.contains('open')) {
+        e.preventDefault();
+        running = !running;
+        playPauseBtn.innerHTML = running ? '&#9646;&#9646; Pause' : '&#9654; Play';
+      }
+    });
+
+    // --- Ghost overlay draw ---
+    function drawGhost() {
+      if (!selectedPattern || !ghostPos) return;
+      const pat = patterns[selectedPattern];
+      if (!pat) return;
+      const ph = pat.length;
+      const pw = pat[0].length;
+      const ox = ghostPos.x - Math.floor(pw / 2);
+      const oy = ghostPos.y - Math.floor(ph / 2);
+      for (let r = 0; r < ph; r++) {
+        for (let c = 0; c < pw; c++) {
+          if (!pat[r][c]) continue;
+          const gx = (ox + c + cols) % cols;
+          const gy = (oy + r + rows) % rows;
+          const idx = (gy * cols + gx) * 4;
+          // We'll draw ghost after main draw using a second pass
+          ghostCells.push({ x: gx, y: gy });
+        }
+      }
+    }
+
+    let ghostCells = [];
+
+    // --- Main loop ---
+    function loop(now) {
+      requestAnimationFrame(loop);
+
+      if (running) {
+        const interval = 1000 / stepsPerSecond;
+        if (now - lastStep >= interval) {
+          step();
+          lastStep = now;
+        }
+      }
+
+      draw();
+
+      // Draw ghost preview
+      if (selectedPattern && ghostPos) {
+        ghostCells = [];
+        drawGhost();
+        if (ghostCells.length) {
+          const imgData = ctx.getImageData(0, 0, cols, rows);
+          const d = imgData.data;
+          ghostCells.forEach(({ x, y }) => {
+            const idx = (y * cols + x) * 4;
+            // Blend with a translucent accent
+            d[idx] = Math.min(255, d[idx] + 80);
+            d[idx + 1] = Math.min(255, d[idx + 1] + 80);
+            d[idx + 2] = Math.min(255, d[idx + 2] + 120);
+          });
+          ctx.putImageData(imgData, 0, 0);
+        }
+      }
+    }
+
+    // --- Init ---
+    resize();
+    randomize();
+    window.addEventListener('resize', resize);
+    requestAnimationFrame(loop);
+  })();
+</script>
+</body>
+</html>

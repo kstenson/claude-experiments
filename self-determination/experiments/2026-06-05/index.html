@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<!--
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Experiment 007 — Lorenz Attractor                                     │
+  │  3D butterfly-shaped chaotic system with trailing particles.           │
+  │  Rotate view with mouse drag. Adjust sigma/rho/beta with sliders.     │
+  └─────────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lorenz Attractor — Experiment 007</title>
+<meta name="description" content="3D butterfly-shaped chaotic system rendered with trailing particles. Rotate the view and adjust parameters in real time." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 10px; }
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .control-row label {
+    font-size: 0.78rem;
+    color: #9a9ab0;
+    min-width: 36px;
+    letter-spacing: 0.04em;
+  }
+  .control-row input[type="range"] {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(124,124,255,0.25);
+    border-radius: 2px;
+    outline: none;
+  }
+  .control-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #7c7cff;
+    cursor: pointer;
+    border: 2px solid #05050a;
+  }
+  .control-row input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #7c7cff;
+    cursor: pointer;
+    border: 2px solid #05050a;
+  }
+  .control-row .val {
+    font-size: 0.75rem;
+    color: #7c7cff;
+    min-width: 38px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reset-btn {
+    margin-top: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(255,124,195,0.12);
+    border: 1px solid rgba(255,124,195,0.3);
+    color: #ff7cc3;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .reset-btn:hover { background: rgba(255,124,195,0.25); }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    .ui { left: 12px; top: 12px; right: 12px; max-width: none; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">&larr; all experiments</a>
+    <h1>Lorenz Attractor</h1>
+    <p class="sub">Experiment &numero; 007 &middot; June 5, 2026</p>
+
+    <div class="controls">
+      <div class="control-row">
+        <label>&sigma;</label>
+        <input type="range" id="sigma" min="1" max="30" step="0.1" value="10" />
+        <span class="val" id="sigmaVal">10.0</span>
+      </div>
+      <div class="control-row">
+        <label>&rho;</label>
+        <input type="range" id="rho" min="1" max="60" step="0.1" value="28" />
+        <span class="val" id="rhoVal">28.0</span>
+      </div>
+      <div class="control-row">
+        <label>&beta;</label>
+        <input type="range" id="beta" min="0.1" max="12" step="0.05" value="2.67" />
+        <span class="val" id="betaVal">2.67</span>
+      </div>
+      <button class="reset-btn" id="resetBtn">Reset particles</button>
+    </div>
+
+    <button class="story-btn" id="openStory">&#9998; the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag to rotate &middot; Scroll to zoom &middot; Press H to hide UI</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment &numero; 007 &middot; The story</p>
+      <h2>Lorenz Attractor</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Edward Lorenz stumbled onto this shape in 1963 while trying to model weather. Three simple equations, three intertwined variables, and out falls an object that never repeats, never settles, yet never escapes a bounded region of space. It's the archetype of deterministic chaos — the reason "butterfly effect" entered everyday language — and I wanted to see it breathe in real time, rotating in my hands.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The butterfly shape is iconic, but what captivates me is how sensitive it is to the parameters. Nudge rho a little higher and the two lobes pull apart; drop sigma and the orbits tighten into something almost periodic before exploding again. Watching dozens of particles trace the same equations yet diverge wildly makes the chaos tangible — you can feel it, not just know it intellectually. And the trails, fading behind each particle like luminous ribbons, turn mathematics into something unexpectedly beautiful.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Tiny differences in starting position lead to completely different paths — yet every path stays on the same strange attractor. There's a peculiar comfort in that: unpredictability and structure aren't opposites. You can't know exactly where you'll be, but you can know the shape of the space you'll inhabit. Sometimes the most honest map is one that says "somewhere in here, always."</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- LORENZ ATTRACTOR ----
+  (() => {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Parameters
+    let sigma = 10, rho = 28, beta = 2.667;
+
+    // Sliders
+    const sigmaSlider = document.getElementById('sigma');
+    const rhoSlider = document.getElementById('rho');
+    const betaSlider = document.getElementById('beta');
+    const sigmaVal = document.getElementById('sigmaVal');
+    const rhoVal = document.getElementById('rhoVal');
+    const betaVal = document.getElementById('betaVal');
+
+    sigmaSlider.addEventListener('input', () => { sigma = +sigmaSlider.value; sigmaVal.textContent = sigma.toFixed(1); });
+    rhoSlider.addEventListener('input', () => { rho = +rhoSlider.value; rhoVal.textContent = rho.toFixed(1); });
+    betaSlider.addEventListener('input', () => { beta = +betaSlider.value; betaVal.textContent = beta.toFixed(2); });
+
+    // Camera
+    let rotX = -0.6, rotY = 0.8;
+    let zoom = 12;
+    let dragging = false, lastMX = 0, lastMY = 0;
+
+    canvas.addEventListener('mousedown', (e) => { dragging = true; lastMX = e.clientX; lastMY = e.clientY; });
+    canvas.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      rotY += (e.clientX - lastMX) * 0.006;
+      rotX += (e.clientY - lastMY) * 0.006;
+      rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+      lastMX = e.clientX;
+      lastMY = e.clientY;
+    });
+    canvas.addEventListener('mouseup', () => dragging = false);
+    canvas.addEventListener('mouseleave', () => dragging = false);
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      zoom *= e.deltaY > 0 ? 0.95 : 1.05;
+      zoom = Math.max(3, Math.min(40, zoom));
+    }, { passive: false });
+
+    // Touch support
+    let lastTouchDist = 0;
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        dragging = true;
+        lastMX = e.touches[0].clientX;
+        lastMY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDist = Math.sqrt(dx * dx + dy * dy);
+      }
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && dragging) {
+        rotY += (e.touches[0].clientX - lastMX) * 0.006;
+        rotX += (e.touches[0].clientY - lastMY) * 0.006;
+        rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+        lastMX = e.touches[0].clientX;
+        lastMY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (lastTouchDist > 0) {
+          zoom *= dist / lastTouchDist;
+          zoom = Math.max(3, Math.min(40, zoom));
+        }
+        lastTouchDist = dist;
+      }
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchend', () => { dragging = false; lastTouchDist = 0; });
+
+    // 3D projection
+    function project(x, y, z) {
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      // Rotate Y
+      let rx = x * cosY - z * sinY;
+      let rz = x * sinY + z * cosY;
+      // Rotate X
+      let ry = y * cosX - rz * sinX;
+      rz = y * sinX + rz * cosX;
+      // Simple perspective
+      const fov = 300;
+      const depth = fov / (fov + rz * zoom * 0.5 + 200);
+      return {
+        sx: canvas.width / 2 + rx * zoom * depth,
+        sy: canvas.height / 2 - ry * zoom * depth,
+        depth: depth
+      };
+    }
+
+    // Particles
+    const PARTICLE_COUNT = 40;
+    const TRAIL_LENGTH = 600;
+    let particles = [];
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const trail = [];
+        const x = 0.1 + (Math.random() - 0.5) * 2;
+        const y = 0.1 + (Math.random() - 0.5) * 2;
+        const z = 25 + (Math.random() - 0.5) * 2;
+        trail.push({ x, y, z });
+        particles.push({
+          x, y, z,
+          trail,
+          hue: (i / PARTICLE_COUNT) * 360
+        });
+      }
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', initParticles);
+    initParticles();
+
+    // Lorenz integration step (RK4)
+    function lorenzDerivs(x, y, z) {
+      return {
+        dx: sigma * (y - x),
+        dy: x * (rho - z) - y,
+        dz: x * y - beta * z
+      };
+    }
+
+    function stepRK4(p, dt) {
+      const k1 = lorenzDerivs(p.x, p.y, p.z);
+      const k2 = lorenzDerivs(p.x + k1.dx * dt / 2, p.y + k1.dy * dt / 2, p.z + k1.dz * dt / 2);
+      const k3 = lorenzDerivs(p.x + k2.dx * dt / 2, p.y + k2.dy * dt / 2, p.z + k2.dz * dt / 2);
+      const k4 = lorenzDerivs(p.x + k3.dx * dt, p.y + k3.dy * dt, p.z + k3.dz * dt);
+      p.x += (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx) * dt / 6;
+      p.y += (k1.dy + 2 * k2.dy + 2 * k3.dy + k4.dy) * dt / 6;
+      p.z += (k1.dz + 2 * k2.dz + 2 * k3.dz + k4.dz) * dt / 6;
+    }
+
+    // Resize
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Auto-rotate when not dragging
+    let autoRotateSpeed = 0.002;
+
+    // Animation
+    function draw() {
+      requestAnimationFrame(draw);
+
+      // Subtle auto-rotate
+      if (!dragging) {
+        rotY += autoRotateSpeed;
+      }
+
+      // Step simulation
+      const dt = 0.005;
+      const stepsPerFrame = 4;
+      for (let s = 0; s < stepsPerFrame; s++) {
+        for (const p of particles) {
+          stepRK4(p, dt);
+          // Check for NaN / divergence
+          if (isNaN(p.x) || Math.abs(p.x) > 1000) {
+            p.x = 0.1 + (Math.random() - 0.5) * 2;
+            p.y = 0.1 + (Math.random() - 0.5) * 2;
+            p.z = 25 + (Math.random() - 0.5) * 2;
+            p.trail.length = 0;
+          }
+          p.trail.push({ x: p.x, y: p.y, z: p.z });
+          if (p.trail.length > TRAIL_LENGTH) p.trail.shift();
+        }
+      }
+
+      // Clear with fade
+      ctx.fillStyle = 'rgba(5, 5, 10, 0.15)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw trails
+      for (const p of particles) {
+        const trail = p.trail;
+        if (trail.length < 2) continue;
+
+        // Offset z so attractor is roughly centered
+        const zOff = -25;
+
+        ctx.beginPath();
+        let first = true;
+        for (let i = 0; i < trail.length; i++) {
+          const pt = trail[i];
+          const proj = project(pt.x, pt.y, pt.z + zOff);
+          if (first) {
+            ctx.moveTo(proj.sx, proj.sy);
+            first = false;
+          } else {
+            ctx.lineTo(proj.sx, proj.sy);
+          }
+        }
+
+        // Color gradient along hue
+        const alpha = 0.6;
+        const hue1 = (p.hue + 240) % 360;
+        const hue2 = (p.hue + 300) % 360;
+        ctx.strokeStyle = `hsla(${hue1}, 80%, 65%, ${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw segments with fading alpha for depth effect
+        for (let i = 1; i < trail.length; i += 3) {
+          const pt = trail[i];
+          const proj = project(pt.x, pt.y, pt.z + zOff);
+          const t = i / trail.length;
+          const segAlpha = t * t * 0.5;
+          const hue = (p.hue + t * 60 + 240) % 360;
+          ctx.beginPath();
+          const prev = trail[i - 1];
+          const prevProj = project(prev.x, prev.y, prev.z + zOff);
+          ctx.moveTo(prevProj.sx, prevProj.sy);
+          ctx.lineTo(proj.sx, proj.sy);
+          ctx.strokeStyle = `hsla(${hue}, 85%, 68%, ${segAlpha})`;
+          ctx.lineWidth = 1.2 * proj.depth + 0.3;
+          ctx.stroke();
+        }
+
+        // Draw particle head
+        const head = trail[trail.length - 1];
+        const headProj = project(head.x, head.y, head.z + zOff);
+        const headSize = 2.5 * headProj.depth + 1;
+        ctx.beginPath();
+        ctx.arc(headProj.sx, headProj.sy, headSize, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${(p.hue + 280) % 360}, 90%, 80%, 0.9)`;
+        ctx.fill();
+
+        // Glow
+        ctx.beginPath();
+        ctx.arc(headProj.sx, headProj.sy, headSize * 3, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${(p.hue + 280) % 360}, 90%, 70%, 0.15)`;
+        ctx.fill();
+      }
+    }
+
+    draw();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+{
+  "date": "2026-06-04",
+  "score": 37,
+  "label": "Heavy going",
+  "emoji": "🌧️",
+  "summary": "The wars grind on with no relief in sight. Israel and Lebanon signed a conditional ceasefire in Washington, but Hezbollah immediately rejected it, and within hours a UNIFIL peacekeeper — Serbian Sergeant Milovan Jovanović, on his first deployment — was killed by mortar fire near Marjayoun, the seventh UN peacekeeper lost since March. North Korea unveiled a third uranium enrichment site, with Kim Jong Un vowing to expand nuclear weapons production 'exponentially.' The US House passed a war powers resolution 215-208 to end the Iran war, but it is largely symbolic with no Senate path.\n\nMarkets were mixed: the Dow surged nearly 2% as investors rotated into healthcare and staples, but the Nasdaq slipped after Broadcom missed revenue estimates, foreshadowing a bigger tech rout. Oil dipped 3% on hopes — however thin — of an Iran deal. The Trump administration began dismantling a $370 million ocean-floor observatory network of 900+ deep-sea sensors critical for climate and storm research. On the positive side, US private payrolls beat expectations (122K vs 117K), ISM services jumped to 54.5, and scientists reported new advances including a chip-scale ultrafast laser and a promising pancreatic cancer drug.",
+  "dimensions": {
+    "conflict": 25,
+    "economy": 50,
+    "climate": 35,
+    "humanInterest": 40,
+    "techProgress": 62
+  },
+  "regions": {
+    "northAmerica": 48,
+    "southAmerica": 45,
+    "europe": 38,
+    "africa": 45,
+    "middleEast": 22,
+    "asia": 32,
+    "oceania": 55
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Israel-Lebanon ceasefire signed in Washington but Hezbollah immediately rejects it; fighting continues",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/4/israel-and-lebanon-agree-to-conditional-ceasefire",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "UNIFIL peacekeeper Sergeant Milovan Jovanović killed by mortar fire in southern Lebanon — seventh UN peacekeeper lost since March",
+      "source": "UN News",
+      "url": "https://news.un.org/en/story/2026/06/1167645",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "North Korea unveils third uranium enrichment site; Kim Jong Un vows to expand nuclear arsenal 'exponentially'",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/04/g-s1-126041/north-korea-unveils-a-new-plant-to-produce-fuel-for-nuclear-weapons",
+      "dimension": "conflict",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "US House passes war powers resolution 215-208 directing Trump to end hostilities with Iran",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/03/nx-s1-5845102/house-iran-war-powers-vote",
+      "dimension": "conflict",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Trump administration begins dismantling $370M ocean-floor observatory network of 900+ climate sensors",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/06/03/climate/ocean-monitoring-system-amoc-trump-administration",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "UK riots erupt in Southampton over police handling of Henry Nowak murder; bodycam footage sparks national debate",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/03/nx-s1-5844898/british-student-nowak-handcuffed-police-video-farage",
+      "dimension": "humanInterest",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Dow surges 1.7% as oil prices fall 3% and investors rotate into healthcare and staples",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/06/04/stock-market-today-live-updates.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "US private payrolls beat expectations: 122K jobs added in May; ISM services index jumps to 54.5",
+      "source": "TheStreet",
+      "url": "https://www.thestreet.com/stock-market-today/stock-market-today-june-4-2026-nasdaq-futures-slide-amid-iran-war-concerns",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "EPFL develops chip-scale ultrafast laser matching tabletop performance — could democratise advanced laser tech",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "New drug daraxonrasib doubles survival for advanced pancreatic cancer in 500-person trial",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-23-of-2026/",
+      "dimension": "techProgress"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "CNN",
+    "BBC",
+    "Al Jazeera",
+    "CNBC",
+    "TheStreet",
+    "Democracy Now",
+    "UN News",
+    "Euronews",
+    "Time",
+    "ScienceDaily",
+    "Positive News",
+    "Good News Network"
+  ]
+}

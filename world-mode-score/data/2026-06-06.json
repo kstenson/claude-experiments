@@ -1,0 +1,123 @@
+{
+  "date": "2026-06-06",
+  "score": 35,
+  "label": "Heavy going",
+  "emoji": "🌧️",
+  "summary": "A Saturday defined by the aftershocks of a brutal week. The Lebanon ceasefire is in tatters — Hezbollah rejected it, Israel says it will not withdraw, and the humanitarian toll is staggering: more than 3,500 Lebanese killed and nearly a fifth of the population displaced since the war began in March. Iran's foreign minister warned that Israeli attacks on Lebanon violate the ceasefire 'on all fronts.' The UN warned the global hunger crisis is 'coming to pass' as the Hormuz closure nears 100 days, with WFP projecting 9 million could lose aid if the conflict lasts six months.\n\nMarkets closed Friday with heavy losses still echoing: the Nasdaq's 4% plunge wiped $1 trillion from semiconductors, and rising yields signalled the Fed may yet hike rather than cut. Oil dipped below $93 on weak Chinese demand but geopolitical risk keeps it elevated. Climate news is grim: NOAA forecasts above-normal heat across most of the US this month, and the ocean monitoring network continues to be dismantled. On a brighter note, the pancreatic cancer drug daraxonrasib doubled survival times in trials, platypuses are breeding on Australia's Hacking River for the first time in generations, and the World Cup pre-tournament friendlies offered a welcome distraction — Germany faced the US in Chicago.",
+  "dimensions": {
+    "conflict": 23,
+    "economy": 35,
+    "climate": 32,
+    "humanInterest": 40,
+    "techProgress": 58
+  },
+  "regions": {
+    "northAmerica": 42,
+    "southAmerica": 48,
+    "europe": 38,
+    "africa": 38,
+    "middleEast": 18,
+    "asia": 38,
+    "oceania": 58
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Lebanon ceasefire collapses: Hezbollah rejects deal, Israel refuses to withdraw; 3,500 Lebanese killed since March",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/6/5/iran-war-live-hezbollah-rejects-truce-as-israel-continues-lebanon-strikes",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Iran warns Israeli attacks in Lebanon violate ceasefire 'on all fronts'; no progress in US-Iran negotiations",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/1/iran-warns-israeli-attacks-in-lebanon-and-gaza-threaten-us-ceasefire-talks",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "UN warns feared global hunger crisis 'coming to pass' as Hormuz closure nears 100 days; 9 million could lose aid",
+      "source": "WFP",
+      "url": "https://www.wfp.org/news/wfp-projects-food-insecurity-could-reach-record-levels-result-middle-east-escalation",
+      "dimension": "humanInterest"
+    },
+    {
+      "direction": "down",
+      "headline": "Markets reel from Friday's selloff: Nasdaq lost 4%, S&P 500 down 2.6% as yields spike on hot jobs data",
+      "source": "TheStreet",
+      "url": "https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-june-05-2026",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Eurozone inflation rises to 3.2% — above ECB's 2% target — as Middle East conflict pushes energy prices higher",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/06/04/israel-and-lebanon-agree-to-conditional-ceasefire-following-us-led-talks",
+      "dimension": "economy",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "NOAA forecasts above-normal temperatures across most of the US in June; El Nino forming with 82% probability",
+      "source": "NOAA",
+      "url": "https://www.weather.gov/media/mbrfc/climate/Climate_Outlook.pdf",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "UK protests over Henry Nowak murder spread; far-right figures exploit tensions as policing debate intensifies",
+      "source": "CBC News",
+      "url": "https://www.cbc.ca/news/world/britain-murder-henry-nowak-debate-race-9.7222123",
+      "dimension": "humanInterest",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Pancreatic cancer drug daraxonrasib doubles median survival to 13.2 months in 500-person trial with fewer side effects",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-23-of-2026/",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Duck-billed platypuses breeding on Australia's Hacking River for first time in generations; population reaches 20",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-23-of-2026/",
+      "dimension": "climate",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "World Cup friendlies bring welcome distraction: Germany vs USA in Chicago as tournament preparations ramp up",
+      "source": "Yahoo Sports",
+      "url": "https://sports.yahoo.com/soccer/live/2026-world-cup-news-live-tracker-injuries-squads-storylines-and-updates-as-the-tournament-looms-200000653.html",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "CNN",
+    "BBC",
+    "Al Jazeera",
+    "CNBC",
+    "TheStreet",
+    "Yahoo Finance",
+    "Yahoo Sports",
+    "Democracy Now",
+    "UN News",
+    "WFP",
+    "FAO",
+    "Euronews",
+    "CBC News",
+    "Positive News",
+    "Good News Network"
+  ]
+}

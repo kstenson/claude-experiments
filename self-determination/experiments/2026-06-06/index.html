@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<!--
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Experiment 008 — Fourier Drawing Machine                          │
+  │  Draw any shape, watch it decomposed into spinning epicycles.      │
+  └─────────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fourier Drawing Machine — Experiment 008</title>
+<meta name="description" content="Draw any shape with your mouse, then watch it decomposed into spinning circles (epicycles) that trace the original path using the Discrete Fourier Transform." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .control-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .control-row label {
+    font-size: 0.8rem;
+    color: #9a9ab0;
+    min-width: 80px;
+    letter-spacing: 0.05em;
+  }
+  .control-row input[type="range"] {
+    flex: 1;
+    accent-color: #7c7cff;
+    height: 4px;
+  }
+  .control-row .val {
+    font-size: 0.8rem;
+    color: #7c7cff;
+    min-width: 32px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .control-row input[type="range"]::-webkit-slider-thumb {
+    cursor: pointer;
+  }
+
+  .btn-row { display: flex; gap: 8px; }
+  .ctrl-btn {
+    flex: 1;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.3);
+    color: #cfcfff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .ctrl-btn:hover { background: rgba(124,124,255,0.25); }
+  .ctrl-btn.accent {
+    background: rgba(255,124,195,0.12);
+    border-color: rgba(255,124,195,0.3);
+    color: #ffc8e0;
+  }
+  .ctrl-btn.accent:hover { background: rgba(255,124,195,0.25); }
+
+  .speed-row { margin-top: 2px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+    transition: opacity 0.5s;
+  }
+
+  @media (max-width: 600px) {
+    .ui { left: 12px; top: 12px; right: 12px; max-width: none; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">&larr; all experiments</a>
+    <h1>Fourier Drawing Machine</h1>
+    <p class="sub">Experiment &#8470; 008 &middot; June 6, 2026</p>
+
+    <div class="controls">
+      <div class="control-row">
+        <label>Harmonics</label>
+        <input type="range" id="harmonics" min="1" max="200" value="200" />
+        <span class="val" id="harmonicsVal">all</span>
+      </div>
+      <div class="control-row speed-row">
+        <label>Speed</label>
+        <input type="range" id="speed" min="1" max="10" value="3" />
+        <span class="val" id="speedVal">3</span>
+      </div>
+      <div class="btn-row">
+        <button class="ctrl-btn accent" id="clearBtn">Clear &amp; redraw</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">&#9998; the story behind this one</button>
+  </div>
+
+  <p class="hint" id="hint">Draw a shape anywhere on the canvas</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment &#8470; 008 &middot; The story</p>
+      <h2>Fourier Drawing Machine</h2>
+
+      <h3>Why I picked it</h3>
+      <p>The Discrete Fourier Transform is one of the most beautiful ideas in mathematics: any signal — any squiggle, any shape, any sound — can be perfectly reconstructed from a sum of simple spinning circles. I wanted to make that idea tangible and immediate. Not an equation on a blackboard, but something you draw with your own hand and then watch come alive.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment when you slide the harmonics down to just two or three circles and watch your complex drawing reduced to a wobbly ellipse — and then you slowly add more circles and it gets closer and closer to what you drew, each new circle a small correction on top of the last. There's something deeply satisfying about watching complexity get assembled, layer by layer, from simplicity. The circles never stop spinning, and the path they trace never quite finishes feeling like magic.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Every complicated thing you see — a coastline, a melody, a face — can be described as a stack of simple patterns at different scales. The big circles capture the broad strokes; the tiny ones add the fine detail. Understanding doesn't always mean grasping the whole at once. Sometimes it means finding the right simple pieces and learning how they add up.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- FOURIER DRAWING MACHINE ----
+  (() => {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const hint = document.getElementById('hint');
+    const harmonicsSlider = document.getElementById('harmonics');
+    const harmonicsVal = document.getElementById('harmonicsVal');
+    const speedSlider = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    const clearBtn = document.getElementById('clearBtn');
+
+    let W, H, dpr;
+
+    function resize() {
+      dpr = window.devicePixelRatio || 1;
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // State
+    let userPath = [];       // [{x, y}, ...] raw drawing
+    let fourier = [];        // DFT coefficients sorted by amplitude
+    let tracePoints = [];    // reconstructed path so far
+    let time = 0;
+    let phase = 'idle';      // 'idle' | 'drawing' | 'animating'
+    let drawingOpacity = 1;
+
+    // --- DFT ---
+    function dft(points) {
+      const N = points.length;
+      const result = [];
+      for (let k = 0; k < N; k++) {
+        let re = 0, im = 0;
+        for (let n = 0; n < N; n++) {
+          const angle = (2 * Math.PI * k * n) / N;
+          re += points[n].x * Math.cos(angle) + points[n].y * Math.sin(angle);
+          im += -points[n].x * Math.sin(angle) + points[n].y * Math.cos(angle);
+        }
+        re /= N;
+        im /= N;
+        const amp = Math.sqrt(re * re + im * im);
+        const ph = Math.atan2(im, re);
+        result.push({ freq: k, amp, phase: ph, re, im });
+      }
+      // Sort by amplitude descending so slicing gives best approximation
+      result.sort((a, b) => b.amp - a.amp);
+      return result;
+    }
+
+    // --- Subsample path to keep DFT manageable ---
+    function subsample(path, maxPoints) {
+      if (path.length <= maxPoints) return path.slice();
+      const step = path.length / maxPoints;
+      const result = [];
+      for (let i = 0; i < maxPoints; i++) {
+        result.push(path[Math.floor(i * step)]);
+      }
+      return result;
+    }
+
+    // --- Drawing input ---
+    let isPointerDown = false;
+
+    function startDraw(x, y) {
+      if (phase === 'animating' || phase === 'drawing') {
+        resetState();
+      }
+      phase = 'drawing';
+      isPointerDown = true;
+      userPath = [{ x, y }];
+      hint.style.opacity = '0';
+    }
+
+    function moveDraw(x, y) {
+      if (!isPointerDown) return;
+      const last = userPath[userPath.length - 1];
+      const dx = x - last.x;
+      const dy = y - last.y;
+      if (dx * dx + dy * dy > 9) { // min distance 3px
+        userPath.push({ x, y });
+      }
+    }
+
+    function endDraw() {
+      if (!isPointerDown) return;
+      isPointerDown = false;
+      if (userPath.length < 10) {
+        phase = 'idle';
+        hint.style.opacity = '1';
+        return;
+      }
+      startAnimation();
+    }
+
+    function startAnimation() {
+      // Center the path
+      let cx = 0, cy = 0;
+      for (const p of userPath) { cx += p.x; cy += p.y; }
+      cx /= userPath.length;
+      cy /= userPath.length;
+      const centered = userPath.map(p => ({ x: p.x - cx, y: p.y - cy }));
+
+      // Subsample
+      const sampled = subsample(centered, Math.min(centered.length, 512));
+
+      // Compute DFT
+      fourier = dft(sampled);
+
+      // Update slider max
+      harmonicsSlider.max = fourier.length;
+      harmonicsSlider.value = fourier.length;
+      updateHarmonicsLabel();
+
+      // Store center offset for rendering
+      canvas._cx = cx;
+      canvas._cy = cy;
+
+      time = 0;
+      tracePoints = [];
+      phase = 'animating';
+      drawingOpacity = 1;
+    }
+
+    // Pointer events
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      startDraw(e.clientX, e.clientY);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      e.preventDefault();
+      moveDraw(e.clientX, e.clientY);
+    });
+    canvas.addEventListener('pointerup', (e) => { e.preventDefault(); endDraw(); });
+    canvas.addEventListener('pointercancel', (e) => { e.preventDefault(); endDraw(); });
+    canvas.style.touchAction = 'none';
+
+    // Controls
+    function updateHarmonicsLabel() {
+      const v = parseInt(harmonicsSlider.value);
+      harmonicsVal.textContent = v >= fourier.length ? 'all' : v;
+    }
+    harmonicsSlider.addEventListener('input', () => {
+      updateHarmonicsLabel();
+      // Re-trace with new harmonic count
+      if (phase === 'animating') {
+        tracePoints = [];
+        time = 0;
+      }
+    });
+    speedSlider.addEventListener('input', () => {
+      speedVal.textContent = speedSlider.value;
+    });
+
+    clearBtn.addEventListener('click', () => {
+      resetState();
+    });
+
+    function resetState() {
+      userPath = [];
+      fourier = [];
+      tracePoints = [];
+      time = 0;
+      phase = 'idle';
+      drawingOpacity = 1;
+      hint.textContent = 'Draw a shape anywhere on the canvas';
+      hint.style.opacity = '1';
+    }
+
+    // --- Demo shape on load ---
+    function createDemoShape() {
+      const cx = W / 2;
+      const cy = H / 2;
+      const r = Math.min(W, H) * 0.2;
+      const points = [];
+      const N = 300;
+      // Draw a star shape
+      for (let i = 0; i < N; i++) {
+        const t = (i / N) * Math.PI * 2;
+        const wobble = 0.5 + 0.5 * Math.cos(5 * t);
+        const rad = r * (0.5 + 0.5 * wobble);
+        points.push({
+          x: cx + rad * Math.cos(t),
+          y: cy + rad * Math.sin(t)
+        });
+      }
+      return points;
+    }
+
+    // Start with demo
+    userPath = createDemoShape();
+    startAnimation();
+    hint.textContent = 'Draw your own shape, or drag the harmonics slider';
+    hint.style.opacity = '1';
+
+    // --- Render loop ---
+    function draw() {
+      requestAnimationFrame(draw);
+      ctx.clearRect(0, 0, W, H);
+
+      if (phase === 'drawing') {
+        // Draw current user path
+        if (userPath.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(userPath[0].x, userPath[0].y);
+          for (let i = 1; i < userPath.length; i++) {
+            ctx.lineTo(userPath[i].x, userPath[i].y);
+          }
+          ctx.strokeStyle = 'rgba(255, 124, 195, 0.8)';
+          ctx.lineWidth = 2.5;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.stroke();
+        }
+        return;
+      }
+
+      if (phase !== 'animating' || fourier.length === 0) return;
+
+      const cx = canvas._cx;
+      const cy = canvas._cy;
+      const N = fourier.length;
+      const numHarmonics = Math.min(parseInt(harmonicsSlider.value), N);
+      const speedMul = parseInt(speedSlider.value);
+
+      // Draw the original path faintly (fading out)
+      if (drawingOpacity > 0.05) {
+        ctx.globalAlpha = drawingOpacity * 0.25;
+        ctx.beginPath();
+        ctx.moveTo(userPath[0].x, userPath[0].y);
+        for (let i = 1; i < userPath.length; i++) {
+          ctx.lineTo(userPath[i].x, userPath[i].y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = '#444460';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        if (tracePoints.length > 50) {
+          drawingOpacity *= 0.995;
+        }
+      }
+
+      // Compute epicycle chain
+      let x = 0, y = 0;
+      const circles = [];
+
+      for (let i = 0; i < numHarmonics; i++) {
+        const f = fourier[i];
+        const prevX = x;
+        const prevY = y;
+        const angle = f.freq * (2 * Math.PI / N) * time + f.phase;
+        x += f.amp * Math.cos(angle);
+        y += f.amp * Math.sin(angle);
+        circles.push({
+          cx: prevX + cx,
+          cy: prevY + cy,
+          r: f.amp,
+          ex: x + cx,
+          ey: y + cy
+        });
+      }
+
+      // Draw circles
+      for (let i = 0; i < circles.length; i++) {
+        const c = circles[i];
+        if (c.r < 0.5) continue; // skip tiny circles
+        const alpha = Math.max(0.04, Math.min(0.25, 8 / (i + 1)));
+        ctx.beginPath();
+        ctx.arc(c.cx, c.cy, c.r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(124, 124, 255, ${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Draw radii
+      for (let i = 0; i < circles.length; i++) {
+        const c = circles[i];
+        if (c.r < 0.5) continue;
+        const alpha = Math.max(0.08, Math.min(0.35, 12 / (i + 1)));
+        ctx.beginPath();
+        ctx.moveTo(c.cx, c.cy);
+        ctx.lineTo(c.ex, c.ey);
+        ctx.strokeStyle = `rgba(124, 124, 255, ${alpha})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+
+      // Tip dot
+      const tipX = x + cx;
+      const tipY = y + cy;
+
+      // Glow
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 124, 195, 0.3)';
+      ctx.fill();
+      // Solid dot
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff7cc3';
+      ctx.fill();
+
+      // Add to trace
+      tracePoints.push({ x: tipX, y: tipY });
+
+      // Draw trace
+      if (tracePoints.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(tracePoints[0].x, tracePoints[0].y);
+        for (let i = 1; i < tracePoints.length; i++) {
+          ctx.lineTo(tracePoints[i].x, tracePoints[i].y);
+        }
+        ctx.strokeStyle = '#ff7cc3';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        // Second pass: glow
+        ctx.strokeStyle = 'rgba(255, 124, 195, 0.2)';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+      }
+
+      // Advance time
+      const dt = speedMul * 0.3;
+      time += dt / (60); // roughly one loop per N frames at speed 1
+
+      // Check if we've completed a full loop
+      if (time >= N) {
+        // Keep looping
+        time -= N;
+        tracePoints = [];
+      }
+    }
+
+    draw();
+  })();
+</script>
+</body>
+</html>
