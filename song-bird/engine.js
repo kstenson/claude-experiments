@@ -386,19 +386,25 @@ function initVoiceControls() {
 // must never abort init, or the core scope functions (stack, note, s) never get
 // registered and every pattern dies with "Can't find variable: stack".
 async function loadDefaultSamples() {
-  const ds = "https://raw.githubusercontent.com/felixroos/dough-samples/main/";
+  const ds = "samples/";
   const files = [
     "tidal-drum-machines.json", "piano.json", "Dirt-Samples.json",
-    "EmuSP12.json", "vcsl.json", "mridangam.json",
+    "EmuSP12.json", "vcsl.json",
   ];
   // Load each independently so one bad fetch doesn't sink the rest.
-  await Promise.all(
+  const results = await Promise.all(
     files.map((f) =>
-      Promise.resolve(samples(ds + f)).catch((e) =>
-        console.warn("Sample pack failed to load:", f, e)
-      )
+      Promise.resolve(samples(ds + f))
+        .then(() => { console.log("✓ Loaded:", f); return true; })
+        .catch((e) => {
+          console.warn("✗ Sample pack failed:", f, e);
+          return false;
+        })
     )
   );
+  const loaded = results.filter(Boolean).length;
+  console.log(`Sample loading: ${loaded}/${files.length} packs loaded`);
+  if (loaded === 0) console.error("NO sample packs loaded — only oscillators will play");
 }
 
 async function ensureStrudel() {
@@ -436,9 +442,14 @@ async function buildAndPlay(song) {
   try {
     const pat = (0, eval)(song.pattern);
     pat.cpm(bpm / 4).play();
+    console.log("Pattern playing at", bpm, "bpm (cpm=" + (bpm/4) + ")");
   } catch (e) {
     console.error("Pattern evaluation failed:", e);
-    $("summary").textContent = "Could not play pattern: " + e.message;
+    const info = $("sample-info");
+    if (info) {
+      info.textContent = "Pattern error: " + e.message;
+      info.hidden = false;
+    }
   }
 }
 
