@@ -10,14 +10,42 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-06",
+    "lastUpdated": "2026-06-08",
     "note": "Today's edition was compiled while live news retrieval was degraded. Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-08",
+      "date": "2026-06-08",
+      "headline": true,
+      "topic": "Small boat Channel crossings",
+      "claim": "We'd stop the boats — we'd stop 1,000 people coming in a day.",
+      "speaker": "Robert Kenyon",
+      "party": "Reform UK",
+      "role": "Reform UK candidate, Makerfield by-election (18 June 2026)",
+      "discussionScore": 79,
+      "discussionNote": "Immigration remains the single most-cited issue facing Britain, and this claim landed on BBC Question Time (4 June) in the run-up to the high-profile Makerfield by-election on 18 June, where Reform UK's Robert Kenyon faces Labour's Andy Burnham. The contest is one of the most-watched political events of the month. Kenyon's '1,000 people a day' line was clipped and shared by LBC, fact-checked by Full Fact, and drew sustained social-media reaction, keeping it near the top of the week's immigration debate.",
+      "score": 22,
+      "verdict": "False",
+      "explanation": "Kenyon's framing — that stopping the boats would stop '1,000 people coming in a day' — presents 1,000 daily arrivals as the normal current rate. That overstates the real figure by roughly ten times. Home Office data show that since Labour took office on 5 July 2024, small-boat arrivals have averaged about 106 people per day overall (around 274 per day if days with zero crossings are excluded). Days of 1,000 or more arrivals are rare: there have been just 12 such days in the entire dataset since 2018, and only four since Labour took office. The Migration Observatory puts total crossings at roughly 41,000 in both 2024 and 2025 (about 112 a day), with 2026 running sharply lower — around 9,000 in the first five months. There is a grain of truth that 1,000-arrival days do occasionally happen in peak summer conditions, but presenting that as the everyday rate is a significant exaggeration.",
+      "evidence": [
+        "Full Fact (June 2026): small-boat arrivals have averaged about 106 per day since Labour took office on 5 July 2024 (274 per day excluding days with no crossings) — not 1,000.",
+        "Full Fact: only 12 days since the dataset began on 1 January 2018 have seen 1,000+ small-boat arrivals; just four of those fall since July 2024 (31 May 2025; 6 and 19 September 2025; 8 October 2025).",
+        "Migration Observatory: roughly 41,000 crossings in 2024 and about 41,000 in 2025 — an average of around 112 people per day across the year.",
+        "Migration Observatory: about 9,000 people crossed in the first five months of 2026, around 38% lower than the same period in 2025, so the current daily rate is well below even the long-run average.",
+        "The highest annual total to date was about 46,000 in 2022; no year has come close to the ~365,000 that a sustained rate of 1,000 a day would imply."
+      ],
+      "confidence": "High — corroborated by Full Fact's analysis of Home Office small-boat arrivals data and the Migration Observatory's Channel crossings briefing, two independent sources.",
+      "sources": [
+        { "title": "Full Fact — How many migrants come to the UK by small boat each day?", "url": "https://fullfact.org/immigration/robert-kenyon-small-boats-question-time/" },
+        { "title": "Migration Observatory — People crossing the English Channel in small boats", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/people-crossing-the-english-channel-in-small-boats/" },
+        { "title": "ITV News Granada — Reform UK and Andy Burnham to go head to head in Makerfield by-election", "url": "https://www.itv.com/news/granada/2026-05-19/reform-uk-and-andy-burnham-to-go-head-to-head-in-by-election" }
+      ]
+    },
+    {
       "id": "2026-06-06",
       "date": "2026-06-06",
-      "headline": true,
+      "headline": false,
       "topic": "Young people and disability benefits",
       "claim": "Mild anxiety is not a reason to be on disability benefit — it just isn't. We can't afford it, it can't continue.",
       "speaker": "Nigel Farage",
