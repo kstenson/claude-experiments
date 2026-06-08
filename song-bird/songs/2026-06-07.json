@@ -1,0 +1,59 @@
+{
+  "date": "2026-06-07",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "The Litani Line",
+  "mood": {
+    "label": "Heavy going",
+    "score": -0.24,
+    "summary": "A tense Sunday as April's Iran–Israel truce frayed to breaking: Israeli warplanes hit Beirut's southern suburbs and Iran fired its first missiles toward Israel since the spring ceasefire, with both sides poised to resume — yet over a million filled Madrid for Pope Leo XIV's open-air Mass, Armenia's pro-Western party won its vote, and Zverev took his first Grand Slam in five sets.",
+    "palette": {
+      "bg": "#0c1014",
+      "bg2": "#13191e",
+      "accent": "#6a5a72",
+      "accent2": "#3e6a6a",
+      "text": "#d2d8da"
+    }
+  },
+  "style": {
+    "genre": "slow piano ballad, dorian",
+    "key": "D",
+    "scale": "dorian",
+    "bpm": 72,
+    "swing": 0.05
+  },
+  "samples": [],
+  "sampleSources": [
+    "Strudel default library — sampled piano, vibraphone (VCSL), RolandTR909"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ rim ~ ~ ~\").bank(\"RolandTR909\").gain(0.3).room(0.32).hpf(80).slow(2), note(\"d1 ~ ~ ~ ~ ~ ~ ~ a1 ~ ~ ~ ~ ~ ~ ~ g1 ~ ~ ~ ~ ~ ~ ~ c2 ~ ~ ~ ~ ~ ~ ~\").s(\"sine\").attack(0.03).release(1.6).lpf(300).gain(0.48), note(\"<[d3,f3,a3] [a2,c3,e3] [g2,bb2,d3] [c3,e3,g3]>\").s(\"piano\").gain(0.5).room(0.56).rsize(6).pan(0.45).slow(2), note(\"<[d3,f3,a3,c4] [a2,c3,e3,g3] [g2,bb2,d3,f3] [c3,e3,g3,bb3]>\").s(\"sawtooth\").attack(2.4).decay(0.7).sustain(0.5).release(4.5).lpf(sine.range(300,1100).slow(24)).gain(0.07).room(0.68).rsize(8), note(\"d4 ~ ~ ~ f4 ~ e4 ~ ~ ~ d4 ~ ~ a3 ~ ~ c4 ~ ~ ~ d4 ~ ~ ~ ~ a3 ~ ~ ~ ~ ~ ~\").s(\"piano\").gain(0.35).room(0.5).pan(0.54).delay(0.24).delaytime(0.42).off(0.125, x => x.gain(0.12).pan(0.64).lpf(1500)), note(\"~ ~ a4 ~ ~ ~ ~ ~ ~ ~ ~ f4 ~ ~ ~ ~ ~ ~ d4 ~ ~ ~ ~ ~ ~ ~ ~ e4 ~ ~ ~ ~\").s(\"vibraphone\").gain(0.19).room(0.55).rsize(5).pan(0.36).delay(0.22).delaytime(0.5))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "The planes came low over the southern suburbs before the bells of Sunday rang,",
+        "two more names in a stronghold, twenty wounded in the smoke.",
+        "Then the sky filled up over the water — the first since spring let go —",
+        "missiles answering a promise that the April ink had broke."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "They say hold fire for the moment, they say pull back from the Litani line,",
+        "and the market sleeps the weekend through while oil waits to climb.",
+        "But a million stood in Madrid where the old procession sang,",
+        "Armenia turned toward morning, and a man won his first time."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Draw the line at the river, keep the fragile word alive,",
+        "before the hundredth day burns down the little that survives.",
+        "Hold the mercies in the heavy: a crowd, a vote, a name —",
+        "the small bright things we carry when the rest comes down like rain."
+      ]
+    }
+  ]
+}
