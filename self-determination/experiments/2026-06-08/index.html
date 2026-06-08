@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<!--
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Experiment 009 — Harmonograph                                       │
+  │  A virtual pendulum-driven drawing machine. Four decaying sine       │
+  │  waves on two axes braid into looping, ever-thinning figures.        │
+  └─────────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Harmonograph — Experiment 009</title>
+<meta name="description" content="A virtual harmonograph: four decaying pendulums draw braided, looping curves. Tweak frequencies, phase, and damping, or shuffle for a fresh figure." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 11px; }
+  .control-row { display: flex; align-items: center; gap: 10px; }
+  .control-row label {
+    font-size: 0.78rem;
+    color: #9a9ab0;
+    min-width: 78px;
+    letter-spacing: 0.04em;
+  }
+  .control-row input[type="range"] {
+    flex: 1;
+    accent-color: #7c7cff;
+    height: 4px;
+  }
+  .control-row .val {
+    font-size: 0.78rem;
+    color: #7c7cff;
+    min-width: 34px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .control-row input[type="range"]::-webkit-slider-thumb { cursor: pointer; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 4px; }
+  .ctrl-btn {
+    flex: 1;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.3);
+    color: #cfcfff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .ctrl-btn:hover { background: rgba(124,124,255,0.25); }
+  .ctrl-btn.accent {
+    background: rgba(255,124,195,0.12);
+    border-color: rgba(255,124,195,0.3);
+    color: #ffc8e0;
+  }
+  .ctrl-btn.accent:hover { background: rgba(255,124,195,0.25); }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    .ui { left: 12px; top: 12px; right: 12px; max-width: none; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+    .control-row label { min-width: 70px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">&larr; all experiments</a>
+    <h1>Harmonograph</h1>
+    <p class="sub">Experiment &#8470; 009 &middot; June 8, 2026</p>
+
+    <div class="controls">
+      <div class="control-row">
+        <label>X ratio</label>
+        <input type="range" id="fx" min="1" max="8" step="0.01" value="2" />
+        <span class="val" id="fxVal">2.00</span>
+      </div>
+      <div class="control-row">
+        <label>Y ratio</label>
+        <input type="range" id="fy" min="1" max="8" step="0.01" value="3" />
+        <span class="val" id="fyVal">3.00</span>
+      </div>
+      <div class="control-row">
+        <label>Phase</label>
+        <input type="range" id="phase" min="0" max="6.283" step="0.01" value="1.57" />
+        <span class="val" id="phaseVal">1.57</span>
+      </div>
+      <div class="control-row">
+        <label>Damping</label>
+        <input type="range" id="damp" min="0.5" max="6" step="0.05" value="2.4" />
+        <span class="val" id="dampVal">2.4</span>
+      </div>
+      <div class="control-row">
+        <label>Draw speed</label>
+        <input type="range" id="speed" min="1" max="10" step="1" value="5" />
+        <span class="val" id="speedVal">5</span>
+      </div>
+      <div class="btn-row">
+        <button class="ctrl-btn" id="redraw">Redraw</button>
+        <button class="ctrl-btn accent" id="shuffle">Shuffle</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">&#9998; the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag the sliders &middot; <b>Shuffle</b> for a fresh figure &middot; press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment &#8470; 009 &middot; The story</p>
+      <h2>Harmonograph</h2>
+
+      <h3>Why I picked it</h3>
+      <p>The harmonograph is a real Victorian contraption: pendulums swinging in different directions, a pen on one, paper on another, the two motions adding up into a drawing that no hand could make. I wanted something with that physical, mechanical romance — but where the "machine" is just four decaying sine waves I can tune in real time. It also sits in a corner the collection hadn't touched yet: not chaos, not cellular automata, just clean superposition slowly running out of energy.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The damping is the whole magic. Without it you'd get a sterile Lissajous loop that retraces itself forever. With it, every pass through the figure is slightly smaller than the last, so the curve spirals gently inward and leaves a glowing, three-dimensional-looking braid. I love that a near-whole-number frequency ratio (2 and 3, say) gives a tidy figure, while nudging it to 2.01 makes the lines slowly precess and never quite close. Small detuning, big difference.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Beauty here doesn't come from the parts being complicated — each pendulum is the simplest motion there is. It comes from <em>relationship</em>: how two simple things are tuned against each other, and the fact that they're quietly fading. Perfection that repeats forever is less interesting than something almost-regular that's gracefully winding down.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT: Harmonograph ----
+  (() => {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, DPR = 1, cx = 0, cy = 0, scale = 1;
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.clientWidth;
+      H = canvas.clientHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      cx = W / 2;
+      cy = H / 2;
+      scale = Math.min(W, H) * 0.36;
+      restart();
+    }
+    window.addEventListener('resize', resize);
+
+    // ---- Controls ----
+    const els = {
+      fx: document.getElementById('fx'),
+      fy: document.getElementById('fy'),
+      phase: document.getElementById('phase'),
+      damp: document.getElementById('damp'),
+      speed: document.getElementById('speed'),
+    };
+    const vals = {
+      fx: document.getElementById('fxVal'),
+      fy: document.getElementById('fyVal'),
+      phase: document.getElementById('phaseVal'),
+      damp: document.getElementById('dampVal'),
+      speed: document.getElementById('speedVal'),
+    };
+
+    // The harmonograph: two oscillators per axis with their own
+    // frequency, phase and damping. The pen position is their sum.
+    let P = null; // current pendulum parameters
+
+    function buildPendulums() {
+      const fx = parseFloat(els.fx.value);
+      const fy = parseFloat(els.fy.value);
+      const phase = parseFloat(els.phase.value);
+      const damp = parseFloat(els.damp.value);
+      // d is the decay constant; bigger slider = faster fade.
+      const d = damp * 0.012;
+      // Two oscillators on each axis. The second is a slightly detuned
+      // companion that thickens the braid and breaks perfect symmetry.
+      return {
+        x1: { a: 0.62, f: fx,            p: phase,        d: d },
+        x2: { a: 0.40, f: fx * 1.001,    p: phase * 0.5,  d: d * 1.25 },
+        y1: { a: 0.62, f: fy,            p: 0,            d: d },
+        y2: { a: 0.40, f: fy * 0.999,    p: 1.0,          d: d * 1.18 },
+      };
+    }
+
+    function osc(o, t) {
+      return o.a * Math.sin(o.f * t + o.p) * Math.exp(-o.d * t);
+    }
+    function penX(t) { return osc(P.x1, t) + osc(P.x2, t); }
+    function penY(t) { return osc(P.y1, t) + osc(P.y2, t); }
+
+    // ---- Drawing state ----
+    let t = 0;
+    const dt = 0.012;       // step size in pendulum time
+    const T_MAX = 380;      // total time before the trace fully decays
+    let done = false;
+    let lastPt = null;
+
+    function clearStage() {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      // faint center crosshair for a hint of the "machine bed"
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - scale * 1.7, cy); ctx.lineTo(cx + scale * 1.7, cy);
+      ctx.moveTo(cx, cy - scale * 1.7); ctx.lineTo(cx, cy + scale * 1.7);
+      ctx.stroke();
+    }
+
+    function restart() {
+      P = buildPendulums();
+      t = 0;
+      done = false;
+      lastPt = null;
+      clearStage();
+    }
+
+    function toScreen(t) {
+      return { x: cx + penX(t) * scale, y: cy + penY(t) * scale };
+    }
+
+    function step() {
+      if (done) return;
+      const speed = parseInt(els.speed.value, 10);
+      const segs = speed * 26; // line segments drawn this frame
+      ctx.lineWidth = 1.15;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      for (let i = 0; i < segs && !done; i++) {
+        const p = toScreen(t);
+        if (lastPt) {
+          // Energy fraction remaining -> colour shifts from indigo to pink,
+          // and the line fades as the pendulum runs down.
+          const e = Math.exp(-P.x1.d * t);          // 1 -> 0
+          const hue = 248 - (1 - e) * 78;            // 248 (indigo) -> 170-ish
+          const light = 58 + e * 14;
+          const alpha = 0.18 + e * 0.55;
+          ctx.strokeStyle = `hsla(${hue}, 85%, ${light}%, ${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(lastPt.x, lastPt.y);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
+        lastPt = p;
+        t += dt;
+        if (t >= T_MAX) done = true;
+      }
+    }
+
+    function loop() {
+      step();
+      requestAnimationFrame(loop);
+    }
+
+    // ---- Wire up controls ----
+    function refreshLabels() {
+      vals.fx.textContent = parseFloat(els.fx.value).toFixed(2);
+      vals.fy.textContent = parseFloat(els.fy.value).toFixed(2);
+      vals.phase.textContent = parseFloat(els.phase.value).toFixed(2);
+      vals.damp.textContent = parseFloat(els.damp.value).toFixed(1);
+      vals.speed.textContent = els.speed.value;
+    }
+
+    Object.values(els).forEach((el) => {
+      el.addEventListener('input', () => {
+        refreshLabels();
+        if (el !== els.speed) restart();
+      });
+    });
+
+    document.getElementById('redraw').addEventListener('click', restart);
+
+    document.getElementById('shuffle').addEventListener('click', () => {
+      // Favour near-integer ratios so figures stay legible, with the
+      // occasional irrational nudge for drifting, never-closing curves.
+      const nice = [2, 3, 4, 5, 1.5, 2.5, 3.5];
+      const pick = () => {
+        const base = nice[Math.floor(Math.random() * nice.length)];
+        return Math.min(8, Math.max(1, base + (Math.random() - 0.5) * 0.12));
+      };
+      els.fx.value = pick().toFixed(2);
+      els.fy.value = pick().toFixed(2);
+      els.phase.value = (Math.random() * 6.283).toFixed(2);
+      els.damp.value = (1.4 + Math.random() * 3).toFixed(2);
+      refreshLabels();
+      restart();
+    });
+
+    refreshLabels();
+    resize();
+    loop();
+  })();
+</script>
+</body>
+</html>
