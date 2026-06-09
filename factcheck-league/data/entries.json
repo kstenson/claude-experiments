@@ -10,14 +10,42 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-08",
+    "lastUpdated": "2026-06-09",
     "note": "Today's edition was compiled while live news retrieval was degraded. Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-09",
+      "date": "2026-06-09",
+      "headline": true,
+      "topic": "Welfare spending versus income tax",
+      "claim": "We're now in a situation for the first time ever where the amount that we are paying in benefits is more than the government is taking in income tax.",
+      "speaker": "Katie Lam",
+      "party": "Conservative",
+      "role": "Conservative MP for Weald of Kent and Opposition Assistant Whip",
+      "discussionScore": 81,
+      "discussionNote": "The line that welfare now exceeds income tax 'for the first time ever' has become one of the most-repeated Conservative and Reform attack lines of the welfare debate, deployed by Katie Lam on BBC Radio 4's World at One and echoed almost word-for-word by Robert Jenrick, Helen Whately, Kemi Badenoch and Luke Evans across broadcast and social media. Full Fact has had to fact-check the framing more than once, and it remains a high-reach talking point as the parties spar over the size of the benefits bill.",
+      "score": 20,
+      "verdict": "False",
+      "explanation": "Lam's underlying fact — that total welfare spending currently exceeds income tax receipts — is correct, but the 'for the first time ever' framing is the opposite of the truth. Using OBR figures, Full Fact and the IFS find welfare (which includes the state pension, not just out-of-work benefits) has been higher than income tax receipts every year for at least the last 13 years, going back to at least 2013/14. Far from being the first time, 2025/26 is expected to be the LAST year for the foreseeable future that welfare exceeds income tax: the OBR forecasts the gap narrowing sharply and the positions reversing in 2026/27, with income tax staying ahead through to the end of the forecast in 2030/31. The figures also do not cleanly map onto 'workers paying for non-workers' — many workers receive benefits and many non-workers, including pensioners, pay income tax.",
+      "evidence": [
+        "Full Fact (June 2026), citing OBR figures: welfare spending has been higher than income tax receipts every year for at least the last 13 years, going back to at least 2013/14 — not for the first time.",
+        "IFS (Tom Waters): welfare spending is forecast to be lower than income tax receipts in 2026/27 'for the first time since at least 2013/14', and to remain that way until the end of the forecast period in 2030/31.",
+        "The gap between welfare and income tax narrowed significantly in 2025/26, so 2025/26 is expected to be the last year — not the first — that welfare exceeds income tax.",
+        "Welfare here includes the state pension alongside universal credit and other benefits, so the totals are not a clean measure of money paid by workers versus money spent on non-workers; many workers claim benefits and many pensioners pay income tax.",
+        "The same 'first time ever' framing was used by other senior figures including Robert Jenrick, Helen Whately, Kemi Badenoch and Luke Evans, and was rated false in each case."
+      ],
+      "confidence": "High — corroborated by two Full Fact analyses and the IFS, all drawing on OBR public-finances data; the OBR is the underlying primary source.",
+      "sources": [
+        { "title": "Full Fact — Katie Lam wrongly claims welfare has exceeded income tax 'for the first time ever'", "url": "https://fullfact.org/economy/katie-lam-welfare-income-tax/" },
+        { "title": "Full Fact — Welfare payments have not exceeded income tax 'for the first time ever'", "url": "https://fullfact.org/economy/income-tax-versus-welfare-spending/" },
+        { "title": "OBR — Economic and fiscal outlook (March 2026)", "url": "https://obr.uk/economic-and-fiscal-outlooks/" }
+      ]
+    },
+    {
       "id": "2026-06-08",
       "date": "2026-06-08",
-      "headline": true,
+      "headline": false,
       "topic": "Small boat Channel crossings",
       "claim": "We'd stop the boats — we'd stop 1,000 people coming in a day.",
       "speaker": "Robert Kenyon",
