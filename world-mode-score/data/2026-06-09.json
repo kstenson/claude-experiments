@@ -1,0 +1,154 @@
+{
+  "date": "2026-06-09",
+  "score": 43,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "A day of fragile relief rather than resolution. The Iran–Israel front cooled: Netanyahu said Israel had halted its attacks and Iran suspended its own operations, though Tehran warned it would resume if Israeli strikes on southern Lebanon continued. Even amid the pause the violence had a human cost — an Israeli strike on Tyre killed five and wounded eight, including four paramedics near a Red Cross center. Markets read the de-escalation as good news: Brent eased toward $93 a barrel after spiking past $97, US equities had rebounded ~0.9% on Monday, and futures edged higher as the AI trade — underscored by OpenAI's confidential IPO filing a week after Anthropic's — kept driving sentiment.\n\nElsewhere the ledger was mixed. In the Philippines, the death toll from Monday's magnitude-7.8 Mindanao quake rose to 37 with 479 injured and four missing as coast-guard teams dug through collapsed buildings in General Santos. Xi Jinping wrapped a rare two-day state visit to Pyongyang — his first in seven years — reasserting China's hand over a North Korea drifting toward Moscow. Peru's presidential runoff was effectively tied, leftist Roberto Sánchez edging Keiko Fujimori 50.1% to 49.9% with counting unfinished, a knife-edge result in a deeply polarized country. Sudan's war ground into its fourth year and the DRC's Bundibugyo-Ebola emergency worsened past 90 deaths. Against the strain there were brighter notes: New Zealand created five new marine reserves protecting yellow-eyed penguins and sea lions, and Europe logged a record year of river-barrier removals.",
+  "dimensions": {
+    "conflict": 32,
+    "economy": 52,
+    "climate": 38,
+    "humanInterest": 40,
+    "techProgress": 62
+  },
+  "regions": {
+    "northAmerica": 54,
+    "southAmerica": 48,
+    "europe": 46,
+    "africa": 38,
+    "middleEast": 30,
+    "asia": 42,
+    "oceania": 60
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "Israel and Iran halt attacks for now: Netanyahu says strikes stopped, Iran suspends operations but warns over southern Lebanon",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/6/4/iran-war-live-tensions-simmer-after-latest-us-iran-clashes-in-gulf",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Israeli strike on Tyre kills five and wounds eight, including four paramedics near a Red Cross center, as Lebanon violence persists",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/06/07/world/live-news/iran-war-trump-israel-lebanon",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Mindanao quake death toll climbs to 37 with 479 injured and four missing as coast guard digs through collapsed buildings",
+      "source": "Rappler",
+      "url": "https://www.rappler.com/philippines/mindanao/death-toll-sarangani-earthquake-june-9-2026/",
+      "dimension": "climate",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Oil eases toward $93 a barrel and US stocks rebound ~0.9% as markets read Middle East ceasefire signals as de-escalation",
+      "source": "TheStreet",
+      "url": "https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-june-08-2026",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "OpenAI confidentially files for a US IPO, a week after rival Anthropic, signaling a wave of AI listings as soon as the fall",
+      "source": "Bloomberg",
+      "url": "https://www.bloomberg.com/news/articles/2026-06-08/openai-filed-confidentially-for-ipo-as-rivals-race-to-market",
+      "dimension": "techProgress",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Xi Jinping wraps rare two-day Pyongyang state visit, his first in seven years, reasserting China's influence over North Korea",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/8/chinas-xi-jinping-arrives-in-north-korea-on-rare-state-visit",
+      "dimension": "conflict",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Peru's presidential runoff a virtual tie: leftist Sánchez edges Fujimori 50.1% to 49.9% with counting unfinished in a polarized country",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/8/race-tied-between-left-and-right-wing-rivals-in-perus-presidential-vote",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "DR Congo Bundibugyo-Ebola emergency worsens past 90 deaths and 500+ confirmed cases as WHO warns of conflict and hunger",
+      "source": "World Health Organization",
+      "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON606",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Sudan's war grinds into its fourth year, with heavy fighting around El Obeid and Kadugli and survivors of RSF abuse speaking out",
+      "source": "Security Council Report",
+      "url": "https://www.securitycouncilreport.org/monthly-forecast/2026-06/sudan-39.php",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "UN Security Council meets on Russia's intensifying strikes on Ukraine as officials warn civilian casualties are among the war's highest",
+      "source": "The Kyiv Independent",
+      "url": "https://kyivindependent.com/",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "New Zealand creates five new marine reserves covering 191 square miles to protect yellow-eyed penguins and sea lions",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-23-of-2026/",
+      "dimension": "climate",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "Breast-cancer gene test finds two-thirds of patients can safely skip chemotherapy, keeping 93.7% five-year survival",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-23-of-2026/",
+      "dimension": "techProgress"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "CNN",
+    "CBS News",
+    "BBC",
+    "Al Jazeera",
+    "Euronews",
+    "Bloomberg",
+    "CNBC",
+    "TheStreet",
+    "Yahoo Finance",
+    "Fortune",
+    "Trading Economics",
+    "The Kyiv Independent",
+    "Washington Post",
+    "Washington Times",
+    "Rappler",
+    "Inquirer",
+    "GMA News",
+    "Sunstar",
+    "World Health Organization",
+    "UN News",
+    "Security Council Report",
+    "okayAfrica",
+    "Africanews",
+    "Prime Minister of Australia",
+    "SBS News",
+    "Britannica",
+    "Wikipedia (Current events / 2026 Mindanao earthquake / 2026 Iran war / Peru general election)",
+    "Positive News",
+    "Good News Network"
+  ]
+}
