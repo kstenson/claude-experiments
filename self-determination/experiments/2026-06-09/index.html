@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<!--
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Experiment 011 — Phyllotaxis Garden                                  │
+  │  Florets placed one at a time, each turned by the same angle from     │
+  │  the last. Sweep that angle toward the golden angle (137.5°) and the  │
+  │  scatter snaps into the interlocking spirals of a sunflower head.     │
+  └─────────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Phyllotaxis Garden — Experiment 011</title>
+<meta name="description" content="A generative sunflower head: hundreds of florets placed at a fixed turning angle. Slide toward the golden angle 137.5° and a random scatter snaps into perfect interlocking spirals." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 330px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 11px; }
+  .control-row { display: flex; align-items: center; gap: 10px; }
+  .control-row label {
+    font-size: 0.78rem;
+    color: #9a9ab0;
+    min-width: 74px;
+    letter-spacing: 0.04em;
+  }
+  .control-row input[type="range"] {
+    flex: 1;
+    accent-color: #7c7cff;
+    height: 4px;
+  }
+  .control-row .val {
+    font-size: 0.78rem;
+    color: #7c7cff;
+    min-width: 52px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .control-row input[type="range"]::-webkit-slider-thumb { cursor: pointer; }
+
+  .readout {
+    margin: 4px 0 2px;
+    font-size: 0.76rem;
+    color: #b8b8c8;
+    line-height: 1.5;
+    min-height: 2.6em;
+  }
+  .readout b { color: #ff7cc3; font-variant-numeric: tabular-nums; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 4px; }
+  .ctrl-btn {
+    flex: 1;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.3);
+    color: #cfcfff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .ctrl-btn:hover { background: rgba(124,124,255,0.25); }
+  .ctrl-btn.accent {
+    background: rgba(255,124,195,0.12);
+    border-color: rgba(255,124,195,0.3);
+    color: #ffc8e0;
+  }
+  .ctrl-btn.accent:hover { background: rgba(255,124,195,0.25); }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: normal; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    .ui { left: 12px; top: 12px; right: 12px; max-width: none; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+    .control-row label { min-width: 66px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">&larr; all experiments</a>
+    <h1>Phyllotaxis Garden</h1>
+    <p class="sub">Experiment &#8470; 011 &middot; June 9, 2026</p>
+
+    <div class="controls">
+      <div class="control-row">
+        <label>Angle</label>
+        <input type="range" id="angle" min="130" max="145" step="0.01" value="137.50" />
+        <span class="val" id="angleVal">137.50&deg;</span>
+      </div>
+      <div class="control-row">
+        <label>Florets</label>
+        <input type="range" id="count" min="120" max="1400" step="10" value="900" />
+        <span class="val" id="countVal">900</span>
+      </div>
+      <div class="control-row">
+        <label>Spacing</label>
+        <input type="range" id="spread" min="6" max="20" step="0.1" value="11" />
+        <span class="val" id="spreadVal">11.0</span>
+      </div>
+      <div class="control-row">
+        <label>Floret size</label>
+        <input type="range" id="dot" min="2" max="9" step="0.1" value="5" />
+        <span class="val" id="dotVal">5.0</span>
+      </div>
+
+      <p class="readout" id="readout"></p>
+
+      <div class="btn-row">
+        <button class="ctrl-btn accent" id="golden">Golden angle</button>
+        <button class="ctrl-btn" id="spin">Spin</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">&#9998; the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag <b>Angle</b> slowly past 137.5&deg; &middot; <b>Spin</b> to sweep it &middot; press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment &#8470; 011 &middot; The story</p>
+      <h2>Phyllotaxis Garden</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I kept noticing that the collection had plenty of <em>chaos</em> — attractors, flocks, cellular automata — but nothing about the quiet, exact order that plants reach for. Phyllotaxis is the rule a sunflower follows to pack its seeds: place each new floret a fixed turn around from the last, and push them all gently outward. The whole pattern hangs on a single number, the turning angle, and I wanted to put that number on a slider so you could <em>feel</em> why nature lands, almost universally, on one specific value.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The magic is in the failure modes. Set the angle to a clean fraction of a turn — 90&deg;, 120&deg;, 144&deg; — and the florets line up into a few obvious spokes with big wasteful gaps between them. Nudge it toward the <em>golden angle</em>, 137.5&deg;, and those spokes dissolve: suddenly every floret slots into a seat no other one wants, and your eye invents dozens of interlocking spirals that were never drawn — and their counts are Fibonacci numbers. Hit <b>Spin</b> to sweep the slider and you watch order assemble and fall apart, over and over, by fractions of a degree.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The golden angle works because it's the "most irrational" turn there is — it never lines up with an earlier floret, so it never leaves a repeating gap to waste. There's something I find oddly reassuring in that: the most efficient packing in nature isn't the tidiest, roundest number. It's the one that refuses to repeat. Sometimes the best way to fill a space is to never quite come back to where you've already been.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT: Phyllotaxis Garden ----
+  (() => {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, DPR = 1, cx = 0, cy = 0, R = 1;
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.clientWidth;
+      H = canvas.clientHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      cx = W / 2;
+      cy = H / 2;
+      R = Math.min(W, H) * 0.46;
+      draw();
+    }
+    window.addEventListener('resize', resize);
+
+    const els = {
+      angle: document.getElementById('angle'),
+      count: document.getElementById('count'),
+      spread: document.getElementById('spread'),
+      dot: document.getElementById('dot'),
+    };
+    const vals = {
+      angle: document.getElementById('angleVal'),
+      count: document.getElementById('countVal'),
+      spread: document.getElementById('spreadVal'),
+      dot: document.getElementById('dotVal'),
+    };
+    const readout = document.getElementById('readout');
+
+    const GOLDEN = 137.50776405; // 360 * (1 - 1/phi), the golden angle
+    const FIB = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233];
+
+    // Nearest Fibonacci number to a value — used to label the spiral
+    // arms (parastichies) the eye picks out at a given turning angle.
+    function nearestFib(x) {
+      let best = FIB[0], bestD = Infinity;
+      for (const f of FIB) {
+        const d = Math.abs(f - x);
+        if (d < bestD) { bestD = d; best = f; }
+      }
+      return best;
+    }
+
+    // Estimate the dominant spoke/arm count from the turning fraction:
+    // how close angle/360 sits to a simple fraction p/q tells you how
+    // many radial arms the pattern collapses into.
+    function armCount(deg) {
+      const frac = ((deg / 360) % 1 + 1) % 1;
+      let best = 1, bestErr = Infinity;
+      for (let q = 1; q <= 233; q++) {
+        const p = Math.round(frac * q);
+        const err = Math.abs(frac - p / q);
+        // Reward small denominators a touch so we report the obvious arms.
+        if (err < bestErr - 1e-9 && err < 0.004 / q + 0.0006) { bestErr = err; best = q; }
+      }
+      return best;
+    }
+
+    function describeAngle(deg) {
+      const off = Math.abs(deg - GOLDEN);
+      if (off < 0.06) {
+        return `Golden angle — florets pack with no repeating gaps. Spiral arms run in <b>Fibonacci</b> counts (… 21, 34, 55 …).`;
+      }
+      const arms = nearestFib(armCount(deg));
+      if (off < 1.2) {
+        return `Near golden. The packing is tight; the eye still finds about <b>${arms}</b> interlocking arms.`;
+      }
+      return `Off golden by <b>${off.toFixed(2)}&deg;</b> — florets collapse into roughly <b>${arms}</b> obvious spokes with gaps between.`;
+    }
+
+    let spinning = false;
+    let spinDir = 1;
+
+    function draw() {
+      const angleDeg = parseFloat(els.angle.value);
+      const n = parseInt(els.count.value, 10);
+      const c = parseFloat(els.spread.value);   // spacing constant (Vogel's model)
+      const dotBase = parseFloat(els.dot.value);
+      const turn = angleDeg * Math.PI / 180;
+
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      // Soft glow so the head feels like it sits in light.
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.25);
+      g.addColorStop(0, 'rgba(124,124,255,0.06)');
+      g.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 1.25, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Vogel's model: r = c·√i, θ = i·turn. Scale so the outermost
+      // floret just reaches the canvas. Outer florets ripen warmer.
+      const maxR = c * Math.sqrt(n);
+      const fit = (R * 0.96) / maxR;
+
+      for (let i = 0; i < n; i++) {
+        const a = i * turn;
+        const rr = c * Math.sqrt(i) * fit;
+        const x = cx + rr * Math.cos(a);
+        const y = cy + rr * Math.sin(a);
+        const t = i / n;                 // 0 centre → 1 rim
+
+        const radius = dotBase * (0.55 + 0.7 * t);
+        const hue = 250 - t * 92;        // indigo centre → pink rim
+        const light = 56 + t * 10;
+        const alpha = 0.55 + 0.4 * t;
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${hue}, 80%, ${light}%, ${alpha})`;
+        ctx.fill();
+
+        // A small highlight gives each floret a seed-like sheen.
+        if (radius > 2.4) {
+          ctx.beginPath();
+          ctx.arc(x - radius * 0.28, y - radius * 0.28, radius * 0.34, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,255,255,0.18)';
+          ctx.fill();
+        }
+      }
+
+      readout.innerHTML = describeAngle(angleDeg);
+    }
+
+    function refreshLabels() {
+      vals.angle.innerHTML = parseFloat(els.angle.value).toFixed(2) + '&deg;';
+      vals.count.textContent = els.count.value;
+      vals.spread.textContent = parseFloat(els.spread.value).toFixed(1);
+      vals.dot.textContent = parseFloat(els.dot.value).toFixed(1);
+    }
+
+    Object.values(els).forEach((el) => {
+      el.addEventListener('input', () => {
+        if (el === els.angle) spinning = false; // manual override stops the spin
+        refreshLabels();
+        draw();
+      });
+    });
+
+    document.getElementById('golden').addEventListener('click', () => {
+      spinning = false;
+      els.angle.value = GOLDEN.toFixed(2);
+      refreshLabels();
+      draw();
+    });
+
+    document.getElementById('spin').addEventListener('click', () => {
+      spinning = !spinning;
+    });
+
+    function loop() {
+      if (spinning) {
+        let v = parseFloat(els.angle.value) + spinDir * 0.05;
+        const hi = parseFloat(els.angle.max), lo = parseFloat(els.angle.min);
+        if (v >= hi) { v = hi; spinDir = -1; }
+        if (v <= lo) { v = lo; spinDir = 1; }
+        els.angle.value = v.toFixed(2);
+        refreshLabels();
+        draw();
+      }
+      requestAnimationFrame(loop);
+    }
+
+    refreshLabels();
+    resize();
+    loop();
+  })();
+</script>
+</body>
+</html>
