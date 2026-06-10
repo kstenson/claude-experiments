@@ -1,0 +1,153 @@
+{
+  "date": "2026-06-10",
+  "score": 45,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "A second day of fragile relief, with progress and loss running side by side. The Iran–Israel pause held for another day: Netanyahu reiterated Israel had stopped its strikes while Iran kept its operations suspended, even as a military adviser to Iran's supreme leader warned of fresh missile and drone strikes if the United States renewed attacks. US-Iran talks mediated by Pakistan continued, centered on the Strait of Hormuz, sanctions and Iran's nuclear programme. Markets read the calm as good news: crude slipped below $90 a barrel toward the high $80s and US equities had closed up roughly 0.6–0.7% as chip stocks rebounded.\n\nThe ledger elsewhere stayed mixed. In the Philippines, the death toll from Monday's magnitude-7.8 Mindanao quake rose to 45, with 487 injured and 17 missing, as responders reached previously isolated communities by sea and continued digging through the wreckage in Soccsksargen and the Davao region. Russia's war on Ukraine intensified, with cross-border drone strikes and continued heavy civilian casualties, and Sudan's conflict and the DR Congo Bundibugyo-Ebola emergency (now past 90 deaths) ground on. As the World Cup approached, several referees, team staff and ticket-holding fans were denied US entry, drawing criticism that the tournament risked becoming one of exclusion. Against the strain there were brighter notes: a Cambridge-designed, computer-generated coronavirus vaccine passed an early-stage human trial, astronomers confirmed the nearby habitable-zone super-Earth GJ 887 d, and Australia's reintroduced platypus population in Royal National Park grew to 20 and was confirmed breeding along the Hacking River for the first time in over 50 years. (Scored +2 above the formula: the held ceasefire and steady tech and conservation gains slightly outweigh a grim earthquake tally.)",
+  "dimensions": {
+    "conflict": 35,
+    "economy": 56,
+    "climate": 40,
+    "humanInterest": 42,
+    "techProgress": 62
+  },
+  "regions": {
+    "northAmerica": 52,
+    "southAmerica": 48,
+    "europe": 44,
+    "africa": 38,
+    "middleEast": 40,
+    "asia": 42,
+    "oceania": 64
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "Iran–Israel pause holds a second day as Netanyahu says Israel has halted strikes and Tehran keeps operations suspended, with US–Iran talks continuing via Pakistan",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/8/israel-and-iran-exchange-attacks-as-ceasefire-falters",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Iran's supreme-leader adviser warns of renewed missile and drone strikes if the US resumes attacks, underscoring how fragile the ceasefire remains",
+      "source": "TIME",
+      "url": "https://time.com/article/2026/06/08/israel-iran-war-direct-attacks-latest-ceasefire-trump-netanyahu-lebanon/",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Mindanao quake death toll rises to 45 with 487 injured and 17 missing as responders reach isolated towns by sea vessel",
+      "source": "GMA News",
+      "url": "https://www.gmanetwork.com/news/topstories/nation/990902/live-updates-magnitude-7-8-mindanao-earthquake-effects-june-10-2026/story/",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Crude oil slips below $90 a barrel toward the high $80s and US stocks close up ~0.6–0.7% as markets read the Middle East pause as de-escalation",
+      "source": "Trading Economics",
+      "url": "https://tradingeconomics.com/commodity/crude-oil",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Russia's war on Ukraine intensifies: a drone strike kills eight on a bus in occupied Donetsk amid mass overnight drone exchanges and high civilian tolls",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/3/ukraine-drone-attack-kills-7-in-russian-held-territory-in-new-escalation",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "DR Congo Bundibugyo-Ebola outbreak reaches 515 cases and 91 deaths, with Uganda reporting 19 cases, as no approved treatment or vaccine yet exists for this strain",
+      "source": "World Health Organization",
+      "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON606",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Referees, team staff and ticket-holding fans denied US entry ahead of the World Cup, with a Somali referee and an Iraqi team photographer among those turned away",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/09/nx-s1-5851634/immigration-policies-affect-fifa",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Xi Jinping wraps a rare two-day Pyongyang state visit, his first in seven years, with Kim agreeing to expand political, economic and cultural cooperation",
+      "source": "NBC News",
+      "url": "https://www.nbcnews.com/world/asia/xi-jinping-wraps-trip-north-korea-rcna349156",
+      "dimension": "conflict",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Peru's presidential runoff stays on a knife-edge: leftist Roberto Sánchez edges Keiko Fujimori 50.1% to 49.9% with overseas votes still uncounted",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/8/race-tied-between-left-and-right-wing-rivals-in-perus-presidential-vote",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "A computer-designed coronavirus vaccine from Cambridge and DIOSynVax passes an early human trial, proving safe and triggering broad immune responses in 39 volunteers",
+      "source": "Wikipedia (2026 in science)",
+      "url": "https://en.wikipedia.org/wiki/2026_in_science",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Astronomers confirm GJ 887 d, a nearby habitable-zone super-Earth just 10.7 light-years away, the second-closest known habitable-zone exoplanet",
+      "source": "Wikipedia (2026 in science)",
+      "url": "https://en.wikipedia.org/wiki/2026_in_science",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Australia's reintroduced platypus population in Royal National Park grows to 20 and is confirmed breeding along the Hacking River for the first time in over 50 years",
+      "source": "UNSW Sydney",
+      "url": "https://www.unsw.edu.au/newsroom/news/2026/05/platypus-population-expands-to-20-in-royal-national-park-latest-survey",
+      "dimension": "climate",
+      "region": "oceania"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "CNN",
+    "CBS News",
+    "BBC",
+    "Al Jazeera",
+    "Euronews",
+    "TIME",
+    "NBC News",
+    "France 24",
+    "Democracy Now!",
+    "Trading Economics",
+    "OilPrice.com",
+    "CNBC",
+    "TheStreet",
+    "Yahoo Sports",
+    "GMA News",
+    "Rappler",
+    "Inquirer",
+    "Sunstar",
+    "RNZ",
+    "World Health Organization",
+    "UN News",
+    "CDC",
+    "Doctors Without Borders (MSF)",
+    "UNSW Sydney",
+    "Mongabay",
+    "Phys.org",
+    "Wikipedia (2026 in science / 2026 Mindanao earthquake / 2026 Iran war ceasefire / 2026 Peruvian general election / Russo-Ukrainian war timeline / Xi Jinping North Korea visit)",
+    "Positive News",
+    "Good Good Good"
+  ]
+}
