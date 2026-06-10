@@ -10,14 +10,44 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-09",
-    "note": "Today's edition was compiled while live news retrieval was degraded. Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
+    "lastUpdated": "2026-06-10",
+    "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-10",
+      "date": "2026-06-10",
+      "headline": true,
+      "topic": "Teacher recruitment target",
+      "claim": "Latest stats show we're over 70% of the way to our target to recruit 6,500 teachers in the places they're needed most — 4,654 more teachers in those schools and colleges compared to 2024.",
+      "speaker": "Bridget Phillipson",
+      "party": "Labour",
+      "role": "Secretary of State for Education",
+      "discussionScore": 74,
+      "discussionNote": "The DfE's annual school workforce statistics, published 4 June 2026, showed the total teaching workforce shrinking for the first time since 2019 even as ministers claimed progress on the flagship '6,500 new teachers' pledge. Phillipson's '70% of the way' framing was picked up by Schools Week, TES, Channel 4 FactCheck, the Coventry Observer and Guido Fawkes (who accused her of 'spinning' the pledge), fact-checked by Full Fact, and queried by the Commons Education Committee — making it one of the most-scrutinised domestic-policy claims of the week and the central education flashpoint as overall teacher numbers fell.",
+      "score": 62,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The specific number Phillipson cites is accurate, but it is true only because of how narrowly the target is defined — and it sits alongside an overall fall in teacher numbers that the headline framing obscures. Against the manifesto pledge of at least 6,500 more teachers in secondary schools, special schools/PRUs and further-education colleges by the end of the Parliament (baseline 2023/24), the DfE's 4,654 figure is genuine and is indeed about 72% of the way there. But three caveats matter. First, the target deliberately excludes primary and nursery teachers, and the total full-time-equivalent teaching workforce in state-funded schools actually fell by about 1,900 (from 468,272 to 466,372) between November 2024 and November 2025 — the first contraction of the overall workforce since 2019. Second, it is a net-change measure, not 6,500 newly hired individuals, and most of the progress came in the first year (Nov 2023-Nov 2024); only roughly 670 were added in the latest year. Third, the 4,654 total leans heavily on further-education colleges (1,646 of it), whose inclusion critics say was added to the pledge after the fact; the DfE's own release credits just 3,008 secondary and special-school teachers. So the claim is literally correct on its own terms, which is why Full Fact rates the pledge 'appears on track', but the '70% of the way' line gives a misleadingly rosy impression of teacher supply overall.",
+      "evidence": [
+        "DfE School Workforce in England statistics (published 4 June 2026): 4,654 additional teachers recruited towards the 6,500 target since the 2023/24 baseline — about 72% of the way there.",
+        "DfE breakdown: that 4,654 comprises 3,008 secondary and special-school teachers plus 1,646 in further education; the FE element is the contested part of the count.",
+        "Total FTE teachers in state-funded schools fell by about 1,900 (468,272 to 466,372) between November 2024 and November 2025 — the first fall in the overall school workforce since 2019.",
+        "Full Fact (June 2026): the 4,654 figure and '70%-plus' framing are accurate, but the target excludes primary and nursery teachers; most progress (around 4,000 of the gain) came in the first year, with only roughly 670 added in the latest year.",
+        "The pledge is a net-change target ('at least 6,500 more teachers... at the end of this Parliament than at the start'), not 6,500 brand-new hires, and Full Fact rates it 'appears on track'.",
+        "Primary teachers fell about 1.3% and secondary teachers about 0.4% year-on-year; special/PRU teachers rose about 3.9% (DfE, 4 June 2026)."
+      ],
+      "confidence": "High — the figures come directly from the DfE's 4 June 2026 School Workforce statistics and are corroborated independently by Full Fact and Schools Week, which reach the same conclusion: the number is right but the framing omits the falling overall workforce and the narrow target definition.",
+      "sources": [
+        { "title": "Full Fact — Do the latest teacher figures show Labour is on track to deliver its manifesto recruitment pledge?", "url": "https://fullfact.org/education/labour-manifesto-pledge-teacher-numbers/" },
+        { "title": "Full Fact — How many of the promised 6,500 'new expert teachers' has the government recruited?", "url": "https://fullfact.org/government-tracker/6500-new-expert-teachers/" },
+        { "title": "Schools Week — DfE 'hits 70% of 6,500 teachers target', but overall workforce shrinks", "url": "https://schoolsweek.co.uk/dfe-hits-70-of-6500-teachers-target-but-overall-workforce-shrinks/" },
+        { "title": "GOV.UK — School Workforce in England", "url": "https://explore-education-statistics.service.gov.uk/find-statistics/school-workforce-in-england" }
+      ]
+    },
+    {
       "id": "2026-06-09",
       "date": "2026-06-09",
-      "headline": true,
+      "headline": false,
       "topic": "Welfare spending versus income tax",
       "claim": "We're now in a situation for the first time ever where the amount that we are paying in benefits is more than the government is taking in income tax.",
       "speaker": "Katie Lam",
