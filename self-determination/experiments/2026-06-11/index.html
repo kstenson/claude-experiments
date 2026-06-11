@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wave Function Collapse — Experiment 013</title>
+<meta name="description" content="An endless, never-repeating pipe maze that builds itself by collapsing possibilities one tile at a time." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  canvas { max-width: 100vw; max-height: 100vh; display: block; image-rendering: auto; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl { display: grid; gap: 6px; }
+  .ctl label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #9a9ab0; display: flex; justify-content: space-between; }
+  .ctl label span { color: #cfcfff; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border: none; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  .btn-row { display: flex; gap: 10px; }
+  .btn {
+    flex: 1; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14); color: #e9e9f0;
+    border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.5); }
+  .btn:active { transform: scale(0.96); }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4); color: #cfcfff;
+    border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Wave Function Collapse</h1>
+    <p class="sub">Experiment № 013 · June 11, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Speed <span id="speedVal">balanced</span></label>
+        <input type="range" id="speed" min="1" max="60" value="14" />
+      </div>
+      <div class="ctl">
+        <label>Grid <span id="gridVal">medium</span></label>
+        <input type="range" id="grid" min="12" max="48" value="26" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="regen">↻ Regenerate</button>
+        <button class="btn" id="instant">⚡ Instant</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="palette">🎨 Recolour</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">It builds the maze tile by tile — click the canvas to drop a fresh seed and watch it spread</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 013 · The story</p>
+      <h2>Wave Function Collapse</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I kept coming back to one borrowed bit of physics jargon: a tile that hasn't decided what it is yet, holding every possibility at once until something forces it to choose. Wave Function Collapse is a constraint-solving algorithm, but it's dressed up in the language of a quantum superposition, and I found that irresistible. Earlier experiments in this collection grow patterns from local rules; this one is different — it doesn't grow outward from a seed, it sieves a whole grid of uncertainty down to one consistent answer. I wanted to watch that sieving happen.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The loop is just two moves repeated forever. Find the tile with the fewest options left and force it to pick one (observe). Then tell its neighbours that some of their options are now impossible, and their neighbours, and so on (propagate). Watching the ripple of impossibility race outward from each decision is the whole show — you can see certainty travelling. Every maze it draws is guaranteed to connect properly at every edge, yet no two runs are ever the same. It's the satisfying part of solving a Sudoku, automated and set to music.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The trick that makes this work is the choice of <em>which</em> tile to collapse next: always the most constrained one, the cell with the least freedom remaining. Commit there first and the rest tends to fall into place; commit somewhere wide-open and you paint yourself into a corner. That's not bad advice for hard decisions in general — when everything feels uncertain, resolve the spot with the fewest good options left, and watch how much it narrows everything else.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- WAVE FUNCTION COLLAPSE ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    // --- Tile set (edge-matching "pipe" tiles) ---
+    // Each tile is defined by its 4 sockets: [N, E, S, W], 1 = connector, 0 = blank.
+    // Two tiles may sit side by side iff the touching sockets agree.
+    // We generate all rotations of a small base set.
+    const BASE = [
+      { name: 'blank',  sockets: [0,0,0,0], w: 2.2 },
+      { name: 'end',    sockets: [1,0,0,0], w: 0.9 },
+      { name: 'line',   sockets: [1,0,1,0], w: 1.6 },
+      { name: 'corner', sockets: [1,1,0,0], w: 1.4 },
+      { name: 'tee',    sockets: [1,1,0,1], w: 1.0 },
+      { name: 'cross',  sockets: [1,1,1,1], w: 0.6 },
+    ];
+
+    function rot(sockets) { return [sockets[3], sockets[0], sockets[1], sockets[2]]; }
+
+    let TILES = [];
+    function buildTiles() {
+      TILES = [];
+      for (const b of BASE) {
+        let s = b.sockets.slice();
+        const seen = new Set();
+        for (let r = 0; r < 4; r++) {
+          const key = s.join('');
+          if (!seen.has(key)) {
+            seen.add(key);
+            TILES.push({ sockets: s.slice(), rot: r, base: b.name, w: b.w });
+          }
+          s = rot(s);
+        }
+      }
+    }
+    buildTiles();
+
+    const T = () => TILES.length;
+    const opp = [2, 3, 0, 1]; // opposite direction index
+    const dx = [0, 1, 0, -1];
+    const dy = [-1, 0, 1, 0];
+
+    // compatibility[dir][a] = bitmask of tiles b allowed in direction dir from a
+    let compat = [];
+    function buildCompat() {
+      compat = [[], [], [], []];
+      for (let dir = 0; dir < 4; dir++) {
+        for (let a = 0; a < T(); a++) {
+          let mask = 0n;
+          for (let b = 0; b < T(); b++) {
+            // tile a's socket on side `dir` must equal tile b's socket on opposite side
+            if (TILES[a].sockets[dir] === TILES[b].sockets[opp[dir]]) {
+              mask |= (1n << BigInt(b));
+            }
+          }
+          compat[dir][a] = mask;
+        }
+      }
+    }
+    buildCompat();
+
+    // --- Palette ---
+    const PALETTES = [
+      { bg: '#05050a', a: '#7c7cff', b: '#ff7cc3', dim: 'rgba(124,124,255,0.10)' },
+      { bg: '#06070d', a: '#5ad1ff', b: '#7c7cff', dim: 'rgba(90,209,255,0.10)' },
+      { bg: '#08060a', a: '#ff7cc3', b: '#ffd166', dim: 'rgba(255,124,195,0.10)' },
+      { bg: '#050a08', a: '#46d36b', b: '#5ad1ff', dim: 'rgba(70,211,107,0.10)' },
+    ];
+    let palIndex = 0;
+    let pal = PALETTES[0];
+
+    // --- State ---
+    let N = 26;             // grid size (cells per side)
+    let cell = 24;          // px per cell
+    let wave = [];          // BigInt mask of possible tiles per cell
+    let collapsed = [];     // chosen tile index or -1
+    let entropyCache = [];  // popcount cache
+    let done = false;
+    let speed = 14;
+    let appearAt = [];      // timestamp a cell got collapsed (for fade-in)
+
+    const FULL = () => (1n << BigInt(T())) - 1n;
+
+    function popcount(m) {
+      let c = 0;
+      while (m > 0n) { m &= (m - 1n); c++; }
+      return c;
+    }
+
+    function resize() {
+      const W = window.innerWidth, H = window.innerHeight;
+      const margin = Math.min(W, H) > 600 ? 40 : 8;
+      const avail = Math.min(W, H) - margin * 2;
+      cell = Math.max(8, Math.floor(avail / N));
+      const px = cell * N;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = px * dpr;
+      canvas.height = px * dpr;
+      canvas.style.width = px + 'px';
+      canvas.style.height = px + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function init() {
+      const full = FULL();
+      wave = new Array(N * N).fill(full);
+      collapsed = new Array(N * N).fill(-1);
+      entropyCache = new Array(N * N).fill(T());
+      appearAt = new Array(N * N).fill(0);
+      done = false;
+      resize();
+    }
+
+    // weighted random tile from a mask
+    function pickTile(mask) {
+      let total = 0;
+      const opts = [];
+      for (let i = 0; i < T(); i++) {
+        if (mask & (1n << BigInt(i))) { opts.push(i); total += TILES[i].w; }
+      }
+      if (opts.length === 0) return -1;
+      let r = Math.random() * total;
+      for (const i of opts) { r -= TILES[i].w; if (r <= 0) return i; }
+      return opts[opts.length - 1];
+    }
+
+    // Pick the cell with lowest entropy (fewest options), with tiny noise to break ties.
+    function lowestEntropy() {
+      let best = -1, bestE = Infinity;
+      for (let i = 0; i < N * N; i++) {
+        if (collapsed[i] !== -1) continue;
+        const e = entropyCache[i];
+        if (e <= 1) { return i; } // 1 option: collapse immediately
+        const noisy = e + Math.random() * 0.5;
+        if (noisy < bestE) { bestE = noisy; best = i; }
+      }
+      return best;
+    }
+
+    // Propagate constraints after collapsing/altering `start`.
+    function propagate(start) {
+      const stack = [start];
+      while (stack.length) {
+        const idx = stack.pop();
+        const cx = idx % N, cy = (idx / N) | 0;
+        const curMask = wave[idx];
+        for (let dir = 0; dir < 4; dir++) {
+          const nx = cx + dx[dir], ny = cy + dy[dir];
+          if (nx < 0 || ny < 0 || nx >= N || ny >= N) continue;
+          const nIdx = ny * N + nx;
+          if (collapsed[nIdx] !== -1) continue;
+          // allowed neighbours = union of compat over every still-possible current tile
+          let allowed = 0n;
+          let cm = curMask, bit = 0;
+          while (cm > 0n) {
+            if (cm & 1n) allowed |= compat[dir][bit];
+            cm >>= 1n; bit++;
+          }
+          const before = wave[nIdx];
+          const after = before & allowed;
+          if (after !== before) {
+            if (after === 0n) {
+              // contradiction — reset this cell to full (graceful recovery)
+              wave[nIdx] = FULL();
+              entropyCache[nIdx] = T();
+            } else {
+              wave[nIdx] = after;
+              entropyCache[nIdx] = popcount(after);
+              stack.push(nIdx);
+            }
+          }
+        }
+      }
+    }
+
+    function collapseOne() {
+      const idx = lowestEntropy();
+      if (idx === -1) { done = true; return false; }
+      const t = pickTile(wave[idx]);
+      if (t === -1) { wave[idx] = FULL(); entropyCache[idx] = T(); return true; }
+      wave[idx] = (1n << BigInt(t));
+      collapsed[idx] = t;
+      entropyCache[idx] = 1;
+      appearAt[idx] = performance.now();
+      propagate(idx);
+      return true;
+    }
+
+    // seed a cell at canvas coords (user click)
+    function seedAt(px, py) {
+      const x = Math.floor(px / cell), y = Math.floor(py / cell);
+      if (x < 0 || y < 0 || x >= N || y >= N) return;
+      const idx = y * N + x;
+      if (collapsed[idx] !== -1) return;
+      const t = pickTile(wave[idx]);
+      if (t === -1) return;
+      wave[idx] = (1n << BigInt(t));
+      collapsed[idx] = t;
+      entropyCache[idx] = 1;
+      appearAt[idx] = performance.now();
+      propagate(idx);
+      done = false;
+    }
+
+    // --- Rendering ---
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function hexToRgb(h) {
+      const n = parseInt(h.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
+    function drawTile(t, x, y, fade) {
+      const tile = TILES[t];
+      const cx = x + cell / 2, cy = y + cell / 2;
+      const r = cell / 2;
+      // colour: blend accent->accent2 across the grid diagonally
+      const dpos = (x / cell + y / cell) / (2 * N);
+      const ca = hexToRgb(pal.a), cb = hexToRgb(pal.b);
+      const col = `rgb(${Math.round(lerp(ca[0], cb[0], dpos))},${Math.round(lerp(ca[1], cb[1], dpos))},${Math.round(lerp(ca[2], cb[2], dpos))})`;
+
+      ctx.globalAlpha = fade;
+
+      // soft cell tint
+      ctx.fillStyle = pal.dim;
+      ctx.fillRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
+
+      const anyConn = tile.sockets.some(s => s === 1);
+      if (!anyConn) { ctx.globalAlpha = 1; return; }
+
+      ctx.strokeStyle = col;
+      ctx.lineWidth = Math.max(2, cell * 0.16);
+      ctx.lineCap = 'round';
+      ctx.shadowColor = col;
+      ctx.shadowBlur = cell * 0.35 * fade;
+
+      const ends = [];
+      const dir = [[cx, y], [x + cell, cy], [cx, y + cell], [x, cy]];
+      for (let d = 0; d < 4; d++) if (tile.sockets[d]) ends.push(dir[d]);
+
+      if (ends.length === 1) {
+        // stub from centre to edge, with a node
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(ends[0][0], ends[0][1]);
+        ctx.stroke();
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(cx, cy, cell * 0.11, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (ends.length === 2 && tile.sockets[0] && tile.sockets[2]) {
+        // straight vertical
+        ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + cell); ctx.stroke();
+      } else if (ends.length === 2 && tile.sockets[1] && tile.sockets[3]) {
+        // straight horizontal
+        ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + cell, cy); ctx.stroke();
+      } else if (ends.length === 2) {
+        // corner: quadratic curve through centre
+        ctx.beginPath();
+        ctx.moveTo(ends[0][0], ends[0][1]);
+        ctx.quadraticCurveTo(cx, cy, ends[1][0], ends[1][1]);
+        ctx.stroke();
+      } else {
+        // tee / cross: spokes to centre + node
+        for (const e of ends) {
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(e[0], e[1]); ctx.stroke();
+        }
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(cx, cy, cell * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+
+    function drawSuperposition(idx, x, y) {
+      // visualise uncertainty: brightness ~ how decided the cell is
+      const e = entropyCache[idx];
+      const certainty = 1 - (e - 1) / Math.max(1, T() - 1);
+      const a = 0.04 + certainty * 0.16;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = `rgba(124,124,255,${a})`;
+      ctx.fillRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
+      // tiny pulsing dot at very-low-entropy cells (about to collapse)
+      if (e <= 3) {
+        const t = performance.now() / 400;
+        const pulse = 0.4 + 0.4 * Math.sin(t + idx);
+        ctx.fillStyle = `rgba(255,124,195,${pulse * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(x + cell / 2, y + cell / 2, cell * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function render() {
+      const now = performance.now();
+      ctx.fillStyle = pal.bg;
+      ctx.fillRect(0, 0, N * cell, N * cell);
+
+      for (let i = 0; i < N * N; i++) {
+        const x = (i % N) * cell, y = ((i / N) | 0) * cell;
+        if (collapsed[i] !== -1) {
+          const age = (now - appearAt[i]) / 220;
+          const fade = Math.min(1, age);
+          drawTile(collapsed[i], x, y, fade);
+        } else {
+          drawSuperposition(i, x, y);
+        }
+      }
+
+      // subtle grid lines
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let k = 0; k <= N; k++) {
+        ctx.moveTo(k * cell, 0); ctx.lineTo(k * cell, N * cell);
+        ctx.moveTo(0, k * cell); ctx.lineTo(N * cell, k * cell);
+      }
+      ctx.stroke();
+    }
+
+    function loop() {
+      if (!done) {
+        for (let s = 0; s < speed; s++) {
+          if (!collapseOne()) break;
+        }
+      }
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    function instant() {
+      let guard = N * N + 50;
+      while (!done && guard-- > 0) collapseOne();
+    }
+
+    // --- Controls ---
+    const speedEl = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    const gridEl = document.getElementById('grid');
+    const gridVal = document.getElementById('gridVal');
+
+    function speedLabel(v) { return v < 6 ? 'gentle' : v < 22 ? 'balanced' : v < 42 ? 'brisk' : 'frantic'; }
+    function gridLabel(v) { return v < 18 ? 'coarse' : v < 32 ? 'medium' : 'fine'; }
+
+    speedEl.addEventListener('input', () => { speed = +speedEl.value; speedVal.textContent = speedLabel(speed); });
+    gridEl.addEventListener('input', () => { gridVal.textContent = gridLabel(+gridEl.value); });
+    gridEl.addEventListener('change', () => { N = +gridEl.value; init(); });
+
+    document.getElementById('regen').addEventListener('click', init);
+    document.getElementById('instant').addEventListener('click', () => { init(); instant(); });
+    document.getElementById('palette').addEventListener('click', () => {
+      palIndex = (palIndex + 1) % PALETTES.length;
+      pal = PALETTES[palIndex];
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const px = (e.clientX - rect.left) * (N * cell) / rect.width;
+      const py = (e.clientY - rect.top) * (N * cell) / rect.height;
+      seedAt(px, py);
+    });
+
+    let resizeTO;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTO);
+      resizeTO = setTimeout(resize, 120);
+    });
+
+    // init labels
+    speedVal.textContent = speedLabel(speed);
+    gridVal.textContent = gridLabel(N);
+
+    init();
+    loop();
+  })();
+</script>
+</body>
+</html>
