@@ -10,14 +10,44 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-10",
+    "lastUpdated": "2026-06-11",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-11",
+      "date": "2026-06-11",
+      "headline": true,
+      "topic": "Defence Investment Plan funding gap",
+      "claim": "Military chiefs have said the Defence Investment Plan would need £28 billion to be fully funded — will that requirement be met in full?",
+      "speaker": "Kemi Badenoch",
+      "party": "Conservative",
+      "role": "Leader of the Opposition; Leader of the Conservative Party",
+      "discussionScore": 84,
+      "discussionNote": "Defence dominated PMQs on 10 June 2026, with Badenoch devoting all six of her questions to the delayed Defence Investment Plan (DIP) and pressing Starmer on a reported £28bn funding gap and whether he would rule out tax rises to close it. Starmer declined to confirm the figure or rule out tax rises, saying only the plan would come 'before the NATO summit'. The clash — framed around Badenoch's charge of 'total paralysis' and 'dithering' — led Spectator, GB News, Yorkshire Post and other coverage, and sat on top of a week of warnings from Chief of the Defence Staff Sir Richard Knighton that Britain is 'running out of time' to rearm, making the £28bn figure the most-scrutinised number in UK politics this week.",
+      "score": 64,
+      "verdict": "Half True / Needs Context",
+      "explanation": "Badenoch is accurately repeating a figure that has been widely reported, but she presents a briefed, unpublished number as a settled official requirement, which it is not. Multiple outlets (Defense News, US News, Reuters via Daily Maverick, and the GB News/Spectator and Yorkshire Post PMQs coverage) report that 'military chiefs have warned Starmer there is a £28 billion shortfall in funding over the next four years', and that this gap is the reason the DIP has been repeatedly delayed since last year. So the £28bn figure is genuine in the sense that it is the number circulating in credible reporting and attributed to defence chiefs. Two important caveats. First, it is a media-reported figure attributed to unnamed 'military chiefs', not a costing published by the MoD, NAO or OBR — the DIP itself was still unpublished when Badenoch spoke, so 'fully funded' is being measured against a plan the public cannot yet see. Second, the framing implies a fixed, agreed requirement, whereas it represents the gap between what chiefs say is needed for 'warfighting readiness' and the funding currently pencilled in, within an envelope the government says rises to 2.6% of GDP by April 2027 (from 2.4% in 2025) and a stated ambition of 3% in the next Parliament. The number is therefore accurately quoted but rests on briefing rather than a primary published source, and its status as a hard 'requirement' is contested.",
+      "evidence": [
+        "Defense News (5 June 2026): 'Media reports say military chiefs have warned Starmer that there is a £28 billion ($38 billion) shortfall in funding over the next four years', cited as the reason for the DIP delay.",
+        "The figure is corroborated across US News, Daily Maverick (Reuters), Global Banking & Finance and the GB News/Spectator and Yorkshire Post PMQs write-ups — but none attributes it to a named official or a published MoD/NAO/OBR document; it is consistently described as a media-reported, briefed figure.",
+        "Spectator PMQs coverage (10 June 2026): Badenoch 'pointed out that military chiefs had said the DIP would need £28 billion to be fully funded' and asked 'will that requirement be met in full?'; Starmer replied ministers were 'working through the details'.",
+        "The DIP, intended to fund the move to 'warfighting readiness', was originally due last autumn and remained unpublished; Defence Secretary John Healey said it would be published before the NATO summit on 7 July 2026.",
+        "Context on the funding envelope: Full Fact and the House of Commons Library record UK defence spending at about 2.4% of GDP in 2025, rising to a committed 2.6% by April 2027 (Starmer: '£270 billion over the Parliament'), with a stated ambition of 3% in the next Parliament and 3.5% by 2035 under the new NATO target.",
+        "Chief of the Defence Staff Sir Richard Knighton warned on 5 June 2026 that the UK faces its most dangerous security environment since the Cold War and is 'running out of time' to modernise, lending weight to the chiefs' funding warnings."
+      ],
+      "confidence": "Medium — the £28bn figure is consistently reported across several independent outlets and attributed to military chiefs, and Badenoch quotes it accurately, but it originates in briefing rather than a published primary costing (MoD/NAO/OBR), so the precise figure and its status as a fixed 'requirement' cannot be fully verified against a primary source. The surrounding GDP figures are confirmed by Full Fact and the Commons Library.",
+      "sources": [
+        { "title": "Defense News — UK running out of time to boost defense as investment plan stalls, military chief warns", "url": "https://www.defensenews.com/global/europe/2026/06/05/uk-running-out-of-time-to-boost-defense-as-investment-plan-stalls-military-chief-warns/" },
+        { "title": "The Spectator — Keir Starmer's weakness was on display at PMQs", "url": "https://spectator.com/article/keir-starmers-weakness-was-on-display-at-pmqs/" },
+        { "title": "Full Fact — Is the UK's defence spending increasing?", "url": "https://fullfact.org/politics/defence-spending-increase-pmqs/" },
+        { "title": "House of Commons Library — UK defence spending", "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8175/" }
+      ]
+    },
+    {
       "id": "2026-06-10",
       "date": "2026-06-10",
-      "headline": true,
+      "headline": false,
       "topic": "Teacher recruitment target",
       "claim": "Latest stats show we're over 70% of the way to our target to recruit 6,500 teachers in the places they're needed most — 4,654 more teachers in those schools and colleges compared to 2024.",
       "speaker": "Bridget Phillipson",
