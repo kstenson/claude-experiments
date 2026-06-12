@@ -1,0 +1,159 @@
+{
+  "date": "2026-06-12",
+  "score": 52,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "After a week of escalation, the day turned on a sharp de-escalation. President Trump said he had cancelled the scheduled strikes and bombings against Iran, and announced a 60-day ceasefire extension under which the Strait of Hormuz would reopen, Iran would be free to sell oil, and negotiations would continue on its nuclear program; he said the documents were in 'pretty final shape' for a signing, likely in Europe, and declared 'we have a deal that Iran will never have a nuclear weapon.' Markets read it as relief: West Texas crude fell about 2.6% to settle near $87.71 a barrel, off the week's highs, while the Dow rose about 930 points (+1.86%), the S&P 500 gained 1.75% and the Nasdaq jumped 2.54% on a chip-stock rebound. The relief was incomplete, however — the lagging cost of the war showed up in May producer prices, which surged to 6.5% year-on-year, the hottest wholesale inflation since 2022, nearly 80% of it from a 10.7% jump in energy.\n\nThe rest of the ledger stayed mixed. Anti-immigrant unrest in Northern Ireland ran into a further night, with police firing water cannon in Belfast after a Belfast knife attack set off rioting earlier in the week. Eastern DR Congo's untreatable Bundibugyo-Ebola outbreak passed 127 deaths and 635 confirmed cases with cross-border spread to Uganda, and famine in Sudan spread to two new areas of North Darfur, making Sudan the country with the most territories in active famine. Russia's war on Ukraine ground on, and Peru's presidential run-off remained a 651-vote dead heat under judicial review. Against the strain, brighter notes accumulated: the World Cup opened in Mexico City with a 2-0 host win and matches for the US and Canada following, SpaceX listed on the Nasdaq in the largest IPO in history at a roughly $1.75 trillion valuation, wind and solar out-generated gas worldwide for the first time in a single month, and researchers reported a pill that roughly doubled survival in advanced pancreatic cancer. (Scored on the day's facts: a real ceasefire extension and a market rally lift the day off last week's lows into the middle 'mixed' band, but hot inflation, ongoing riots and famine keep it short of 'good.')",
+  "dimensions": {
+    "conflict": 50,
+    "economy": 48,
+    "climate": 56,
+    "humanInterest": 45,
+    "techProgress": 64
+  },
+  "regions": {
+    "northAmerica": 56,
+    "southAmerica": 50,
+    "europe": 46,
+    "africa": 34,
+    "middleEast": 50,
+    "asia": 50,
+    "oceania": 58
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "Trump cancels scheduled strikes on Iran and announces a 60-day ceasefire extension, with the Strait of Hormuz to reopen and a peace-deal signing said to be 'soon'",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/11/nx-s1-5854970/trump-iran-peace-deal-cancel-strikes",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Crude falls ~2.6% to settle near $87.71 a barrel as the Dow rises ~930 points and the Nasdaq jumps 2.54% on the Iran de-escalation and a chip-stock rebound",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/06/11/stock-market-today-live-updates.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "US wholesale inflation surges to 6.5% year-on-year in May, the highest since 2022, as the Iran oil shock drives a 10.7% jump in energy at the producer level",
+      "source": "CNN Business",
+      "url": "https://www.cnn.com/2026/06/11/economy/us-ppi-wholesale-inflation-may",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Police fire water cannon in Belfast as anti-immigrant unrest continues for a further night across Northern Ireland after a knife attack earlier in the week",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/11/police-in-belfast-use-water-cannon-as-anti-immigrant-unrest-continues",
+      "dimension": "humanInterest",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Eastern DR Congo's untreatable Bundibugyo-Ebola outbreak passes 127 deaths and 635 confirmed cases, with cross-border spread to Uganda",
+      "source": "World Health Organization",
+      "url": "https://www.who.int/emergencies/disease-outbreak-news/item/2026-DON606",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Famine spreads to two new areas of Sudan's North Darfur, Um Baru and Kernoi, making Sudan the country with the most territories in active famine as El Fasher stays besieged",
+      "source": "World Food Programme",
+      "url": "https://www.wfp.org/news/one-year-after-famine-first-confirmed-sudan-wfp-warns-people-trapped-el-fasher-face-starvation",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Peru's presidential run-off remains a 651-vote dead heat with about 400,000 contested ballots set aside for a judicial review that could take weeks",
+      "source": "Americas Quarterly",
+      "url": "https://americasquarterly.org/article/reaction-peru-runoff-is-too-close-to-call-again/",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "The 2026 World Cup opens in Mexico City with a 2-0 host win over South Africa, with the US and Canada playing their opening matches the same week",
+      "source": "ESPN",
+      "url": "https://www.espn.com/soccer/story/_/id/49003509/2026-fifa-world-cup-live-updates-mexico-vs-south-africa",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "SpaceX lists on the Nasdaq in the largest IPO in history, raising about $75 billion at a roughly $1.75 trillion valuation",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/05/20/spacex-ipo-live-updates.html",
+      "dimension": "techProgress",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Wind and solar out-generate gas worldwide for the first time in any month, supplying 22% of global electricity in April against 20% from gas",
+      "source": "Ember",
+      "url": "https://ember-energy.org/latest-updates/for-the-first-time-wind-and-solar-generated-more-electricity-than-gas-worldwide-in-april-2026/",
+      "dimension": "climate"
+    },
+    {
+      "direction": "up",
+      "headline": "A new pill is reported to roughly double median survival in advanced pancreatic cancer, from about 6.7 to 13.2 months",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-23-of-2026/",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "down",
+      "headline": "Russia's war on Ukraine grinds on after a wave of mass drone-and-missile strikes on Kyiv and other cities, as Moscow presses an escalated aerial campaign",
+      "source": "PBS News",
+      "url": "https://www.pbs.org/newshour/world/massive-russian-attack-on-kyiv-and-other-ukrainian-cities-kills-22-people-officials-say-as-moscow-escalates-fighting",
+      "dimension": "conflict",
+      "region": "europe"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "CNN",
+    "CNBC",
+    "BBC",
+    "Al Jazeera",
+    "TIME",
+    "PBS News",
+    "RTE",
+    "ABC News",
+    "Yahoo Finance",
+    "TheStreet",
+    "Marketplace",
+    "CBS News",
+    "Quartz",
+    "U.S. Bureau of Labor Statistics",
+    "ESPN",
+    "FIFA",
+    "Today",
+    "Taiwan News",
+    "World Health Organization",
+    "CDC",
+    "Doctors Without Borders (MSF)",
+    "World Food Programme",
+    "UNICEF",
+    "Action Against Hunger",
+    "Americas Quarterly",
+    "Rio Times",
+    "AS/COA",
+    "Positive News",
+    "Good Good Good",
+    "ScienceDaily",
+    "Ember",
+    "Electrek",
+    "Britannica",
+    "House of Commons Library",
+    "Wikipedia (2026 Iran war ceasefire / 2026 Iran war / 2026 Strait of Hormuz crisis / 2026 Northern Ireland riots / 2026 Peruvian general election / 2026 FIFA World Cup / 2026 in science / Russo-Ukrainian war timeline)"
+  ]
+}
