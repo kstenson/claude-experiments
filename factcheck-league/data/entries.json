@@ -10,14 +10,44 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-11",
+    "lastUpdated": "2026-06-12",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-12",
+      "date": "2026-06-12",
+      "headline": true,
+      "topic": "Welfare spending under the Conservatives",
+      "claim": "On their watch, defence spending went down and welfare spending went up — £88 billion overall, with £33 billion alone under the shadow Chancellor, Sir Mel Stride.",
+      "speaker": "Keir Starmer",
+      "party": "Labour",
+      "role": "Prime Minister; Leader of the Labour Party",
+      "discussionScore": 79,
+      "discussionNote": "With anti-immigration riots in Belfast and the delayed Defence Investment Plan dominating the week, Starmer used PMQs on 10 June 2026 to turn Badenoch's attack on funding back onto the Conservative record, deploying the '£88 billion' welfare-rise line as his central rebuttal. The figure was clipped for Labour's official social channels ('Under the Tories, the welfare bill went up by £88 billion'), amplified by LBC, ITV News and the Spectator and New Statesman PMQs write-ups, and slotted into the running welfare-versus-defence-versus-tax argument that has run through Westminster all month — making it one of the most-circulated factual claims of the 24–48 hour window, and the headline number the government wants to define the Conservatives by.",
+      "score": 66,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The headline number is broadly right but the framing is doing a lot of work. Total real-terms welfare/social-security spending in Great Britain did rise substantially across the Conservatives' 2010–2024 period: Resolution Foundation analysis (its 'Ratchets, retrenchment and reform' study and follow-ups) shows welfare rising as a share of the economy from about 10% of GDP in 2007–08 to 11.2% in 2024–25, with a real-terms increase of roughly £44 billion in just the last five years of that period (2019–20 to 2024–25 prices), so an £88bn cumulative real-terms rise over the full Conservative span is a defensible order of magnitude and matches the figure Labour has published. The crucial context Starmer omits is composition: the overwhelming majority of the increase was driven by the state pension under the triple lock (about £21bn of the recent rise) and by health and disability benefits (about £24bn of the recent rise) — categories largely outside day-to-day government control or actively protected by all parties — while spending on mainstream working-age, non-health benefits actually FELL in real terms over the same years, with benefit-receiving working-age households losing on average about £1,500 a year from cuts such as the benefit cap, two-child limit and the 2010s freezes. So 'welfare spending went up £88 billion on their watch' is numerically fair but rhetorically implies Tory largesse on out-of-work benefits, when the rise was concentrated in pensions and disability/incapacity support that the Conservatives were cutting elsewhere. The '£33 billion under Sir Mel Stride' sub-claim attributes a slice of that rise to Stride's tenure spanning DWP and the Treasury; it is plausible but harder to pin to a single published figure than the £88bn total.",
+      "evidence": [
+        "Hansard, PMQs 10 June 2026: Starmer said that on the Conservatives' watch 'defence spending went down and welfare spending went up — £88 billion overall, with £33 billion alone under the shadow Chancellor, Sir Mel Stride', arguing they neither reformed welfare nor invested in the armed forces.",
+        "Resolution Foundation: total welfare spending rose as a share of GDP from about 10% in 2007–08 to 11.2% in 2024–25, and increased about £44bn in real terms between 2019–20 (£280bn) and 2025–26 (£324bn) alone — consistent with an ~£88bn cumulative real-terms rise across the full 2010–2024 Conservative period.",
+        "Of the recent £44bn rise, about £21bn was pensioner benefits (driven by the triple lock and an ageing population) and about £24bn was non-pensioner disability and incapacity benefits; spending on other working-age benefits fell by roughly £1bn in real terms.",
+        "Resolution Foundation: between 2010–11 and 2024–25, working-age households receiving benefits lost on average about £1,500 a year in real terms from policy changes (benefit cap, two-child limit, multi-year freezes) — i.e. mainstream working-age welfare was cut, not expanded, over the period.",
+        "Labour repeated the figure on its official channels ('Under the Tories, the welfare bill went up by £88 billion'), confirming the wording was a deliberate, central government line rather than an off-the-cuff number.",
+        "Caveat on attribution: the '£33bn under Mel Stride' element folds together periods in different roles and is not anchored to a single published primary figure, so it is less verifiable than the £88bn total."
+      ],
+      "confidence": "Medium-High — the direction and rough magnitude of the £88bn real-terms rise are well supported by Resolution Foundation analysis of DWP/OBR welfare data, and the composition caveats (pensions and disability driving the rise while working-age benefits were cut) are firmly documented. The precise £88bn cumulative figure rests on a specific real-terms baseline and deflator that the government has not fully published, and the '£33bn under Stride' sub-figure could not be confirmed against a single primary source, so the exact numbers carry some uncertainty even though the overall picture is sound.",
+      "sources": [
+        { "title": "Hansard — Engagements (PMQs), House of Commons, 10 June 2026", "url": "https://hansard.parliament.uk/commons/2026-06-10/debates/3219CC50-6B6A-4F88-8661-9E71FDEDF276/Engagements" },
+        { "title": "Resolution Foundation — Is welfare spending 'out of control'?", "url": "https://www.resolutionfoundation.org/comment/is-welfare-spending-out-of-control/" },
+        { "title": "Resolution Foundation — Ratchets, retrenchment and reform: the social security system since 2010", "url": "https://www.resolutionfoundation.org/app/uploads/2024/06/Ratchets-retrenchment-and-reform.pdf" },
+        { "title": "ITV News — Starmer refuses to rule out tax hikes to fund defence spending", "url": "https://www.itv.com/news/2026-06-10/starmer-refuses-to-rule-out-tax-hikes-to-fund-defence-spending" }
+      ]
+    },
+    {
       "id": "2026-06-11",
       "date": "2026-06-11",
-      "headline": true,
+      "headline": false,
       "topic": "Defence Investment Plan funding gap",
       "claim": "Military chiefs have said the Defence Investment Plan would need £28 billion to be fully funded — will that requirement be met in full?",
       "speaker": "Kemi Badenoch",
