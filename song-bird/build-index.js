@@ -23,10 +23,14 @@ const days = fs
   .map((m) => {
     const date = m[1];
     const song = JSON.parse(fs.readFileSync(path.join(songsDir, date + ".json"), "utf8"));
+    const style = song.style || {};
     return {
       date,
       title: song.title || "Untitled",
-      genre: (song.style && song.style.genre) || "",
+      genre: style.genre || "",
+      key: style.key || "",
+      scale: style.scale || "",
+      bpm: typeof style.bpm === "number" ? style.bpm : null,
       mood: {
         label: (song.mood && song.mood.label) || "",
         score: song.mood && typeof song.mood.score === "number" ? song.mood.score : 0,

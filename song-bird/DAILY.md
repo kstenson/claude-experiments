@@ -27,7 +27,11 @@ GitHub Pages redeploys automatically. Every past day stays browsable from the
      that the allowlist still needs fixing — do not invent data.
 2. **Read the day's tone.** Identify the dominant mood/score/"mode" the page
    reports (and any topical content). Summarize it in one honest sentence.
-3. **Pick a musical style from that tone.** See mapping below.
+3. **Pick a musical style — and make it different from recent days.** Follow
+   "Tone → style" below: the day's tone picks the **mode, tempo and genre**; the
+   **tonic** comes from the circle-of-fifths rotation; and you **must** check
+   `songs/index.json` for the last few days' `key`/`scale`/`genre` and avoid
+   repeating them. Do not default to dorian.
 4. **Write lyrics** in that style — 2 verses + a chorus is the house format,
    grounded in what the page actually showed that day. Keep it human, not a
    news summary set to rhyme.
@@ -46,18 +50,67 @@ GitHub Pages redeploys automatically. Every past day stays browsable from the
    straight to `main` and push — no feature branch, no PR. Keep the commit
    message short, e.g. `song: 2026-06-01 — <title>`.
 
-## Tone → style mapping (guidance, not rules)
+## Tone → style: mode & tempo from the day, tonic from rotation, never repeat the week
 
-| Day reads as…        | Mode/key      | BPM     | Genre lean              | Palette         |
-|----------------------|---------------|---------|-------------------------|-----------------|
-| Bright / hopeful     | major / lydian| 100–124 | indie-pop, bright synth | warm, light     |
-| Calm / contemplative | major / mixolydian | 80–96 | ambient folk-pop      | cool blues/teal |
-| Tense / uneasy       | minor / phrygian | 96–120 | dark electronic, post-punk | deep red/violet |
-| Somber / heavy       | minor / aeolian / dorian | 60–80 | slow ballad, piano-led | muted, dim    |
-| Mixed / neutral      | dorian        | 88–104  | downtempo               | balanced        |
+Variety is a requirement, not a nice-to-have. The day's mood sets the **mode,
+tempo and energy** — but the **tonic (key root)** comes from a date-driven
+rotation, *not* the mood (pitch height carries no mood on its own, so rotating
+the root is free variety). And before you commit, **look at the last several
+days** and deliberately differ from them. A run of grim news days is *not* a
+licence to ship the same dorian downtempo piano ballad over and over.
 
-Map the page's numeric score (if any) onto `mood.score` in **-1..1**
-(negative = darker). The page bar fills from that value.
+Map the page's numeric score onto `mood.score` in **-1..1** (negative = darker).
+The page bar fills from that value.
+
+### 1. Mode, tempo & genre — from the day's tone (pick a *fresh* cell)
+
+Each band lists **several** modes and genres on purpose. Pick a combination you
+have **not** used in the last 3–4 days. **Do not default to dorian** — it is the
+single most over-used mode in this archive; reach for it only when it genuinely
+beats the alternatives, and never two days running.
+
+| Day reads as…        | Modes (pick one, vary it)                       | BPM      | Genre / instrumentation leans (pick one, vary it)                       |
+|----------------------|-------------------------------------------------|----------|-------------------------------------------------------------------------|
+| Bright / hopeful     | ionian (major), lydian, mixolydian              | 104–128  | indie-pop, bright synth-pop, afrobeat, gospel-soul, house-lite          |
+| Calm / contemplative | ionian, mixolydian, dorian (bright side)        | 78–100   | ambient folk-pop, chamber-pop, lo-fi beats, gentle bossa, new-age       |
+| Mixed / neutral      | dorian, mixolydian, melodic minor               | 88–112   | trip-hop, neo-soul, motorik/krautrock, dub, downtempo                   |
+| Tense / uneasy       | phrygian, harmonic minor, locrian-tinged minor  | 96–124   | dark electronic, post-punk, industrial, drum-and-bass, darkwave         |
+| Somber / heavy       | aeolian (natural minor), dorian, phrygian       | 56–82    | piano nocturne, slow ballad, post-rock, drone, cinematic strings        |
+
+Mode carries the mood, so keep it tied to the day — but within a band there is
+real range: a mixed day leaning *up* can be mixolydian and brighter; one leaning
+*down*, melodic minor and heavier. **Change the genre and instrumentation every
+day.** If yesterday was piano-led, lead today with vibraphone, a Rhodes-ish
+electric piano, post-rock guitars, or a TR-909 house kit. The library has
+sampled piano, the full VCSL orchestra (`s("vibraphone")`, strings, mallets,
+guitars, winds) and every Roland/Akai drum machine — visit a *different corner*
+of it than the last few days.
+
+### 2. Tonic (key root) — rotate the circle of fifths
+
+Choose the tonic by **rotation** so consecutive days never share a key. Let `N` =
+the number of dated song files already in `songs/` **before** today
+(`ls songs/20*.json | wc -l`). Take position `N mod 12` of the circle of fifths:
+
+```
+index:  0   1   2   3   4   5   6    7    8    9    10   11
+tonic:  C   G   D   A   E   B   F#   C#   Ab   Eb   Bb   F
+```
+
+Pair that root with the mode you chose, e.g. position 6 + phrygian →
+`"key": "F#", "scale": "phrygian"`. Adjacent days land a fifth apart, so even two
+back-to-back minor downtempo days sound clearly different. Sharps and flats are
+fine in Strudel note names (`cs3`, `ef3`, `af2`). If the rotation somehow lands
+on a tonic you used in the last 3 days, step one more position.
+
+### 3. Don't repeat the recent run (check the archive first)
+
+Open `songs/index.json` and read the **last 5–7 days'** `key`, `scale`, `bpm` and
+`genre`. Your pick **must differ from yesterday on at least two** of {tonic, mode,
+genre/instrumentation, tempo feel}, and must not reuse the exact `(key, scale)`
+pair of any of the last 5 days. When a grim news stretch keeps pushing you toward
+dark modes, that is fine — but then make the *tonic, genre, instrumentation and
+rhythmic feel* carry the variety so each day still has its own identity.
 
 ## Strudel pattern guide
 

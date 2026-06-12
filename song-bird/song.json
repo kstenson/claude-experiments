@@ -16,17 +16,17 @@
     }
   },
   "style": {
-    "genre": "downtempo, dorian, mallet-and-piano",
-    "key": "D",
-    "scale": "dorian",
-    "bpm": 96,
-    "swing": 0.06
+    "genre": "trip-hop / neo-soul, vibraphone-led",
+    "key": "G",
+    "scale": "mixolydian",
+    "bpm": 100,
+    "swing": 0.21
   },
   "samples": [],
   "sampleSources": [
-    "Strudel default library — sampled piano, vibraphone (VCSL), RolandTR808"
+    "Strudel default library — vibraphone (VCSL), sampled piano (filtered as Rhodes-ish electric piano), RolandTR909 drum machine; supporting sine sub-bass and sawtooth pad"
   ],
-  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~ bd ~ ~ ~, ~ ~ ~ ~ rim ~ ~ ~ ~ ~ ~ ~ rim ~ ~ ~, ~ hh ~ hh ~ hh ~ hh ~ hh ~ hh ~ hh ~ hh\").bank(\"RolandTR808\").gain(0.4).hpf(60).room(0.16), note(\"d2 ~ ~ ~ ~ ~ a1 ~ ~ ~ c2 ~ ~ ~ g1 ~\").s(\"sine\").attack(0.02).release(0.9).lpf(420).gain(0.5), note(\"<[d3,f3,a3] [g3,b3,d4] [c3,e3,g3] [a2,c3,e3]>\").s(\"piano\").gain(0.44).room(0.42).rsize(5).pan(0.46).slow(2), note(\"<[d4,a4,c5,f5] [g4,d5,f5,b5] [c4,g4,b4,e5] [a3,e4,g4,c5]>\").s(\"sawtooth\").attack(2.5).decay(1).sustain(0.4).release(4.5).lpf(sine.range(440,1500).slow(20)).gain(0.05).room(0.6).rsize(8), note(\"a4 ~ ~ c5 ~ ~ d5 ~ ~ ~ c5 ~ a4 ~ ~ ~ ~ ~ g4 ~ ~ a4 ~ ~ f4 ~ ~ ~ g4 ~ ~ ~\").s(\"piano\").gain(0.33).room(0.46).pan(0.55).delay(0.2).delaytime(0.41).off(0.125, x => x.gain(0.1).pan(0.66).lpf(1600)), note(\"~ ~ ~ d5 ~ ~ ~ ~ ~ ~ e5 ~ ~ ~ ~ ~ ~ ~ ~ ~ a4 ~ ~ ~ ~ ~ ~ c5 ~ ~ ~ ~\").s(\"vibraphone\").gain(0.2).room(0.5).rsize(6).pan(0.38).delay(0.16).delaytime(0.5).gain(sine.range(0.12,0.24).slow(16)))",
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~ ~ bd ~ ~ ~ ~ ~ ~, ~ ~ ~ ~ rim ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~, ~ ~ hh ~ ~ hh ~ hh ~ ~ hh ~ ~ hh ~ hh\").bank(\"RolandTR909\").gain(0.4).hpf(55).room(0.18).rsize(4).swingBy(1/3, 4), note(\"g1 ~ ~ ~ ~ ~ d2 ~ ~ c2 ~ ~ ~ ~ e1 ~\").s(\"sine\").attack(0.02).release(0.85).lpf(380).gain(0.45), note(\"<[g3,b3,d4,f4] [c3,e3,g3] [a2,c3,e3] [e3,g3,b3,d4]>\").s(\"piano\").lpf(sine.range(700,1700).slow(14)).gain(0.34).room(0.4).rsize(5).pan(0.45).delay(0.14).delaytime(0.33).slow(2), note(\"<[g4,d5,f5] [g4,c5,e5] [a4,c5,e5] [g4,b4,e5]>\").s(\"sawtooth\").attack(3).decay(1).sustain(0.4).release(4.5).lpf(sine.range(500,1200).slow(24)).gain(0.07).room(0.6).rsize(8), note(\"d5 ~ ~ b4 ~ ~ ~ d5 ~ ~ e5 ~ d5 ~ ~ ~ ~ ~ g4 ~ ~ a4 ~ b4 ~ ~ ~ ~ a4 ~ ~ ~\").s(\"vibraphone\").gain(0.38).room(0.46).rsize(6).pan(0.55).delay(0.18).delaytime(0.41).off(0.125, x => x.gain(0.12).pan(0.66).lpf(1800)).gain(sine.range(0.3,0.42).slow(16)))",
   "lyrics": [
     {
       "section": "Verse 1",
