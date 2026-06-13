@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<!--
+  Experiment 015 — Dendrite (Diffusion-Limited Aggregation).
+  Standalone: inline CSS + JS, no network, no libraries.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dendrite — Experiment 015</title>
+<meta name="description" content="Random-walking particles that freeze on contact, growing fractal frost-and-coral crystals one wanderer at a time." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 320px;
+    max-width: calc(100vw - 48px);
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl { display: grid; gap: 6px; }
+  .ctl label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #b9b9cc; display: flex; justify-content: space-between; }
+  .ctl label .val { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(135deg, #7c7cff, #ff7cc3); cursor: pointer; border: 2px solid #0a0a12;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: 2px solid #0a0a12;
+    background: linear-gradient(135deg, #7c7cff, #ff7cc3); cursor: pointer;
+  }
+
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1 1 auto; min-width: 0;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #c7c7d6; border-radius: 9px; padding: 7px 6px; font-size: 0.76rem; cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    white-space: nowrap;
+  }
+  .seg button:hover { background: rgba(255,255,255,0.1); }
+  .seg button.on { background: rgba(124,124,255,0.28); border-color: rgba(124,124,255,0.6); color: #eaeaff; }
+
+  .row { display: flex; gap: 8px; }
+  .row button {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #d7d7e6; border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .row button:hover { background: rgba(255,255,255,0.1); border-color: rgba(124,124,255,0.5); }
+
+  .stat { font-size: 0.75rem; color: #8a8aa0; font-variant-numeric: tabular-nums; }
+  .stat b { color: #c7c7d6; font-weight: 600; }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4); color: #cfcfff;
+    border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    .ui { left: 12px; top: 12px; padding: 16px 16px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Dendrite</h1>
+    <p class="sub">Experiment № 015 · June 13, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Seed shape <span class="val" id="seedVal">point</span></label>
+        <div class="seg" id="seedSeg">
+          <button data-seed="point" class="on">Point</button>
+          <button data-seed="line">Floor</button>
+          <button data-seed="ring">Ring</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label>Stickiness <span class="val" id="stickVal">100%</span></label>
+        <input type="range" id="stick" min="4" max="100" value="100" />
+      </div>
+      <div class="ctl">
+        <label>Walkers / frame <span class="val" id="speedVal">600</span></label>
+        <input type="range" id="speed" min="60" max="1600" value="600" />
+      </div>
+      <div class="ctl">
+        <label>Palette <span class="val" id="palVal">frost</span></label>
+        <div class="seg" id="palSeg">
+          <button data-pal="frost" class="on">Frost</button>
+          <button data-pal="ember">Ember</button>
+          <button data-pal="bloom">Bloom</button>
+        </div>
+      </div>
+      <div class="row">
+        <button id="pause">⏸ Pause</button>
+        <button id="reset">↺ Reset</button>
+      </div>
+      <div class="stat">crystal: <b id="grown">1</b> particles · <span id="status">growing</span></div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Click / drag to drop a new seed · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 015 · The story</p>
+      <h2>Dendrite</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I'd done plenty of pieces where order falls out of <em>simultaneous</em> local rules — flocks, chemicals, slime. I wanted the opposite texture: something that grows <em>one event at a time</em>, where the whole structure is just a frozen history of single accidents. Diffusion-limited aggregation does exactly that. A particle wanders aimlessly until it bumps into what's already there, sticks forever, and then the next one starts. It's the maths behind frost ferns on a cold window, mineral dendrites in rock, copper electrodeposits, and the rough edge of a coral — so a fittingly elemental idea to follow the Chladni plate.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The branching is <em>inevitable</em>, and I find that quietly thrilling. A bump that sticks out even slightly is more likely to be hit by the next random walker — it casts a shadow over the valleys behind it — so tips race ahead and gaps get starved. Nobody tells it to make a tree; the tree is the only thing a screen of coin-flips <em>can</em> make. Dropping the stickiness down lets walkers brush past tips and burrow inward, and the airy fern thickens into something almost furry. I left every walker's final step painted faintly so you can watch the snow of near-misses around the crystal it's about to become.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Whoever's already ahead is easiest to reach. The exposed tips get all the new arrivals while the sheltered hollows never fill — the same rich-get-richer geometry that shapes lightning, river networks, citations, and city sprawl. Growth driven by random encounters doesn't spread evenly; it amplifies whatever happened to stick out first.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- DENDRITE: Diffusion-Limited Aggregation ----
+  (() => {
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d', { alpha: false });
+
+    // The aggregate lives on a coarse grid for fast collision checks; we render
+    // it scaled up to the device pixels so it stays crisp at any window size.
+    const CELL = 3;            // pixels per grid cell
+    let cols = 0, rows = 0;    // grid dimensions
+    let grid = null;           // Int32Array: 0 empty, >0 = generation index when frozen
+    let W = 0, H = 0, DPR = 1;
+
+    const PALETTES = {
+      frost: { bg: '#05050a', stops: [[0.0,[120,150,255]],[0.5,[140,205,255]],[1.0,[235,250,255]]], glow: 'rgba(150,200,255,' },
+      ember: { bg: '#0a0505', stops: [[0.0,[120,40,160]],[0.5,[255,90,80]],[1.0,[255,225,140]]], glow: 'rgba(255,160,90,' },
+      bloom: { bg: '#07060b', stops: [[0.0,[124,124,255]],[0.5,[210,110,235]],[1.0,[255,124,195]]], glow: 'rgba(220,140,235,' },
+    };
+    let pal = PALETTES.frost;
+
+    // settings
+    let seedMode = 'point';
+    let stickiness = 1.0;       // probability a contact freezes the walker
+    let perFrame = 600;         // walkers attempted per frame
+    let paused = false;
+
+    let frozenCount = 0;        // particles in the aggregate
+    let generation = 0;         // monotonically rising "age" for colouring
+    let maxRadius = 0;          // furthest frozen cell from the growth origin
+    let originX = 0, originY = 0;
+    let stalled = false;        // true once growth fills the available room
+
+    const grownEl = document.getElementById('grown');
+    const statusEl = document.getElementById('status');
+
+    function lerpColor(stops, t) {
+      t = Math.max(0, Math.min(1, t));
+      for (let i = 0; i < stops.length - 1; i++) {
+        const [a, ca] = stops[i], [b, cb] = stops[i + 1];
+        if (t >= a && t <= b) {
+          const f = (t - a) / (b - a);
+          return [
+            Math.round(ca[0] + (cb[0] - ca[0]) * f),
+            Math.round(ca[1] + (cb[1] - ca[1]) * f),
+            Math.round(ca[2] + (cb[2] - ca[2]) * f),
+          ];
+        }
+      }
+      const last = stops[stops.length - 1][1];
+      return last.slice();
+    }
+
+    function idx(x, y) { return y * cols + x; }
+    function occupied(x, y) {
+      if (x < 0 || y < 0 || x >= cols || y >= rows) return false;
+      return grid[idx(x, y)] !== 0;
+    }
+    function hasNeighbour(x, y) {
+      // 8-connected: any frozen cell touching this one
+      return occupied(x-1,y) || occupied(x+1,y) || occupied(x,y-1) || occupied(x,y+1) ||
+             occupied(x-1,y-1) || occupied(x+1,y-1) || occupied(x-1,y+1) || occupied(x+1,y+1);
+    }
+
+    function paintCell(x, y, t, alpha) {
+      const c = lerpColor(pal.stops, t);
+      ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;
+      ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+    }
+
+    function freeze(x, y) {
+      generation++;
+      grid[idx(x, y)] = generation;
+      frozenCount++;
+      const dx = x - originX, dy = y - originY;
+      const r = Math.sqrt(dx*dx + dy*dy);
+      if (r > maxRadius) maxRadius = r;
+      // colour by how far this particle is from the seed: old core → new tips
+      const t = maxRadius > 0 ? Math.min(1, r / maxRadius) : 0;
+      paintCell(x, y, t, 1);
+    }
+
+    function seed() {
+      if (seedMode === 'point') {
+        originX = (cols >> 1); originY = (rows >> 1);
+        freeze(originX, originY);
+      } else if (seedMode === 'line') {
+        originX = (cols >> 1); originY = rows - 1;
+        for (let x = 0; x < cols; x++) freeze(x, rows - 1);
+      } else if (seedMode === 'ring') {
+        originX = (cols >> 1); originY = (rows >> 1);
+        const R = Math.max(6, Math.min(cols, rows) * 0.42);
+        const steps = Math.floor(2 * Math.PI * R);
+        for (let i = 0; i < steps; i++) {
+          const a = (i / steps) * Math.PI * 2;
+          const x = Math.round(originX + Math.cos(a) * R);
+          const y = Math.round(originY + Math.sin(a) * R);
+          if (x >= 0 && y >= 0 && x < cols && y < rows && !occupied(x, y)) freeze(x, y);
+        }
+        maxRadius = R; // tips grow inward from the ring toward the centre
+      }
+    }
+
+    // Spawn radius: walkers start just outside the current crystal so they
+    // don't waste huge amounts of time wandering empty space.
+    function spawnWalker() {
+      if (seedMode === 'line') {
+        return { x: (Math.random() * cols) | 0, y: 0 };
+      }
+      // ring: tips grow inward, so spawn just inside the live edge.
+      // point: spawn on a circle a little beyond the aggregate.
+      const R = seedMode === 'ring'
+        ? Math.max(2, maxRadius - 2 - Math.random() * 6)
+        : Math.min(maxRadius + 8, Math.min(cols, rows) * 0.49);
+      const a = Math.random() * Math.PI * 2;
+      let x = Math.round(originX + Math.cos(a) * R);
+      let y = Math.round(originY + Math.sin(a) * R);
+      x = Math.max(0, Math.min(cols - 1, x));
+      y = Math.max(0, Math.min(rows - 1, y));
+      return { x, y };
+    }
+
+    const STEP = [[-1,0],[1,0],[0,-1],[0,1]];
+
+    function walkOne() {
+      let { x, y } = spawnWalker();
+      if (occupied(x, y)) return false;          // spawned on the crystal; skip
+      // Kill radius: if a walker strays too far it's recycled.
+      const killR = (seedMode === 'line') ? Infinity : Math.min(maxRadius + 24, Math.max(cols, rows));
+      let life = 4000;
+      while (life-- > 0) {
+        if (hasNeighbour(x, y)) {
+          if (Math.random() < stickiness) {
+            faintTrail(x, y);
+            freeze(x, y);
+            return true;
+          }
+        }
+        const s = STEP[(Math.random() * 4) | 0];
+        x += s[0]; y += s[1];
+        // boundary handling
+        if (seedMode === 'line') {
+          if (x < 0) x = 0; if (x >= cols) x = cols - 1;
+          if (y < 0) y = 0;
+          if (y >= rows) return false;             // fell off the bottom
+        } else {
+          const dx = x - originX, dy = y - originY;
+          if (dx*dx + dy*dy > killR*killR) return false;
+          if (x < 0 || y < 0 || x >= cols || y >= rows) return false;
+        }
+      }
+      return false;
+    }
+
+    // A whisper of light where a walker froze — the snow of near-misses.
+    let trailBuf = [];
+    function faintTrail(x, y) {
+      trailBuf.push(x, y);
+    }
+    function drawTrails() {
+      if (!trailBuf.length) return;
+      ctx.fillStyle = pal.glow + '0.05)';
+      for (let i = 0; i < trailBuf.length; i += 2) {
+        const x = trailBuf[i], y = trailBuf[i+1];
+        ctx.fillRect((x-1) * CELL, (y-1) * CELL, CELL*3, CELL*3);
+      }
+      trailBuf.length = 0;
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.floor(W * DPR);
+      cv.height = Math.floor(H * DPR);
+      cv.style.width = W + 'px';
+      cv.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      cols = Math.ceil(W / CELL);
+      rows = Math.ceil(H / CELL);
+      restart();
+    }
+
+    function clearScreen() {
+      ctx.fillStyle = pal.bg;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function restart() {
+      grid = new Int32Array(cols * rows);
+      frozenCount = 0; generation = 0; maxRadius = 0; stalled = false;
+      trailBuf.length = 0;
+      clearScreen();
+      seed();
+      updateStats();
+    }
+
+    function dropSeedAt(px, py) {
+      const gx = Math.max(0, Math.min(cols - 1, Math.floor(px / CELL)));
+      const gy = Math.max(0, Math.min(rows - 1, Math.floor(py / CELL)));
+      if (!occupied(gx, gy)) {
+        // a brand-new attractor; keep colour continuity by treating it as fresh tip
+        generation++;
+        grid[idx(gx, gy)] = generation;
+        frozenCount++;
+        paintCell(gx, gy, 1, 1);
+        // expand the spawn envelope so walkers can reach this new seed
+        const dx = gx - originX, dy = gy - originY;
+        const r = Math.sqrt(dx*dx + dy*dy);
+        if (r > maxRadius) maxRadius = r;
+        stalled = false;
+      }
+    }
+
+    function updateStats() {
+      grownEl.textContent = frozenCount.toLocaleString();
+      statusEl.textContent = paused ? 'paused' : (stalled ? 'filled' : 'growing');
+    }
+
+    // ---- main loop ----
+    let acc = 0;
+    function frame() {
+      if (!paused) {
+        let stuckThisFrame = 0;
+        const tries = perFrame;
+        let attempts = 0;
+        for (let i = 0; i < tries; i++) {
+          attempts++;
+          if (walkOne()) stuckThisFrame++;
+        }
+        drawTrails();
+        // Detect stall: many attempts, almost nothing sticking and crystal is large.
+        if (stuckThisFrame === 0) { acc++; } else { acc = 0; }
+        const big = (seedMode === 'point' || seedMode === 'ring')
+          ? maxRadius > Math.min(cols, rows) * 0.46
+          : maxRadius > rows * 0.92;
+        if ((acc > 30 || big) && frozenCount > 50) stalled = true;
+        if (stuckThisFrame || stalled) updateStats();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // ---- controls ----
+    const stickEl = document.getElementById('stick');
+    const speedEl = document.getElementById('speed');
+    const stickValEl = document.getElementById('stickVal');
+    const speedValEl = document.getElementById('speedVal');
+    const seedValEl = document.getElementById('seedVal');
+    const palValEl = document.getElementById('palVal');
+
+    stickEl.addEventListener('input', () => {
+      stickiness = stickEl.value / 100;
+      stickValEl.textContent = stickEl.value + '%';
+    });
+    speedEl.addEventListener('input', () => {
+      perFrame = +speedEl.value;
+      speedValEl.textContent = speedEl.value;
+    });
+
+    document.getElementById('seedSeg').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      document.querySelectorAll('#seedSeg button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      seedMode = b.dataset.seed;
+      seedValEl.textContent = b.textContent.toLowerCase();
+      restart();
+    });
+
+    document.getElementById('palSeg').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      document.querySelectorAll('#palSeg button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      pal = PALETTES[b.dataset.pal];
+      palValEl.textContent = b.dataset.pal;
+      repaint();
+    });
+
+    // Repaint the whole crystal in the new palette without losing it.
+    function repaint() {
+      clearScreen();
+      // recompute colour by stored generation ordering -> approximate radius tint
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (grid[idx(x,y)] !== 0) {
+            const dx = x - originX, dy = y - originY;
+            const r = Math.sqrt(dx*dx + dy*dy);
+            const t = maxRadius > 0 ? Math.min(1, r / maxRadius) : 0;
+            paintCell(x, y, t, 1);
+          }
+        }
+      }
+    }
+
+    const pauseBtn = document.getElementById('pause');
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? '▶ Resume' : '⏸ Pause';
+      updateStats();
+    });
+    document.getElementById('reset').addEventListener('click', restart);
+
+    // click / drag to drop seeds
+    let dragging = false;
+    function pointerPos(e) {
+      const t = e.touches ? e.touches[0] : e;
+      return { x: t.clientX, y: t.clientY };
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      const p = pointerPos(e);
+      dropSeedAt(p.x, p.y);
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const p = pointerPos(e);
+      dropSeedAt(p.x, p.y);
+    });
+    window.addEventListener('pointerup', () => { dragging = false; });
+
+    window.addEventListener('resize', () => {
+      clearTimeout(window.__rt);
+      window.__rt = setTimeout(resize, 180);
+    });
+
+    resize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
