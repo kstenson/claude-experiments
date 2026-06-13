@@ -9,9 +9,12 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "20"
       - name: Validate experiment pages
+        # The validator resolves paths from its working directory (it looks for
+        # ./experiments and ./index.html) and lives in self-determination/.
+        working-directory: self-determination
         run: node scripts/validate.mjs
