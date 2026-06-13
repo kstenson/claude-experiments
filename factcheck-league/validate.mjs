@@ -27,7 +27,17 @@ for (const [i, e] of (data.entries||[]).entries()) {
   seen.add(e.id);
   if (typeof e.score !== 'number' || e.score < 0 || e.score > 100) errors.push(`${at}: score must be 0-100`);
   if (e.verdict && !BANDS.includes(e.verdict)) errors.push(`${at}: verdict "${e.verdict}" not a known band`);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date||'')) errors.push(`${at}: date must be YYYY-MM-DD`);
+  const dateStr = e.date || '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    errors.push(`${at}: date must be YYYY-MM-DD`);
+  } else {
+    // Reject well-formatted but impossible dates (e.g. 2026-13-40), which would
+    // otherwise silently roll over when parsed by new Date() in the navigator.
+    const d = new Date(dateStr + 'T00:00:00Z');
+    if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== dateStr) {
+      errors.push(`${at}: "${dateStr}" is not a real calendar date`);
+    }
+  }
   if (!Array.isArray(e.sources) || e.sources.length === 0) errors.push(`${at}: needs at least one source`);
   if (e.headline === true) headlines++;
 }

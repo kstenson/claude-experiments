@@ -36,10 +36,14 @@
     const useHash = cfg.useHash !== false;
 
     // Normalise + sort newest-first. Keep optional per-day labels.
+    const seenDates = new Set();
     const days = (cfg.days || [])
       .map((d) => (typeof d === "string" ? { date: d } : { date: d.date, label: d.label }))
       .filter((d) => d && d.date)
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort((a, b) => b.date.localeCompare(a.date))
+      // Collapse duplicate dates (e.g. two entries sharing one day) so the picker
+      // options and the prev/next index stay unambiguous — keep the first.
+      .filter((d) => (seenDates.has(d.date) ? false : seenDates.add(d.date)));
     const order = days.map((d) => d.date); // newest -> oldest
     const latest = order[0];
     const metaFor = (date) => days.find((d) => d.date === date) || { date };

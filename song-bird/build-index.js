@@ -58,3 +58,18 @@ const newest = days[0].date;
 fs.copyFileSync(path.join(songsDir, newest + ".json"), path.join(__dirname, "song.json"));
 
 console.log(`Indexed ${days.length} day(s); newest = ${newest}.`);
+
+// Variety check (non-fatal): warn if the newest day reuses a (key, scale) pair
+// from the previous five days. See song-bird/DAILY.md "Don't repeat the recent run".
+const newestDay = days[0];
+if (newestDay.key && newestDay.scale) {
+  const clash = days
+    .slice(1, 6)
+    .find((d) => d.key === newestDay.key && d.scale === newestDay.scale);
+  if (clash) {
+    console.warn(
+      `⚠ ${newestDay.date} reuses ${newestDay.key} ${newestDay.scale} (also on ${clash.date}). ` +
+        `Vary the key or mode before committing — see DAILY.md.`
+    );
+  }
+}

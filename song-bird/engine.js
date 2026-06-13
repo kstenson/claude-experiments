@@ -11,6 +11,7 @@
 
 let SONG = null;
 let playing = false;
+let starting = false; // true while playback is spinning up (samples/Strudel loading)
 let strudelReady = false;
 
 const $ = (id) => document.getElementById(id);
@@ -282,7 +283,7 @@ function startSpeech(song) {
 }
 
 function stopSpeech() {
-  synth.cancel();
+  if (synth) synth.cancel();
   clearTimeout(speechTimer);
   speechQueue = [];
   currentUtterance = null;
@@ -455,15 +456,21 @@ async function buildAndPlay(song) {
 
 async function togglePlay() {
   const btn = $("play");
+  if (starting) return; // ignore extra clicks while the first one is still loading
 
   if (!playing) {
+    starting = true;
     primeSpeech();
-    await buildAndPlay(SONG);
-    startSpeech(SONG);
-    playing = true;
-    btn.classList.add("playing");
-    btn.querySelector(".play-icon").textContent = "❚❚";
-    btn.querySelector(".play-label").textContent = "Pause";
+    try {
+      await buildAndPlay(SONG);
+      startSpeech(SONG);
+      playing = true;
+      btn.classList.add("playing");
+      btn.querySelector(".play-icon").textContent = "❚❚";
+      btn.querySelector(".play-label").textContent = "Pause";
+    } finally {
+      starting = false;
+    }
   } else {
     hush();
     stopSpeech();

@@ -155,8 +155,12 @@ function srcLink(s) {
 function factHTML(f) {
   const v = f.verdict || "unverifiable";
   const conf = (f.confidence || "").toLowerCase();
-  const sideTag = f.side ? `<span class="fact-side ${f.side}">${f.side}</span>` : "";
-  const confChip = conf ? `<span class="conf conf-${conf}" title="Verification confidence">${conf} confidence</span>` : "";
+  // Slug for the CSS class (no markup), escape for the visible text.
+  const slug = (s) => s.replace(/[^a-z0-9_-]/g, "");
+  const sideSlug = slug((f.side || "").toLowerCase());
+  const confSlug = slug(conf);
+  const sideTag = f.side ? `<span class="fact-side ${sideSlug}">${escapeHTML(f.side)}</span>` : "";
+  const confChip = conf ? `<span class="conf conf-${confSlug}" title="Verification confidence">${escapeHTML(conf)} confidence</span>` : "";
 
   const primary = f.url
     ? `<a href="${escapeHTML(f.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(f.source || "source")} ↗</a>`

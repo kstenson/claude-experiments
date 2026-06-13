@@ -86,22 +86,32 @@ sampled piano, the full VCSL orchestra (`s("vibraphone")`, strings, mallets,
 guitars, winds) and every Roland/Akai drum machine — visit a *different corner*
 of it than the last few days.
 
-### 2. Tonic (key root) — rotate the circle of fifths
+### 2. Tonic (key root) — rotate the circle of fifths *by date*
 
-Choose the tonic by **rotation** so consecutive days never share a key. Let `N` =
-the number of dated song files already in `songs/` **before** today
-(`ls songs/20*.json | wc -l`). Take position `N mod 12` of the circle of fifths:
+Choose the tonic by a **date-driven rotation** so consecutive days never share a
+key. Derive the index straight from today's date — **not** from a file count,
+which drifts whenever a day is skipped or backfilled:
+
+```
+python3 -c "import datetime as t; print((t.date.fromisoformat('YYYY-MM-DD') - t.date(1970,1,1)).days % 12)"
+```
+
+Take that index into the circle of fifths:
 
 ```
 index:  0   1   2   3   4   5   6    7    8    9    10   11
 tonic:  C   G   D   A   E   B   F#   C#   Ab   Eb   Bb   F
 ```
 
-Pair that root with the mode you chose, e.g. position 6 + phrygian →
-`"key": "F#", "scale": "phrygian"`. Adjacent days land a fifth apart, so even two
-back-to-back minor downtempo days sound clearly different. Sharps and flats are
-fine in Strudel note names (`cs3`, `ef3`, `af2`). If the rotation somehow lands
-on a tonic you used in the last 3 days, step one more position.
+Pair that root with the mode you chose, e.g. index 6 + phrygian →
+`"key": "F#", "scale": "phrygian"`. Because the index comes from the date itself,
+the sequence is stable: a skipped or backfilled day never shifts any other day's
+key, and a one-off manual nudge can't desync future days (each day recomputes
+from its own date). Adjacent days land a fifth apart, so even two back-to-back
+minor downtempo days sound clearly different. Sharps and flats are fine in
+Strudel note names (`cs3`, `ef3`, `af2`). If the date's index lands on a
+`(key, scale)` you used in the last 5 days, step to the next index — only today
+is affected.
 
 ### 3. Don't repeat the recent run (check the archive first)
 
@@ -111,6 +121,10 @@ genre/instrumentation, tempo feel}, and must not reuse the exact `(key, scale)`
 pair of any of the last 5 days. When a grim news stretch keeps pushing you toward
 dark modes, that is fine — but then make the *tonic, genre, instrumentation and
 rhythmic feel* carry the variety so each day still has its own identity.
+
+`build-index.js` prints a `⚠` warning if the newest day reuses a `(key, scale)`
+pair from the previous five days — treat that warning as a signal to revise the
+day's key or mode before committing.
 
 ## Strudel pattern guide
 

@@ -31,8 +31,13 @@ for (const day of days) {
   if (!existsSync(file)) { fail(`${day}: missing index.html`); continue; }
   const html = readFileSync(file, 'utf8');
 
-  // 1. Inline script must parse as JS.
-  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  // 1. Inline script must parse as JS. Match scripts with attributes too
+  // (e.g. <script type="module">) so an attributed inline script isn't skipped.
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
+    .map((m) => m[1])
+    // Only syntax-check genuinely inline scripts; a <script src=...></script>
+    // has no inline body (and is caught as an external asset below).
+    .filter((src) => src.trim().length > 0);
   if (scripts.length === 0) {
     console.log('  · no inline script (static page) — ok');
   }
@@ -40,10 +45,10 @@ for (const day of days) {
     try { new Function(src); } catch (e) { fail(`${day}: script syntax error — ${e.message}`); }
   }
 
-  // 2. No external resources (keep pages self-contained).
-  const external = [...html.matchAll(/(?:src|href)\s*=\s*["'](https?:)?\/\//gi)];
-  // allow http(s) links inside text/anchors only if they're plain navigation; flag asset loads
-  const assetExternal = [...html.matchAll(/<(?:script|link|img|source|iframe)[^>]+(?:src|href)\s*=\s*["']https?:\/\//gi)];
+  // 2. No external resources (keep pages self-contained). Flag asset loads on
+  // script/link/img/source/iframe; allow plain http(s) links in anchor text.
+  // Match both scheme-qualified (https://) and protocol-relative (//host) URLs.
+  const assetExternal = [...html.matchAll(/<(?:script|link|img|source|iframe)\b[^>]+(?:src|href)\s*=\s*["'](?:https?:)?\/\//gi)];
   if (assetExternal.length) fail(`${day}: loads ${assetExternal.length} external asset(s) — pages must be self-contained`);
 
   // 3. Must link back to the gallery.

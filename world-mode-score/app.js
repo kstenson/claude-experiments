@@ -107,11 +107,16 @@ function renderHero(day, days) {
   delta.classList.remove("up", "down");
   const idx = days.findIndex((d) => d.date === day.date);
   if (idx > 0) {
-    const diff = day.score - days[idx - 1].score;
+    const prev = days[idx - 1];
+    const diff = day.score - prev.score;
+    // days[] holds only successfully-loaded days, so the previous entry may not
+    // be the immediately preceding calendar day — label the comparison honestly.
+    const gapDays = Math.round((Date.parse(day.date) - Date.parse(prev.date)) / 86400000);
+    const ref = gapDays === 1 ? "from the day before" : `from ${fmtShort(prev.date)}`;
     if (diff === 0) {
-      delta.textContent = "Unchanged from the day before";
+      delta.textContent = `Unchanged ${ref}`;
     } else {
-      delta.textContent = `${diff > 0 ? "▲ +" : "▼ −"}${Math.abs(diff)} from the day before`;
+      delta.textContent = `${diff > 0 ? "▲ +" : "▼ −"}${Math.abs(diff)} ${ref}`;
       delta.classList.add(diff > 0 ? "up" : "down");
     }
   } else {
