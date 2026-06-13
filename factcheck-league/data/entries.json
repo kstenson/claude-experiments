@@ -10,14 +10,44 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-12",
+    "lastUpdated": "2026-06-13",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-13",
+      "date": "2026-06-13",
+      "headline": true,
+      "topic": "Who cut net migration — Labour or the Conservatives",
+      "claim": "The government has cut net migration by 80%. I'm not sure the Conservatives should be taking credit for this — it's happened on this government's watch.",
+      "speaker": "Andy Burnham",
+      "party": "Labour",
+      "role": "Mayor of Greater Manchester; Labour candidate in the Makerfield by-election (18 June 2026)",
+      "discussionScore": 83,
+      "discussionNote": "With the Makerfield by-election on 18 June shaping up as the most-watched contest of the month — Andy Burnham, a potential Starmer leadership challenger, against Reform's Robert Kenyon — the BBC by-election debate put immigration front and centre. Burnham's clash with Conservative candidate Michael Winstanley over who deserves credit for the falling numbers was the debate's most-quoted exchange, written up by AOL, MSN and the local press, and fact-checked head-on by Full Fact on 10-12 June ('Are the Conservatives or Labour responsible for the fall in net migration?'). It sits on top of immigration's continued status as the public's number-one issue and a week of Makerfield-related disinformation (AI 'Burnham' images, miscaptioned riot clips), making the credit-claiming over the migration fall one of the most-circulated factual disputes of the 24-48 hour window.",
+      "score": 60,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The headline number is roughly right but the credit-claiming is the misleading part. On the raw figure, Burnham is close: ONS provisional data show net migration fell from a peak of 944,000 in the year ending March 2023 to 171,000 in the year ending December 2025 — an 82% fall, so '80%' is a fair rounding. The problem is the framing 'I'm not sure the Conservatives should be taking credit... it's happened on this government's watch', which implies Labour drove the reduction. The evidence points the other way. Measured from the year ending June 2024 — the last quarter before Labour took office in July 2024 — net migration fell about 74%, not 80%, so most of the headline drop predates this government. More importantly, both the ONS and the Migration Observatory attribute the fall mainly to visa rule changes the previous Conservative government introduced in early 2024 (restrictions on dependants of international students and care workers, and tighter Skilled Worker rules): the ONS says the drop 'may be partly because of immigration rule changes, which were introduced in 2024 and 2025', and the Migration Observatory says it was 'largely driven by policies first introduced by the previous government', with Labour's own May 2025 measures 'not yet fully visible' in the 2025 figures. So the 82% fall is real and did continue under Labour, but the bulk of it stems from Conservative-era policy still working through the data — making Burnham's bid to deny the Conservatives credit the weakest part of the claim. (His Conservative opponent Michael Winstanley's mirror-image claim, that the fall was due to 'policies brought in under the tail end of the last Conservative government', is closer to the expert consensus, though Full Fact notes no one can yet attribute the fall precisely.)",
+      "evidence": [
+        "ONS Long-term international migration, provisional (released 21 May 2026): net migration 171,000 for the year ending December 2025, down from a revised peak of 944,000 in the year ending March 2023 — a fall of about 82%, consistent with Burnham's rounded '80%'.",
+        "Full Fact (10-12 June 2026): net migration fell about 82% from the YE March 2023 peak to YE December 2025, but only about 74% since the year ending June 2024, just before Labour took office in July 2024 — so most of the fall predates this government.",
+        "ONS: 'The drop in total immigration in the latest year may be partly because of immigration rule changes, which were introduced in 2024 and 2025'; the single biggest driver was a 47% fall in non-EU+ work-related arrivals in 2025.",
+        "Migration Observatory: the decline 'results from the measures of both the current and the previous administrations' and was 'largely driven by policies first introduced by the previous [Conservative] government' — chiefly the early-2024 restrictions on student and care-worker dependants; Labour's May 2025 changes were 'not yet fully visible' in the 2025 statistics.",
+        "Conservative candidate Michael Winstanley argued in the same debate that the fall was 'due to the policies that were brought in under the tail end of the last Conservative government where we put a restriction on visas' — a framing closer to the ONS/Migration Observatory assessment.",
+        "Caveat on attribution: Full Fact concludes 'we don't know for sure exactly which factors have driven the fall in net migration', and the 171,000 figure is provisional and prone to upward revision, so neither side can claim precise credit."
+      ],
+      "confidence": "High — the 82% headline fall and the 171,000 / 944,000 figures come directly from ONS provisional migration statistics, and the attribution caveats (74% under Labour; the fall largely driven by Conservative-era 2024 rule changes) are corroborated by Full Fact, the ONS commentary and the Migration Observatory. The only soft spot is that exact policy attribution is inherently uncertain and the latest figure is provisional.",
+      "sources": [
+        { "title": "Full Fact — Are the Conservatives or Labour responsible for the fall in net migration?", "url": "https://fullfact.org/immigration/makerfield-debate-migration-claims/" },
+        { "title": "ONS — Long-term international migration, provisional: year ending December 2025 (21 May 2026)", "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingdecember2025" },
+        { "title": "Migration Observatory — Net migration to the UK", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/long-term-international-migration-flows-to-and-from-the-uk/" },
+        { "title": "AOL / PA — All the key points from the Makerfield by-election debate", "url": "https://www.aol.com/articles/key-points-makerfield-election-debate-165248544.html" }
+      ]
+    },
+    {
       "id": "2026-06-12",
       "date": "2026-06-12",
-      "headline": true,
+      "headline": false,
       "topic": "Welfare spending under the Conservatives",
       "claim": "On their watch, defence spending went down and welfare spending went up — £88 billion overall, with £33 billion alone under the shadow Chancellor, Sir Mel Stride.",
       "speaker": "Keir Starmer",
