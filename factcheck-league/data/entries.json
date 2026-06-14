@@ -10,14 +10,44 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-13",
+    "lastUpdated": "2026-06-14",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-14",
+      "date": "2026-06-14",
+      "headline": true,
+      "topic": "Is this the biggest defence spending increase since the Cold War?",
+      "claim": "This government will begin the biggest sustained increase in defence spending since the end of the Cold War.",
+      "speaker": "Keir Starmer",
+      "party": "Labour",
+      "role": "Prime Minister; Leader of the Labour Party",
+      "discussionScore": 89,
+      "discussionNote": "The single biggest political story of the 24-48 hour window was the defence-funding crisis engulfing the government: Defence Secretary John Healey resigned on 11 June 2026, followed hours later by armed forces minister Al Carns, accusing the Treasury of refusing to commit the resources needed to defend the country and warning the Defence Investment Plan would take spending only to 2.68% of GDP by 2030 when 3% is needed. As Starmer reshuffled (appointing Dan Jarvis on 12 June) and defended his record in a BBC interview, his stock line — that Labour is delivering 'the biggest sustained increase in defence spending since the end of the Cold War' — became the most-scrutinised claim of the week, carried by the BBC, Bloomberg, CNN, the Globe and Mail, Forces News and the New Statesman, and directly contradicted by his own departing minister. The £13.4bn headline figure underpinning it was branded 'misleadingly large' and 'silly games with numbers' by the IFS, putting the claim at the centre of the resignation row.",
+      "score": 58,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The 'since the Cold War' framing is defensible on one measure and misleading on another, and the headline number attached to it is contested. Measured in cash and real terms, the planned rise is genuinely large: after decades of decline, the government is lifting NATO-qualifying defence spending from about 2.3% of GDP in 2024 to a committed 2.6% by April 2027, with a stated ambition of 3% in the next Parliament — and the IFS broadly accepts that, as a sustained real-terms uplift, this is the biggest since the Cold War ended, because spending had been on a long downward path since the late 1980s. The misleading part is the implied scale. As a SHARE OF GDP, even 2.6% or 3% remains far below actual Cold War levels, when UK defence spending ran at roughly 4-6% of GDP through the 1980s — so 'since the end of the Cold War' quietly excludes the Cold War's own much higher spending. More damagingly, the £13.4bn-a-year figure the government uses to dramatise the increase was branded 'misleadingly large' by the IFS: it compares cash spending in 2027/28 with 2024/25 rather than with what spending would otherwise have been, and the genuine real-terms uplift from the 0.2-percentage-point rise is closer to £6bn — a figure Healey himself conceded. Above all, the boast was made in the same week Starmer's own Defence Secretary resigned saying the plan 'falls well short of what is required' and reaches only 2.68% of GDP by 2030, so the 'biggest increase' line is real in direction but oversells both its size and its adequacy.",
+      "evidence": [
+        "Starmer (BBC interview, 11-12 June 2026, defending his record after John Healey's resignation): 'this government will begin the biggest sustained increase in defence spending since the end of the Cold War' — the government's standard framing first used when the 2.5%-by-2027 plan was announced in February 2025.",
+        "Full Fact / NATO: UK defence spending was about 2.3% of GDP in 2024 and 2.4% in 2025; the government has committed to 2.6% (NATO definition, including pensions and the Integrated Security Fund) by April 2027, with an ambition of 3% in the next Parliament — a genuine real-terms increase after a long post-Cold-War decline.",
+        "House of Commons Library / IFS: UK defence spending ran at roughly 4-6% of GDP through the 1980s and has fallen sharply since; today's ~2.3-2.6% remains well below actual Cold War levels, so 'biggest increase SINCE the Cold War' excludes the far higher Cold-War-era share of GDP.",
+        "IFS (Paul Johnson and Ben Zaranko): the £13.4bn headline figure is 'misleadingly large' — it compares 2027/28 cash with 2024/25 rather than the counterfactual; an extra 0.2% of GDP is about £6bn (the size of the aid-budget cut), and Johnson accused the PM of 'silly games with numbers' with 'totally inconsistent figures'.",
+        "John Healey, then Defence Secretary, conceded the real-terms increase 'would be something over £6 billion' and that 'the definition of defence numbers can be done in different ways'; he then resigned on 11 June 2026 saying the plan 'falls well short of what is required' and reaches only 2.68% of GDP by 2030 against a needed 3%.",
+        "Context: armed forces minister Al Carns resigned hours after Healey, and Dan Jarvis was appointed Defence Secretary on 12 June 2026; the Defence Investment Plan is due before the NATO summit on 7 July 2026, so the underlying plan was still unpublished when the claim was repeated."
+      ],
+      "confidence": "High — the historical GDP-share comparison (4-6% in the 1980s versus ~2.3-2.6% now) comes from the House of Commons Library and IFS, the current and committed percentages are confirmed by Full Fact and NATO data, and the critique of the £13.4bn figure is on the record from the IFS (Paul Johnson and Ben Zaranko) and was effectively conceded by Healey himself. The only soft spot is that 'sustained increase' is partly a forward-looking projection dependent on a Defence Investment Plan not yet published.",
+      "sources": [
+        { "title": "Full Fact — UK defence spending: explained", "url": "https://fullfact.org/news/uk-gdp-defence-spending/" },
+        { "title": "House of Commons Library — UK defence spending (CBP-8175)", "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8175/" },
+        { "title": "IFS — Response to defence spending announcement", "url": "https://ifs.org.uk/articles/ifs-response-defence-spending-announcement" },
+        { "title": "New Statesman — Defence Secretary John Healey resigns over military spending", "url": "https://www.newstatesman.com/politics/uk-politics/2026/06/defence-secretary-john-healey-resigns-over-military-spending" }
+      ]
+    },
+    {
       "id": "2026-06-13",
       "date": "2026-06-13",
-      "headline": true,
+      "headline": false,
       "topic": "Who cut net migration — Labour or the Conservatives",
       "claim": "The government has cut net migration by 80%. I'm not sure the Conservatives should be taking credit for this — it's happened on this government's watch.",
       "speaker": "Andy Burnham",

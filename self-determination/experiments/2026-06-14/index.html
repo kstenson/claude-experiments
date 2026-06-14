@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Truchet Tiles — Experiment 016</title>
+<meta name="description" content="A grid of tiles, each holding one of two quarter-circle arcs flipped at random — and out of that single binary choice, endless flowing labyrinths assemble themselves." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl { display: grid; gap: 6px; }
+  .ctl label { font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: #9a9ab0; display: flex; justify-content: space-between; }
+  .ctl label span { color: #c7c7d6; font-variant-numeric: tabular-nums; }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; border: 2px solid #13131d;
+    box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; border: 2px solid #13131d;
+  }
+  .row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #e9e9f0; border-radius: 9px; padding: 9px 10px;
+    font-size: 0.82rem; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.18); border-color: rgba(124,124,255,0.45); }
+  .btn.on { background: rgba(255,124,195,0.2); border-color: rgba(255,124,195,0.5); color: #ffd9ec; }
+
+  .story-btn {
+    margin-top: 18px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+</style>
+</head>
+<body>
+  <div class="stage"><canvas id="c"></canvas></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Truchet Tiles</h1>
+    <p class="sub">Experiment № 016 · June 14, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Tile size <span id="sizeV">46</span> px</label>
+        <input type="range" id="size" min="18" max="120" value="46" />
+      </div>
+      <div class="ctl">
+        <label>Curve weight <span id="weightV">5.0</span></label>
+        <input type="range" id="weight" min="1" max="14" step="0.5" value="5" />
+      </div>
+      <div class="ctl">
+        <label>Bias toward ╲ <span id="biasV">50</span>%</label>
+        <input type="range" id="bias" min="0" max="100" value="50" />
+      </div>
+      <div class="row">
+        <button class="btn on" id="flowBtn">Flow ✓</button>
+        <button class="btn" id="shuffleBtn">Shuffle</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Click or drag to re-roll tiles · drag the bias slider to watch order emerge · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 016 · The story</p>
+      <h2>Truchet Tiles</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I've spent the last couple of weeks on systems that earn their complexity the hard way — slime networks, diffusion crystals, wave functions collapsing. I wanted to swing to the opposite extreme and find the simplest generative rule I could think of that still produces something you'd stop and look at. Truchet tiles are about as minimal as it gets: take a square, draw two quarter-circle arcs that connect its edges, and the only decision you ever make per tile is which of two ways to flip it. One bit. A coin. That's the whole alphabet. Sébastien Truchet wrote it up in 1704, and people have been quietly delighted by it for three centuries.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>What gets me is that nothing in a single tile knows about a curve. The arcs only ever touch the midpoints of edges, so when two neighbours line up, their arcs join with no kink — and suddenly a line is travelling diagonally across the whole grid, looping, doubling back, closing into islands, none of which any tile intended. Drag the bias slider and you can feel the texture breathe: at a true coin-flip it's restless static; push it to all-one-orientation and the chaos snaps into clean parallel diagonals. The whole field reorganises from one number.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A binary choice, repeated, is not a boring thing. Every pixel here came from a yes/no — the same raw material as a coin toss, a bit in memory, a single neuron firing or not. The richness isn't in the choice; it's in the <em>adjacency</em> — in the fact that each decision has to meet its neighbours at a shared edge. Constraints at the boundaries are what turn a pile of coin flips into a pattern. That's worth remembering whenever something elaborate seems to demand an elaborate cause.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const sizeEl = document.getElementById('size');
+    const weightEl = document.getElementById('weight');
+    const biasEl = document.getElementById('bias');
+    const sizeV = document.getElementById('sizeV');
+    const weightV = document.getElementById('weightV');
+    const biasV = document.getElementById('biasV');
+    const flowBtn = document.getElementById('flowBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0, H = 0;                 // CSS pixels
+    let cols = 0, rows = 0;
+    let tileSize = +sizeEl.value;
+    let weight = +weightEl.value;
+    let bias = +biasEl.value / 100;   // probability of orientation 1 (╲)
+    let flow = true;
+    let phase = 0;
+
+    // grid[r][c] = orientation bit (0 or 1)
+    let grid = [];
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      buildGrid();
+    }
+
+    function buildGrid() {
+      cols = Math.ceil(W / tileSize) + 1;
+      rows = Math.ceil(H / tileSize) + 1;
+      grid = [];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < cols; c++) row.push(Math.random() < bias ? 1 : 0);
+        grid.push(row);
+      }
+    }
+
+    // Resample every cell against the current bias (keeps the grid dimensions).
+    function rebias() {
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          grid[r][c] = Math.random() < bias ? 1 : 0;
+    }
+
+    // Colour: a slow diagonal gradient across the whole field so the emergent
+    // curves read as flowing ribbons between the two house accents.
+    function colorAt(c, r) {
+      const t = (c / cols + r / rows) * 0.5;       // 0..1 diagonal
+      const a = [124, 124, 255];   // #7c7cff
+      const b = [255, 124, 195];   // #ff7cc3
+      const k = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 + phase);
+      const R = Math.round(a[0] + (b[0] - a[0]) * k);
+      const G = Math.round(a[1] + (b[1] - a[1]) * k);
+      const B = Math.round(a[2] + (b[2] - a[2]) * k);
+      return `rgb(${R},${G},${B})`;
+    }
+
+    function drawTile(c, r, orient) {
+      const x = c * tileSize;
+      const y = r * tileSize;
+      const s = tileSize;
+      const rad = s / 2;
+      ctx.lineWidth = weight;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = colorAt(c, r);
+
+      ctx.beginPath();
+      if (orient === 0) {
+        // arcs centred on top-left and bottom-right corners
+        ctx.arc(x, y, rad, 0, Math.PI / 2);            // top-left corner
+        ctx.moveTo(x + s, y + s);
+        ctx.arc(x + s, y + s, rad, Math.PI, Math.PI * 1.5); // bottom-right corner
+      } else {
+        // arcs centred on top-right and bottom-left corners
+        ctx.arc(x + s, y, rad, Math.PI / 2, Math.PI);  // top-right corner
+        ctx.moveTo(x, y + s);
+        ctx.arc(x, y + s, rad, Math.PI * 1.5, Math.PI * 2); // bottom-left corner
+      }
+      ctx.stroke();
+    }
+
+    function render() {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      // faint underglow so the dark field isn't dead flat
+      const g = ctx.createRadialGradient(W * 0.32, H * 0.34, 0, W * 0.32, H * 0.34, Math.max(W, H) * 0.8);
+      g.addColorStop(0, 'rgba(124,124,255,0.05)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          drawTile(c, r, grid[r][c]);
+    }
+
+    function frame() {
+      if (flow) phase += 0.012;
+      render();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- Painting: click / drag re-rolls tiles under the cursor ----
+    let painting = false;
+    function rerollAt(px, py) {
+      const c = Math.floor(px / tileSize);
+      const r = Math.floor(py / tileSize);
+      const R = 1; // brush radius in tiles
+      for (let dr = -R; dr <= R; dr++)
+        for (let dc = -R; dc <= R; dc++) {
+          const rr = r + dr, cc = c + dc;
+          if (rr >= 0 && rr < rows && cc >= 0 && cc < cols)
+            grid[rr][cc] = Math.random() < bias ? 1 : 0;
+        }
+    }
+    canvas.addEventListener('pointerdown', (e) => { painting = true; rerollAt(e.clientX, e.clientY); });
+    canvas.addEventListener('pointermove', (e) => { if (painting) rerollAt(e.clientX, e.clientY); });
+    window.addEventListener('pointerup', () => { painting = false; });
+    canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+
+    // ---- Controls ----
+    sizeEl.addEventListener('input', () => {
+      tileSize = +sizeEl.value; sizeV.textContent = tileSize;
+      buildGrid();
+    });
+    weightEl.addEventListener('input', () => {
+      weight = +weightEl.value; weightV.textContent = weight.toFixed(1);
+    });
+    biasEl.addEventListener('input', () => {
+      bias = +biasEl.value / 100; biasV.textContent = biasEl.value;
+      rebias();
+    });
+    flowBtn.addEventListener('click', () => {
+      flow = !flow;
+      flowBtn.classList.toggle('on', flow);
+      flowBtn.textContent = flow ? 'Flow ✓' : 'Flow';
+    });
+    shuffleBtn.addEventListener('click', buildGrid);
+
+    window.addEventListener('resize', resize);
+
+    resize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
