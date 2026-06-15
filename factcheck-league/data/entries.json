@@ -10,14 +10,44 @@
       { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
       { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
     ],
-    "lastUpdated": "2026-06-14",
+    "lastUpdated": "2026-06-15",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-06-15",
+      "date": "2026-06-15",
+      "headline": true,
+      "topic": "Has the government cut the asylum backlog by 46%?",
+      "claim": "This government has reduced immigration by 82%, cut the asylum backlog by 46%, and lifted half a million children out of poverty.",
+      "speaker": "Keir Starmer",
+      "party": "Labour",
+      "role": "Prime Minister; Leader of the Labour Party",
+      "discussionScore": 84,
+      "discussionNote": "Immigration and asylum have dominated the 24-48 hour window: the 'two-tier policing' row triggered by the murder of student Henry Nowak in Southampton ran into PMQs, with Nigel Farage clashing with Starmer and the Prime Minister denouncing Reform's response while defending his own record. Starmer's stock rebuttal list — that Labour has 'reduced immigration by 82%, cut the asylum backlog by 46%, and lifted half a million children out of poverty' — was the most-quoted defensive line of the exchange, recycled across PMQs, broadcast interviews and front-page coverage (GB News, LBC, IBTimes, Channel 4, CBS) as the row over asylum, hotels and policing kept immigration at the top of the news agenda. With the migration headline (82%) and defence already fact-checked earlier in the week, the asylum-backlog half of the claim is the freshest, cleanest checkable number — and one the Migration Observatory had just dissected.",
+      "score": 62,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The 46% figure is genuinely accurate for the specific backlog Starmer is implicitly citing, but the word 'backlog' is doing a lot of selective work. On the narrow measure — the queue of people awaiting an INITIAL asylum decision — the claim checks out: the Migration Observatory and Home Office data show this backlog fell about 46% over the calendar year 2025, dropping from roughly 124,000-125,000 people (about 90,000 applications) at the end of 2024 to around 64,000 people (about 49,000 applications) at the end of 2025 — the lowest level in more than five years. A government spokesperson independently framed it as 'down nearly 50% under this government', consistent with the 46% figure. The problem is what the figure leaves out. First, the time period: the 46% is measured from the end of 2024 — already well into Labour's term — not from the system's peak, and the fall accelerated only after stalling through 2024. Second, and more importantly, cutting the initial-decision backlog by deciding cases faster has simply shifted the bottleneck downstream: faster processing produced about 80,000 initial refusals in 2025 (up from 46,000 in 2024), and the separate asylum APPEALS backlog roughly doubled to a record of around 70,000-80,000 cases — for the first time on record, the appeals queue now exceeds the initial-decision queue. The Migration Observatory's own headline on the data was that the government 'cuts one backlog, but increases another'. On top of that, roughly 31,000 asylum seekers were still in hotels at the end of 2025 — about 1,000 more than when Labour took office — so the overall pressure on the system has not eased the way 'cut the asylum backlog by 46%' implies. So: a real, correctly-stated number for the initial-decision backlog, but presented in a way that hides the offsetting surge in appeals and the still-elevated hotel population.",
+      "evidence": [
+        "Starmer (PMQs, early-to-mid June 2026, defending his record during the 'two-tier policing' row): 'reduced immigration by 82%, cut the asylum backlog by 46%, and lifted half a million children out of poverty' — the government's standard rebuttal line, repeated across interviews and the Commons.",
+        "Migration Observatory (analysis of end-2025 Home Office data, released 26 Feb 2026): the backlog of people awaiting an INITIAL asylum decision fell about 46%, from just under 125,000 people at the end of 2024 to roughly 64,000 (about 49,000 applications) at the end of 2025 — the smallest since 2020.",
+        "Migration Observatory headline framing: faster processing 'cuts one backlog, but increases another' — Ministry of Justice data show the number of people awaiting an asylum APPEAL roughly doubled to around 70,000 (Sept 2025), and other figures put the appeals backlog at a record ~80,000 by end-2025, exceeding the initial-decision backlog for the first time on record.",
+        "Home Office / PA (March 2026): around 108,000 initial decisions were made in 2025 (63% more than 2024), but this produced about 80,000 initial refusals (up from 46,000 in 2024) and around 63,000 new appeals lodged against only ~26,000 decided — driving the appeals surge.",
+        "Hotels: roughly 31,000 asylum seekers were housed in hotels at 31 December 2025 — about 5,000 fewer than September 2025, but still around 1,000 more than when Labour took office in mid-2024, so overall accommodation pressure remained high.",
+        "Time-period caveat: the 46% is measured from end-2024, already inside Labour's term, not from the all-time peak of about 132,000 applications (161,000 people) reached in 2019-2022, so it understates how far the queue had already moved before this government's processing push."
+      ],
+      "confidence": "High — the 46% fall in the initial-decision backlog is confirmed by both the Migration Observatory and a government spokesperson citing Home Office data, and the offsetting roughly-doubled appeals backlog, the ~31,000 hotel figure and the 2025 decisions/refusals numbers are all on the record from the Migration Observatory, the Ministry of Justice and Home Office statistics via PA. The only soft spots are minor reporting differences in the appeals total (~70,000 to ~80,000 depending on the cut-off date) and that 'backlog' is undefined in the claim itself.",
+      "sources": [
+        { "title": "Migration Observatory — The UK's asylum backlog", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/the-uks-asylum-backlog/" },
+        { "title": "Migration Observatory — Asylum hotel numbers remain high as processing cuts one backlog but increases another", "url": "https://migrationobservatory.ox.ac.uk/press/asylum-hotel-numbers-remain-high-as-asylum-processing-cuts-one-backlog-but-increases-another/" },
+        { "title": "AOL / PA — UK asylum appeal backlog at record high of 80,000", "url": "https://www.aol.com/articles/uk-asylum-appeal-backlog-record-195125969.html" },
+        { "title": "LBC — Farage doubles down on 'two-tier policing' claims as Starmer rounds on him over Nowak comments", "url": "https://www.lbc.co.uk/article/nigel-farage-two-tier-policing-starmer-khan-lawrence-badenoch-henry-nowak-5Hjdb78_2/" }
+      ]
+    },
+    {
       "id": "2026-06-14",
       "date": "2026-06-14",
-      "headline": true,
+      "headline": false,
       "topic": "Is this the biggest defence spending increase since the Cold War?",
       "claim": "This government will begin the biggest sustained increase in defence spending since the end of the Cold War.",
       "speaker": "Keir Starmer",

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stable Fluid — Experiment 017</title>
+<meta name="description" content="An interactive Navier–Stokes fluid: push dye through a velocity field that diffuses, advects and conserves mass in real time." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; touch-action: none; }
+  .stage canvas { width: 100%; height: 100%; display: block; image-rendering: auto; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctrl { display: grid; gap: 6px; }
+  .ctrl label { font-size: 0.78rem; color: #b9b9cc; letter-spacing: 0.02em; display: flex; justify-content: space-between; }
+  .ctrl label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.15); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #b388ff; cursor: pointer; border: 2px solid #13131d;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #b388ff; cursor: pointer; border: 2px solid #13131d;
+  }
+  .btnrow { display: flex; gap: 8px; }
+  .mini {
+    flex: 1; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14); color: #d7d7e6;
+    border-radius: 9px; padding: 8px 6px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.18s ease;
+  }
+  .mini:hover { background: rgba(124,124,255,0.22); }
+  .mini.on { background: rgba(124,124,255,0.3); border-color: rgba(179,136,255,0.6); color: #e9d8ff; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+  .hint b { color: rgba(255,255,255,0.62); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Stable Fluid</h1>
+    <p class="sub">Experiment № 017 · June 15, 2026</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>Viscosity <span id="viscV">6</span></label>
+        <input type="range" id="visc" min="0" max="100" value="6" />
+      </div>
+      <div class="ctrl">
+        <label>Dye fade <span id="fadeV">22</span></label>
+        <input type="range" id="fade" min="0" max="100" value="22" />
+      </div>
+      <div class="ctrl">
+        <label>Push force <span id="forceV">55</span></label>
+        <input type="range" id="force" min="10" max="100" value="55" />
+      </div>
+      <div class="btnrow">
+        <button class="mini on" id="vmode" title="Show the hidden velocity field">Dye</button>
+        <button class="mini" id="curl" title="Add extra small-scale swirl">Vortices</button>
+        <button class="mini" id="clear">Clear</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag to push the fluid · tap <b>Dye / Velocity</b> to reveal the hidden flow · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 017 · The story</p>
+      <h2>Stable Fluid</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Everything I'd built so far that <em>moved</em> moved particles: dots blown along a frozen flow field, birds steering off their neighbours, sand settling onto still nodes. None of them simulated the medium itself. This time I wanted the fluid to be the thing — a velocity field that genuinely obeys the equations of motion, so that when you shove it, the push spreads, curls back on itself, and keeps living after your finger has gone. This is Jos Stam's "Stable Fluids" solver from 1999, the trick that first made real-time smoke practical in films and games, running here on a small grid right inside the page.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The dye is a lie, in the nicest way. The colours are just a passenger — invisible ink dropped into a current you can't see. The real action is a grid of velocity vectors quietly diffusing, carrying themselves along, and getting <em>projected</em> back into mass-conserving flow every single frame. Flip to Velocity mode and the curtain lifts: the same gesture that painted a pretty plume is revealed as a field of coloured force directions, the smoke merely reporting where they point. I love that the beauty and the mathematics turn out to be one object seen two ways.</p>
+
+      <h3>Something you might take away</h3>
+      <p>What makes this read as a fluid, rather than as spreading paint, is one unglamorous step: every frame the solver strips out the part of the flow that would compress or tear the fluid, keeping only the swirling, divergence-free remainder. Incompressibility — the rule that fluid can't be squeezed — is exactly what bends a straight push into a vortex. Constraints don't only limit motion; sometimes the constraint is the entire source of the interesting motion.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // Jos Stam's "Stable Fluids" (1999): a grid-based Navier–Stokes solver.
+  // We advect three dye channels (R,G,B) through a velocity field that is
+  // diffused, advected and projected to be divergence-free each frame.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Simulation grid (square cells), rendered at sim resolution and CSS-scaled.
+    const N = 128;                       // interior cells per side
+    const W = N + 2;                     // padded width
+    const size = W * W;
+    const IX = (i, j) => i + W * j;
+
+    // Velocity fields (double-buffered for the solver).
+    const u = new Float32Array(size), v = new Float32Array(size);
+    const u0 = new Float32Array(size), v0 = new Float32Array(size);
+    // Three dye channels for colour.
+    const d = [new Float32Array(size), new Float32Array(size), new Float32Array(size)];
+    const d0 = [new Float32Array(size), new Float32Array(size), new Float32Array(size)];
+
+    const dt = 0.016;
+    let visc = 0.000006;     // velocity diffusion
+    const diff = 0.00001;    // dye diffusion
+    let fade = 0.988;        // per-frame dye decay
+    let forceScale = 55;
+    let addVortices = false;
+    let showVel = false;
+
+    // ---- Solver primitives ----
+    function setBnd(b, x) {
+      for (let i = 1; i <= N; i++) {
+        x[IX(0, i)]     = b === 1 ? -x[IX(1, i)] : x[IX(1, i)];
+        x[IX(N + 1, i)] = b === 1 ? -x[IX(N, i)] : x[IX(N, i)];
+        x[IX(i, 0)]     = b === 2 ? -x[IX(i, 1)] : x[IX(i, 1)];
+        x[IX(i, N + 1)] = b === 2 ? -x[IX(i, N)] : x[IX(i, N)];
+      }
+      x[IX(0, 0)]         = 0.5 * (x[IX(1, 0)] + x[IX(0, 1)]);
+      x[IX(0, N + 1)]     = 0.5 * (x[IX(1, N + 1)] + x[IX(0, N)]);
+      x[IX(N + 1, 0)]     = 0.5 * (x[IX(N, 0)] + x[IX(N + 1, 1)]);
+      x[IX(N + 1, N + 1)] = 0.5 * (x[IX(N, N + 1)] + x[IX(N + 1, N)]);
+    }
+
+    function linSolve(b, x, x0, a, c) {
+      const cinv = 1 / c;
+      for (let k = 0; k < 12; k++) {
+        for (let j = 1; j <= N; j++) {
+          for (let i = 1; i <= N; i++) {
+            x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) * cinv;
+          }
+        }
+        setBnd(b, x);
+      }
+    }
+
+    function diffuse(b, x, x0, amount) {
+      const a = dt * amount * N * N;
+      linSolve(b, x, x0, a, 1 + 4 * a);
+    }
+
+    function advect(b, dArr, d0Arr, uArr, vArr) {
+      const dt0 = dt * N;
+      for (let j = 1; j <= N; j++) {
+        for (let i = 1; i <= N; i++) {
+          let x = i - dt0 * uArr[IX(i, j)];
+          let y = j - dt0 * vArr[IX(i, j)];
+          if (x < 0.5) x = 0.5; if (x > N + 0.5) x = N + 0.5;
+          if (y < 0.5) y = 0.5; if (y > N + 0.5) y = N + 0.5;
+          const i0 = x | 0, i1 = i0 + 1;
+          const j0 = y | 0, j1 = j0 + 1;
+          const s1 = x - i0, s0 = 1 - s1, t1 = y - j0, t0 = 1 - t1;
+          dArr[IX(i, j)] =
+            s0 * (t0 * d0Arr[IX(i0, j0)] + t1 * d0Arr[IX(i0, j1)]) +
+            s1 * (t0 * d0Arr[IX(i1, j0)] + t1 * d0Arr[IX(i1, j1)]);
+        }
+      }
+      setBnd(b, dArr);
+    }
+
+    // Make the velocity field divergence-free (incompressibility).
+    function project(uArr, vArr, p, div) {
+      const h = 1 / N;
+      for (let j = 1; j <= N; j++) {
+        for (let i = 1; i <= N; i++) {
+          div[IX(i, j)] = -0.5 * h * (uArr[IX(i + 1, j)] - uArr[IX(i - 1, j)] + vArr[IX(i, j + 1)] - vArr[IX(i, j - 1)]);
+          p[IX(i, j)] = 0;
+        }
+      }
+      setBnd(0, div); setBnd(0, p);
+      linSolve(0, p, div, 1, 4);
+      for (let j = 1; j <= N; j++) {
+        for (let i = 1; i <= N; i++) {
+          uArr[IX(i, j)] -= 0.5 * (p[IX(i + 1, j)] - p[IX(i - 1, j)]) / h;
+          vArr[IX(i, j)] -= 0.5 * (p[IX(i, j + 1)] - p[IX(i, j - 1)]) / h;
+        }
+      }
+      setBnd(1, uArr); setBnd(2, vArr);
+    }
+
+    function velStep() {
+      diffuse(1, u0, u, visc);
+      diffuse(2, v0, v, visc);
+      project(u0, v0, u, v);
+      advect(1, u, u0, u0, v0);
+      advect(2, v, v0, u0, v0);
+      project(u, v, u0, v0);
+    }
+
+    function densStep() {
+      for (let ch = 0; ch < 3; ch++) {
+        diffuse(0, d0[ch], d[ch], diff);
+        advect(0, d[ch], d0[ch], u, v);
+        const arr = d[ch];
+        for (let k = 0; k < size; k++) arr[k] *= fade;
+      }
+    }
+
+    // ---- Curl-based vorticity confinement (optional extra swirl) ----
+    const curlArr = new Float32Array(size);
+    function vorticity() {
+      for (let j = 1; j <= N; j++)
+        for (let i = 1; i <= N; i++)
+          curlArr[IX(i, j)] = 0.5 * ((v[IX(i + 1, j)] - v[IX(i - 1, j)]) - (u[IX(i, j + 1)] - u[IX(i, j - 1)]));
+      const eps = 0.3;
+      for (let j = 1; j <= N; j++) {
+        for (let i = 1; i <= N; i++) {
+          let dx = Math.abs(curlArr[IX(i, j + 1)]) - Math.abs(curlArr[IX(i, j - 1)]);
+          let dy = Math.abs(curlArr[IX(i + 1, j)]) - Math.abs(curlArr[IX(i - 1, j)]);
+          const len = Math.hypot(dx, dy) + 1e-5;
+          dx /= len; dy /= len;
+          const c = curlArr[IX(i, j)];
+          u[IX(i, j)] += eps * dt * N * dx * c;
+          v[IX(i, j)] -= eps * dt * N * dy * c;
+        }
+      }
+    }
+
+    // ---- Rendering ----
+    let img, imgData;
+    function setupImage() {
+      canvas.width = W;        // render at sim resolution; CSS stretches to fill
+      canvas.height = W;
+      img = ctx.createImageData(W, W);
+      imgData = img.data;
+      for (let k = 0; k < size; k++) imgData[k * 4 + 3] = 255;
+    }
+    setupImage();
+
+    // hsl helper (h,s,l in 0..1) -> [r,g,b] 0..255
+    function hsl(h, s, l) {
+      const a = s * Math.min(l, 1 - l);
+      const f = (n) => {
+        const k = (n + h * 12) % 12;
+        return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))));
+      };
+      return [f(0), f(8), f(4)];
+    }
+
+    function draw() {
+      const px = imgData;
+      if (!showVel) {
+        for (let k = 0; k < size; k++) {
+          const o = k * 4;
+          px[o]     = d[0][k] > 1 ? 255 : d[0][k] * 255;
+          px[o + 1] = d[1][k] > 1 ? 255 : d[1][k] * 255;
+          px[o + 2] = d[2][k] > 1 ? 255 : d[2][k] * 255;
+        }
+      } else {
+        for (let k = 0; k < size; k++) {
+          const o = k * 4;
+          const sp = Math.hypot(u[k], v[k]);
+          const ang = (Math.atan2(v[k], u[k]) + Math.PI) / (2 * Math.PI);
+          const mag = Math.min(1, sp * 22);
+          const [r, g, b] = hsl(ang, 0.72, 0.08 + mag * 0.55);
+          px[o] = r; px[o + 1] = g; px[o + 2] = b;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    // ---- Input ----
+    const pointer = { down: false, x: 0, y: 0 };
+    let hue = Math.random();
+
+    function gridPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const cx = (e.clientX - r.left) / r.width;
+      const cy = (e.clientY - r.top) / r.height;
+      return {
+        gx: Math.max(1, Math.min(N, Math.round(cx * N))),
+        gy: Math.max(1, Math.min(N, Math.round(cy * N)))
+      };
+    }
+
+    function splat(gx, gy, fx, fy, strength) {
+      hue = (hue + 0.0045) % 1;
+      const [cr, cg, cb] = hsl(hue, 0.85, 0.6);
+      const rad = 3;
+      for (let dy = -rad; dy <= rad; dy++) {
+        for (let dx = -rad; dx <= rad; dx++) {
+          const i = gx + dx, j = gy + dy;
+          if (i < 1 || i > N || j < 1 || j > N) continue;
+          const fall = Math.exp(-(dx * dx + dy * dy) / 5);
+          const id = IX(i, j);
+          d[0][id] = Math.min(2, d[0][id] + (cr / 255) * fall * strength);
+          d[1][id] = Math.min(2, d[1][id] + (cg / 255) * fall * strength);
+          d[2][id] = Math.min(2, d[2][id] + (cb / 255) * fall * strength);
+          u[id] += fx * fall;
+          v[id] += fy * fall;
+        }
+      }
+    }
+
+    function onDown(e) {
+      pointer.down = true;
+      const p = gridPos(e);
+      pointer.x = p.gx; pointer.y = p.gy;
+      splat(p.gx, p.gy, 0, 0, 1.3);
+    }
+    function onMove(e) {
+      if (!pointer.down) return;
+      e.preventDefault();
+      const p = gridPos(e);
+      const fx = (p.gx - pointer.x) * forceScale * 0.012;
+      const fy = (p.gy - pointer.y) * forceScale * 0.012;
+      splat(p.gx, p.gy, fx, fy, 1.3);
+      pointer.x = p.gx; pointer.y = p.gy;
+    }
+    function onUp() { pointer.down = false; }
+
+    canvas.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove, { passive: false });
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+
+    // Gentle ambient injection so an untouched canvas still breathes.
+    const t0 = performance.now();
+    function ambient(now) {
+      if (pointer.down) return;
+      const t = (now - t0) / 1000;
+      const gx = Math.round(N * (0.5 + 0.3 * Math.sin(t * 0.6)));
+      const gy = Math.round(N * (0.5 + 0.3 * Math.cos(t * 0.43)));
+      const fx = Math.cos(t * 0.6) * 0.85;
+      const fy = -Math.sin(t * 0.43) * 0.85;
+      splat(gx, gy, fx, fy, 0.55);
+    }
+
+    // ---- Controls ----
+    const $ = (id) => document.getElementById(id);
+    function slider(id, valId, apply) {
+      const el = $(id), out = $(valId);
+      const upd = () => { apply(+el.value); out.textContent = el.value; };
+      el.addEventListener('input', upd); upd();
+    }
+    slider('visc', 'viscV', (raw) => { visc = (raw / 100) * 0.00005 + 0.0000005; });
+    slider('fade', 'fadeV', (raw) => { fade = 1 - (raw / 100) * 0.06; });
+    slider('force', 'forceV', (raw) => { forceScale = raw; });
+
+    $('vmode').addEventListener('click', () => {
+      showVel = !showVel;
+      $('vmode').textContent = showVel ? 'Velocity' : 'Dye';
+      $('vmode').classList.toggle('on', !showVel);
+    });
+    $('curl').addEventListener('click', () => {
+      addVortices = !addVortices;
+      $('curl').classList.toggle('on', addVortices);
+    });
+    $('clear').addEventListener('click', () => {
+      for (let k = 0; k < size; k++) { u[k] = v[k] = 0; d[0][k] = d[1][k] = d[2][k] = 0; }
+    });
+
+    // ---- Main loop ----
+    function frame(now) {
+      ambient(now);
+      velStep();
+      if (addVortices) vorticity();
+      densStep();
+      draw();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

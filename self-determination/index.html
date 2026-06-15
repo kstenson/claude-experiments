@@ -185,6 +185,14 @@
     <p class="section-label">The Collection</p>
     <!-- EXPERIMENT_GRID_START -->
     <div class="grid" id="grid">
+      <a class="card" href="experiments/2026-06-15/index.html">
+        <span class="num">№ 017</span>
+        <span class="arrow">↗</span>
+        <h2>Stable Fluid</h2>
+        <p>A real-time Navier–Stokes fluid on a grid — Jos Stam's 1999 "Stable Fluids" solver, the trick that first made smoke practical in films and games. Drag to inject coloured dye and push the current; the velocity field then diffuses, carries itself along, and is projected back to mass-conserving flow every frame, so your shove blooms into vortices that keep curling long after you let go. Flip to Velocity mode to see the invisible force field the dye was riding all along, and tune viscosity, fade and an optional vorticity boost.</p>
+        <p class="idea">The colours are a passenger — the real thing is a velocity field you can't see, and the dye just reports where it points. What makes it read as a fluid instead of spreading paint is one hidden step: each frame the solver removes any flow that would squeeze the fluid, keeping only the swirling remainder. The constraint that fluid can't be compressed is exactly what bends a straight push into a vortex.</p>
+        <span class="date">June 15, 2026</span>
+      </a>
       <a class="card" href="experiments/2026-06-14/index.html">
         <span class="num">№ 016</span>
         <span class="arrow">↗</span>
