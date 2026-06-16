@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apollonian Gasket — Experiment 018</title>
+<meta name="description" content="A fractal of circles packed inside circles, grown recursively from Descartes' Circle Theorem — every gap forever invites three more curves." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; touch-action: none; }
+  .stage canvas { width: 100%; height: 100%; display: block; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctrl { display: grid; gap: 6px; }
+  .ctrl label { font-size: 0.78rem; color: #b9b9cc; letter-spacing: 0.02em; display: flex; justify-content: space-between; }
+  .ctrl label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.15); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #b388ff; cursor: pointer; border: 2px solid #13131d;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #b388ff; cursor: pointer; border: 2px solid #13131d;
+  }
+  .btnrow { display: flex; gap: 8px; }
+  .mini {
+    flex: 1; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14); color: #d7d7e6;
+    border-radius: 9px; padding: 8px 6px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.18s ease;
+  }
+  .mini:hover { background: rgba(124,124,255,0.22); }
+  .mini.on { background: rgba(124,124,255,0.3); border-color: rgba(179,136,255,0.6); color: #e9d8ff; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: normal; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+  .hint b { color: rgba(255,255,255,0.62); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Apollonian Gasket</h1>
+    <p class="sub">Experiment № 018 · June 16, 2026</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>Depth <span id="depthV">7</span></label>
+        <input type="range" id="depth" min="2" max="11" value="7" />
+      </div>
+      <div class="ctrl">
+        <label>Smallest circle <span id="minV">0.6</span></label>
+        <input type="range" id="minr" min="2" max="40" value="6" />
+      </div>
+      <div class="ctrl">
+        <label>Growth speed <span id="speedV">55</span></label>
+        <input type="range" id="speed" min="5" max="100" value="55" />
+      </div>
+      <div class="btnrow">
+        <button class="mini on" id="fillBtn" title="Fill the discs or just draw their outlines">Filled</button>
+        <button class="mini" id="newBtn" title="Reshuffle the three starting circles">Reshuffle</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">a new gasket grows automatically · drag the <b>sliders</b> · tap <b>Reshuffle</b> for a new seed · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 018 · The story</p>
+      <h2>Apollonian Gasket</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I've spent a lot of these experiments watching things <em>spread</em> — fluid, sand, slime, dye. I wanted the opposite urge for a change: a shape that grows by turning <em>inward</em>, filling its own empty pockets forever. The Apollonian gasket is exactly that. Start with three circles that all kiss each other, and there's a unique fourth circle snug in the gap between them. Now you have new, smaller gaps — and each one again has a unique circle waiting inside it. It never stops. What sealed it for me is that the whole infinite cascade is governed by a single tidy equation from 1643, Descartes' Circle Theorem, which I get to actually compute live on the screen rather than fake with recursion.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The maths is almost suspiciously generous. Measure circles by their <em>curvature</em> — one over the radius, with the big outer circle counted as negative because it curves the other way — and the four mutually-tangent curvatures obey <em>(a+b+c+d)² = 2(a²+b²+c²+d²)</em>. Solve that quadratic for the unknown <em>d</em> and the two roots hand you both the circle nestled inside the gap and the giant one wrapped around the outside. There's a complex-number cousin of the same equation that pins down <em>where</em> the new circle sits, so I never have to search or guess — every circle's exact position and size drops straight out of arithmetic. Watching the gasket bloom into its own holes, generation after generation, is the rare case where the picture and the proof are the same motion.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Every gap looks like emptiness, but it's really a fully-determined invitation: given the three circles around it, there is one and only one circle that fits, and you can name it before you draw it. The structure isn't added on top of the holes — it <em>is</em> the holes, resolved. I find that a quietly hopeful way to look at unfilled space: not as something missing, but as a precise question that already contains its own answer.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // Apollonian gasket via Descartes' Circle Theorem.
+  // Circles are stored as { b, z } where b = signed curvature (1/r, outer < 0)
+  // and z = b * center (a complex number), following the "complex Descartes"
+  // formulation that yields both the new curvature AND the new centre directly.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    // --- tiny complex-number helpers ---
+    const cx = (re, im) => ({ re, im });
+    const cadd = (a, b) => cx(a.re + b.re, a.im + b.im);
+    const csub = (a, b) => cx(a.re - b.re, a.im - b.im);
+    const cmul = (a, b) => cx(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+    const cscale = (a, s) => cx(a.re * s, a.im * s);
+    const csqrt = (a) => {
+      const r = Math.hypot(a.re, a.im);
+      const re = Math.sqrt((r + a.re) / 2);
+      let im = Math.sqrt((r - a.re) / 2);
+      if (a.im < 0) im = -im;
+      return cx(re, im);
+    };
+
+    // A circle: signed curvature b, and z = b * (centre as complex).
+    // centre = z / b ; radius = 1 / |b|.
+    function circle(b, centre) { return { b, z: cscale(centre, b) }; }
+    function centreOf(c) { return cscale(c.z, 1 / c.b); }
+
+    // Given three mutually tangent circles, find the two that complete the set.
+    // Curvature:  d = a+b+c ± 2*sqrt(ab+bc+ca)
+    // Centre:     d*zd = a*za + b*zb + c*zc ± 2*sqrt(za*zb + zb*zc + zc*za)
+    function descartes(c1, c2, c3) {
+      const b1 = c1.b, b2 = c2.b, b3 = c3.b;
+      const sum = b1 + b2 + b3;
+      const root = 2 * Math.sqrt(Math.abs(b1 * b2 + b2 * b3 + b3 * b1));
+      const zb = cadd(cadd(cmul(c1.z, c2.z), cmul(c2.z, c3.z)), cmul(c3.z, c1.z));
+      const zroot = cscale(csqrt(zb), 2);
+      const zsum = cadd(cadd(c1.z, c2.z), c3.z);
+      const make = (b, z) => ({ b, z });
+      return [
+        make(sum + root, cadd(zsum, zroot)),
+        make(sum + root, csub(zsum, zroot)),
+        make(sum - root, cadd(zsum, zroot)),
+        make(sum - root, csub(zsum, zroot)),
+      ];
+    }
+
+    // Validate that candidate circle d is genuinely tangent to a, b, c.
+    function tangent(a, b) {
+      const ca = centreOf(a), cb = centreOf(b);
+      const dist = Math.hypot(ca.re - cb.re, ca.im - cb.im);
+      const ra = 1 / Math.abs(a.b), rb = 1 / Math.abs(b.b);
+      // externally tangent: dist ≈ ra+rb ; internally: dist ≈ |ra-rb|
+      return Math.abs(dist - (ra + rb)) < 1e-3 || Math.abs(dist - Math.abs(ra - rb)) < 1e-3;
+    }
+
+    // --- build the full gasket as a flat list, with a generation index ---
+    let circles = [];          // { b, z, gen }
+    let outerR = 1, outerC = cx(0, 0);
+    let maxGen = 7, minRadiusFrac = 0.006;
+
+    function buildGasket() {
+      circles = [];
+      // Outer bounding circle (negative curvature) fits the viewport.
+      const R = outerR;
+      const C = outerC;
+      const c0 = circle(-1 / R, C);
+
+      // Two inner circles tangent to each other and to the outer one,
+      // with a random split ratio for variety.
+      const k = 0.30 + Math.random() * 0.40;           // first inner radius / R
+      const r1 = k * R;
+      const r2 = R - r1;                                 // second fills the rest along a diameter
+      // place them along a randomly-rotated diameter
+      const ang = Math.random() * Math.PI * 2;
+      const dir = cx(Math.cos(ang), Math.sin(ang));
+      const c1 = circle(1 / r1, cadd(C, cscale(dir, R - r1)));
+      const c2 = circle(1 / r2, cadd(C, cscale(dir, -(R - r2))));
+
+      circles.push({ ...c0, gen: 0 }, { ...c1, gen: 0 }, { ...c2, gen: 0 });
+
+      // The two seed circles complete the first triple with the outer one.
+      const minR = minRadiusFrac * R;
+      const seen = new Set();
+      const key = (c) => {
+        const ce = centreOf(c);
+        return Math.round(ce.re * 1e3) + ',' + Math.round(ce.im * 1e3) + ',' + Math.round(c.b * 1e3);
+      };
+      seen.add(key(c0)); seen.add(key(c1)); seen.add(key(c2));
+
+      // recursive subdivision: each tangent triple spawns one new interior circle
+      function recurse(a, b, c, gen) {
+        if (gen > maxGen) return;
+        const cands = descartes(a, b, c);
+        for (const cand of cands) {
+          if (cand.b <= 0) continue;                    // skip the outer-type solution
+          const r = 1 / cand.b;
+          if (r < minR) continue;
+          // must lie inside the outer circle and be tangent to all three
+          const ce = centreOf(cand);
+          if (Math.hypot(ce.re - C.re, ce.im - C.im) + r > R + 1e-2) continue;
+          if (!(tangent(cand, a) && tangent(cand, b) && tangent(cand, c))) continue;
+          const kk = key(cand);
+          if (seen.has(kk)) continue;
+          seen.add(kk);
+          circles.push({ b: cand.b, z: cand.z, gen });
+          // the new circle forms three fresh triples with each pair of its parents
+          recurse(a, b, cand, gen + 1);
+          recurse(a, c, cand, gen + 1);
+          recurse(b, c, cand, gen + 1);
+        }
+      }
+      recurse(c0, c1, c2, 1);
+
+      // sort by generation so growth reveals coarse-to-fine
+      circles.sort((p, q) => p.gen - q.gen || q.b - p.b);
+    }
+
+    // --- colour: hue by generation, a soft violet→pink→cyan sweep ---
+    function hsl(h, s, l) {
+      const a = s * Math.min(l, 1 - l);
+      const f = (n) => {
+        const kk = (n + h / 30) % 12;
+        return Math.round(255 * (l - a * Math.max(-1, Math.min(kk - 3, Math.min(9 - kk, 1)))));
+      };
+      return `rgb(${f(0)},${f(8)},${f(4)})`;
+    }
+
+    // --- view transform: data space is centred on outerC, radius outerR ---
+    let view = { s: 1, ox: 0, oy: 0 };
+    function fit() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth, h = window.innerHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const margin = 40;
+      const span = Math.min(w, h) - margin * 2;
+      view.s = span / (2 * outerR);
+      view.ox = w / 2 - outerC.re * view.s;
+      view.oy = h / 2 - outerC.im * view.s;
+    }
+
+    // --- animation state ---
+    let revealed = 0;           // how many circles are currently shown (float)
+    let filled = true;
+    let speed = 55;
+
+    function reset() {
+      buildGasket();
+      revealed = 0;
+      fit();
+    }
+
+    function draw() {
+      const w = window.innerWidth, h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
+      // backdrop vignette
+      const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.7);
+      g.addColorStop(0, '#0c0c18');
+      g.addColorStop(1, '#05050a');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+
+      const n = Math.min(circles.length, Math.floor(revealed));
+      ctx.lineWidth = 1.1;
+      for (let i = 0; i < n; i++) {
+        const c = circles[i];
+        const ce = centreOf(c);
+        const r = (1 / Math.abs(c.b)) * view.s;
+        const px = ce.re * view.s + view.ox;
+        const py = ce.im * view.s + view.oy;
+        if (r < 0.4) continue;
+        const isOuter = c.b < 0;
+        const hue = 250 + c.gen * 16;          // violet drifting toward pink/cyan
+        const light = isOuter ? 0.16 : Math.min(0.72, 0.34 + c.gen * 0.05);
+        const col = hsl(hue % 360, 0.7, light);
+
+        // fade-in the freshest ring
+        const edge = revealed - i;
+        const alpha = edge < 1 ? Math.max(0, edge) : 1;
+        ctx.globalAlpha = alpha;
+
+        ctx.beginPath();
+        ctx.arc(px, py, r, 0, Math.PI * 2);
+        if (isOuter) {
+          ctx.strokeStyle = 'rgba(124,124,255,0.5)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        } else if (filled) {
+          ctx.fillStyle = col;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(5,5,12,0.55)';
+          ctx.lineWidth = Math.min(1.4, r * 0.12 + 0.3);
+          ctx.stroke();
+        } else {
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 1.1;
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function frame() {
+      if (revealed < circles.length) {
+        revealed += (speed / 55) * (1.5 + circles.length * 0.012);
+        if (revealed > circles.length) revealed = circles.length;
+      }
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- Controls ----
+    const $ = (id) => document.getElementById(id);
+    function slider(id, valId, fmt, apply) {
+      const el = $(id), out = $(valId);
+      const upd = () => { apply(+el.value); out.textContent = fmt(+el.value); };
+      el.addEventListener('input', upd); upd();
+    }
+    slider('depth', 'depthV', v => v, v => { maxGen = v; });
+    slider('minr', 'minV', v => (v / 10).toFixed(1) + '%', v => { minRadiusFrac = v / 1000; });
+    slider('speed', 'speedV', v => v, v => { speed = v; });
+
+    // rebuild when structural sliders settle (debounced)
+    let rebuildT = null;
+    function scheduleRebuild() {
+      clearTimeout(rebuildT);
+      rebuildT = setTimeout(() => { reset(); }, 180);
+    }
+    $('depth').addEventListener('input', scheduleRebuild);
+    $('minr').addEventListener('input', scheduleRebuild);
+
+    $('fillBtn').addEventListener('click', () => {
+      filled = !filled;
+      $('fillBtn').textContent = filled ? 'Filled' : 'Outline';
+      $('fillBtn').classList.toggle('on', filled);
+    });
+    $('newBtn').addEventListener('click', () => { reset(); });
+
+    canvas.addEventListener('pointerdown', () => { reset(); });
+    window.addEventListener('resize', fit);
+
+    reset();
+    requestAnimationFrame(frame);
+
+    // auto-reshuffle every so often so an idle page stays alive
+    setInterval(() => {
+      if (revealed >= circles.length) reset();
+    }, 11000);
+  })();
+</script>
+</body>
+</html>
