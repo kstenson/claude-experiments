@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cyclic Cellular Automaton — Experiment 019</title>
+<meta name="description" content="A grid where every state eats the next in a cycle — rock beats scissors beats paper beats rock — and from that one rule, rotating spiral waves spontaneously wind themselves up out of pure noise." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; touch-action: none; }
+  .stage canvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 330px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.78rem; color: #b9b9cc; display: flex; justify-content: space-between; letter-spacing: 0.02em; }
+  .row label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: rgba(255,255,255,0.14); border-radius: 999px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btns button {
+    flex: 1; min-width: 84px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #d6d6e6; border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .btns button:hover { background: rgba(124,124,255,0.18); border-color: rgba(124,124,255,0.5); }
+  .btns button:active { transform: scale(0.97); }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Cyclic Cellular Automaton</h1>
+    <p class="sub">Experiment № 019 · June 17, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>States in the cycle <span id="vStates">14</span></label>
+        <input type="range" id="states" min="3" max="20" step="1" value="14" />
+      </div>
+      <div class="row">
+        <label>Threshold to be eaten <span id="vThresh">2</span></label>
+        <input type="range" id="thresh" min="1" max="5" step="1" value="2" />
+      </div>
+      <div class="row">
+        <label>Neighbourhood reach <span id="vReach">2</span></label>
+        <input type="range" id="reach" min="1" max="3" step="1" value="2" />
+      </div>
+      <div class="row">
+        <label>Speed <span id="vSpeed">2×</span></label>
+        <input type="range" id="speed" min="1" max="4" step="1" value="2" />
+      </div>
+      <div class="btns">
+        <button id="reseed">Reseed</button>
+        <button id="pause">Pause</button>
+        <button id="palette">Palette</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag to paint a fresh patch of noise · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 019 · The story</p>
+      <h2>Cyclic Cellular Automaton</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I'd already built a few grids that come alive — Conway's Game of Life, reaction-diffusion, wave function collapse — and I kept wanting the one that makes <em>spirals</em>. Not spirals you draw, but spirals that wind themselves up out of static, with nobody placing a centre. The cyclic cellular automaton does exactly that, and its rule is almost too small to believe: every state can only ever be eaten by the next one in a fixed loop. It's rock-paper-scissors, but with up to twenty hands instead of three, played simultaneously by every pixel.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The first few seconds are pure television snow — random colours, no shape at all. Then it does the thing. Little curls catch, the snow drains away into smooth blocks of colour, and rotating spiral waves lock the whole screen into a slowly turning pinwheel field that never settles. What I love is that there's no seed and no centre to a spiral; a spiral core is just an unlucky spot where the colours happened to wrap all the way around the cycle, and once one exists it pumps waves outward forever. Drag a patch of fresh noise into a calm region and you can watch new spirals nucleate on demand.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Nothing here chases a goal or holds a plan. Each cell only asks one question — "is the colour that would eat me crowding my neighbourhood?" — and flips if the answer is yes. Order doesn't arrive because something organises it; it arrives because a cyclic "everything beats something" relationship can't sit still, and motion that can't stop has to curl. A lot of real patterns — heart-muscle waves, slime-mould pulses, chemical spirals in a dish — run on exactly this logic: not a hierarchy, just a loop with no top.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // Cyclic Cellular Automaton (a.k.a. the "demon" / Greenberg–Hastings family).
+  //
+  // Every cell holds a state s in 0..N-1. The states form a cycle, so the state
+  // that "eats" s is (s+1) mod N. On each step, a cell counts how many cells in
+  // its neighbourhood already hold its successor state. If that count >= THRESHOLD,
+  // the cell advances to the successor. From uniform random noise this self-
+  // organises into rotating spiral waves with no seeding whatsoever.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { willReadFrequently: false });
+
+    // Simulation grid is fixed-resolution and scaled to fit; keeps it crisp & fast.
+    const COLS = 220, ROWS = 132;
+    const sim = document.createElement('canvas');
+    sim.width = COLS; sim.height = ROWS;
+    const sctx = sim.getContext('2d');
+    const img = sctx.createImageData(COLS, ROWS);
+
+    let N = 14;        // states in the cycle
+    let THRESH = 2;    // neighbours of the successor needed to flip
+    let REACH = 2;     // square neighbourhood radius
+    let SPEED = 2;     // sim steps per frame
+    let paused = false;
+    let paletteIdx = 0;
+
+    let grid = new Uint8Array(COLS * ROWS);
+    let next = new Uint8Array(COLS * ROWS);
+
+    function hsl(h, s, l) {
+      h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(1, s)); l = Math.max(0, Math.min(1, l));
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+      const m = l - c / 2;
+      let r = 0, g = 0, b = 0;
+      if (h < 60) { r = c; g = x; }
+      else if (h < 120) { r = x; g = c; }
+      else if (h < 180) { g = c; b = x; }
+      else if (h < 240) { g = x; b = c; }
+      else if (h < 300) { r = x; b = c; }
+      else { r = c; b = x; }
+      return [(r + m) * 255 | 0, (g + m) * 255 | 0, (b + m) * 255 | 0];
+    }
+
+    // ---- Palettes: each maps a state index -> rgb. Built procedurally so any N works.
+    const palettes = [
+      (s, n) => hsl((280 + 360 * s / n) % 360, 0.62, 0.30 + 0.42 * Math.sin(Math.PI * s / n)), // aurora
+      (s, n) => hsl((10 + 70 * s / n), 0.85, 0.18 + 0.50 * (s / n)),                            // ember
+      (s, n) => hsl((180 + 80 * s / n), 0.55, 0.22 + 0.46 * (s / n)),                           // ice
+      (s, n) => hsl(360 * s / n, 0.70, 0.52),                                                   // spectrum
+    ];
+    let lut = []; // per-state [r,g,b], rebuilt whenever N or palette changes
+
+    function buildLut() {
+      const f = palettes[paletteIdx];
+      lut = new Array(N);
+      for (let s = 0; s < N; s++) lut[s] = f(s, N);
+    }
+
+    function reseed() {
+      for (let i = 0; i < grid.length; i++) grid[i] = (Math.random() * N) | 0;
+    }
+
+    // Paint a circular patch of fresh noise at sim coords (cx, cy).
+    function paintNoise(cx, cy, rad) {
+      const r2 = rad * rad;
+      for (let dy = -rad; dy <= rad; dy++) {
+        const y = cy + dy; if (y < 0 || y >= ROWS) continue;
+        for (let dx = -rad; dx <= rad; dx++) {
+          if (dx * dx + dy * dy > r2) continue;
+          const x = cx + dx; if (x < 0 || x >= COLS) continue;
+          grid[y * COLS + x] = (Math.random() * N) | 0;
+        }
+      }
+    }
+
+    function step() {
+      const reach = REACH;
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const idx = y * COLS + x;
+          const s = grid[idx];
+          const succ = s + 1 === N ? 0 : s + 1;
+          let count = 0;
+          // Count successor-state cells in a square neighbourhood (toroidal wrap).
+          for (let dy = -reach; dy <= reach; dy++) {
+            let yy = y + dy; if (yy < 0) yy += ROWS; else if (yy >= ROWS) yy -= ROWS;
+            const row = yy * COLS;
+            for (let dx = -reach; dx <= reach; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              let xx = x + dx; if (xx < 0) xx += COLS; else if (xx >= COLS) xx -= COLS;
+              if (grid[row + xx] === succ) { count++; if (count >= THRESH) { dy = reach; break; } }
+            }
+          }
+          next[idx] = count >= THRESH ? succ : s;
+        }
+      }
+      const t = grid; grid = next; next = t;
+    }
+
+    function draw() {
+      const data = img.data;
+      for (let i = 0; i < grid.length; i++) {
+        const c = lut[grid[i]];
+        const p = i << 2;
+        data[p] = c[0]; data[p + 1] = c[1]; data[p + 2] = c[2]; data[p + 3] = 255;
+      }
+      sctx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sim, 0, 0, canvas.width, canvas.height);
+    }
+
+    // ---- Canvas sizing (HiDPI aware, but sim grid is fixed) ----
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      draw();
+    }
+    window.addEventListener('resize', resize);
+
+    // ---- Pointer painting ----
+    let painting = false;
+    function pointerToSim(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * COLS | 0;
+      const y = ((e.clientY - rect.top) / rect.height) * ROWS | 0;
+      return [Math.max(0, Math.min(COLS - 1, x)), Math.max(0, Math.min(ROWS - 1, y))];
+    }
+    function onDown(e) { painting = true; const [x, y] = pointerToSim(e); paintNoise(x, y, 9); e.preventDefault(); }
+    function onMove(e) { if (!painting) return; const [x, y] = pointerToSim(e); paintNoise(x, y, 7); e.preventDefault(); }
+    function onUp() { painting = false; }
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+
+    // ---- Controls ----
+    const $ = (id) => document.getElementById(id);
+    $('states').addEventListener('input', (e) => {
+      N = +e.target.value; $('vStates').textContent = N;
+      // Clamp existing states into the new range, then refresh palette.
+      for (let i = 0; i < grid.length; i++) if (grid[i] >= N) grid[i] = (Math.random() * N) | 0;
+      buildLut();
+    });
+    $('thresh').addEventListener('input', (e) => { THRESH = +e.target.value; $('vThresh').textContent = THRESH; });
+    $('reach').addEventListener('input', (e) => { REACH = +e.target.value; $('vReach').textContent = REACH; });
+    $('speed').addEventListener('input', (e) => { SPEED = +e.target.value; $('vSpeed').textContent = SPEED + '×'; });
+    $('reseed').addEventListener('click', reseed);
+    $('pause').addEventListener('click', () => { paused = !paused; $('pause').textContent = paused ? 'Play' : 'Pause'; });
+    $('palette').addEventListener('click', () => { paletteIdx = (paletteIdx + 1) % palettes.length; buildLut(); draw(); });
+
+    // ---- Boot ----
+    buildLut();
+    reseed();
+    resize();
+
+    function loop() {
+      if (!paused) { for (let k = 0; k < SPEED; k++) step(); draw(); }
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+</script>
+</body>
+</html>
