@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Penrose Tiling — Experiment 020</title>
+<meta name="description" content="A pattern of two simple rhombi that tiles the plane forever without ever repeating — grown live by repeatedly cutting each tile into smaller copies of itself, with the golden ratio hiding in every split." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; touch-action: none; }
+  .stage canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+  .stage canvas:active { cursor: grabbing; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 330px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.78rem; color: #b9b9cc; display: flex; justify-content: space-between; letter-spacing: 0.02em; }
+  .row label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: rgba(255,255,255,0.14); border-radius: 999px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btns button {
+    flex: 1; min-width: 84px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #d6d6e6; border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .btns button:hover { background: rgba(124,124,255,0.18); border-color: rgba(124,124,255,0.5); }
+  .btns button:active { transform: scale(0.97); }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: italic; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Penrose Tiling</h1>
+    <p class="sub">Experiment № 020 · June 18, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Subdivision depth <span id="vDepth">6</span></label>
+        <input type="range" id="depth" min="0" max="9" step="1" value="6" />
+      </div>
+      <div class="row">
+        <label>Edge stroke <span id="vStroke">1.0</span></label>
+        <input type="range" id="stroke" min="0" max="3" step="0.1" value="1" />
+      </div>
+      <div class="row">
+        <label>Zoom <span id="vZoom">1.00×</span></label>
+        <input type="range" id="zoom" min="0.5" max="6" step="0.05" value="1" />
+      </div>
+      <div class="btns">
+        <button id="palette">Palette</button>
+        <button id="recenter">Recentre</button>
+        <button id="anim">Auto-deflate</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag to pan · scroll or pinch to zoom · slide the depth to cut tiles into tiles · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 020 · The story</p>
+      <h2>Penrose Tiling</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I've been building a lot of patterns that grow, flow or settle — flocks, fluids, spiral waves. I wanted the opposite kind of marvel: something perfectly still that is, nonetheless, impossible to pin down. The Penrose tiling is exactly that. Two boring rhombi — one fat, one thin — cover the whole infinite plane with no gaps and no overlaps, and yet the result <em>never repeats</em>. You can slide the pattern over a copy of itself as far as you like and it will never line up. After nine days of motion I wanted to make the thing that holds still and still refuses to be ordinary.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The way it's built is my favourite part, and you can watch it happen by dragging the depth slider. I don't place tiles one by one. I start with a handful of triangles in a wheel and then <em>deflate</em>: each tile is cut into smaller copies of the two basic triangles, following one fixed recipe. Do it again. And again. Every step the count of pieces multiplies by the golden ratio, φ ≈ 1.618, and the same fivefold-symmetric shape blooms at finer and finer scale. The golden ratio isn't decoration here — it's the exact proportion at which the cut has to happen for the small tiles to fit the big ones, so it falls out of the geometry whether you want it or not. Zoom in and you keep finding the same motifs — suns, stars, decagons — at every magnification, never quite tiling the same way twice.</p>
+
+      <h3>Something you might take away</h3>
+      <p>For decades mathematicians assumed that any pattern filling space with a few repeated shapes <em>must</em> eventually repeat — that order and periodicity were the same thing. Penrose's tiles broke that. They're rigidly ordered, fivefold symmetric, completely determined by a local matching rule — and aperiodic forever. Then in 1982 Dan Shechtman found real crystals doing the same trick with atoms, won a Nobel for it, and rewrote what "crystal" means. The lesson I keep: <em>repetition and structure are not the same thing.</em> Something can follow strict rules everywhere and never once come back to where it started.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // Penrose P3 (rhombus) tiling, generated by the classic "deflation" of Robinson
+  // triangles. Each tile is one of two golden-gnomon / golden-triangle half-rhombi,
+  // represented as a triangle (colour, A, B, C) with complex-number vertices.
+  //
+  //   • A "0" (thin / acute) triangle deflates into one 0 + one 1 triangle.
+  //   • A "1" (fat / obtuse) triangle deflates into two 1 + one 0 triangle.
+  //
+  // The split point along each edge is at the golden ratio φ = (1+√5)/2, which is
+  // *why* the small copies fit the big ones. Repeating the deflation N times grows
+  // a fivefold-symmetric patch whose piece-count scales by φ each step, and the
+  // limit is the aperiodic Penrose tiling. Pairs of adjacent half-rhombi share a
+  // long edge, so we draw the triangles filled (the rhombi) plus their outlines.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const PHI = (1 + Math.sqrt(5)) / 2;       // golden ratio
+    const INV = 1 / PHI;                       // φ - 1
+
+    // --- minimal complex helpers (vertices are {x,y}) ---
+    const add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
+    const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
+    const mul = (a, s) => ({ x: a.x * s, y: a.y * s });
+    // p + (q - p) * t  — point t of the way from p to q
+    const lerp = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+
+    // ---- View state ----
+    let DEPTH = 6;
+    let STROKE = 1;
+    let zoom = 1;            // slider zoom
+    let panX = 0, panY = 0;  // pan offset in CSS px
+    let paletteIdx = 0;
+    let animating = false;
+    let animDir = 1;
+    let animClock = 0;
+
+    let W = 0, H = 0, DPR = 1;
+
+    // ---- Palettes: [fatFill, thinFill, edge] ----
+    const palettes = [
+      ['#5a4bc4', '#ff7cc3', 'rgba(8,8,16,0.85)'],   // aurora (house accents)
+      ['#1f6f8b', '#46d3b0', 'rgba(4,12,14,0.85)'],  // teal
+      ['#b5532a', '#f2b134', 'rgba(20,8,2,0.8)'],    // ember
+      ['#2b2b3a', '#6f6f8f', 'rgba(0,0,0,0.9)'],     // graphite
+    ];
+
+    // ---- Build the seed: a "wheel" of 10 triangles around the origin ----
+    // Gives the iconic fivefold (decagonal) sunburst. Radius is in unit space.
+    function seed() {
+      const tris = [];
+      const c = { x: 0, y: 0 };
+      for (let i = 0; i < 10; i++) {
+        let b = { x: Math.cos((2 * i - 1) * Math.PI / 10), y: Math.sin((2 * i - 1) * Math.PI / 10) };
+        let d = { x: Math.cos((2 * i + 1) * Math.PI / 10), y: Math.sin((2 * i + 1) * Math.PI / 10) };
+        if (i % 2 === 0) { const t = b; b = d; d = t; } // alternate orientation
+        tris.push([1, c, b, d]); // all fat ("1") half-rhombi, mirrored alternately
+      }
+      return tris;
+    }
+
+    // ---- One deflation step: each triangle -> its smaller children ----
+    function deflate(tris) {
+      const out = [];
+      for (const [color, A, B, C] of tris) {
+        if (color === 0) {
+          // thin / acute: split edge A->B at φ
+          const P = lerp(A, B, INV);
+          out.push([0, C, P, B]);
+          out.push([1, P, C, A]);
+        } else {
+          // fat / obtuse: two splits
+          const Q = lerp(B, A, INV);
+          const R = lerp(B, C, INV);
+          out.push([1, R, C, A]);
+          out.push([1, Q, R, B]);
+          out.push([0, R, Q, A]);
+        }
+      }
+      return out;
+    }
+
+    // Cache deflations so dragging the depth slider is instant.
+    let cache = [seed()];
+    function tilesAt(depth) {
+      while (cache.length <= depth) cache.push(deflate(cache[cache.length - 1]));
+      return cache[depth];
+    }
+
+    // ---- Render ----
+    function draw(depthFloat) {
+      const depthInt = Math.min(9, Math.max(0, Math.round(depthFloat)));
+      const tris = tilesAt(depthInt);
+      const pal = palettes[paletteIdx];
+
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      // subtle vignette backdrop
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      // Unit space (~radius 1.2) mapped to fit the smaller screen dimension.
+      const base = Math.min(W, H) * 0.46;
+      const scale = base * zoom;
+      const cx = W / 2 + panX, cy = H / 2 + panY;
+      const TX = (p) => p.x * scale + cx;
+      const TY = (p) => p.y * scale + cy;
+
+      // Fill triangles by colour (batch the two fills, then stroke once).
+      for (let pass = 0; pass < 2; pass++) {
+        ctx.fillStyle = pass === 0 ? pal[0] : pal[1];
+        ctx.beginPath();
+        for (const t of tris) {
+          if (t[0] !== pass) continue;
+          const A = t[1], B = t[2], C = t[3];
+          ctx.moveTo(TX(A), TY(A));
+          ctx.lineTo(TX(B), TY(B));
+          ctx.lineTo(TX(C), TY(C));
+          ctx.closePath();
+        }
+        ctx.fill();
+      }
+
+      // Edge outlines. We stroke only the two *short* legs of each half-rhombus
+      // (A-B and A-C), skipping the long hypotenuse B-C that bisects each rhombus,
+      // so the drawing reads as whole rhombi rather than triangles.
+      if (STROKE > 0) {
+        ctx.strokeStyle = pal[2];
+        ctx.lineWidth = STROKE;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (const t of tris) {
+          const A = t[1], B = t[2], C = t[3];
+          ctx.moveTo(TX(B), TY(B));
+          ctx.lineTo(TX(A), TY(A));
+          ctx.lineTo(TX(C), TY(C));
+        }
+        ctx.stroke();
+      }
+    }
+
+    // ---- Sizing ----
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      draw(animating ? animClock : DEPTH);
+    }
+    window.addEventListener('resize', resize);
+
+    // ---- Controls ----
+    const $ = (id) => document.getElementById(id);
+    function render() { draw(animating ? animClock : DEPTH); }
+
+    $('depth').addEventListener('input', (e) => {
+      DEPTH = +e.target.value; $('vDepth').textContent = DEPTH;
+      if (animating) { animating = false; $('anim').textContent = 'Auto-deflate'; }
+      render();
+    });
+    $('stroke').addEventListener('input', (e) => {
+      STROKE = +e.target.value; $('vStroke').textContent = STROKE.toFixed(1); render();
+    });
+    $('zoom').addEventListener('input', (e) => {
+      zoom = +e.target.value; $('vZoom').textContent = zoom.toFixed(2) + '×'; render();
+    });
+    $('palette').addEventListener('click', () => {
+      paletteIdx = (paletteIdx + 1) % palettes.length; render();
+    });
+    $('recenter').addEventListener('click', () => {
+      panX = 0; panY = 0; zoom = 1; $('zoom').value = 1; $('vZoom').textContent = '1.00×'; render();
+    });
+    $('anim').addEventListener('click', () => {
+      animating = !animating;
+      $('anim').textContent = animating ? 'Stop' : 'Auto-deflate';
+      if (animating) { animClock = 0; animDir = 1; loop(); }
+    });
+
+    // ---- Pan & zoom (drag + wheel + pinch) ----
+    let dragging = false, lastX = 0, lastY = 0;
+    canvas.addEventListener('pointerdown', (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      panX += e.clientX - lastX; panY += e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY; render();
+    });
+    const endDrag = () => { dragging = false; };
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = Math.exp(-e.deltaY * 0.0015);
+      const nz = Math.min(6, Math.max(0.5, zoom * factor));
+      // zoom toward the cursor
+      const mx = e.clientX - (W / 2 + panX), my = e.clientY - (H / 2 + panY);
+      const r = nz / zoom;
+      panX -= mx * (r - 1); panY -= my * (r - 1);
+      zoom = nz; $('zoom').value = zoom; $('vZoom').textContent = zoom.toFixed(2) + '×'; render();
+    }, { passive: false });
+
+    // ---- Auto-deflate animation: sweep depth up and back down ----
+    function loop() {
+      if (!animating) return;
+      animClock += 0.018 * animDir;
+      if (animClock >= 8) { animClock = 8; animDir = -1; }
+      else if (animClock <= 0) { animClock = 0; animDir = 1; }
+      $('vDepth').textContent = Math.round(animClock);
+      draw(animClock);
+      requestAnimationFrame(loop);
+    }
+
+    // ---- Boot ----
+    resize();
+  })();
+</script>
+</body>
+</html>
