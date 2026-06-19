@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Differential Growth — Experiment 021</title>
+<meta name="description" content="A closed loop that crowds against itself, sprouts new points where it stretches, and meanders into brain-coral folds — all from local push and pull." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctrl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #b9b9cc; margin-bottom: 5px; letter-spacing: 0.02em; }
+  .ctrl label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #fff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.8);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border: none; border-radius: 50%;
+    background: #fff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.8);
+  }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row button {
+    flex: 1;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #cfcfff; border-radius: 9px; padding: 9px 8px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .btn-row button:hover { background: rgba(124,124,255,0.26); }
+  .btn-row button:active { transform: scale(0.96); }
+  .btn-row button.on { background: rgba(255,124,195,0.22); border-color: rgba(255,124,195,0.5); color: #ffd8ec; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Differential Growth</h1>
+    <p class="sub">Experiment № 021 · June 19, 2026</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>Repulsion radius <span id="repV">22</span></label>
+        <input type="range" id="rep" min="8" max="46" step="1" value="22" />
+      </div>
+      <div class="ctrl">
+        <label>Attraction <span id="attV">0.36</span></label>
+        <input type="range" id="att" min="0.05" max="0.9" step="0.01" value="0.36" />
+      </div>
+      <div class="ctrl">
+        <label>Growth rate <span id="grV">1.0×</span></label>
+        <input type="range" id="gr" min="0.2" max="3" step="0.1" value="1" />
+      </div>
+      <div class="btn-row">
+        <button id="seedBtn">↻ new seed</button>
+        <button id="trailBtn">trails: on</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag on the canvas to nudge the curve · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 021 · The story</p>
+      <h2>Differential Growth</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I've been working through patterns that <em>build</em> — tilings deflating, crystals aggregating, automata cascading. But I hadn't yet done one that grows the way living tissue does: not by adding to an edge, but by a whole boundary running out of room and having to fold. The convoluted surface of a brain, the ridges of a fingerprint, the rippled lip of a sea slug, the channels of coral — they all share one cause. A sheet (or a line) is told to keep getting longer while it's trapped in a space that can't get any bigger, so it buckles. I wanted to see that single tension play out on the simplest possible version: one closed loop.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>There is no master plan and no global shape being aimed at. Every point on the loop knows only two things — stay close to your two neighbours, and stay away from everyone who gets too near — and the line keeps inserting new points wherever a segment stretches too far. That's the whole rulebook. Out of it comes meandering, never-crossing folds that look hand-drawn, that nest inside each other and fill space like something organic. I love that you can watch a circle, the most boring shape there is, lose its patience and turn into a labyrinth. Tug on it and it heals; the convolutions just keep coming.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Complexity here isn't an instruction — it's a <em>symptom</em>. Nobody told the loop to be wrinkly; wrinkles are simply what "keep growing in a space that won't grow with you" looks like. A lot of intricate structure in the world is like that: not designed, but the unavoidable shape of a simple pressure with nowhere to go. When you see something elaborately folded, it's worth asking what was being squeezed.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, DPR = 1;
+
+    // Tunable parameters
+    const P = {
+      repulsion: 22,    // radius within which points push each other apart
+      attraction: 0.36, // how hard a point is pulled toward its two neighbours
+      growth: 1.0,      // speed multiplier on node insertion / motion
+      trails: true,
+    };
+
+    // The closed curve: an ordered ring of points.
+    let pts = [];
+    const MAX_PTS = 1400;        // cap so the sim stays smooth
+    const MIN_DIST = 9;          // segment shorter than this -> merge
+    let SPLIT_DIST = 17;         // segment longer than this -> insert a point
+
+    // Spatial hash for fast neighbour lookup
+    let grid = new Map();
+    let cellSize = 24;
+    const key = (cx, cy) => cx + ',' + cy;
+
+    function rebuildGrid() {
+      grid.clear();
+      cellSize = Math.max(12, P.repulsion);
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        const cx = Math.floor(p.x / cellSize);
+        const cy = Math.floor(p.y / cellSize);
+        const k = key(cx, cy);
+        let bucket = grid.get(k);
+        if (!bucket) { bucket = []; grid.set(k, bucket); }
+        bucket.push(i);
+      }
+    }
+
+    function seed() {
+      pts = [];
+      const cx = W / 2, cy = H / 2;
+      const r = Math.min(W, H) * 0.10 + 30;
+      const n = 36;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        // a little asymmetry so it doesn't stay a perfect circle
+        const rr = r * (1 + 0.06 * Math.sin(a * 3));
+        pts.push({
+          x: cx + Math.cos(a) * rr,
+          y: cy + Math.sin(a) * rr,
+          vx: 0, vy: 0,
+        });
+      }
+      fadeFlash = 1; // flash a clear so old trails wipe on reseed
+    }
+
+    function step() {
+      const n = pts.length;
+      if (n < 3) return;
+
+      rebuildGrid();
+      const rep = P.repulsion;
+      const rep2 = rep * rep;
+      const g = P.growth;
+
+      // accumulate displacement
+      for (let i = 0; i < n; i++) {
+        const p = pts[i];
+        let dx = 0, dy = 0;
+
+        // --- repulsion from nearby points (any, not just neighbours) ---
+        const cx = Math.floor(p.x / cellSize);
+        const cy = Math.floor(p.y / cellSize);
+        for (let ox = -1; ox <= 1; ox++) {
+          for (let oy = -1; oy <= 1; oy++) {
+            const bucket = grid.get(key(cx + ox, cy + oy));
+            if (!bucket) continue;
+            for (let b = 0; b < bucket.length; b++) {
+              const j = bucket[b];
+              if (j === i) continue;
+              const q = pts[j];
+              const ax = p.x - q.x, ay = p.y - q.y;
+              const d2 = ax * ax + ay * ay;
+              if (d2 > 0 && d2 < rep2) {
+                const d = Math.sqrt(d2);
+                const force = (1 - d / rep);
+                dx += (ax / d) * force;
+                dy += (ay / d) * force;
+              }
+            }
+          }
+        }
+        // normalise repulsion strength a bit
+        dx *= 0.9; dy *= 0.9;
+
+        // --- attraction toward the two ring neighbours ---
+        const prev = pts[(i - 1 + n) % n];
+        const next = pts[(i + 1) % n];
+        const mx = (prev.x + next.x) * 0.5;
+        const my = (prev.y + next.y) * 0.5;
+        dx += (mx - p.x) * P.attraction;
+        dy += (my - p.y) * P.attraction;
+
+        p.vx = dx * g;
+        p.vy = dy * g;
+      }
+
+      // --- mouse interaction: gently push points away from the cursor ---
+      if (mouse.active) {
+        const mr = 70, mr2 = mr * mr;
+        for (let i = 0; i < n; i++) {
+          const p = pts[i];
+          const ax = p.x - mouse.x, ay = p.y - mouse.y;
+          const d2 = ax * ax + ay * ay;
+          if (d2 > 0 && d2 < mr2) {
+            const d = Math.sqrt(d2);
+            const f = (1 - d / mr) * 6;
+            p.vx += (ax / d) * f;
+            p.vy += (ay / d) * f;
+          }
+        }
+      }
+
+      // integrate
+      for (let i = 0; i < n; i++) {
+        const p = pts[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        // soft containment so it doesn't escape the frame
+        const pad = 16;
+        if (p.x < pad) p.x += (pad - p.x) * 0.2;
+        if (p.x > W - pad) p.x -= (p.x - (W - pad)) * 0.2;
+        if (p.y < pad) p.y += (pad - p.y) * 0.2;
+        if (p.y > H - pad) p.y -= (p.y - (H - pad)) * 0.2;
+      }
+
+      resample();
+    }
+
+    // Insert points where the curve is stretched; merge where it's bunched.
+    function resample() {
+      const out = [];
+      const n = pts.length;
+      for (let i = 0; i < n; i++) {
+        const a = pts[i];
+        const b = pts[(i + 1) % n];
+        out.push(a);
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const d = Math.hypot(dx, dy);
+        if (d > SPLIT_DIST && out.length < MAX_PTS) {
+          out.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, vx: 0, vy: 0 });
+        }
+      }
+      // merge very short segments (skip every other to keep ordering sane)
+      const merged = [];
+      for (let i = 0; i < out.length; i++) {
+        const a = out[i];
+        const b = out[(i + 1) % out.length];
+        merged.push(a);
+        const d = Math.hypot(b.x - a.x, b.y - a.y);
+        if (d < MIN_DIST && out.length > 40) { i++; } // drop the next point
+      }
+      pts = merged;
+    }
+
+    // ---- rendering ----
+    let fadeFlash = 0;
+    let hue = 0;
+
+    function draw() {
+      if (fadeFlash > 0) {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = '#05050a';
+        ctx.fillRect(0, 0, W, H);
+        fadeFlash = 0;
+      } else if (P.trails) {
+        // gentle fade so motion leaves ghost trails
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(5,5,10,0.10)';
+        ctx.fillRect(0, 0, W, H);
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = '#05050a';
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      const n = pts.length;
+      if (n < 3) return;
+
+      hue = (hue + 0.15) % 360;
+
+      // soft glow underlay
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i <= n; i++) {
+        const p = pts[i % n];
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.closePath();
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = 'rgba(124,124,255,0.06)';
+      ctx.stroke();
+
+      // crisp line with a colour that drifts between the two accents
+      const t = (Math.sin(hue * Math.PI / 180) + 1) / 2;
+      const r = Math.round(124 + t * (255 - 124));
+      const gC = Math.round(124 + t * (124 - 124));
+      const bC = Math.round(255 + t * (195 - 255));
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i <= n; i++) {
+        const p = pts[i % n];
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.closePath();
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = `rgba(${r},${gC},${bC},0.92)`;
+      ctx.stroke();
+    }
+
+    let acc = 0;
+    function loop() {
+      // a couple of sub-steps per frame keeps growth smooth at low growth rates
+      const sub = 1 + Math.floor(P.growth);
+      for (let s = 0; s < sub; s++) step();
+      draw();
+      // status read-out of node count via title? keep it light; just animate.
+      requestAnimationFrame(loop);
+    }
+
+    // ---- input ----
+    const mouse = { x: 0, y: 0, active: false };
+    function setMouse(e) {
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      mouse.x = (t.clientX - rect.left);
+      mouse.y = (t.clientY - rect.top);
+    }
+    canvas.addEventListener('pointerdown', (e) => { mouse.active = true; setMouse(e); });
+    canvas.addEventListener('pointermove', (e) => { if (mouse.active) setMouse(e); });
+    window.addEventListener('pointerup', () => { mouse.active = false; });
+    canvas.addEventListener('pointercancel', () => { mouse.active = false; });
+
+    // ---- controls ----
+    const repEl = document.getElementById('rep');
+    const attEl = document.getElementById('att');
+    const grEl = document.getElementById('gr');
+    const repV = document.getElementById('repV');
+    const attV = document.getElementById('attV');
+    const grV = document.getElementById('grV');
+
+    repEl.addEventListener('input', () => {
+      P.repulsion = +repEl.value;
+      // keep split distance comfortably below repulsion so it can fill
+      SPLIT_DIST = Math.max(12, P.repulsion * 0.8);
+      repV.textContent = repEl.value;
+    });
+    attEl.addEventListener('input', () => { P.attraction = +attEl.value; attV.textContent = (+attEl.value).toFixed(2); });
+    grEl.addEventListener('input', () => { P.growth = +grEl.value; grV.textContent = (+grEl.value).toFixed(1) + '×'; });
+
+    document.getElementById('seedBtn').addEventListener('click', seed);
+    const trailBtn = document.getElementById('trailBtn');
+    trailBtn.classList.add('on');
+    trailBtn.addEventListener('click', () => {
+      P.trails = !P.trails;
+      trailBtn.textContent = 'trails: ' + (P.trails ? 'on' : 'off');
+      trailBtn.classList.toggle('on', P.trails);
+    });
+
+    // ---- resize ----
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.clientWidth;
+      H = canvas.clientHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+    }
+    window.addEventListener('resize', () => { const had = pts.length; resize(); if (!had) seed(); });
+
+    // init
+    SPLIT_DIST = Math.max(12, P.repulsion * 0.8);
+    resize();
+    seed();
+    loop();
+  })();
+</script>
+</body>
+</html>
