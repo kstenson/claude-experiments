@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ising Model — Experiment 022</title>
+<meta name="description" content="A lattice of magnetic spins, each only obeying its four neighbours, that spontaneously magnetises below a critical temperature." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  canvas { image-rendering: pixelated; touch-action: none; box-shadow: 0 30px 80px -30px rgba(124,124,255,0.5); border-radius: 6px; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 320px;
+    max-width: calc(100vw - 48px);
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #b8b8cc; letter-spacing: 0.02em; margin-bottom: 6px; }
+  .ctl label b { color: #cfcfff; font-variant-numeric: tabular-nums; font-weight: 600; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 4px;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.9); border: none;
+  }
+  input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; cursor: pointer; border: none; box-shadow: 0 0 8px rgba(124,124,255,0.9); }
+
+  /* Temperature gauge: marks the critical point */
+  .tc-rail { position: relative; height: 4px; margin-top: -4px; }
+  .tc-rail .tc { position: absolute; top: -3px; width: 2px; height: 10px; background: #ffd36b; box-shadow: 0 0 6px #ffd36b; }
+  .tc-rail .tc::after { content: "Tᴄ"; position: absolute; top: 11px; left: -6px; font-size: 0.6rem; color: #ffd36b; letter-spacing: 0.05em; }
+
+  .readout {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;
+  }
+  .stat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px 11px; }
+  .stat .k { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8e8ea6; }
+  .stat .v { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .stat .v small { font-size: 0.62rem; font-weight: 500; color: #9a9ab0; }
+  .phase-ordered { color: #ff9ad4; }
+  .phase-critical { color: #ffd36b; }
+  .phase-disordered { color: #7cc6ff; }
+
+  .row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; background: rgba(124,124,255,0.12); border: 1px solid rgba(124,124,255,0.34);
+    color: #cfcfff; border-radius: 10px; padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.18s ease, transform 0.08s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.26); }
+  .btn:active { transform: scale(0.96); }
+
+  .story-btn {
+    margin-top: 4px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45); color: #e9d8ff; border-radius: 11px;
+    padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto; background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close { margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4); color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer; }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+  }
+
+  @media (max-width: 720px) {
+    .ui { left: 12px; top: 12px; right: 12px; width: auto; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage"><canvas id="c"></canvas></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Ising Model</h1>
+    <p class="sub">Experiment № 022 · June 20, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Temperature <b><span id="tVal">2.27</span> J/k</b></label>
+        <input type="range" id="temp" min="0.05" max="5" step="0.01" value="2.27" />
+        <div class="tc-rail"><span class="tc" id="tcMark"></span></div>
+      </div>
+      <div class="ctl">
+        <label>Field bias <b><span id="hVal">0.00</span></b></label>
+        <input type="range" id="field" min="-1" max="1" step="0.01" value="0" />
+      </div>
+      <div class="ctl">
+        <label>Speed (sweeps/frame) <b><span id="sVal">6</span></b></label>
+        <input type="range" id="speed" min="1" max="20" step="1" value="6" />
+      </div>
+
+      <div class="readout">
+        <div class="stat">
+          <div class="k">Magnetisation</div>
+          <div class="v" id="magV">0.00</div>
+        </div>
+        <div class="stat">
+          <div class="k">Phase</div>
+          <div class="v" id="phaseV">—</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="btn" id="hot">Heat ↑</button>
+        <button class="btn" id="cool">Cool ↓</button>
+        <button class="btn" id="quench">Quench</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <p class="hint">drag on the lattice to flip a patch of spins · drag the temperature past Tᴄ · press H to hide</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 022 · The story</p>
+      <h2>Ising Model</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I'd spent the last few days on shapes that <em>build</em> — gaskets, growth, tilings that fan out from a seed. I wanted the opposite kind of order: not something assembled, but something that <em>decides</em>. The Ising model is the simplest thing I know that has a genuine phase transition — a point where, all on its own, a crowd of indifferent little spins makes up its mind to agree. It's the canonical model of magnetism, but the same maths describes neurons firing, opinions spreading, and water freezing, and I find it almost spooky that one two-line rule covers all of that. After a run of pretty fractals, I wanted one that's really about a moment of collective choosing.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Every cell here is an arrow pointing up or down, and it follows one urge: fall in line with your four neighbours, unless the temperature is high enough to make you reckless. There is no global rule, no leader, no template of the final pattern — each spin only ever consults the four touching it. Drag the temperature down through the critical value (Tᴄ ≈ 2.27) and watch the screen do something a pile of independent coin-flips can never do: the static suddenly curdles into vast continents of agreement, and the magnetisation jumps off zero. Right <em>at</em> Tᴄ it's at its most beautiful — domains of every size at once, flickering, never settling, a system poised exactly between order and noise.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Nobody tips the lattice over. Below the critical temperature, agreement isn't imposed — it becomes the cheaper option, and the spins discover it locally, one nudge at a time, until the whole sheet has committed without anything coordinating them. Consensus, freezing, fashion, a market turning — these aren't always pushed from outside. Sometimes a crowd of things that only watch their neighbours crosses a threshold and tips itself, all at once. The interesting question is rarely <em>who</em> decided. It's what the temperature was.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- THE ISING MODEL ----
+  // A 2D lattice of spins s ∈ {+1, -1}. Each spin wants to align with its four
+  // nearest neighbours (ferromagnetic coupling J = 1). The Metropolis rule lets a
+  // spin flip with probability min(1, e^(-ΔE/T)): always when it lowers energy,
+  // and sometimes — more often when hot — when it raises it. Below the Onsager
+  // critical temperature Tc = 2/ln(1+√2) ≈ 2.269 the lattice spontaneously orders.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const TC = 2 / Math.log(1 + Math.SQRT2); // ≈ 2.269
+
+    // Position the Tc tick on the temperature rail (range 0.05..5).
+    const tcMark = document.getElementById('tcMark');
+    tcMark.style.left = ((TC - 0.05) / (5 - 0.05) * 100) + '%';
+
+    let N = 200;                 // lattice is N x N
+    let spins = new Int8Array(N * N);
+    let img, buf32;
+
+    // Colours: up = warm pink, down = cool indigo, blended toward the accents.
+    const UP = [255, 124, 195];   // #ff7cc3
+    const DOWN = [108, 110, 255]; // ~#6c6eff
+    const packed = (r, g, b) => (255 << 24) | (b << 16) | (g << 8) | r; // little-endian ABGR
+    const UP32 = packed(UP[0], UP[1], UP[2]);
+    const DOWN32 = packed(DOWN[0], DOWN[1], DOWN[2]);
+
+    function sizeForViewport() {
+      const w = window.innerWidth, h = window.innerHeight;
+      const side = Math.min(w, h) * (w < 720 ? 0.92 : 0.82);
+      return Math.max(220, Math.round(side));
+    }
+
+    function buildImage() {
+      img = ctx.createImageData(N, N);
+      buf32 = new Uint32Array(img.data.buffer);
+    }
+
+    function resize() {
+      const px = sizeForViewport();
+      canvas.style.width = px + 'px';
+      canvas.style.height = px + 'px';
+      canvas.width = N;
+      canvas.height = N;
+    }
+
+    function randomise() {
+      for (let i = 0; i < spins.length; i++) spins[i] = Math.random() < 0.5 ? 1 : -1;
+    }
+
+    function init() {
+      spins = new Int8Array(N * N);
+      buildImage();
+      resize();
+      randomise();
+    }
+    init();
+
+    // ---- controls ----
+    const tempEl = document.getElementById('temp');
+    const fieldEl = document.getElementById('field');
+    const speedEl = document.getElementById('speed');
+    const tValEl = document.getElementById('tVal');
+    const hValEl = document.getElementById('hVal');
+    const sValEl = document.getElementById('sVal');
+    const magVEl = document.getElementById('magV');
+    const phaseVEl = document.getElementById('phaseV');
+
+    let T = parseFloat(tempEl.value);
+    let H = parseFloat(fieldEl.value);
+    let sweeps = parseInt(speedEl.value, 10);
+
+    tempEl.addEventListener('input', () => { T = parseFloat(tempEl.value); tValEl.textContent = T.toFixed(2); });
+    fieldEl.addEventListener('input', () => { H = parseFloat(fieldEl.value); hValEl.textContent = H.toFixed(2); });
+    speedEl.addEventListener('input', () => { sweeps = parseInt(speedEl.value, 10); sValEl.textContent = sweeps; });
+
+    function setTemp(t) {
+      T = Math.max(0.05, Math.min(5, t));
+      tempEl.value = T.toFixed(2);
+      tValEl.textContent = T.toFixed(2);
+    }
+    document.getElementById('hot').addEventListener('click', () => setTemp(T + 0.4));
+    document.getElementById('cool').addEventListener('click', () => setTemp(T - 0.4));
+    document.getElementById('quench').addEventListener('click', () => { randomise(); setTemp(1.2); });
+
+    // ---- Metropolis sweeps ----
+    // The energy change for flipping a spin is ΔE = 2*s*(neighbourSum + H).
+    // Accept the flip with probability min(1, e^(-ΔE/T)): always if it lowers
+    // energy, and otherwise more readily the hotter the lattice is.
+    function oneSweep() {
+      const n = N, total = n * n;
+      const t = T;
+      for (let k = 0; k < total; k++) {
+        const idx = (Math.random() * total) | 0;
+        const x = idx % n;
+        const y = (idx / n) | 0;
+        const s = spins[idx];
+        // toroidal neighbours
+        const left = spins[(x === 0 ? idx + n - 1 : idx - 1)];
+        const right = spins[(x === n - 1 ? idx - n + 1 : idx + 1)];
+        const up = spins[(y === 0 ? idx + (n - 1) * n : idx - n)];
+        const down = spins[(y === n - 1 ? idx - (n - 1) * n : idx + n)];
+        const sum = left + right + up + down;
+        const dE = 2 * s * (sum + H);
+        if (dE <= 0 || Math.random() < Math.exp(-dE / t)) {
+          spins[idx] = -s;
+        }
+      }
+    }
+
+    // ---- render ----
+    function draw() {
+      let netUp = 0;
+      for (let i = 0; i < spins.length; i++) {
+        if (spins[i] === 1) { buf32[i] = UP32; netUp++; }
+        else buf32[i] = DOWN32;
+      }
+      ctx.putImageData(img, 0, 0);
+      return (2 * netUp - spins.length) / spins.length; // magnetisation in [-1,1]
+    }
+
+    // ---- pointer painting ----
+    let painting = false, paintSpin = 1;
+    function paintAt(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      const gx = Math.floor((clientX - r.left) / r.width * N);
+      const gy = Math.floor((clientY - r.top) / r.height * N);
+      const rad = Math.max(4, Math.round(N * 0.05));
+      for (let dy = -rad; dy <= rad; dy++) {
+        for (let dx = -rad; dx <= rad; dx++) {
+          if (dx * dx + dy * dy > rad * rad) continue;
+          const x = ((gx + dx) % N + N) % N;
+          const y = ((gy + dy) % N + N) % N;
+          spins[y * N + x] = paintSpin;
+        }
+      }
+    }
+    function pointerDown(e) {
+      painting = true;
+      paintSpin = e.shiftKey ? -1 : 1;
+      const p = e.touches ? e.touches[0] : e;
+      paintAt(p.clientX, p.clientY);
+      e.preventDefault();
+    }
+    function pointerMove(e) {
+      if (!painting) return;
+      const p = e.touches ? e.touches[0] : e;
+      paintAt(p.clientX, p.clientY);
+      e.preventDefault();
+    }
+    function pointerUp() { painting = false; }
+    canvas.addEventListener('mousedown', pointerDown);
+    window.addEventListener('mousemove', pointerMove);
+    window.addEventListener('mouseup', pointerUp);
+    canvas.addEventListener('touchstart', pointerDown, { passive: false });
+    canvas.addEventListener('touchmove', pointerMove, { passive: false });
+    window.addEventListener('touchend', pointerUp);
+
+    window.addEventListener('resize', resize);
+
+    // ---- main loop ----
+    function loop() {
+      for (let s = 0; s < sweeps; s++) oneSweep();
+      const m = draw();
+
+      magVEl.textContent = (m >= 0 ? '+' : '') + m.toFixed(2);
+      const am = Math.abs(m);
+      let label, cls;
+      if (T < TC - 0.25) { label = 'ordered'; cls = 'phase-ordered'; }
+      else if (T > TC + 0.35) { label = 'disordered'; cls = 'phase-disordered'; }
+      else { label = 'critical'; cls = 'phase-critical'; }
+      phaseVEl.textContent = label;
+      phaseVEl.className = 'v ' + cls;
+      magVEl.className = 'v ' + cls;
+
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+</script>
+</body>
+</html>

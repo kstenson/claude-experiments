@@ -1,0 +1,153 @@
+{
+  "date": "2026-06-20",
+  "score": 51,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "The paper peace wobbled. The U.S.-Iran talks meant to implement the deal that ended more than 100 days of war were called off: Iranian officials refused to travel to Switzerland and Vice President JD Vance postponed his trip, with Tehran insisting the fighting in Lebanon must stop first and the White House citing unfinished 'technical' arrangements. The trigger was a sharp flare-up on the Israel-Lebanon front - Israeli forces moved on the Ali al-Taher hilltop near Nabatiyeh, Hezbollah hit Israeli tanks, and the exchange left four Israeli soldiers and at least 21 people in Lebanon dead before Netanyahu vowed to 'exact a very heavy price.' Late in the day there was a reprieve: Qatar, the U.S. and Iran brokered a renewal of the Israel-Hezbollah ceasefire, though neither combatant confirmed it publicly. The interim accord and the reopened Strait of Hormuz still held - nearly 10 million barrels moved near the strait, including the first Saudi tankers since the war began - but oil stayed jumpy, Brent near $80, on doubts the recovery will last. Europe's mood frayed too: Ukraine's largest drone strike on Moscow in the four-year war set a refinery ablaze and drew a Russian barrage in return, and U.S. Defense Secretary Hegseth lashed 'shameful' NATO allies and ordered a six-month review of U.S. forces in Europe. Africa's ledger stayed grim, with the Bundibugyo-virus Ebola outbreak in DR Congo and Uganda climbing to 896 confirmed cases and 232 deaths. Against the gloom, science shone: researchers regrew bone, joint and cartilage in mice in a step toward mammalian regeneration, a Swedish team pushed superconductivity to higher temperatures, and a personalized melanoma vaccine halved recurrence risk at five years. U.S. markets sat out the day on the Juneteenth holiday. A deal still standing and a fresh truce keep the floor from falling out, but collapsed talks, Lebanon's dead and a burning Moscow refinery pull the mood back to the uneasy middle.",
+  "dimensions": {
+    "conflict": 48,
+    "economy": 54,
+    "climate": 44,
+    "humanInterest": 45,
+    "techProgress": 66
+  },
+  "regions": {
+    "northAmerica": 53,
+    "southAmerica": 52,
+    "europe": 47,
+    "africa": 34,
+    "middleEast": 48,
+    "asia": 55,
+    "oceania": 52
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "U.S.-Iran talks meant to implement the war-ending deal are called off in Switzerland: Iranian officials refuse to travel and Vice President JD Vance postpones his trip, with Tehran insisting the fighting in Lebanon must stop first and the White House citing unfinished technical arrangements",
+      "source": "PBS News",
+      "url": "https://www.pbs.org/newshour/world/israel-and-hezbollah-renew-ceasefire-after-u-s-and-iran-call-off-talks-over-fighting-in-lebanon",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "A sharp flare-up on the Israel-Lebanon front - Israeli forces moving on the Ali al-Taher hilltop near Nabatiyeh, Hezbollah striking Israeli tanks - leaves four Israeli soldiers and at least 21 people in Lebanon dead, with Netanyahu vowing to 'exact a very heavy price'",
+      "source": "The Philadelphia Inquirer",
+      "url": "https://www.inquirer.com/news/nation-world/iran-us-war-talks-switzerland-vance-postponed-israel-lebanon-trump-khamenei--20260619.html",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Late in the day, Qatar, the United States and Iran broker a renewal of the Israel-Hezbollah ceasefire, according to regional and U.S. officials, though neither combatant immediately confirms it publicly",
+      "source": "PBS News",
+      "url": "https://www.pbs.org/newshour/world/israel-and-hezbollah-renew-ceasefire-after-u-s-and-iran-call-off-talks-over-fighting-in-lebanon",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Ukraine launches its largest drone strike on Moscow in the four-year war, setting the Kapotnya oil refinery ablaze; Russia says it downed 555 drones overnight, nearly 200 near the capital, and answers with its own barrage as Zelenskyy says it is 'time the war ended'",
+      "source": "CNN",
+      "url": "https://edition.cnn.com/2026/06/18/europe/ukraine-strikes-moscow-oil-refinery-intl-hnk",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "U.S. Defense Secretary Pete Hegseth lashes 'shameful' NATO allies in Brussels and orders a six-month review of U.S. forces in Europe, pressing allies to take primary responsibility for the continent's defense in a 'NATO 3.0'",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/18/pentagon-chief-announces-review-of-us-forces-in-europe-slams-nato-allies",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "The interim accord and reopened Strait of Hormuz still hold: nearly 10 million barrels move near the strait, including the first Saudi-owned tankers since the war began, though Brent stays jumpy near $80 on doubts the supply recovery will last",
+      "source": "Trading Economics",
+      "url": "https://tradingeconomics.com/commodity/brent-crude-oil",
+      "dimension": "economy",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "The Bundibugyo-virus Ebola outbreak in DR Congo and Uganda - a WHO-declared public health emergency with no approved vaccine or treatment - climbs to 896 confirmed cases and 232 deaths across 31 health zones, with Uganda reporting 19 cases and two deaths",
+      "source": "U.S. CDC",
+      "url": "https://www.cdc.gov/han/php/notices/han00530.html",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "UN warns climate shocks are accelerating as a potentially strong El Niño looms over already vulnerable regions, with changing rainfall expected to bring drought to some areas and severe flooding to others through late 2026",
+      "source": "UN News",
+      "url": "https://news.un.org/en/story/2026/06/1167753",
+      "dimension": "climate"
+    },
+    {
+      "direction": "up",
+      "headline": "A step toward regeneration in mammals: a two-step FGF2-then-BMP2 treatment regrows bone, joint, cartilage and ligament in mice that normally scar, suggesting the ability to rebuild complex body parts may simply be 'switched off' rather than lost",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/releases/2026/06/260617032211.htm",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "A personalized melanoma vaccine (intismeran) combined with Keytruda halves the risk of recurrence or death over five years versus Keytruda alone, results from the phase 2b KEYNOTE-942 trial presented at the 2026 ASCO meeting in Chicago",
+      "source": "NYU Langone News",
+      "url": "https://nyulangone.org/news/cancer-vaccine-sustains-49-percent-melanoma-reduction-after-5-years",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "China's foreign ministry welcomes the first-phase U.S.-Iran memorandum as a positive step and urges rational second-phase talks, while its ambassador to Washington proposes expanding tariff-free goods under the new U.S.-China Board of Trade from $30 billion to as much as $300 billion",
+      "source": "The Asia Cable",
+      "url": "https://www.theasiacable.com/p/asia-daily-june-19-2026",
+      "dimension": "economy",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Colombia heads into a polarized June 21 presidential runoff between far-right outsider Abelardo de la Espriella, who led the first round with 43.74%, and leftist ruling-party candidate Ivan Cepeda, in a contest defined by crime and the legacy of President Petro",
+      "source": "Americas Society/Council of the Americas",
+      "url": "https://www.as-coa.org/articles/ahead-colombias-runoff-candidates-make-final-plays-presidency",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "PBS News",
+    "CNN",
+    "CNBC",
+    "NBC News",
+    "CBS News",
+    "ABC News",
+    "Bloomberg",
+    "The Washington Post",
+    "The Philadelphia Inquirer",
+    "BBC",
+    "Al Jazeera",
+    "Times of Israel",
+    "South China Morning Post",
+    "Gulf News",
+    "Euronews",
+    "Trading Economics",
+    "UN News",
+    "World Health Organization",
+    "U.S. CDC",
+    "Doctors Without Borders (MSF)",
+    "ECDC",
+    "The Asia Cable",
+    "Nikkei Asia",
+    "Americas Society/Council of the Americas",
+    "Goldman Sachs",
+    "ScienceDaily",
+    "NYU Langone News",
+    "Positive News",
+    "Britannica",
+    "Wikipedia (2026 Iran war / 2026 Israel-Lebanon ceasefire / 2026 Moscow Oil Refinery drone attacks / 2026 Central Africa Ebola epidemic / 2026 Colombian presidential election)"
+  ]
+}
