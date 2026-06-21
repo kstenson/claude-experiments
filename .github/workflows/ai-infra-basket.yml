@@ -1,0 +1,36 @@
+name: AI-Infra Basket
+
+on:
+  push:
+    paths:
+      - 'ai-infra-basket/**'
+  pull_request:
+    paths:
+      - 'ai-infra-basket/**'
+  # Daily cadence. The price refresh + weekly trade decision need a Claude Code on
+  # the web scheduled session running ai-infra-basket/.claude/daily-prompt.md. This
+  # scheduled job just validates the data and flags if it has gone stale.
+  schedule:
+    - cron: '30 22 * * *'   # 22:30 UTC daily (after US close)
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate basket data
+        run: node ai-infra-basket/validate.mjs
+      - name: Check data freshness (schedule only, non-blocking)
+        if: github.event_name == 'schedule'
+        run: |
+          ASOF=$(node -e "console.log(require('./ai-infra-basket/data/series.json').meta.asOf)")
+          echo "Series as of $ASOF"
+          CUTOFF=$(date -u -d '5 days ago' +%F)
+          if [ "$ASOF" \< "$CUTOFF" ]; then
+            echo "::warning::AI-Infra Basket data looks stale (as of $ASOF). Run ai-infra-basket/.claude/daily-prompt.md."
+          else
+            echo "✅ Data is fresh."
+          fi
