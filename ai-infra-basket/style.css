@@ -96,8 +96,11 @@ main { max-width: var(--max); margin: 0 auto; padding: 24px 20px 64px; }
 .chart-wrap { position: relative; }
 #chart { display: block; width: 100%; height: auto; }
 .series { fill: none; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
-.series.bh { stroke: var(--bh); }
-.series.act { stroke: var(--act); }
+/* Buy & hold is drawn first and a touch wider, so it reads as a halo behind the
+   active line wherever the two coincide (they're identical until the first trade);
+   once they diverge, both are clearly distinct. */
+.series.bh { stroke: var(--bh); stroke-width: 5; }
+.series.act { stroke: var(--act); stroke-width: 2.2; }
 .series.sp { stroke: var(--sp); stroke-dasharray: 5 4; stroke-width: 2; }
 .grid { stroke: var(--line); stroke-width: 1; }
 .base { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 2 3; }

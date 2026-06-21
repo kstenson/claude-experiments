@@ -179,12 +179,27 @@ def main():
     active = []
     applied = []  # decisions actually applied (date present in calendar)
     for i, d in enumerate(dates):
-        # value just before any action today (the book starts with $100 to invest)
-        value = 100.0 if i == 0 else sum(shares[t] * usd[t][i] for t in tickers) + cash
         reb = rebal_by_date.get(d)
-        if i == 0 and reb is None:
-            reb = {"date": d, "weights": {t: 1.0 / n for t in tickers},
-                   "rationale": "Inception: equal-weight all 15 names.", "label": "Inception"}
+        if i == 0:
+            # Inception is equal-weight by definition. Seed the active book with the
+            # exact same equal-dollar shares as buy & hold so the two lines start
+            # perfectly identical (no rounding drift from the ledger's inception
+            # weights) and only separate at the first real trade.
+            shares = dict(bh_shares)
+            cash = 0.0
+            r0 = reb or {"label": "Inception",
+                         "rationale": "Inception: equal-weight all 15 names."}
+            applied.append({
+                "date": d,
+                "label": r0.get("label", "Inception"),
+                "rationale": r0.get("rationale", ""),
+                "weights": {t: round(1.0 / n, 4) for t in tickers},
+                "cash": 0.0,
+            })
+            active.append(sum(shares[t] * usd[t][i] for t in tickers) + cash)
+            continue
+        # value just before any action today
+        value = sum(shares[t] * usd[t][i] for t in tickers) + cash
         if reb is not None:
             w, c = normalise_weights(reb["weights"])
             shares = {t: (w.get(t, 0.0) * value) / usd[t][i] for t in tickers}
