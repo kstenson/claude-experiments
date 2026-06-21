@@ -1,0 +1,28 @@
+{
+  "_comment": "Decision ledger for the ACTIVE line. Each Friday the daily routine appends one rebalance with target weights (ticker -> fraction; the remainder is held as cash). Self-financing: no new money in/out. Weights are applied at that date's close and held until the next entry. Never edit past entries. See CLAUDE.md.",
+  "rebalances": [
+    {
+      "date": "2026-01-02",
+      "label": "Inception",
+      "rationale": "Start equal-weight: 1/15 in every name. Identical to the buy & hold book on day one.",
+      "weights": {
+        "AMD": 0.0667, "AVGO": 0.0667, "MRVL": 0.0667,
+        "TSM": 0.0667, "ASML": 0.0667, "AMAT": 0.0667,
+        "MU": 0.0667, "000660.KS": 0.0667, "STX": 0.0667,
+        "ANET": 0.0667, "COHR": 0.0666, "CRDO": 0.0666,
+        "VRT": 0.0666, "CEG": 0.0666, "EQIX": 0.0666
+      }
+    },
+    {
+      "date": "2026-06-12",
+      "label": "Trim the parabola, fund the laggards",
+      "rationale": "Six months in, the memory/storage trade has gone vertical: Seagate (+224%), Marvell (+213%), Micron (+211%) and SK Hynix (+203%) have each roughly tripled YTD and now carry far more weight — and risk — than I want in four correlated DRAM/HBM names. I'm trimming all four to ~4.5% and recycling the proceeds into quality laggards that haven't run: Broadcom (+10%), Arista (+22%), TSMC (+33%) and Equinix (+40%), plus a contrarian add to the only loser in the book, Constellation Energy (-31%). I'm also parking ~3.5% in cash as dry powder after a move this parabolic. Conviction tilt, not a wholesale reshuffle — all 15 names stay in.",
+      "weights": {
+        "STX": 0.045, "MRVL": 0.045, "MU": 0.045, "000660.KS": 0.045,
+        "AMD": 0.065, "AMAT": 0.065, "COHR": 0.065, "CRDO": 0.065, "VRT": 0.065,
+        "ASML": 0.075, "EQIX": 0.075, "TSM": 0.075, "ANET": 0.075,
+        "AVGO": 0.080, "CEG": 0.080
+      }
+    }
+  ]
+}

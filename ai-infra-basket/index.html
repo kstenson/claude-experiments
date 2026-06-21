@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI-Infrastructure Basket</title>
+  <meta name="description" content="A weekly-tracked, equal-weighted basket of 15 'picks & shovels' AI-infrastructure stocks (deliberately no Nvidia), benchmarked against the S&P 500 — buy & hold vs an actively traded book vs the index." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../shared/history-nav.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛏️</text></svg>" />
+</head>
+<body>
+  <main id="app" aria-busy="true">
+    <a class="back" href="../index.html">← all experiments</a>
+
+    <header class="masthead">
+      <div class="brand">⛏️ <span>AI-Infrastructure Basket</span></div>
+      <div class="asof" id="asof">—</div>
+    </header>
+
+    <section class="intro">
+      <div class="eyebrow">Picks &amp; shovels — no Nvidia</div>
+      <h1 class="tagline">15 equal-weighted AI-infra stocks, three ways, vs the S&amp;P 500.</h1>
+      <p class="blurb" id="blurb">Loading…</p>
+    </section>
+
+    <!-- Three headline scorecards -->
+    <section class="cards" id="cards" aria-label="Performance summary"></section>
+
+    <!-- The chart -->
+    <section class="panel chart-panel" aria-label="Performance chart">
+      <div class="panel-head">
+        <h2>Cumulative return since inception</h2>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="chart-wrap">
+        <svg id="chart" role="img" aria-label="Index performance chart"></svg>
+        <div class="readout" id="readout"></div>
+      </div>
+      <div id="historyNav"></div>
+    </section>
+
+    <!-- Holdings -->
+    <section class="panel" aria-label="Holdings">
+      <div class="panel-head">
+        <h2>The 15 holdings</h2>
+        <div class="sub">YTD return, and how each line weights it now</div>
+      </div>
+      <div class="table-wrap">
+        <table class="holdings" id="holdings">
+          <thead>
+            <tr>
+              <th>Stock</th><th class="num">YTD</th>
+              <th class="num">Buy&nbsp;&amp;&nbsp;hold</th><th class="num">Active</th>
+            </tr>
+          </thead>
+          <tbody id="holdingsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Decision log -->
+    <section class="panel" aria-label="Trade decisions">
+      <div class="panel-head">
+        <h2>Friday trade decisions</h2>
+        <div class="sub">The active book's running log — equal-weight at inception, re-weighted on Fridays</div>
+      </div>
+      <div class="decisions" id="decisions"></div>
+    </section>
+
+    <footer class="foot">
+      <p id="footnote"></p>
+      <p>Built with Claude · <a href="https://github.com/kstenson/claude-experiments/tree/main/ai-infra-basket">source</a>.
+      Not investment advice — an experiment in tracking a thesis.</p>
+    </footer>
+  </main>
+
+  <script src="../shared/history-nav.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
