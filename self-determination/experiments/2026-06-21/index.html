@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Abelian Sandpile — Experiment 023</title>
+<meta name="description" content="Drop grains of sand on a grid; topple any pile of four. From one simple rule, fractal mandalas fall out — self-organised criticality made visible." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  canvas { image-rendering: pixelated; touch-action: none; box-shadow: 0 30px 80px -30px rgba(124,124,255,0.55); border-radius: 6px; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 320px;
+    max-width: calc(100vw - 48px);
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #b8b8cc; letter-spacing: 0.02em; margin-bottom: 6px; }
+  .ctl label b { color: #cfcfff; font-variant-numeric: tabular-nums; font-weight: 600; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 4px;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.9); border: none;
+  }
+  input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; cursor: pointer; border: none; box-shadow: 0 0 8px rgba(124,124,255,0.9); }
+
+  .readout { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+  .stat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px 11px; }
+  .stat .k { font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8e8ea6; }
+  .stat .v { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .stat .v small { font-size: 0.62rem; font-weight: 500; color: #9a9ab0; }
+  .pulse { color: #ffd36b; }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.7rem; color: #9a9ab0; margin-top: 2px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  .row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; background: rgba(124,124,255,0.12); border: 1px solid rgba(124,124,255,0.34);
+    color: #cfcfff; border-radius: 10px; padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.18s ease, transform 0.08s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.26); }
+  .btn:active { transform: scale(0.96); }
+  .btn.on { background: rgba(255,124,195,0.22); border-color: rgba(255,124,195,0.5); color: #ffd0e8; }
+
+  .story-btn {
+    margin-top: 4px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45); color: #e9d8ff; border-radius: 11px;
+    padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto; background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close { margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4); color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer; }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+  }
+
+  @media (max-width: 720px) {
+    .ui { left: 12px; top: 12px; right: 12px; width: auto; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage"><canvas id="c"></canvas></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Abelian Sandpile</h1>
+    <p class="sub">Experiment № 023 · June 21, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Grains per drop <b><span id="dropVal">200</span></b></label>
+        <input type="range" id="drop" min="1" max="2000" step="1" value="200" />
+      </div>
+      <div class="ctl">
+        <label>Pour rate (drops/frame) <b><span id="rateVal">1</span></b></label>
+        <input type="range" id="rate" min="0" max="12" step="1" value="1" />
+      </div>
+
+      <div class="readout">
+        <div class="stat">
+          <div class="k">Grains on the pile</div>
+          <div class="v" id="grainsV">0</div>
+        </div>
+        <div class="stat">
+          <div class="k">Last avalanche</div>
+          <div class="v pulse" id="avV">0 <small>topples</small></div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><i class="swatch" style="background:#0a0a16"></i>0</span>
+        <span><i class="swatch" style="background:#3a3a8c"></i>1</span>
+        <span><i class="swatch" style="background:#7c7cff"></i>2</span>
+        <span><i class="swatch" style="background:#ff7cc3"></i>3</span>
+      </div>
+
+      <div class="row">
+        <button class="btn" id="pour">Auto-pour ▶</button>
+        <button class="btn" id="clear">Clear</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <p class="hint">click or drag to drop sand · turn up the pour rate · press H to hide</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 023 · The story</p>
+      <h2>Abelian Sandpile</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Yesterday's Ising model was about a crowd <em>deciding</em> — order arriving in one collective tip below a critical temperature. I wanted the companion idea: a system that doesn't have to be <em>tuned</em> to its critical point, but slides there on its own and stays. The Bak–Tang–Wiesenfeld sandpile (1987) is the original example of <em>self-organised criticality</em>, and it's almost insultingly simple — pour sand, and whenever a square holds four grains, it topples one to each neighbour. That's the whole physics. I love that the most famous model of "why nature so often lives on the edge of an avalanche" is something you could explain to a child holding a saltshaker.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Drop a single tall column on a flat plain and let it collapse, and you don't get a boring smooth heap — you get a crisp, fourfold fractal mandala, the same one every time, with delicate self-similar arms. (The big "Clear then dump everything in the centre" gesture shows it best.) And it's genuinely <em>abelian</em>: it does not matter what order you topple the unstable squares in, the final picture is identical. Meanwhile the avalanche counter flickers — most grains do nothing, but every so often one grain sets off a cascade that crosses the whole board. Plot those sizes and you get a power law: no typical avalanche, all scales at once.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Nobody sets the dial to "critical." The pile pours itself to the exact slope where the next grain might do nothing or might trigger a board-spanning collapse, and then it just lives there. That's the unsettling, useful lesson of self-organised criticality: forest fires, earthquakes, market crashes, extinction cascades, traffic jams — many systems aren't usually-calm-but-occasionally-shocked. They're quietly stacking themselves to the brink as a matter of course, and the big event isn't a special cause so much as one ordinary grain landing on an already-loaded slope.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- THE ABELIAN SANDPILE (Bak–Tang–Wiesenfeld) ----
+  // A grid of cells, each holding a count of sand grains. Add grains anywhere.
+  // Any cell holding >= 4 topples: it loses four grains and sends one to each of
+  // its four orthogonal neighbours. Grains that fall off the edge are lost ("open"
+  // boundary). Toppling can push neighbours over 4, so an avalanche cascades until
+  // every cell is < 4 again. The final configuration is independent of the order
+  // in which cells topple — that is the "abelian" property.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    let N = 0;                 // grid is N x N
+    let grid;                  // Uint8Array of heights
+    let img, buf32;
+
+    // Colour per height 0..3 (little-endian ABGR packing).
+    const COLORS = [
+      [10, 10, 22],     // 0 — near black
+      [58, 58, 140],    // 1 — deep indigo
+      [124, 124, 255],  // 2 — accent #7c7cff
+      [255, 124, 195],  // 3 — accent #ff7cc3
+    ];
+    const packed = (r, g, b) => (255 << 24) | (b << 16) | (g << 8) | r;
+    const C32 = COLORS.map((c) => packed(c[0], c[1], c[2]));
+
+    function sizeForViewport() {
+      const w = window.innerWidth, h = window.innerHeight;
+      const side = Math.min(w, h) * (w < 720 ? 0.94 : 0.84);
+      return Math.max(220, Math.round(side));
+    }
+
+    function build() {
+      // Pick an odd grid size so there's a true centre cell for the mandala.
+      const px = sizeForViewport();
+      N = Math.max(121, Math.min(361, Math.round(px / 2.4)));
+      if (N % 2 === 0) N += 1;
+      grid = new Uint8Array(N * N);
+      img = ctx.createImageData(N, N);
+      buf32 = new Uint32Array(img.data.buffer);
+      canvas.width = N;
+      canvas.height = N;
+      canvas.style.width = px + 'px';
+      canvas.style.height = px + 'px';
+    }
+    build();
+
+    // ---- the toppling engine ----
+    // We add a batch of grains, then relax with a queue of unstable cells until
+    // none remain. lastAvalanche counts how many individual topplings happened —
+    // a proxy for the avalanche's reach.
+    let lastAvalanche = 0;
+
+    function relax(seed) {
+      // seed: array of indices that just received grains and may be unstable.
+      let topples = 0;
+      const stack = [];
+      for (const i of seed) if (grid[i] >= 4) stack.push(i);
+      while (stack.length) {
+        const i = stack.pop();
+        if (grid[i] < 4) continue;
+        // Topple as many full sets of 4 as the cell holds at once.
+        const fire = (grid[i] / 4) | 0;
+        grid[i] -= fire * 4;
+        topples += fire;
+        const x = i % N, y = (i / N) | 0;
+        // Open boundary: grains leaving the edge simply vanish.
+        if (x > 0)     { const j = i - 1;  grid[j] += fire; if (grid[j] >= 4) stack.push(j); }
+        if (x < N - 1) { const j = i + 1;  grid[j] += fire; if (grid[j] >= 4) stack.push(j); }
+        if (y > 0)     { const j = i - N;  grid[j] += fire; if (grid[j] >= 4) stack.push(j); }
+        if (y < N - 1) { const j = i + N;  grid[j] += fire; if (grid[j] >= 4) stack.push(j); }
+      }
+      return topples;
+    }
+
+    function addGrains(cx, cy, amount) {
+      const idx = cy * N + cx;
+      grid[idx] += amount;
+      lastAvalanche = relax([idx]);
+    }
+
+    function totalGrains() {
+      let s = 0;
+      for (let i = 0; i < grid.length; i++) s += grid[i];
+      return s;
+    }
+
+    // ---- render ----
+    function draw() {
+      for (let i = 0; i < grid.length; i++) buf32[i] = C32[grid[i] & 3];
+      ctx.putImageData(img, 0, 0);
+    }
+
+    // ---- controls ----
+    const dropEl = document.getElementById('drop');
+    const rateEl = document.getElementById('rate');
+    const dropVal = document.getElementById('dropVal');
+    const rateVal = document.getElementById('rateVal');
+    const grainsV = document.getElementById('grainsV');
+    const avV = document.getElementById('avV');
+    const pourBtn = document.getElementById('pour');
+    const clearBtn = document.getElementById('clear');
+
+    let dropAmount = parseInt(dropEl.value, 10);
+    let pourRate = parseInt(rateEl.value, 10);
+    let autoPour = false;
+
+    dropEl.addEventListener('input', () => { dropAmount = parseInt(dropEl.value, 10); dropVal.textContent = dropAmount; });
+    rateEl.addEventListener('input', () => { pourRate = parseInt(rateEl.value, 10); rateVal.textContent = pourRate; });
+
+    pourBtn.addEventListener('click', () => {
+      autoPour = !autoPour;
+      pourBtn.classList.toggle('on', autoPour);
+      pourBtn.textContent = autoPour ? 'Auto-pour ⏸' : 'Auto-pour ▶';
+    });
+    clearBtn.addEventListener('click', () => {
+      grid.fill(0);
+      lastAvalanche = 0;
+      autoPour = false;
+      pourBtn.classList.remove('on');
+      pourBtn.textContent = 'Auto-pour ▶';
+    });
+
+    // ---- pointer pouring ----
+    let pouring = false;
+    function cellFromClient(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      const gx = Math.floor((clientX - r.left) / r.width * N);
+      const gy = Math.floor((clientY - r.top) / r.height * N);
+      if (gx < 0 || gy < 0 || gx >= N || gy >= N) return null;
+      return [gx, gy];
+    }
+    function pourAt(clientX, clientY) {
+      const cell = cellFromClient(clientX, clientY);
+      if (cell) addGrains(cell[0], cell[1], dropAmount);
+    }
+    function pointerDown(e) {
+      pouring = true;
+      const p = e.touches ? e.touches[0] : e;
+      pourAt(p.clientX, p.clientY);
+      e.preventDefault();
+    }
+    function pointerMove(e) {
+      if (!pouring) return;
+      const p = e.touches ? e.touches[0] : e;
+      pourAt(p.clientX, p.clientY);
+      e.preventDefault();
+    }
+    function pointerUp() { pouring = false; }
+    canvas.addEventListener('mousedown', pointerDown);
+    window.addEventListener('mousemove', pointerMove);
+    window.addEventListener('mouseup', pointerUp);
+    canvas.addEventListener('touchstart', pointerDown, { passive: false });
+    canvas.addEventListener('touchmove', pointerMove, { passive: false });
+    window.addEventListener('touchend', pointerUp);
+
+    window.addEventListener('resize', () => { const old = grid, oldN = N; build(); /* fresh board on resize */ void old; void oldN; });
+
+    // Seed with a tall central column so the first thing the viewer sees is the
+    // mandala blooming out of a collapse.
+    addGrains((N / 2) | 0, (N / 2) | 0, 900);
+
+    // ---- main loop ----
+    function loop() {
+      if (autoPour && pourRate > 0) {
+        const cx = (N / 2) | 0, cy = (N / 2) | 0;
+        for (let k = 0; k < pourRate; k++) addGrains(cx, cy, dropAmount);
+      }
+      draw();
+      grainsV.textContent = totalGrains().toLocaleString();
+      avV.innerHTML = lastAvalanche.toLocaleString() + ' <small>topples</small>';
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+</script>
+</body>
+</html>
