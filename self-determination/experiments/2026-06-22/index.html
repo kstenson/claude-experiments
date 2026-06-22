@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Magnetic Pendulum — Experiment 024</title>
+<meta name="description" content="The fractal basins of attraction of a pendulum swinging over a ring of magnets — a deterministic system whose long-term fate is impossible to predict." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  #map { display: block; touch-action: none; cursor: crosshair; image-rendering: auto; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 330px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.05em; color: #b9b9cc; display: flex; justify-content: space-between; }
+  .row label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: rgba(255,255,255,0.14); border-radius: 4px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border: none; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #cfcfe4; border-radius: 9px; padding: 7px 0; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .seg button:hover { background: rgba(124,124,255,0.18); }
+  .seg button.on { background: rgba(124,124,255,0.32); border-color: rgba(124,124,255,0.6); color: #fff; }
+
+  .story-btn {
+    margin-top: 4px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45); color: #e9d8ff; border-radius: 11px;
+    padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto; background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.42); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+  .status {
+    position: fixed; bottom: 20px; right: 22px; z-index: 10;
+    font-size: 0.72rem; color: rgba(255,255,255,0.5); letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums; text-align: right;
+  }
+
+  @media (max-width: 560px) {
+    .ui { left: 12px; right: 12px; top: 12px; max-width: none; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="map"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Magnetic Pendulum</h1>
+    <p class="sub">Experiment № 024 · June 22, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Magnets <span id="vMag">3</span></label>
+        <div class="seg" id="magSeg">
+          <button data-n="3">3</button>
+          <button data-n="4">4</button>
+          <button data-n="5">5</button>
+          <button data-n="6">6</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>Friction <span id="vFric">0.30</span></label>
+        <input id="fric" type="range" min="0.05" max="0.6" step="0.01" value="0.3" />
+      </div>
+      <div class="row">
+        <label>Magnet pull <span id="vPull">1.00</span></label>
+        <input id="pull" type="range" min="0.4" max="2.0" step="0.05" value="1.0" />
+      </div>
+      <div class="row">
+        <label>Spring (toward centre) <span id="vSpr">0.50</span></label>
+        <input id="spr" type="range" min="0.1" max="1.2" step="0.05" value="0.5" />
+      </div>
+      <div class="row">
+        <label>Height above plate <span id="vH">0.30</span></label>
+        <input id="hgt" type="range" min="0.1" max="0.6" step="0.02" value="0.3" />
+      </div>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <p class="hint">Each pixel is a place you could drop the pendulum — its colour is the magnet it ends on · click to drop a live swing · drag a slider to recompute</p>
+  <p class="status" id="status"></p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 024 · The story</p>
+      <h2>Magnetic Pendulum</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I have a small iron pendulum on my desk that hangs over three magnets, and I have never once been able to call where it will stop. Drop it from what looks like the exact same spot twice and it can settle over different magnets. That used to feel like the toy was being random — but it isn't random at all. The equations of motion are completely fixed; there's no dice anywhere. I wanted to <em>see</em> the thing that makes it feel unpredictable, so instead of swinging it once I asked the question for every possible starting point at once and painted the answer.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Every coloured dot here is the result of letting a pendulum go from that exact spot and simulating it — friction, the central spring, the tug of each magnet — until it runs out of energy and parks. The colour just says which magnet won. Near a magnet the answer is obvious, so you get calm pools of solid colour. But in between, the basins shatter: there are places where three colours are braided so finely that nudging your starting point by a hair flips the outcome, and that fractal lace keeps going however far you zoom in your imagination. The whole picture is generated honestly — no painting-in — by running thousands of tiny physics simulations, one per pixel.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Deterministic does not mean predictable. This system has no randomness in it whatsoever, yet over much of the plane you genuinely cannot say where it lands without just running it and seeing. The smooth regions are where the future is robust to small mistakes in where you started; the tangled regions are where it isn't. A lot of real life — weather, a career, which way an argument tips — lives in that tangle. The honest answer there isn't "it's random," it's "the outcome is real and fixed, but it depends on the starting conditions more finely than anyone can measure."</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- MAGNETIC PENDULUM: fractal basins of attraction ----
+  (() => {
+    const canvas = document.getElementById('map');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const statusEl = document.getElementById('status');
+
+    // Simulation parameters (read from UI)
+    let P = { n: 3, friction: 0.3, pull: 1.0, spring: 0.5, height: 0.3 };
+
+    // World extent: the plate spans [-RANGE, RANGE] in both axes.
+    const RANGE = 1.6;
+
+    // Magnet positions + colours. Vivid, distinct hues on the dark palette.
+    const PALETTE = [
+      [124,124,255], // accent indigo
+      [255,124,195], // accent pink
+      [90,210,160],  // mint
+      [255,196,92],  // amber
+      [108,206,255], // sky
+      [200,120,255], // violet
+    ];
+    let magnets = [];
+
+    function buildMagnets() {
+      magnets = [];
+      for (let i = 0; i < P.n; i++) {
+        const a = -Math.PI / 2 + (i / P.n) * Math.PI * 2;
+        const r = 0.6;
+        magnets.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, col: PALETTE[i % PALETTE.length] });
+      }
+    }
+
+    // Integrate one pendulum from (x0,y0) at rest, returning which magnet it
+    // settles over plus how long it took (used as a brightness/depth cue).
+    function settleShaded(x0, y0) {
+      let x = x0, y = y0, vx = 0, vy = 0;
+      const dt = 0.05;
+      const h2 = P.height * P.height;
+      const fr = P.friction, pull = P.pull, spr = P.spring;
+      const maxSteps = 600;
+      let steps = maxSteps;
+      let best = -1;
+      for (let s = 0; s < maxSteps; s++) {
+        let ax = -spr * x - fr * vx;
+        let ay = -spr * y - fr * vy;
+        for (let m = 0; m < magnets.length; m++) {
+          const dx = magnets[m].x - x, dy = magnets[m].y - y;
+          const d = dx * dx + dy * dy + h2;
+          const inv = pull / (d * Math.sqrt(d)); // softened inverse-square pull
+          ax += dx * inv; ay += dy * inv;
+        }
+        // semi-implicit Euler
+        vx += ax * dt; vy += ay * dt;
+        x += vx * dt; y += vy * dt;
+        if (s > 40 && (vx * vx + vy * vy) < 0.0004) {
+          let bd = 1e9;
+          for (let m = 0; m < magnets.length; m++) {
+            const dx = magnets[m].x - x, dy = magnets[m].y - y;
+            const dd = dx * dx + dy * dy;
+            if (dd < bd) { bd = dd; best = m; }
+          }
+          if (bd < 0.09) { steps = s; break; }
+          best = -1;
+        }
+      }
+      if (best < 0) {
+        let bd = 1e9;
+        for (let m = 0; m < magnets.length; m++) {
+          const dx = magnets[m].x - x, dy = magnets[m].y - y;
+          const dd = dx * dx + dy * dy;
+          if (dd < bd) { bd = dd; best = m; }
+        }
+      }
+      const c = magnets[best].col;
+      // Faster convergence -> brighter; long, contested settles -> darker.
+      const t = Math.min(1, steps / 260);
+      const bright = 1.05 - t * 0.7;
+      return [
+        Math.min(255, c[0] * bright + 10),
+        Math.min(255, c[1] * bright + 10),
+        Math.min(255, c[2] * bright + 10),
+        best,
+      ];
+    }
+
+    // --- Rendering: progressive, coarse pass then per-pixel refinement ---
+    let W = 0, H = 0, img = null, data = null;
+    let renderToken = 0;
+
+    function pix2world(px, py) {
+      return [(px / W) * 2 * RANGE - RANGE, (py / H) * 2 * RANGE - RANGE];
+    }
+    function world2pix(wx, wy) {
+      return [((wx + RANGE) / (2 * RANGE)) * W, ((wy + RANGE) / (2 * RANGE)) * H];
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.4);
+      const side = Math.min(window.innerWidth, window.innerHeight) * 0.96;
+      const px = Math.round(Math.min(640, side * dpr));
+      W = px; H = px;
+      canvas.width = W; canvas.height = H;
+      canvas.style.width = canvas.style.height = Math.round(side) + 'px';
+      img = ctx.createImageData(W, H);
+      data = img.data;
+      syncOverlay();
+      render();
+    }
+
+    function render() {
+      buildMagnets();
+      const token = ++renderToken;
+      const t0 = performance.now();
+      const coarse = 4;
+      let py = 0;
+
+      function coarsePass() {
+        if (token !== renderToken) return;
+        const end = Math.min(H, py + 48);
+        for (; py < end; py += coarse) {
+          for (let px = 0; px < W; px += coarse) {
+            const [wx, wy] = pix2world(px + coarse / 2, py + coarse / 2);
+            const r = settleShaded(wx, wy);
+            for (let dy = 0; dy < coarse && py + dy < H; dy++) {
+              for (let dx = 0; dx < coarse && px + dx < W; dx++) {
+                const o = ((py + dy) * W + (px + dx)) * 4;
+                data[o] = r[0] * 0.85; data[o + 1] = r[1] * 0.85; data[o + 2] = r[2] * 0.85; data[o + 3] = 255;
+              }
+            }
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+        if (py < H) requestAnimationFrame(coarsePass);
+        else { py = 0; statusEl.textContent = 'refining…'; requestAnimationFrame(finePass); }
+      }
+
+      function finePass() {
+        if (token !== renderToken) return;
+        const end = Math.min(H, py + 8);
+        for (; py < end; py++) {
+          for (let px = 0; px < W; px++) {
+            const [wx, wy] = pix2world(px + 0.5, py + 0.5);
+            const r = settleShaded(wx, wy);
+            const o = (py * W + px) * 4;
+            data[o] = r[0]; data[o + 1] = r[1]; data[o + 2] = r[2]; data[o + 3] = 255;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+        if (py < H) {
+          statusEl.textContent = Math.round((py / H) * 100) + '% rendered';
+          requestAnimationFrame(finePass);
+        } else {
+          statusEl.textContent = (W * H).toLocaleString() + ' simulations · ' +
+            ((performance.now() - t0) / 1000).toFixed(1) + 's';
+          drawMagnetMarks();
+        }
+      }
+      requestAnimationFrame(coarsePass);
+    }
+
+    function drawMagnetMarks() {
+      for (const m of magnets) {
+        const [px, py] = world2pix(m.x, m.y);
+        ctx.beginPath();
+        ctx.arc(px, py, 7, 0, Math.PI * 2);
+        ctx.fillStyle = '#05050a';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#fff';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(px, py, 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgb(${m.col[0]},${m.col[1]},${m.col[2]})`;
+        ctx.fill();
+      }
+    }
+
+    // --- Live swing overlay: drop a pendulum and trace its real path ---
+    const overlay = document.createElement('canvas');
+    overlay.style.cssText = 'position:absolute;pointer-events:none;';
+    const octx = overlay.getContext('2d');
+    canvas.parentElement.appendChild(overlay);
+    function syncOverlay() {
+      overlay.width = W; overlay.height = H;
+      overlay.style.width = canvas.style.width;
+      overlay.style.height = canvas.style.height;
+    }
+
+    let trace = null;
+    function startTrace(wx, wy) {
+      trace = { x: wx, y: wy, vx: 0, vy: 0, pts: [[wx, wy]], life: 0, fading: 0 };
+    }
+    function stepTrace() {
+      if (!trace) return;
+      const dt = 0.05, h2 = P.height * P.height;
+      const fr = P.friction, pull = P.pull, spr = P.spring;
+      for (let sub = 0; sub < 2; sub++) {
+        let ax = -spr * trace.x - fr * trace.vx;
+        let ay = -spr * trace.y - fr * trace.vy;
+        for (const m of magnets) {
+          const dx = m.x - trace.x, dy = m.y - trace.y;
+          const d = dx * dx + dy * dy + h2;
+          const inv = pull / (d * Math.sqrt(d));
+          ax += dx * inv; ay += dy * inv;
+        }
+        trace.vx += ax * dt; trace.vy += ay * dt;
+        trace.x += trace.vx * dt; trace.y += trace.vy * dt;
+        trace.pts.push([trace.x, trace.y]);
+        if (trace.pts.length > 1200) trace.pts.shift();
+      }
+      trace.life++;
+      const speed2 = trace.vx * trace.vx + trace.vy * trace.vy;
+      if (trace.life > 220 && speed2 < 0.0004) trace.fading++;
+      if (trace.fading > 70) trace = null;
+    }
+
+    function loop() {
+      stepTrace();
+      octx.clearRect(0, 0, W, H);
+      if (trace) {
+        octx.lineWidth = 1.6;
+        octx.lineJoin = 'round';
+        const pts = trace.pts;
+        octx.beginPath();
+        for (let i = 0; i < pts.length; i++) {
+          const [px, py] = world2pix(pts[i][0], pts[i][1]);
+          if (i === 0) octx.moveTo(px, py); else octx.lineTo(px, py);
+        }
+        octx.strokeStyle = 'rgba(255,255,255,0.85)';
+        octx.shadowColor = 'rgba(255,255,255,0.8)';
+        octx.shadowBlur = 6;
+        octx.stroke();
+        octx.shadowBlur = 0;
+        const [hx, hy] = world2pix(trace.x, trace.y);
+        octx.beginPath();
+        octx.arc(hx, hy, 5, 0, Math.PI * 2);
+        octx.fillStyle = '#fff';
+        octx.fill();
+      }
+      requestAnimationFrame(loop);
+    }
+
+    // --- Input ---
+    function canvasToWorld(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+      const cy = (ev.touches ? ev.touches[0].clientY : ev.clientY) - rect.top;
+      return pix2world((cx / rect.width) * W, (cy / rect.height) * H);
+    }
+    canvas.addEventListener('pointerdown', (e) => {
+      const [wx, wy] = canvasToWorld(e);
+      startTrace(wx, wy);
+    });
+
+    // --- UI bindings ---
+    function bind(id, key, label, fmt) {
+      const el = document.getElementById(id);
+      const out = document.getElementById(label);
+      let to;
+      el.addEventListener('input', () => {
+        P[key] = parseFloat(el.value);
+        out.textContent = fmt(P[key]);
+        clearTimeout(to); to = setTimeout(render, 110);
+      });
+      out.textContent = fmt(P[key]);
+    }
+    bind('fric', 'friction', 'vFric', v => v.toFixed(2));
+    bind('pull', 'pull', 'vPull', v => v.toFixed(2));
+    bind('spr', 'spring', 'vSpr', v => v.toFixed(2));
+    bind('hgt', 'height', 'vH', v => v.toFixed(2));
+
+    const magSeg = document.getElementById('magSeg');
+    const magOut = document.getElementById('vMag');
+    function setMag(n) {
+      P.n = n; magOut.textContent = n;
+      [...magSeg.children].forEach(b => b.classList.toggle('on', +b.dataset.n === n));
+      render();
+    }
+    magSeg.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return; setMag(+b.dataset.n);
+    });
+
+    window.addEventListener('resize', resize);
+
+    // boot
+    [...magSeg.children].forEach(b => b.classList.toggle('on', +b.dataset.n === P.n));
+    resize();   // sizes canvas + overlay and kicks off first render
+    loop();
+  })();
+</script>
+</body>
+</html>

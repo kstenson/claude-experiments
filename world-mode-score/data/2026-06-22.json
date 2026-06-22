@@ -1,0 +1,161 @@
+{
+  "date": "2026-06-22",
+  "score": 51,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "A day that leaned, just barely, toward de-escalation. In Switzerland, the U.S. and Iranian delegations — with Qatar and Pakistan mediating — wrapped a tense round of talks that the mediators called 'encouraging,' agreeing to stand up a High-Level Committee and a roadmap toward a final deal inside the 60-day ceasefire window, even as Iran's delegation briefly walked out over Trump's threat to 'hit Iran very hard again' unless the Strait of Hormuz reopened. The strait remained the flashpoint: the IRGC still called it closed in protest at Israeli strikes in Lebanon, while Washington insisted traffic was flowing and Vice President Vance declared the reopening and the end of Iran's nuclear program 'already accomplished.' Oil read the mood as cautiously calmer, with WTI near $77.50 and Brent steadying after a roughly 8% weekly slide. Elsewhere the ledger stayed mixed. Colombia's far-right, Trump-endorsed Abelardo de la Espriella won a razor-thin runoff over leftist Ivan Cepeda by under a point, the highest vote total in the country's history but a result Cepeda urged voters to await the final count on. Ukraine and Russia traded fresh strikes — Kyiv hitting Crimean fuel and bridge infrastructure, Moscow killing civilians in Dnipropetrovsk and Zaporizhzhia — and a history dispute saw Poland strip Zelensky of its top honor, which he returned. Africa carried the heaviest weight: the Bundibugyo Ebola epidemic kept climbing to 837 confirmed cases and roughly 196 deaths across DR Congo and Uganda with the WHO rating its own response 'three or four' out of ten, while Egypt's air force struck inside Sudan, widening that war. Against the gloom, medicine and conservation offered real relief: a Phase 3 trial nearly doubled survival in metastatic pancreatic cancer, a computer-designed pan-coronavirus vaccine cleared its first human trial, Australia logged its largest-ever cocaine seizure, and France, Europe's rivers and South Asia's vultures all notched conservation wins. Talks advancing and oil easing nudge the mood just above yesterday's, but a tense Hormuz standoff, a worsening African outbreak and a widening Sudan war keep it pinned near the neutral line.",
+  "dimensions": {
+    "conflict": 45,
+    "economy": 52,
+    "climate": 53,
+    "humanInterest": 45,
+    "techProgress": 68
+  },
+  "regions": {
+    "northAmerica": 51,
+    "southAmerica": 47,
+    "europe": 48,
+    "africa": 33,
+    "middleEast": 46,
+    "asia": 53,
+    "oceania": 55
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "U.S.-Iran talks in Switzerland end with mediators Qatar and Pakistan reporting 'encouraging progress,' the creation of a High-Level Committee for technical talks and a roadmap toward a final deal within the 60-day ceasefire window",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/21/vance-arrives-in-switzerland-for-us-iran-talks",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "High drama at the talks as Iran's delegation briefly walks out over President Trump's threat to 'hit Iran very hard again' unless the Strait of Hormuz reopens, with the IRGC still calling the waterway closed in protest at Israeli strikes in Lebanon",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/live-updates/iran-us-war-talks-suspended-trump-mou-israel-lebanon-hezbollah-fighting/",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Oil steadies as de-escalation hopes hold: WTI trades near $77.50 a barrel, up slightly on the day but down roughly 8% on the week, as markets price in the fragile U.S.-Iran ceasefire and the prospect of Hormuz staying open",
+      "source": "Trading Economics",
+      "url": "https://tradingeconomics.com/commodity/brent-crude-oil",
+      "dimension": "economy",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Colombia's far-right, Trump-endorsed Abelardo de la Espriella wins a razor-thin presidential runoff over leftist Ivan Cepeda, 49.65% to 48.70% in the preliminary count, in a deeply polarized vote Cepeda urged supporters to await the final tally on",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/06/21/americas/colombia-trump-abelardo-de-la-espriella-intl-latam",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Ukraine and Russia trade fresh strikes: Kyiv hits fuel depots and bridge infrastructure on both sides of the Crimean Bridge, while Russian guided bombs, drones and artillery kill civilians in the Dnipropetrovsk and Zaporizhzhia regions",
+      "source": "Ukrinform",
+      "url": "https://www.ukrinform.net/rubric-ato",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "A World War II history dispute flares as Poland's president strips Zelensky of the Order of the White Eagle over Ukraine naming a military unit after the UPA; Zelensky returns the honor, saying it 'was meant for the Ukrainian People'",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/ukrainian-officials-criticize-polish-presidents-decision-to-strip-zelenskyy-of-honor/",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "The Bundibugyo Ebola epidemic keeps climbing across DR Congo and Uganda, with the DRC reporting 837 confirmed cases and 196 deaths, as a WHO official rates the response 'about three or four' on a scale of ten and warns cases are being missed",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/ebola-outbreak-2026-congo-uganda-still-spreading-who/",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Egypt's air force strikes a mining site in the Allaqi area of Sudan near the Red Sea border, killing several miners, in an unprecedented escalation widening Sudan's civil war as the army and RSF battle for a tenth consecutive day in North Kordofan",
+      "source": "ACLED",
+      "url": "https://acleddata.com/update/africa-overview-june-2026",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "Australian Federal Police announce the country's largest-ever cocaine seizure, 2.7 tonnes worth about A$816 million found in underground bunkers beneath shipping containers near Sydney, under Operation Minjiang, with two men remanded in custody",
+      "source": "Australian Federal Police",
+      "url": "https://www.afp.gov.au/news-centre/media-release/australias-biggest-ever-cocaine-bust-police-seize-another-27-tonnes-under",
+      "dimension": "humanInterest",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "A Phase 3 trial of the oral RAS(ON) inhibitor daraxonrasib nearly doubles median overall survival in previously treated metastatic pancreatic cancer, to 13.2 months from 6.7 with chemotherapy, a roughly 60% cut in the risk of death hailed as a 'grand slam'",
+      "source": "Dana-Farber Cancer Institute",
+      "url": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
+      "dimension": "techProgress",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "France moves toward its 2030 protection goal by creating seven new biological reserves and expanding two more, the largest a 156,290-hectare integral reserve of tropical rainforest and granite peaks in French Guiana",
+      "source": "Good Good Good",
+      "url": "https://www.goodgoodgood.co/articles/good-news-this-week-june-20-2026",
+      "dimension": "climate"
+    },
+    {
+      "direction": "down",
+      "headline": "Japan presses the G7 to counter China's rare-earth export controls with a price-floor mechanism and stockpiling, as Tokyo's firms hoard supplies and Beijing reaffirms its curbs, keeping critical-minerals trade tensions simmering across Asia",
+      "source": "Nikkei Asia",
+      "url": "https://asia.nikkei.com/politics/international-relations/japan-china-tensions/us-asks-china-to-resume-rare-earth-exports-to-japan",
+      "dimension": "economy",
+      "region": "asia"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "PBS News",
+    "CNN",
+    "CBS News",
+    "ABC News",
+    "Bloomberg",
+    "Al Jazeera",
+    "BBC",
+    "CBC News",
+    "The Jerusalem Post",
+    "RFE/RL",
+    "Ukrinform",
+    "Kyiv Post",
+    "The Philadelphia Inquirer",
+    "France 24",
+    "The Bogota Post",
+    "South China Morning Post",
+    "Nikkei Asia",
+    "Asia Times",
+    "Mining.com",
+    "SBS News",
+    "RNZ",
+    "Australian Federal Police",
+    "Trading Economics",
+    "UN News",
+    "World Health Organization",
+    "ECDC",
+    "U.S. CDC",
+    "ACLED",
+    "International Crisis Group",
+    "Dana-Farber Cancer Institute",
+    "OncLive",
+    "ScienceDaily",
+    "Good Good Good",
+    "Positive News",
+    "Good News Network",
+    "Wikipedia (2026 Strait of Hormuz crisis / 2026 Iran war ceasefire / 2026 Colombian presidential election / 2026 Ebola epidemic)"
+  ]
+}
