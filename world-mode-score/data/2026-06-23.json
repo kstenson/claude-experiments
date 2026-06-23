@@ -1,0 +1,158 @@
+{
+  "date": "2026-06-23",
+  "score": 49,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "A day that pulled in two directions and settled just below the neutral line. The Middle East kept easing: after the Switzerland round produced a road map, Washington granted Iran a 60-day license to sell oil internationally and the two sides moved to extend the ceasefire and keep the Strait of Hormuz open, with U.S. Central Command insisting traffic was flowing normally despite Tehran's protests; a separately reported U.S.-, Qatar- and Iran-brokered Israel-Hezbollah truce added to the thaw, and oil read the calm by sliding toward $74 a barrel. But the political weather darkened elsewhere. In Britain, Keir Starmer resigned as prime minister after losing the confidence of his parliamentary party amid a surge by Nigel Farage's Reform UK, clearing the path for the country's seventh leader in a decade, with Manchester mayor Andy Burnham the frontrunner. Washington and Beijing escalated a tit-for-tat: China sanctioned ten U.S. defense and rare-earth firms after the Pentagon blacklisted Chinese tech companies. Africa again carried the heaviest weight as the Bundibugyo Ebola epidemic crossed a grim threshold to 1,003 confirmed cases and 254 deaths in DR Congo, now the second-largest Ebola outbreak on record, while Sudan's war ground on with mass-casualty drone strikes on markets and towns. A punishing heatwave bore down on southern Europe with readings nearing 45C, an Antarctic warm spell and a developing record El Nino underscored a hard climate season. Alan Greenspan, who chaired the Federal Reserve for nearly two decades, died at 100. Against the gloom, the ledger held real good: Colombia moved to ban female genital mutilation, London's clean-air zone was tied to fewer hospital admissions, Asia's near-extinct white-rumped vultures rebounded, and U.S. alcohol, drug and suicide deaths fell. De-escalation in the Gulf and easing oil are genuine, but a fallen government, a worsening outbreak, a widening Sudan war and a brutal heatwave keep the mood pinned a notch below yesterday.",
+  "dimensions": {
+    "conflict": 48,
+    "economy": 53,
+    "climate": 44,
+    "humanInterest": 43,
+    "techProgress": 60
+  },
+  "regions": {
+    "northAmerica": 50,
+    "southAmerica": 47,
+    "europe": 46,
+    "africa": 31,
+    "middleEast": 50,
+    "asia": 49,
+    "oceania": 54
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "Iran and the U.S. reach an initial deal to extend the ceasefire and keep the Strait of Hormuz open as Washington grants Iran a 60-day license to sell oil on international markets, with U.S. Central Command saying shipping is proceeding normally despite Tehran's protests",
+      "source": "PBS NewsHour",
+      "url": "https://www.pbs.org/newshour/world/iran-and-u-s-reach-an-initial-deal-to-extend-the-ceasefire-and-open-the-strait-of-hormuz-but-challenges-remain",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Oil eases on de-escalation hopes, with crude stabilizing near $74 a barrel after Washington's 60-day license for Iranian oil sales raised expectations of a quicker recovery in global supply, taking pressure off cost of living worldwide",
+      "source": "Trading Economics",
+      "url": "https://tradingeconomics.com/commodity/crude-oil",
+      "dimension": "economy",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Keir Starmer resigns as UK prime minister after losing the confidence of his parliamentary party amid the surge of Nigel Farage's Reform UK, clearing the path for the country's seventh leader in a decade, with Manchester mayor Andy Burnham the frontrunner",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/22/why-has-keir-starmer-resigned-as-uk-prime-minister-and-who-will-take-over",
+      "dimension": "humanInterest",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "China sanctions 10 American military and rare-earth firms, barring exports of 'dual-use' items, in a tit-for-tat response to the Pentagon adding Chinese tech companies including Alibaba and Baidu to its military-links blacklist, escalating trade tensions",
+      "source": "PBS NewsHour",
+      "url": "https://www.pbs.org/newshour/world/china-hits-back-at-u-s-sanctions-on-tech-giants-restricting-its-exports-to-american-defense-firms",
+      "dimension": "economy",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "The Bundibugyo Ebola epidemic crosses 1,003 confirmed cases and 254 deaths in DR Congo with 20 cases and two deaths in Uganda as of 22 June, becoming the second-largest Ebola outbreak on record and the fastest-rising to date, the ECDC reports",
+      "source": "ECDC",
+      "url": "https://www.ecdc.europa.eu/en/ebola-outbreak-democratic-republic-congo-and-uganda",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Sudan's civil war grinds on with mass-casualty drone strikes as an SAF strike on a market in Ghabesh, West Kordofan kills 28 and the RSF kills 22 in El-Obeid, after drone attacks killed over a thousand civilians in the first five months of 2026",
+      "source": "ACLED",
+      "url": "https://acleddata.com/country/sudan",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "A punishing heatwave bears down on southern Europe with Portugal and Spain bracing for up to 45C and Paris facing multi-day highs in the upper 30s to low 40s, as an Antarctic warm spell and a developing record El Nino mark a severe climate season",
+      "source": "Severe Weather Europe",
+      "url": "https://www.severe-weather.eu/global-weather/heat-dome-europe-heatwave-june-summer-2026-forecast-mk/",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Far-right, Trump-endorsed Abelardo de la Espriella is confirmed the winner of Colombia's presidential runoff by under 250,000 votes, the narrowest margin in recent history, as leftist Ivan Cepeda vows to challenge results at 33,000 polling stations",
+      "source": "France 24",
+      "url": "https://www.france24.com/en/americas/20260621-colombia-presidential-election-live-cepeda-de-la-espriella-face-off-in-second-round",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Alan Greenspan, who chaired the U.S. Federal Reserve for nearly two decades under four presidents and presided over the 1990s expansion before drawing blame for pre-2008 deregulation, dies at 100 of complications from Parkinson's disease",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/6/22/former-us-federal-reserve-chairman-alan-greenspan-dies-at-age-100",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Colombia passes legislation to ban female genital mutilation, a practice affecting mainly the indigenous Embera community, with the bill awaiting presidential approval, in a week of human-rights and conservation gains worldwide",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-25-of-2026/",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Asia's white-rumped vultures, which had collapsed by 99.9% after diclofenac poisoning, are rebounding following bans on the drug, in what conservationists call one of the biggest conservation success stories of our time",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-25-of-2026/",
+      "dimension": "climate",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "U.S. deaths of despair fall, with alcohol deaths down 4%, drug deaths down 26% and suicides down 3% in 2024, while London's clean-air zone is tied to an 8.1% drop in cardiovascular and 6.2% drop in respiratory hospital admissions",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-25-of-2026/",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "PBS NewsHour",
+    "CNN",
+    "CBS News",
+    "ABC News",
+    "NBC News",
+    "CNBC",
+    "Bloomberg",
+    "Al Jazeera",
+    "BBC",
+    "Euronews",
+    "The Washington Post",
+    "Fortune",
+    "France 24",
+    "The Bogota Post",
+    "Americas Quarterly",
+    "Nikkei Asia",
+    "South China Morning Post",
+    "Trading Economics",
+    "IEA",
+    "UN News",
+    "World Health Organization",
+    "ECDC",
+    "U.S. CDC",
+    "ACLED",
+    "Security Council Report",
+    "Severe Weather Europe",
+    "WMO",
+    "Space.com",
+    "Positive News",
+    "Good Good Good",
+    "Good News Network",
+    "Wikipedia (2026 Iran war ceasefire / 2026 Strait of Hormuz crisis / 2026 Labour Party leadership crisis / 2026 Colombian presidential election / 2026 Ebola epidemic / Timeline of the Sudanese civil war 2026)"
+  ]
+}

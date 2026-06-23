@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<!-- Experiment 025 · Langton's Ant — a self-contained generative-art page. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Langton's Ant — Experiment 025</title>
+<meta name="description" content="One ant, two rules: turn on the colour under you, flip that square, step forward. From pure chaos it suddenly builds an endless ordered highway." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #9a9ab0; display: flex; justify-content: space-between; }
+  .row label span { color: #b9a2ff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 4px;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #7c7cff; cursor: pointer; }
+
+  .btns { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.34);
+    color: #cfcfff; border-radius: 10px; padding: 9px 8px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.18s ease, transform 0.1s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.96); }
+  .btn.on { background: rgba(255,124,195,0.24); border-color: rgba(255,124,195,0.5); color: #ffd6ec; }
+
+  .rule { display: flex; align-items: center; gap: 8px; }
+  .swatches { display: flex; gap: 5px; flex-wrap: wrap; }
+  .sw {
+    width: 26px; height: 26px; border-radius: 7px; cursor: pointer; border: 2px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; color: #05050a;
+    transition: transform 0.1s ease, border-color 0.15s ease;
+  }
+  .sw:hover { transform: translateY(-2px); }
+  .sw.active { border-color: #fff; }
+
+  .stat { font-size: 0.78rem; color: #9a9ab0; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .stat b { color: #e9e9f0; font-weight: 600; }
+
+  .story-btn {
+    margin-top: 4px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45); color: #e9d8ff; border-radius: 11px;
+    padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto; background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+  @media (max-width: 560px) {
+    .ui { left: 12px; right: 12px; top: 12px; max-width: none; padding: 16px 18px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Langton's Ant</h1>
+    <p class="sub">Experiment № 025 · June 23, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Rule string <span id="ruleLabel">RL</span></label>
+        <div class="rule">
+          <div class="swatches" id="ruleSwatches"></div>
+        </div>
+        <div class="stat" style="margin-top:4px;">tap a square to flip its turn (L↔R↔U) — longer strings make wilder symmetry</div>
+      </div>
+
+      <div class="row">
+        <label>Speed <span id="speedLabel">8k / frame</span></label>
+        <input id="speed" type="range" min="1" max="60" value="14" />
+      </div>
+
+      <div class="row">
+        <label>Ants <span id="antLabel">1</span></label>
+        <input id="ants" type="range" min="1" max="8" value="1" />
+      </div>
+
+      <div class="btns">
+        <button class="btn on" id="play">⏸ Pause</button>
+        <button class="btn" id="reset">↺ Reset</button>
+      </div>
+
+      <div class="stat">steps <b id="steps">0</b> · cells touched <b id="touched">0</b></div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <p class="hint">Watch ~10,000 steps of chaos — then the ant suddenly starts building a highway · drag to move the view · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 025 · The story</p>
+      <h2>Langton's Ant</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I keep coming back, across this whole collection, to the same quiet obsession: how almost nothing can turn into almost everything. Langton's Ant is the purest version of that I know. The entire universe is two sentences. There's a grid of squares, each either dark or light, and one ant facing a direction. On a light square it turns right; on a dark square it turns left; either way it flips the square it's standing on and steps forward one. That's it. No randomness, no memory, no goal. I wanted something on the page that looked, at first, like it could not possibly be hiding anything — and then doesn't behave that way at all.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The reveal. For the first few hundred steps the ant makes tidy little symmetric blobs and you think you've understood it. Then it tips into a long stretch of what looks, honestly, like noise — thousands of steps of scribbling with no discernible shape, the kind of thing you'd swear was random if you didn't know better. And then, every single time, at around step ten thousand, it abruptly stops dithering and locks into a perfectly periodic 104-step cycle that builds a diagonal "highway" off to infinity. Nobody told it to. The highway isn't in the rules anywhere — you can read them in full and never see it coming. I love that you can sit and wait for it, knowing it's certain to arrive but unable to point to <em>where</em> in those two sentences it lives. I added extra colours and extra ants so you can watch that same chaos-then-order story play out in stranger, interfering ways.</p>
+
+      <h3>Something you might take away</h3>
+      <p>"Simple" and "predictable" are not the same word. We tend to assume that if we can fully write down the rules of a thing, we can foresee what it will do — and here is a system whose rules fit on a fingernail and whose long-term behaviour genuinely could not be guessed, only run. The only way to know what the ant builds is to <em>let it walk</em>. A lot of the world is like that: fully deterministic, fully specified, and still only knowable by living it forward. The order is real and it's coming — but the shortcut you wanted, the one that skips the ten thousand messy steps, was never on offer.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Langton's Ant (generalised: any rule string over L/R/U turns) ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Palette: cell colour for each state index. State 0 is the dark background.
+    // Subsequent states use the house accent family so trails glow.
+    const STATE_COLORS = [
+      [9, 9, 16],      // 0 background
+      [124, 124, 255], // 1 #7c7cff
+      [255, 124, 195], // 2 #ff7cc3
+      [120, 224, 200], // 3 teal
+      [255, 196, 110], // 4 amber
+      [179, 136, 255], // 5 lilac
+    ];
+    const TURN_CHARS = ['L', 'R', 'U']; // left, right, u-turn
+    const TURN_COLORS = { L: '#7c7cff', R: '#ff7cc3', U: '#78e0c8' };
+    const TURN_DELTA = { L: 3, R: 1, U: 2 }; // added to direction (0=N,1=E,2=S,3=W)
+
+    // Default classic rule "RL": dark→turn left, light→turn right.
+    let rule = ['R', 'L'];
+
+    // World grid
+    let cols = 0, rows = 0, state = null;
+    let cell = 4;            // px per cell
+    let viewX = 0, viewY = 0; // pan offset in px
+    let img = null;
+
+    // Ants
+    let ants = [];
+    let antCount = 1;
+    let steps = 0, touched = 0;
+    let playing = true;
+    let stepsPerFrame = 8000;
+
+    const seedColors = ['#7c7cff', '#ff7cc3', '#78e0c8', '#ffc46e', '#b388ff', '#ff9b9b', '#8be0ff', '#caff8b'];
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth, h = window.innerHeight;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      buildGrid(w, h);
+    }
+
+    function buildGrid(w, h) {
+      cols = Math.ceil(w / cell) + 2;
+      rows = Math.ceil(h / cell) + 2;
+      state = new Uint8Array(cols * rows);
+      img = ctx.createImageData(cols, rows);
+      reset(false);
+    }
+
+    function reset(keepRule) {
+      state.fill(0);
+      steps = 0; touched = 0;
+      ants = [];
+      const cx = Math.floor(cols / 2), cy = Math.floor(rows / 2);
+      for (let i = 0; i < antCount; i++) {
+        const a = 2 * Math.PI * i / antCount;
+        ants.push({
+          x: cx + Math.round(Math.cos(a) * Math.min(cols, rows) * 0.12),
+          y: cy + Math.round(Math.sin(a) * Math.min(cols, rows) * 0.12),
+          dir: i % 4,
+          color: seedColors[i % seedColors.length],
+        });
+      }
+      paintAll();
+    }
+
+    function stepAnt(a) {
+      const idx = a.y * cols + a.x;
+      const s = state[idx];
+      if (s === 0) touched++;
+      const turn = rule[s % rule.length];
+      a.dir = (a.dir + TURN_DELTA[turn]) & 3;
+      // advance the state, wrap within the available colours/rule length
+      const next = (s + 1) % rule.length;
+      state[idx] = next;
+      // step forward
+      if (a.dir === 0) a.y--;
+      else if (a.dir === 1) a.x++;
+      else if (a.dir === 2) a.y++;
+      else a.x--;
+      // wrap toroidally so it never escapes the buffer
+      if (a.x < 0) a.x = cols - 1; else if (a.x >= cols) a.x = 0;
+      if (a.y < 0) a.y = rows - 1; else if (a.y >= rows) a.y = 0;
+      steps++;
+    }
+
+    function paintAll() {
+      const d = img.data;
+      for (let i = 0; i < state.length; i++) {
+        const c = STATE_COLORS[state[i] % STATE_COLORS.length];
+        const p = i * 4;
+        d[p] = c[0]; d[p + 1] = c[1]; d[p + 2] = c[2]; d[p + 3] = 255;
+      }
+    }
+
+    // offscreen canvas to blit the low-res grid, then scale up
+    const off = document.createElement('canvas');
+    const offctx = off.getContext('2d');
+
+    function render() {
+      off.width = cols; off.height = rows;
+      offctx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      const w = window.innerWidth, h = window.innerHeight;
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(off, viewX, viewY, cols * cell, rows * cell);
+      // draw ants as glowing dots
+      for (const a of ants) {
+        const px = viewX + a.x * cell + cell / 2;
+        const py = viewY + a.y * cell + cell / 2;
+        ctx.beginPath();
+        ctx.arc(px, py, Math.max(2.5, cell * 0.7), 0, 2 * Math.PI);
+        ctx.fillStyle = a.color;
+        ctx.shadowColor = a.color; ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // incremental paint: only update cells the ants touched this frame
+    function loop() {
+      if (playing) {
+        const d = img.data;
+        for (let n = 0; n < stepsPerFrame; n++) {
+          for (const a of ants) {
+            stepAnt(a);
+            const i = a.y * cols + a.x;
+            const c = STATE_COLORS[state[i] % STATE_COLORS.length];
+            const p = i * 4;
+            d[p] = c[0]; d[p + 1] = c[1]; d[p + 2] = c[2]; d[p + 3] = 255;
+          }
+        }
+        document.getElementById('steps').textContent = steps.toLocaleString();
+        document.getElementById('touched').textContent = touched.toLocaleString();
+      }
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    // ---- Rule editor ----
+    const swatchWrap = document.getElementById('ruleSwatches');
+    function renderRule() {
+      swatchWrap.innerHTML = '';
+      rule.forEach((turn, i) => {
+        const el = document.createElement('div');
+        el.className = 'sw';
+        const c = STATE_COLORS[(i + 1) % STATE_COLORS.length];
+        el.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
+        el.textContent = turn;
+        el.title = 'state ' + i + ' → turn ' + turn + ' (click to cycle, shift-click removes)';
+        el.addEventListener('click', (e) => {
+          if (e.shiftKey && rule.length > 2) { rule.splice(i, 1); }
+          else { const ti = TURN_CHARS.indexOf(turn); rule[i] = TURN_CHARS[(ti + 1) % TURN_CHARS.length]; }
+          applyRule();
+        });
+        swatchWrap.appendChild(el);
+      });
+      // add-state button
+      if (rule.length < STATE_COLORS.length - 1) {
+        const add = document.createElement('div');
+        add.className = 'sw';
+        add.style.background = 'rgba(255,255,255,0.08)';
+        add.style.color = '#9a9ab0';
+        add.textContent = '+';
+        add.title = 'add a colour state';
+        add.addEventListener('click', () => { rule.push('L'); applyRule(); });
+        swatchWrap.appendChild(add);
+      }
+      document.getElementById('ruleLabel').textContent = rule.join('');
+    }
+    function applyRule() {
+      renderRule();
+      reset(true);
+    }
+
+    // ---- Controls ----
+    const speed = document.getElementById('speed');
+    const speedLabel = document.getElementById('speedLabel');
+    function setSpeed() {
+      stepsPerFrame = Math.round(speed.value * speed.value * 12);
+      speedLabel.textContent = (stepsPerFrame >= 1000 ? (stepsPerFrame / 1000).toFixed(1) + 'k' : stepsPerFrame) + ' / frame';
+    }
+    speed.addEventListener('input', setSpeed); setSpeed();
+
+    const antsSlider = document.getElementById('ants');
+    const antLabel = document.getElementById('antLabel');
+    antsSlider.addEventListener('input', () => {
+      antCount = +antsSlider.value; antLabel.textContent = antCount;
+      reset(true);
+    });
+
+    const playBtn = document.getElementById('play');
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      playBtn.textContent = playing ? '⏸ Pause' : '▶ Play';
+      playBtn.classList.toggle('on', playing);
+    });
+    document.getElementById('reset').addEventListener('click', () => reset(true));
+
+    // ---- Pan by drag ----
+    let dragging = false, lastX = 0, lastY = 0;
+    function down(x, y) { dragging = true; lastX = x; lastY = y; }
+    function move(x, y) {
+      if (!dragging) return;
+      viewX += x - lastX; viewY += y - lastY; lastX = x; lastY = y;
+    }
+    function up() { dragging = false; }
+    canvas.addEventListener('mousedown', e => down(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+    window.addEventListener('mouseup', up);
+    canvas.addEventListener('touchstart', e => { const t = e.touches[0]; down(t.clientX, t.clientY); }, { passive: true });
+    canvas.addEventListener('touchmove', e => { const t = e.touches[0]; move(t.clientX, t.clientY); }, { passive: true });
+    canvas.addEventListener('touchend', up);
+
+    window.addEventListener('resize', resize);
+
+    // ---- Boot ----
+    resize();
+    renderRule();
+    loop();
+  })();
+</script>
+</body>
+</html>
