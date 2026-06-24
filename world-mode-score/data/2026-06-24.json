@@ -1,0 +1,157 @@
+{
+  "date": "2026-06-24",
+  "score": 48,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "A day balanced on a knife edge, with real relief in the Gulf set against a lethal climate emergency in Europe and deepening crises in Africa. The Middle East thaw firmed up: a week after the U.S.-Iran memorandum of understanding, commercial traffic through the Strait of Hormuz surged to record post-war levels, the UN's shipping agency began an evacuation plan for roughly 11,000 seafarers stranded in the Gulf, and oil slid to a near three-month low around $73 a barrel, easing cost-of-living pressure worldwide. But the dominant story was the weather. An exceptional heat dome pushed France to its hottest day since at least 1947 near 43C, killed at least 40 people who drowned trying to cool off, claimed two young children left in a car, and put dozens of departments under red alert as the Louvre and Eiffel Tower cut hours; Britain braced for a rare extreme-heat red warning with schools closing. Africa again carried the heaviest weight: the Bundibugyo Ebola epidemic in DR Congo passed 1,048 confirmed cases and 267 deaths to become the second-largest on record, while Sudan's war severed humanitarian lifelines as an overnight strike damaged the Ardamata bridge in West Darfur, a vital aid route into a region where millions face famine risk. In Asia, Taiwan ran a combat-readiness drill under PLA pressure and South Korea sentenced ex-justice minister Park Sung-jae to 25 years over the failed 2024 martial-law plot, an act of accountability. Against the gloom the ledger held genuine good: the U.S. Senate passed a bipartisan housing-affordability bill, American 'deaths of despair' fell, Pakistan's citizen-led solar boom accelerated, South Asia's vultures kept rebounding, and astronomers logged fresh discoveries from the early universe. Easing oil and a holding ceasefire are real, but a deadly heatwave, a worsening outbreak and a widening Sudan war pin the mood just below the neutral line.",
+  "dimensions": {
+    "conflict": 51,
+    "economy": 52,
+    "climate": 38,
+    "humanInterest": 42,
+    "techProgress": 61
+  },
+  "regions": {
+    "northAmerica": 53,
+    "southAmerica": 48,
+    "europe": 38,
+    "africa": 30,
+    "middleEast": 54,
+    "asia": 48,
+    "oceania": 51
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "Commercial traffic through the Strait of Hormuz surges to record post-war levels a week after the U.S.-Iran memorandum of understanding, with maritime trackers counting 37-42 crossings in a single day, as the UN shipping agency launches a plan to evacuate roughly 11,000 seafarers stranded in the Gulf",
+      "source": "RFE/RL",
+      "url": "https://www.rferl.org/a/iran-war-us-hormuz-oil-blockade-gulf-israel/33640284.html",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Crude oil falls to around $73 a barrel, its lowest in nearly three months, as progress in U.S.-Iran peace talks and a 60-day license for Iranian oil sales ease supply fears, taking pressure off cost of living worldwide",
+      "source": "Trading Economics",
+      "url": "https://tradingeconomics.com/commodity/crude-oil",
+      "dimension": "economy",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "France records its hottest day since at least 1947 near 43C as at least 40 people drown trying to escape the heatwave and two young children die in a car, with dozens of departments under red alert and the Louvre and Eiffel Tower cutting hours amid an exceptional Europe-wide heat dome",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/23/about-20-drown-in-france-trying-to-escape-heatwave-sweeping-much-of-europe",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Britain braces for a rare Met Office red warning for extreme heat with temperatures forecast toward 40C, hundreds of schools closing or moving to half days and warnings of severe impacts on energy, water and rail, as the record June heat dome is supercharged by climate change",
+      "source": "Severe Weather Europe",
+      "url": "https://www.severe-weather.eu/global-weather/heat-dome-europe-excessive-historic-heatwave-june-july-summer-2026-mk/",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "The Bundibugyo Ebola epidemic in DR Congo passes 1,048 confirmed cases and 267 deaths with Ituri the worst-hit province, becoming the second-largest Ebola outbreak on record and the fastest-rising to date, with no licensed vaccine for the strain",
+      "source": "ECDC",
+      "url": "https://www.ecdc.europa.eu/en/ebola-outbreak-democratic-republic-congo-and-uganda",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Sudan's war severs humanitarian lifelines as an overnight strike damages the Ardamata bridge in West Darfur, a vital route linking El Geneina to the Chad border, deepening a crisis in which nearly 15 million are displaced and millions face famine risk",
+      "source": "UN News",
+      "url": "https://news.un.org/en/story/2026/06/1167688",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Taiwan launches an Immediate Combat Readiness Exercise to test rapid movement to a wartime footing as Chinese PLA air and naval operations compress response times, focusing on deployment, infrastructure protection and command-and-control",
+      "source": "South China Morning Post",
+      "url": "https://www.scmp.com/news/asia",
+      "dimension": "conflict",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "South Korea's ex-justice minister Park Sung-jae is sentenced to 25 years in prison for his role in the failed 2024 martial-law plot, with the court finding him guilty of insurrection and abuse of power in a marker of accountability",
+      "source": "U.S. News & World Report",
+      "url": "https://www.usnews.com/news/world/articles/2026-06-22/south-koreas-ex-justice-minister-park-sentenced-to-25-years-in-jail-over-martial-law-yonhap-says",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "The U.S. Senate passes a sweeping bipartisan housing-affordability bill aimed at building more homes and restricting large Wall Street investors from outbidding families, a rare cross-party win on cost of living",
+      "source": "NBC News",
+      "url": "https://www.nbcnews.com/politics/congress/senate-passes-bill-lower-housing-costs-restrict-wall-street-buying-hom-rcna350753",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Pakistan's citizen-led 'solar revolution' is transforming its power grid in what experts call probably the fastest deployment of distributed solar anywhere in the world, while the share of solar in U.S. generation overtakes coal",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-25-of-2026/",
+      "dimension": "climate",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "U.S. deaths of despair fall, with alcohol deaths down 4%, drug deaths down 26% and suicides down 3% in 2024, while São Tomé and Príncipe establishes its first marine protected areas, adding to a week of public-health and conservation gains",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-25-of-2026/",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Astronomers report fresh discoveries from the early universe, including a flickering quasar seen 850 million years after the Big Bang and a vast cold-gas reservoir in a galaxy from when the cosmos was about 700 million years old, as NASA's Cold Atom Lab advances quantum research aboard the ISS",
+      "source": "Space.com",
+      "url": "https://www.space.com/",
+      "dimension": "techProgress"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "PBS NewsHour",
+    "CNN",
+    "NBC News",
+    "Fox News",
+    "CNBC",
+    "Fortune",
+    "Al Jazeera",
+    "BBC",
+    "France 24",
+    "RFE/RL",
+    "U.S. News & World Report",
+    "GlobalSecurity.org",
+    "The Washington Post",
+    "Nikkei Asia",
+    "South China Morning Post",
+    "Asia News Network",
+    "Trading Economics",
+    "OilPrice.com",
+    "U.S. EIA",
+    "UN News",
+    "World Health Organization",
+    "ECDC",
+    "U.S. CDC",
+    "Severe Weather Europe",
+    "AccuWeather",
+    "Space.com",
+    "SciTechDaily",
+    "ScienceDaily",
+    "Positive News",
+    "Good Good Good",
+    "Good News Network",
+    "Wikipedia (2026 Iran war ceasefire / 2026 Strait of Hormuz crisis / 2026 European heatwaves / 2026 Ebola epidemic / Timeline of the Sudanese civil war 2026 / 2026 Labour Party leadership election)"
+  ]
+}

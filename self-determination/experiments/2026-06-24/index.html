@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>L-System Garden — Experiment 026</title>
+<meta name="description" content="Tiny rewriting grammars that grow into ferns, weeds and trees — a whole plant unpacked from one short rule." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 320px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+
+  .field label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.78rem; color: #b9b9cc; letter-spacing: 0.03em; margin-bottom: 6px; }
+  .field label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: rgba(255,255,255,0.14); border-radius: 4px; outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(120deg, #7c7cff, #ff7cc3); cursor: pointer; border: 2px solid #14141f;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: 2px solid #14141f;
+    background: linear-gradient(120deg, #7c7cff, #ff7cc3); cursor: pointer;
+  }
+  input[type="range"]:disabled { opacity: 0.35; }
+
+  .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .preset {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #d7d7e6; border-radius: 9px; padding: 8px 6px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .preset:hover { background: rgba(124,124,255,0.16); }
+  .preset.active { border-color: rgba(124,124,255,0.7); background: rgba(124,124,255,0.22); color: #fff; }
+
+  .ruleline {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.74rem; color: #c2c2d4;
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 9px 11px; line-height: 1.5; word-break: break-word;
+  }
+  .ruleline b { color: #ff7cc3; }
+  .ruleline em { color: #7c7cff; font-style: normal; }
+
+  .replant {
+    width: 100%; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14); color: #e7e7f2;
+    border-radius: 10px; padding: 9px; font-size: 0.84rem; cursor: pointer; font-weight: 600;
+    transition: background 0.15s ease;
+  }
+  .replant:hover { background: rgba(124,124,255,0.18); }
+
+  .story-btn {
+    margin-top: 4px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45); color: #e9d8ff;
+    border-radius: 11px; padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+  .hint b { color: rgba(255,255,255,0.66); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="stage"><canvas id="c"></canvas></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>L-System Garden</h1>
+    <p class="sub">Experiment № 026 · June 24, 2026</p>
+
+    <div class="controls">
+      <div class="presets" id="presets"></div>
+
+      <div class="ruleline" id="ruleline"></div>
+
+      <div class="field">
+        <label>Generations <span id="genVal"></span></label>
+        <input type="range" id="gen" min="0" max="7" step="1" />
+      </div>
+      <div class="field">
+        <label>Turn angle <span id="angVal"></span></label>
+        <input type="range" id="ang" min="5" max="45" step="0.5" />
+      </div>
+      <div class="field">
+        <label>Wind sway <span id="windVal"></span></label>
+        <input type="range" id="wind" min="0" max="100" step="1" />
+      </div>
+
+      <button class="replant" id="replant">↻ regrow this one</button>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <p class="hint">pick a species, drag <b>generations</b> to unfold it · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 026 · The story</p>
+      <h2>L-System Garden</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Most of this collection grows structure out of many things watching their neighbours — ants, spins, grains, agents. I wanted the opposite engine: not a crowd, but a <em>grammar</em>. An L-system is just a handful of letters and a couple of find-and-replace rules, applied to a string over and over. There's no canvas in the rule at all — and yet out falls a fern, a weed, a bush that looks unmistakably alive. After weeks of emergence-from-space, I wanted emergence-from-language.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>That the entire plant is hiding inside one short line of text. The rewrite rule for the bushy fern is barely a tweet long, yet it contains every frond at every scale — you're not drawing the plant, you're <em>expanding</em> it, the way you'd expand an abbreviation. I love watching the generation slider tick up and the same silhouette resolve into more and more detail, each branch turning out to be a smaller copy of the whole. And the turn-angle slider is pure delight: a few degrees decides whether you get a stiff conifer or a drooping willow.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The plant isn't stored as a picture — it's stored as <em>instructions for making the picture</em>, and the instructions stay tiny because they're allowed to refer to themselves. That's the deep trick behind how a seed can fit a whole tree, and behind why a short program can print an endless image. Complexity doesn't have to be written down in full. Sometimes it just has to be <em>foldable</em>: a small rule, plus permission to apply it to its own output.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- L-SYSTEM GARDEN ----
+  // A Lindenmayer system: start from a short "axiom" string, then repeatedly
+  // replace each character by its rule. A turtle reads the final string and
+  // draws it — F = step forward, +/- = turn, [ ] = save/restore the pen.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const SPECIES = [
+      { name: 'Bushy Fern', icon: '🌿', axiom: 'X',
+        rules: { X: 'F+[[X]-X]-F[-FX]+X', F: 'FF' }, angle: 25, gen: 5, hue: 135 },
+      { name: 'Weed', icon: '🌱', axiom: 'F',
+        rules: { F: 'FF-[-F+F+F]+[+F-F-F]' }, angle: 22.5, gen: 4, hue: 95 },
+      { name: 'Seaweed', icon: '🪸', axiom: 'F',
+        rules: { F: 'F[+F]F[-F]F' }, angle: 25.7, gen: 4, hue: 170 },
+      { name: 'Willow', icon: '🌳', axiom: 'X',
+        rules: { X: 'F[+X]F[-X]+X', F: 'FF' }, angle: 20, gen: 6, hue: 50 },
+      { name: 'Twiggy', icon: '🍂', axiom: 'X',
+        rules: { X: 'F-[[X]+X]+F[+FX]-X', F: 'FF' }, angle: 22.5, gen: 5, hue: 28 },
+      { name: 'Sierpinski', icon: '▲', axiom: 'F-G-G',
+        rules: { F: 'F-G+F+G-F', G: 'GG' }, angle: 120, gen: 5, hue: 285,
+        fixedAngle: true, onFloor: true },
+    ];
+
+    let species = SPECIES[0];
+    let gen = species.gen;
+    let angleDeg = species.angle;
+    let windAmt = 18;
+    let phase = Math.random() * 1000;
+
+    // ---- string expansion (memoised per species + generation) ----
+    let cache = {};
+    function expand(sp, generations) {
+      const key = sp.name + '|' + generations;
+      if (cache[key]) return cache[key];
+      let s = sp.axiom;
+      for (let i = 0; i < generations; i++) {
+        let next = '';
+        for (const ch of s) next += (sp.rules[ch] !== undefined ? sp.rules[ch] : ch);
+        s = next;
+        if (s.length > 1600000) break; // safety cap
+      }
+      cache[key] = s;
+      return s;
+    }
+
+    // ---- turtle: walk the string once, collect segments + measure bounds ----
+    function buildSegments(str, angRad) {
+      const segs = [];
+      let x = 0, y = 0, dir = -Math.PI / 2; // start pointing up
+      let depth = 0, maxDepth = 0;
+      const stack = [];
+      let minX = 0, maxX = 0, minY = 0, maxY = 0;
+      for (const ch of str) {
+        if (ch === 'F' || ch === 'G') {
+          const nx = x + Math.cos(dir), ny = y + Math.sin(dir);
+          segs.push({ x1: x, y1: y, x2: nx, y2: ny, depth });
+          x = nx; y = ny;
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+        } else if (ch === '+') { dir += angRad; }
+        else if (ch === '-') { dir -= angRad; }
+        else if (ch === '[') { stack.push({ x, y, dir, depth }); depth++; if (depth > maxDepth) maxDepth = depth; }
+        else if (ch === ']') { const s = stack.pop(); if (s) { x = s.x; y = s.y; dir = s.dir; depth = s.depth; } }
+      }
+      return { segs, bounds: { minX, maxX, minY, maxY }, maxDepth };
+    }
+
+    let model = null;
+    let needBuild = true;
+
+    function rebuild() {
+      const str = expand(species, gen);
+      const angRad = (species.fixedAngle ? species.angle : angleDeg) * Math.PI / 180;
+      model = buildSegments(str, angRad);
+      needBuild = false;
+    }
+
+    // ---- responsive canvas ----
+    let W = 0, H = 0, DPR = 1;
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ---- render loop: progressive growth + gentle wind sway ----
+    let growT = 0;
+    let lastKey = '';
+
+    function draw(now) {
+      if (needBuild) rebuild();
+
+      const key = species.name + '|' + gen + '|' + (species.fixedAngle ? species.angle : angleDeg);
+      if (key !== lastKey) { growT = 0; lastKey = key; }
+      growT = Math.min(1, growT + 0.02);
+
+      ctx.clearRect(0, 0, W, H);
+      const glow = ctx.createRadialGradient(W / 2, H * 1.05, 0, W / 2, H * 1.05, H * 0.9);
+      glow.addColorStop(0, 'rgba(124,124,255,0.07)');
+      glow.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+
+      const { segs, bounds, maxDepth } = model;
+      const bw = bounds.maxX - bounds.minX || 1;
+      const bh = bounds.maxY - bounds.minY || 1;
+      const pad = Math.min(W, H) * 0.07;
+      const scale = Math.min((W - pad * 2) / bw, (H - pad * 2) / bh);
+
+      const cx = W / 2 - ((bounds.minX + bounds.maxX) / 2) * scale;
+      // place the base of the model near the bottom of the screen
+      const cy = (H - pad * 1.4) - (bounds.maxY) * scale;
+
+      const t = now * 0.001;
+      const sway = windAmt / 100;
+      const baseHue = species.hue;
+      // how high a point sits (0 at base → 1 at canopy), used for wind + colour fade
+      const heightOf = (yy) => (bounds.maxY - yy) / bh;
+
+      ctx.lineCap = 'round';
+      const total = segs.length;
+      const sm = growT * growT * (3 - 2 * growT); // smoothstep
+      const drawCount = Math.floor(total * sm);
+
+      for (let i = 0; i < drawCount; i++) {
+        const s = segs[i];
+        const d = s.depth;
+        const h1 = heightOf(s.y1), h2 = heightOf(s.y2);
+        const swayX1 = sway * Math.sin(t * 1.3 + phase + h1 * 2.2 + d * 0.5) * h1 * h1 * 70;
+        const swayX2 = sway * Math.sin(t * 1.3 + phase + h2 * 2.2 + d * 0.5) * h2 * h2 * 70;
+
+        const x1 = cx + s.x1 * scale + swayX1;
+        const y1 = cy + s.y1 * scale;
+        const x2 = cx + s.x2 * scale + swayX2;
+        const y2 = cy + s.y2 * scale;
+
+        const dn = maxDepth > 0 ? d / maxDepth : 0;
+        const hue = baseHue + dn * 40 - 10;
+        const light = 26 + dn * 42;
+        const sat = 45 + dn * 35;
+        const width = Math.max(0.6, (1 - dn) * 3.2 * Math.min(1, scale * 0.7) + 0.5);
+
+        ctx.strokeStyle = `hsl(${hue}, ${sat}%, ${light}%)`;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+
+        if (i >= drawCount - 1 && growT < 1 && total > 1) {
+          ctx.fillStyle = `hsla(${baseHue + 50}, 90%, 70%, 0.9)`;
+          ctx.beginPath();
+          ctx.arc(x2, y2, 2.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+
+    // ---- controls ----
+    const presetsEl = document.getElementById('presets');
+    const ruleline = document.getElementById('ruleline');
+    const genEl = document.getElementById('gen');
+    const angEl = document.getElementById('ang');
+    const windEl = document.getElementById('wind');
+    const genVal = document.getElementById('genVal');
+    const angVal = document.getElementById('angVal');
+    const windVal = document.getElementById('windVal');
+
+    function syncRuleLine() {
+      const rules = Object.entries(species.rules)
+        .map(([k, v]) => `<b>${k}</b> → ${v}`).join('<br>');
+      ruleline.innerHTML = `axiom <b>${species.axiom}</b><br>${rules}<br><em>${species.fixedAngle ? 'fixed ' + species.angle + '°' : 'F=step  +/−=turn  [ ]=branch'}</em>`;
+    }
+
+    function syncSliders() {
+      genEl.value = gen; genVal.textContent = gen;
+      angEl.value = angleDeg; angVal.textContent = (species.fixedAngle ? species.angle : angleDeg) + '°';
+      angEl.disabled = !!species.fixedAngle;
+      windEl.value = windAmt; windVal.textContent = windAmt;
+    }
+
+    function selectSpecies(sp, btn) {
+      species = sp;
+      gen = sp.gen;
+      angleDeg = sp.angle;
+      phase = Math.random() * 1000;
+      needBuild = true; growT = 0; lastKey = '';
+      cache = {};
+      document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      syncRuleLine(); syncSliders();
+    }
+
+    SPECIES.forEach((sp, i) => {
+      const b = document.createElement('button');
+      b.className = 'preset' + (i === 0 ? ' active' : '');
+      b.innerHTML = `${sp.icon} ${sp.name}`;
+      b.addEventListener('click', () => selectSpecies(sp, b));
+      presetsEl.appendChild(b);
+    });
+
+    genEl.addEventListener('input', () => { gen = +genEl.value; genVal.textContent = gen; needBuild = true; });
+    angEl.addEventListener('input', () => {
+      if (species.fixedAngle) return;
+      angleDeg = +angEl.value; angVal.textContent = angleDeg + '°'; needBuild = true;
+    });
+    windEl.addEventListener('input', () => { windAmt = +windEl.value; windVal.textContent = windAmt; });
+    document.getElementById('replant').addEventListener('click', () => {
+      phase = Math.random() * 1000; growT = 0; lastKey = '';
+    });
+
+    syncRuleLine(); syncSliders();
+  })();
+</script>
+</body>
+</html>
