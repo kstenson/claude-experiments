@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lenia — Experiment 028</title>
+<meta name="description" content="A continuous cellular automaton where soft, glowing lifeforms grow, glide and pulse — the same idea as Conway's Life, but made smooth in space, time and state." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: min(320px, calc(100vw - 48px));
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #9a9ab0; display: flex; justify-content: space-between; }
+  .row label .val { color: #b9b9ff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 999px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.8);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border: none; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.8);
+  }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 auto; min-width: 84px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #d7d7e6; border-radius: 9px; padding: 8px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.18); border-color: rgba(124,124,255,0.5); }
+  .btn:active { transform: scale(0.97); }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+
+  @media (max-width: 560px) {
+    .ui { padding: 16px 16px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Lenia</h1>
+    <p class="sub">Experiment № 028 · June 26, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Growth centre <span class="val" id="muV">0.150</span></label>
+        <input type="range" id="mu" min="0.08" max="0.30" step="0.005" value="0.15" />
+      </div>
+      <div class="row">
+        <label>Growth width <span class="val" id="sigV">0.017</span></label>
+        <input type="range" id="sig" min="0.008" max="0.040" step="0.001" value="0.017" />
+      </div>
+      <div class="row">
+        <label>Time step <span class="val" id="dtV">0.10</span></label>
+        <input type="range" id="dt" min="0.04" max="0.30" step="0.01" value="0.10" />
+      </div>
+      <div class="btns">
+        <button class="btn" id="seedOrb">Seed gliders</button>
+        <button class="btn" id="seedSoup">Soup</button>
+        <button class="btn" id="clear">Clear</button>
+      </div>
+      <div class="btns">
+        <button class="btn" id="palette">Palette</button>
+        <button class="btn" id="pause">Pause</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag to paint life · tap empty space to drop a glider · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 028 · The story</p>
+      <h2>Lenia</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I've already built Conway's Game of Life for this collection, and it's beautiful — but it's also blocky and binary: a cell is alive or dead, time ticks in hard frames, neighbours are a tidy ring of eight squares. Lenia, devised by Bert Wang-Chak Chan in 2019, asks a deceptively simple question — what happens if you take that exact idea and make <em>everything</em> smooth? Smooth state (a cell can be 0.37 alive, not just on or off), smooth space (a soft ring-shaped neighbourhood instead of eight cells), smooth time (each cell eases toward its target instead of snapping). I picked it because the answer is startling: out of that one generalisation, soft creatures appear — the famous "Orbium" glider that swims across the field like a tiny jellyfish — and they're written nowhere in the rules.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>It feels alive in a way the discrete version never quite does. Game of Life flickers; Lenia <em>breathes</em>. Drop a glider and it doesn't march in pixel steps — it undulates, holds its own shape, glances off its neighbours, and sometimes survives a collision while sometimes dissolving into a glowing smear. Under the hood it's just a blur (a convolution with a bump-shaped kernel) followed by a bell-curve growth rule, run every frame, and yet it produces something that reads as unmistakably biological. I love that two sliders — where the growth curve is centred, and how forgiving it is — separate a sterile dark field from a teeming colony from a screen that boils over into static.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Life as we know it is digital — discrete DNA, discrete cells — but life as it <em>could</em> be might not have to be. Lenia is a small argument that the lifelike quality (coherence, movement, self-repair, even reproduction) isn't really about being made of discrete bits. It can sit on a continuum just as happily, and arguably more naturally. When something feels alive, the interesting question usually isn't what it's made of; it's whether it can hold itself together while the world keeps trying to smear it out.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- LENIA ----
+  // A continuous cellular automaton. Every step:
+  //   potential U = convolution of the field with a soft ring-shaped kernel
+  //   growth      G = bell-curve(U; mu, sigma) remapped to [-1, +1]
+  //   field       A = clamp(A + dt * G, 0, 1)
+  (() => {
+    const canvas = document.getElementById('cv');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    let GW, GH, A, B, R;       // field, scratch field, kernel radius
+    let kernel, kOff, kSum;    // flattened kernel weights + offsets + normalisation
+    let img, off, offCtx;      // display buffers
+    let cellPx = 4;
+
+    let mu = 0.15, sigma = 0.017, dt = 0.10;
+    let paused = false, paletteIx = 0;
+
+    const PALETTES = [
+      [[5,5,12],[34,18,74],[124,124,255],[255,124,195],[255,236,210]],
+      [[3,8,8],[10,52,58],[40,170,150],[150,235,120],[245,255,210]],
+      [[8,4,10],[60,12,60],[200,40,110],[255,150,60],[255,245,200]],
+    ];
+
+    function build() {
+      const cssW = window.innerWidth, cssH = window.innerHeight;
+      canvas.width = Math.max(1, Math.floor(cssW));
+      canvas.height = Math.max(1, Math.floor(cssH));
+
+      const target = Math.max(cssW, cssH);
+      cellPx = target > 1100 ? 5 : target > 720 ? 4 : 3;
+      GW = Math.max(48, Math.floor(cssW / cellPx));
+      GH = Math.max(48, Math.floor(cssH / cellPx));
+      const MAX = 46000;
+      while (GW * GH > MAX) { GW = Math.floor(GW * 0.92); GH = Math.floor(GH * 0.92); }
+
+      A = new Float32Array(GW * GH);
+      B = new Float32Array(GW * GH);
+
+      buildKernel();
+      buildImage();
+      seedOrbium(true);
+    }
+
+    function buildKernel() {
+      // Smooth ring kernel: a bump peaked at a mid radius, ~0 at the centre and rim.
+      R = 13;
+      const offs = [], wts = [];
+      let sum = 0;
+      for (let dy = -R; dy <= R; dy++) {
+        for (let dx = -R; dx <= R; dx++) {
+          const r = Math.hypot(dx, dy) / R;
+          if (r > 1 || r === 0) continue;
+          const w = Math.exp(-Math.pow((r - 0.5) / 0.15, 2) * 0.5);
+          if (w < 1e-3) continue;
+          offs.push(dx, dy);
+          wts.push(w);
+          sum += w;
+        }
+      }
+      kOff = new Int16Array(offs);
+      kernel = new Float32Array(wts);
+      kSum = sum;
+    }
+
+    function buildImage() {
+      off = document.createElement('canvas');
+      off.width = GW; off.height = GH;
+      offCtx = off.getContext('2d');
+      img = offCtx.createImageData(GW, GH);
+    }
+
+    function growth(u) {
+      const t = (u - mu) / sigma;
+      return 2 * Math.exp(-0.5 * t * t) - 1;
+    }
+
+    function step() {
+      const n = kernel.length;
+      for (let y = 0; y < GH; y++) {
+        for (let x = 0; x < GW; x++) {
+          let acc = 0;
+          for (let k = 0; k < n; k++) {
+            let sx = x + kOff[k * 2];
+            let sy = y + kOff[k * 2 + 1];
+            if (sx < 0) sx += GW; else if (sx >= GW) sx -= GW;
+            if (sy < 0) sy += GH; else if (sy >= GH) sy -= GH;
+            acc += A[sy * GW + sx] * kernel[k];
+          }
+          const u = acc / kSum;
+          const i = y * GW + x;
+          let v = A[i] + dt * growth(u);
+          B[i] = v < 0 ? 0 : v > 1 ? 1 : v;
+        }
+      }
+      const tmp = A; A = B; B = tmp;
+    }
+
+    let lut = new Uint8Array(256 * 3);
+    function buildLut() {
+      const stops = PALETTES[paletteIx];
+      for (let i = 0; i < 256; i++) {
+        const t = i / 255 * (stops.length - 1);
+        const a = Math.floor(t), b = Math.min(a + 1, stops.length - 1);
+        const f = t - a;
+        lut[i * 3]     = stops[a][0] + (stops[b][0] - stops[a][0]) * f;
+        lut[i * 3 + 1] = stops[a][1] + (stops[b][1] - stops[a][1]) * f;
+        lut[i * 3 + 2] = stops[a][2] + (stops[b][2] - stops[a][2]) * f;
+      }
+    }
+    buildLut();
+
+    function draw() {
+      const d = img.data;
+      for (let i = 0; i < A.length; i++) {
+        let v = Math.pow(A[i], 0.78);
+        const li = (v * 255) | 0;
+        const j = i * 4;
+        d[j]     = lut[li * 3];
+        d[j + 1] = lut[li * 3 + 1];
+        d[j + 2] = lut[li * 3 + 2];
+        d[j + 3] = 255;
+      }
+      offCtx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+    }
+
+    // A radial creature with an asymmetric "head" so it propels itself: stand-in
+    // for Lenia's Orbium glider, robust across a wide band of mu/sigma settings.
+    function stampOrbium(cx, cy, ang) {
+      const S = 20;
+      const ca = Math.cos(ang), sa = Math.sin(ang);
+      for (let j = 0; j < S; j++) {
+        for (let i = 0; i < S; i++) {
+          const u = (i - S / 2) / (S / 2);
+          const w = (j - S / 2) / (S / 2);
+          const r = Math.hypot(u, w);
+          let val = 0;
+          if (r < 1) {
+            const ring = Math.exp(-Math.pow((r - 0.62) / 0.28, 2) * 0.5);
+            const head = 0.55 + 0.45 * Math.tanh(3 * (w * 0.9 + 0.15));
+            val = ring * head;
+          }
+          if (val < 0.04) continue;
+          const px = Math.round(cx + (i - S / 2) * ca - (j - S / 2) * sa);
+          const py = Math.round(cy + (i - S / 2) * sa + (j - S / 2) * ca);
+          if (px < 0 || py < 0 || px >= GW || py >= GH) continue;
+          A[py * GW + px] = Math.min(1, A[py * GW + px] + val);
+        }
+      }
+    }
+
+    function seedOrbium(reset) {
+      if (reset) A.fill(0);
+      const n = Math.max(3, Math.floor((GW * GH) / 12000));
+      for (let k = 0; k < n; k++) {
+        const cx = (Math.random() * (GW - 30) + 15) | 0;
+        const cy = (Math.random() * (GH - 30) + 15) | 0;
+        stampOrbium(cx, cy, Math.random() * Math.PI * 2);
+      }
+    }
+
+    function seedSoup() {
+      A.fill(0);
+      const blobs = 60;
+      for (let b = 0; b < blobs; b++) {
+        const cx = Math.random() * GW, cy = Math.random() * GH;
+        const rad = 6 + Math.random() * 14;
+        const amp = 0.4 + Math.random() * 0.6;
+        const x0 = Math.max(0, (cx - rad) | 0), x1 = Math.min(GW, (cx + rad) | 0);
+        const y0 = Math.max(0, (cy - rad) | 0), y1 = Math.min(GH, (cy + rad) | 0);
+        for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+          const dd = Math.hypot(x - cx, y - cy) / rad;
+          if (dd < 1) A[y * GW + x] = Math.min(1, A[y * GW + x] + amp * (1 - dd * dd));
+        }
+      }
+    }
+
+    // ---- pointer painting ----
+    let painting = false, lastP = null, downP = null, movedDist = 0;
+    function gridFromEvent(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * GW;
+      const y = ((e.clientY - rect.top) / rect.height) * GH;
+      return { x, y };
+    }
+    function paintAt(gx, gy) {
+      const rad = 5;
+      const x0 = Math.max(0, (gx - rad) | 0), x1 = Math.min(GW, (gx + rad) | 0);
+      const y0 = Math.max(0, (gy - rad) | 0), y1 = Math.min(GH, (gy + rad) | 0);
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+        const dd = Math.hypot(x - gx, y - gy) / rad;
+        if (dd < 1) A[y * GW + x] = Math.min(1, A[y * GW + x] + 0.85 * (1 - dd * dd));
+      }
+    }
+    canvas.addEventListener('pointerdown', (e) => {
+      painting = true; movedDist = 0;
+      const p = gridFromEvent(e); lastP = p; downP = p;
+      paintAt(p.x, p.y);
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!painting) return;
+      const p = gridFromEvent(e);
+      const dist = Math.hypot(p.x - lastP.x, p.y - lastP.y);
+      movedDist += dist;
+      const steps = Math.ceil(dist / 2);
+      for (let s = 1; s <= steps; s++) {
+        paintAt(lastP.x + (p.x - lastP.x) * s / steps, lastP.y + (p.y - lastP.y) * s / steps);
+      }
+      lastP = p;
+    });
+    function endPaint() {
+      if (painting && movedDist < 3 && downP) {
+        stampOrbium(downP.x | 0, downP.y | 0, Math.random() * Math.PI * 2);
+      }
+      painting = false;
+    }
+    canvas.addEventListener('pointerup', endPaint);
+    canvas.addEventListener('pointercancel', endPaint);
+
+    // ---- controls ----
+    const muEl = document.getElementById('mu'), sigEl = document.getElementById('sig'), dtEl = document.getElementById('dt');
+    const muV = document.getElementById('muV'), sigV = document.getElementById('sigV'), dtV = document.getElementById('dtV');
+    muEl.addEventListener('input', () => { mu = +muEl.value; muV.textContent = mu.toFixed(3); });
+    sigEl.addEventListener('input', () => { sigma = +sigEl.value; sigV.textContent = sigma.toFixed(3); });
+    dtEl.addEventListener('input', () => { dt = +dtEl.value; dtV.textContent = dt.toFixed(2); });
+
+    document.getElementById('seedOrb').addEventListener('click', () => seedOrbium(true));
+    document.getElementById('seedSoup').addEventListener('click', seedSoup);
+    document.getElementById('clear').addEventListener('click', () => A.fill(0));
+    document.getElementById('palette').addEventListener('click', () => {
+      paletteIx = (paletteIx + 1) % PALETTES.length; buildLut();
+    });
+    const pauseBtn = document.getElementById('pause');
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused; pauseBtn.textContent = paused ? 'Play' : 'Pause';
+    });
+
+    let resizeT;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeT);
+      resizeT = setTimeout(build, 200);
+    });
+
+    // ---- main loop: steady ~30 steps/sec regardless of frame rate ----
+    let acc = 0, last = performance.now();
+    function loop(now) {
+      const elapsed = now - last; last = now;
+      if (!paused) {
+        acc += elapsed;
+        let budget = 2;
+        while (acc > 33 && budget-- > 0) { step(); acc -= 33; }
+        if (acc > 200) acc = 0;
+      }
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    build();
+    requestAnimationFrame(loop);
+  })();
+</script>
+</body>
+</html>

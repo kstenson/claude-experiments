@@ -1,0 +1,159 @@
+{
+  "date": "2026-06-26",
+  "score": 45,
+  "label": "Heavy going",
+  "emoji": "🌧️",
+  "summary": "A grim day defined by disaster on two continents. Venezuela was devastated by a rare earthquake 'doublet' — a magnitude 7.2 quake near San Felipe followed almost immediately by a 7.5 near Yumare, the country's strongest since 1900 — collapsing buildings across the north and, in the day's running tallies, killing at least 235 people and injuring more than 4,300, with rescuers still digging through rubble; the U.S. Geological Survey's loss model warned the toll could ultimately run into the thousands. President Trump pledged a rapid U.S. relief response. Western Europe's lethal heat dome refused to relent: rather than breaking, the 'omega block' shifted east and intensified, with Germany and Austria forecast near 41C through the weekend after France logged its hottest day on record earlier in the week, and the heat-linked death and drowning tolls continued to climb. Africa again carried compounding weight — the DR Congo Bundibugyo Ebola epidemic rose to roughly 1,118 confirmed cases and 291 deaths, now the second-largest Ebola outbreak on record with no licensed vaccine for the strain, while two more North Darfur areas crossed famine thresholds, leaving Sudan the country with the most territories in active famine. Against the grief, the ledger held real light: crude held near multi-month lows easing cost-of-living pressure, Micron's blockbuster AI-memory earnings sent its shares up 17% even as Apple dragged the Nasdaq, the Iran ceasefire stayed intact, and a strong run of public-health wins landed — England reported effectively zero cervical-cancer deaths among young women after HPV vaccination, India's smoking rate has halved this century, and EVs outsold petrol cars in the UK for the first time. Cheaper energy and genuine health progress are real, but a catastrophic earthquake, an intensifying heatwave and a worsening outbreak pull the mood below the neutral line (headline nudged down for a mass-casualty regional disaster).",
+  "dimensions": {
+    "conflict": 52,
+    "economy": 55,
+    "climate": 30,
+    "humanInterest": 34,
+    "techProgress": 63
+  },
+  "regions": {
+    "northAmerica": 53,
+    "southAmerica": 22,
+    "europe": 34,
+    "africa": 28,
+    "middleEast": 51,
+    "asia": 54,
+    "oceania": 55
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "A rare earthquake 'doublet' devastates northern Venezuela as a magnitude 7.2 quake near San Felipe is followed almost immediately by a 7.5 near Yumare, the strongest to hit the country since 1900, killing at least 235 people and injuring more than 4,300 as rescuers search collapsed buildings",
+      "source": "NBC News",
+      "url": "https://www.nbcnews.com/world/venezuela/live-blog/live-updates-venezuela-earthquakes-rescue-aid-trump-delcy-caracas-rcna351701",
+      "dimension": "climate",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "The U.S. Geological Survey's loss model warns the Venezuela earthquake death toll could ultimately reach the thousands, estimating a significant probability of more than 10,000 fatalities, as the scale of destruction near Caracas becomes clearer",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/25/venezuela-struck-by-back-to-back-earthquakes-high-casualties-feared",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "President Trump pledges a rapid U.S. relief response for Venezuela in the wake of the historic earthquakes, with aid and assistance offered as the death toll climbs into the hundreds",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/06/25/venezuela-earthquakes-casualties-trump-pledges-support-aids-oil-.html",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Western Europe's deadly 'omega block' heat dome refuses to break, shifting east and intensifying with Germany and Austria forecast near 41C through the weekend, after France earlier recorded its hottest day since records began and the heat-linked death and drowning tolls kept rising",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/06/24/weather/live-news/europe-heatwave-temperatures-news",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "The DR Congo Bundibugyo Ebola epidemic rises to about 1,118 confirmed cases and 291 deaths, now the second-largest Ebola outbreak on record and the fastest-spreading to date, with Ituri the hardest-hit province and no licensed vaccine for the Bundibugyo strain",
+      "source": "UN News",
+      "url": "https://news.un.org/en/story/2026/06/1167786",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Two more North Darfur areas, Um Baru and Kernoi, cross famine thresholds, making Sudan the country with the most territories in active famine on the planet as nearly 19.5 million people face acute food insecurity and the 2026 aid plan remains barely funded",
+      "source": "UNICEF",
+      "url": "https://www.unicef.org/press-releases/famine-confirmed-sudans-north-darfur-confirming-un-agencies-worst-fears",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Iran's Supreme Leader Ayatollah Ali Khamenei resurfaces in a recorded address to warn the United States against future attacks, making no mention of the U.S.-brokered ceasefire, as a permanent nuclear agreement remains unresolved",
+      "source": "Wikipedia (2026 Iran war ceasefire)",
+      "url": "https://en.wikipedia.org/wiki/2026_Iran_war_ceasefire",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Crude oil holds near multi-month lows around $70 a barrel after the U.S.-Iran ceasefire and reopening of the Strait of Hormuz eased supply fears, taking pressure off cost of living worldwide even as a quiet calm holds in the Gulf",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/06/25/venezuela-earthquakes-casualties-trump-pledges-support-aids-oil-.html",
+      "dimension": "economy",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Micron shares jump 17% after blockbuster quarterly earnings driven by surging AI memory demand, with revenue quadrupling to $41.46 billion, though the Nasdaq slips for a fourth day as Apple and Microsoft announce consumer-hardware price increases tied to higher memory costs",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/06/24/stock-market-today-live-updates.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "England reports effectively zero cervical-cancer deaths among women in their early 20s over 2020-2024, with the HPV vaccine credited with preventing around 200 deaths, as India also reports its smoking rate has halved this century",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-26-of-2026/",
+      "dimension": "humanInterest",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Electric vehicles outsell petrol cars in the UK for the first time, with 516,490 new EVs registered against 504,010 petrol cars in the year to May, as the green economy tops $10 trillion in market value for the first time",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-26-of-2026/",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Cambridge researchers report the first human trial of a vaccine whose active component was designed entirely by computer simulation, while China's EAST tokamak verifies a theorised density-free plasma regime, marking fresh advances in computational medicine and fusion science",
+      "source": "Nature",
+      "url": "https://www.nature.com/articles/d41586-026-00188-6",
+      "dimension": "techProgress",
+      "region": "asia"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "PBS NewsHour",
+    "CNN",
+    "NBC News",
+    "CBS News",
+    "ABC News",
+    "CNBC",
+    "Yahoo Finance",
+    "TheStreet",
+    "Al Jazeera",
+    "BBC",
+    "TIME",
+    "RTE",
+    "SBS News",
+    "Global Times",
+    "South China Morning Post",
+    "Dallas Express",
+    "Northeastern Global News",
+    "UN News",
+    "World Food Programme",
+    "UNICEF",
+    "FAO",
+    "World Health Organization",
+    "ECDC",
+    "U.S. CDC",
+    "Doctors Without Borders (MSF)",
+    "U.S. Geological Survey",
+    "Severe Weather Europe",
+    "Yale Climate Connections",
+    "Nature",
+    "ScienceDaily",
+    "Positive News",
+    "Good News Network",
+    "Wikipedia (2026 Iran war ceasefire / 2026 European heatwaves / 2026 Ebola epidemic / Risk of Famine in Sudan)"
+  ]
+}
