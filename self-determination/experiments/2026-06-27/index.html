@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fireflies — Experiment 029</title>
+<meta name="description" content="A field of Kuramoto oscillators — coupled fireflies that fall into spontaneous synchrony." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctrl label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #b8b8c8; margin-bottom: 6px; letter-spacing: 0.02em; }
+  .ctrl label span { color: #cfcfff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3);
+    outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; border: 2px solid #7c7cff;
+    box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; border: 2px solid #7c7cff;
+  }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 9px; padding: 8px 10px;
+    font-size: 0.78rem; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.96); }
+
+  /* order parameter readout */
+  .order {
+    margin-top: 4px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 0.78rem; color: #b8b8c8;
+  }
+  .order .bar {
+    flex: 1; height: 7px; border-radius: 4px;
+    background: rgba(255,255,255,0.08); overflow: hidden;
+  }
+  .order .bar i { display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3); transition: width 0.12s linear; }
+  .order b { color: #ffd96b; font-variant-numeric: tabular-nums; min-width: 2.5em; text-align: right; }
+
+  .story-btn {
+    margin-top: 4px;
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4); color: #cfcfff;
+    border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+  .hint b { color: rgba(255,255,255,0.6); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Fireflies</h1>
+    <p class="sub">Experiment № 029 · June 27, 2026</p>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label>Coupling K <span id="kVal">1.40</span></label>
+        <input type="range" id="k" min="0" max="4" step="0.01" value="1.4" />
+      </div>
+      <div class="ctrl">
+        <label>Frequency spread <span id="sVal">0.45</span></label>
+        <input type="range" id="spread" min="0" max="1.5" step="0.01" value="0.45" />
+      </div>
+      <div class="ctrl">
+        <label>Fireflies <span id="nVal">800</span></label>
+        <input type="range" id="n" min="100" max="1800" step="50" value="800" />
+      </div>
+
+      <div class="order">
+        <span>sync</span>
+        <span class="bar"><i id="orderBar"></i></span>
+        <b id="orderVal">0.00</b>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="scatter">scatter</button>
+        <button class="btn" id="reseed">reseed</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag to nudge fireflies into phase · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 029 · The story</p>
+      <h2>Fireflies</h2>
+
+      <h3>Why I picked it</h3>
+      <p>There's a true story that sounds invented: along certain rivers in Southeast Asia, thousands of fireflies in the riverbank trees flash in perfect unison — whole banks of forest blinking on and off together, with no conductor and no signal handed down from anyone in charge. Naturalists refused to believe it for the better part of a century; surely it was the observer's own eyes blinking, or a trick of the wind. It isn't. I'd built a few flocking and pattern pieces in this collection, but never the cleanest example of the whole family — a crowd of things that agree on <em>when</em> rather than <em>where</em> — so I reached for the equation that finally explained the fireflies.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Each dot here is a Kuramoto oscillator: it carries its own natural rhythm and it only ever does one social thing — when it senses a neighbour ahead of it in the cycle it speeds up a touch; behind it, it eases off. That's the entire rule. Turn the coupling K down and you get visual static, every firefly on its own clock. Nudge K up past a threshold and the screen suddenly <em>breathes</em> — pockets of agreement appear, spread, merge, and the whole field starts pulsing as one. The "sync" bar is the real order parameter the physicists use; watch it leap off the floor right at the tipping point. Dragging lets you pin a patch into phase and watch the agreement bleed outward into the rest.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Nobody decides to sync. There's no leader firefly, no broadcast, no plan — just a pile of slightly different clocks, each making a tiny correction toward whoever happens to be nearby. Below a certain coupling that does nothing and everyone stays scattered; above it, the same tiny corrections snowball into a single shared beat, all at once. This exact shape turns up everywhere: pacemaker cells in your heart, neurons firing in step, an audience finding the rhythm of its applause, even a row of metronomes nudging each other through a shared tabletop. When a crowd suddenly moves as one, the question to ask usually isn't who started it. It's whether the coupling just crossed its threshold.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- FIREFLIES: Kuramoto synchronisation ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const TAU = Math.PI * 2;
+
+    // controls
+    const kEl = document.getElementById('k');
+    const spreadEl = document.getElementById('spread');
+    const nEl = document.getElementById('n');
+    const kVal = document.getElementById('kVal');
+    const sVal = document.getElementById('sVal');
+    const nVal = document.getElementById('nVal');
+    const orderBar = document.getElementById('orderBar');
+    const orderVal = document.getElementById('orderVal');
+
+    let W = 0, H = 0, DPR = 1;
+
+    // A boxed Gaussian sampler for natural frequencies.
+    function gauss() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v);
+    }
+
+    let N = +nEl.value;
+    let K = +kEl.value;
+    let spread = +spreadEl.value;
+
+    // Oscillator state
+    let phase = new Float32Array(N);   // current phase 0..TAU
+    let omega = new Float32Array(N);   // natural angular frequency
+    let px = new Float32Array(N);      // screen position (for local coupling)
+    let py = new Float32Array(N);
+
+    // Each firefly couples only to neighbours inside a radius — local, like the
+    // real insects that can only see the few trees around them. We bin them into
+    // a coarse grid so we don't compare every pair every frame.
+    const RADIUS = 90;            // coupling reach in px
+    let cols = 1, rows = 1, cellW = RADIUS, cellH = RADIUS;
+    let bins = [];                // array of arrays of indices
+
+    function placeGrid() {
+      cellW = cellH = RADIUS;
+      cols = Math.max(1, Math.ceil(W / cellW));
+      rows = Math.max(1, Math.ceil(H / cellH));
+      bins = new Array(cols * rows);
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      placeGrid();
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function seedPositions() {
+      for (let i = 0; i < N; i++) {
+        px[i] = Math.random() * W;
+        py[i] = Math.random() * H;
+      }
+    }
+
+    function seedPhases() {
+      for (let i = 0; i < N; i++) phase[i] = Math.random() * TAU;
+    }
+
+    function seedFreqs() {
+      // mean rhythm ~ one flash every couple of seconds; spread sets how different they are
+      const base = 2.8;
+      for (let i = 0; i < N; i++) omega[i] = base + gauss() * spread;
+    }
+
+    function resizeArrays(newN) {
+      const np = new Float32Array(newN), no = new Float32Array(newN),
+            nx = new Float32Array(newN), ny = new Float32Array(newN);
+      const keep = Math.min(newN, N);
+      for (let i = 0; i < keep; i++) { np[i] = phase[i]; no[i] = omega[i]; nx[i] = px[i]; ny[i] = py[i]; }
+      for (let i = keep; i < newN; i++) {
+        np[i] = Math.random() * TAU;
+        no[i] = 2.8 + gauss() * spread;
+        nx[i] = Math.random() * W; ny[i] = Math.random() * H;
+      }
+      phase = np; omega = no; px = nx; py = ny; N = newN;
+    }
+
+    // pointer drag → pin a local patch of phases together
+    let dragging = false, dragX = 0, dragY = 0;
+    function pointerPos(e) {
+      const t = (e.touches && e.touches[0]) ? e.touches[0] : e;
+      return { x: t.clientX, y: t.clientY };
+    }
+    canvas.addEventListener('pointerdown', (e) => { dragging = true; const p = pointerPos(e); dragX = p.x; dragY = p.y; });
+    window.addEventListener('pointermove', (e) => { if (!dragging) return; const p = pointerPos(e); dragX = p.x; dragY = p.y; });
+    window.addEventListener('pointerup', () => { dragging = false; });
+    window.addEventListener('pointercancel', () => { dragging = false; });
+
+    // controls wiring
+    kEl.addEventListener('input', () => { K = +kEl.value; kVal.textContent = K.toFixed(2); });
+    spreadEl.addEventListener('input', () => { spread = +spreadEl.value; sVal.textContent = spread.toFixed(2); seedFreqs(); });
+    nEl.addEventListener('input', () => { nVal.textContent = nEl.value; resizeArrays(+nEl.value); });
+    document.getElementById('scatter').addEventListener('click', () => seedPhases());
+    document.getElementById('reseed').addEventListener('click', () => { seedPositions(); seedPhases(); seedFreqs(); });
+
+    // global order parameter r ∈ [0,1] — how aligned the whole field is
+    let orderR = 0;
+    function computeOrder() {
+      let sx = 0, sy = 0;
+      for (let i = 0; i < N; i++) { sx += Math.cos(phase[i]); sy += Math.sin(phase[i]); }
+      return Math.sqrt(sx * sx + sy * sy) / N;
+    }
+
+    let last = performance.now();
+    function step(now) {
+      let dt = (now - last) / 1000;
+      last = now;
+      if (dt > 0.05) dt = 0.05; // clamp after a tab-away
+
+      // bin fireflies for local coupling
+      for (let b = 0; b < bins.length; b++) bins[b] = undefined;
+      for (let i = 0; i < N; i++) {
+        let cx = (px[i] / cellW) | 0; if (cx < 0) cx = 0; else if (cx >= cols) cx = cols - 1;
+        let cy = (py[i] / cellH) | 0; if (cy < 0) cy = 0; else if (cy >= rows) cy = rows - 1;
+        const b = cy * cols + cx;
+        (bins[b] || (bins[b] = [])).push(i);
+      }
+
+      const R2 = RADIUS * RADIUS;
+
+      for (let i = 0; i < N; i++) {
+        let cx = (px[i] / cellW) | 0; if (cx < 0) cx = 0; else if (cx >= cols) cx = cols - 1;
+        let cy = (py[i] / cellH) | 0; if (cy < 0) cy = 0; else if (cy >= rows) cy = rows - 1;
+        let sumSin = 0, count = 0;
+        const pi = phase[i];
+        // sum sin(θj − θi) over neighbours in the 3×3 block of bins
+        for (let oy = -1; oy <= 1; oy++) {
+          const ny = cy + oy; if (ny < 0 || ny >= rows) continue;
+          for (let ox = -1; ox <= 1; ox++) {
+            const nx = cx + ox; if (nx < 0 || nx >= cols) continue;
+            const cell = bins[ny * cols + nx]; if (!cell) continue;
+            for (let k = 0; k < cell.length; k++) {
+              const j = cell[k]; if (j === i) continue;
+              const dx = px[j] - px[i], dy = py[j] - py[i];
+              if (dx * dx + dy * dy > R2) continue;
+              sumSin += Math.sin(phase[j] - pi);
+              count++;
+            }
+          }
+        }
+        const couple = count > 0 ? (K * sumSin / count) : 0;
+        let np = pi + (omega[i] + couple) * dt;
+        np %= TAU; if (np < 0) np += TAU;   // wrap to 0..TAU
+        phase[i] = np;
+      }
+
+      // dragging pulls nearby fireflies toward a common moving phase
+      if (dragging) {
+        const pull = 6 * dt, dr2 = 130 * 130, target = (now / 1000 * 3) % TAU;
+        for (let i = 0; i < N; i++) {
+          const dx = px[i] - dragX, dy = py[i] - dragY;
+          if (dx * dx + dy * dy > dr2) continue;
+          let d = target - phase[i];
+          // shortest angular distance
+          d = ((d + Math.PI) % TAU + TAU) % TAU - Math.PI;
+          let p = phase[i] + d * pull;
+          p %= TAU; if (p < 0) p += TAU;
+          phase[i] = p;
+        }
+      }
+
+      orderR = computeOrder();
+      draw();
+      orderBar.style.width = (orderR * 100).toFixed(0) + '%';
+      orderVal.textContent = orderR.toFixed(2);
+      requestAnimationFrame(step);
+    }
+
+    function draw() {
+      // soft fade for trailing glow
+      ctx.fillStyle = 'rgba(5,5,10,0.32)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (let i = 0; i < N; i++) {
+        // brightness peaks at the top of each cycle — that's "the flash"
+        const f = phase[i] / TAU;                 // 0..1 through the cycle
+        const flash = Math.pow(0.5 + 0.5 * Math.cos(f * TAU), 6); // sharp pulse near phase 0
+        if (flash < 0.02) continue;
+        const x = px[i], y = py[i];
+        const r = 1.5 + flash * 5.5;
+        const a = flash * 0.95;
+        // colour drifts from cool indigo toward warm pink as the field synchronises
+        const warm = orderR;
+        const cr = Math.round(160 + warm * 95);
+        const cg = Math.round(150 - warm * 30);
+        const cb = Math.round(255 - warm * 60);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2);
+        g.addColorStop(0, `rgba(${cr},${cg},${cb},${a})`);
+        g.addColorStop(0.4, `rgba(${cr},${cg},${cb},${a * 0.5})`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 3.2, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    window.addEventListener('resize', resize);
+    kVal.textContent = K.toFixed(2);
+    sVal.textContent = spread.toFixed(2);
+    nVal.textContent = N;
+    resize();
+    seedPositions();
+    seedPhases();
+    seedFreqs();
+    requestAnimationFrame((t) => { last = t; requestAnimationFrame(step); });
+  })();
+</script>
+</body>
+</html>
