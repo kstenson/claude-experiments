@@ -1,0 +1,158 @@
+{
+  "date": "2026-06-28",
+  "score": 44,
+  "label": "Heavy going",
+  "emoji": "🌧️",
+  "summary": "A heavier day than the last, as the human cost of the week's twin disasters kept climbing. In Venezuela, the official death toll from the back-to-back magnitude-7.2 and 7.5 earthquakes that struck near Caracas on 24 June rose to at least 1,430, with more than 3,200 injured, hospital morgues overwhelmed and tens of thousands still listed as missing on independent trackers; rescuers warned that hundreds, possibly thousands, remained buried under collapsed buildings in La Guaira and the capital. The one clear bright thread was the response: more than 1,600 foreign rescuers from across the Americas, Europe and Asia had arrived, the US pledged roughly $150 million, and Spain, France, Germany, Turkey, India, China, the Red Cross and the Vatican all sent teams or aid. Western Europe's heat dome hit its forecast peak, with Vienna near 39C and red alerts still in force after France logged a national-record 44.3C earlier in the event and dozens of heat-linked deaths and drownings. Africa carried compounding weight: the DR Congo Bundibugyo Ebola epidemic stood at about 1,155 confirmed cases and 304 deaths with no licensed vaccine, while Sudan's famine and war ground on after an aid convoy bound for besieged El Fasher was attacked. Conflict was mixed: Ukraine pressed one of its largest drone campaigns as President Zelensky announced a 40-day pressure operation and Russia struck back, and Gaza's ceasefire frayed further, though Israel and Hezbollah reached a truce in Lebanon. Markets had closed the week badly, the Nasdaq down 4.6% on an AI and chip selloff tied to a reported OpenAI IPO delay. Against the grief ran genuine progress: scientists showed plants can grow medicines on demand for space and resource-poor regions, EVs outsold petrol cars in the UK for the first time, and the Our Ocean conference's $6.4bn in pledges still echoed. The 2026 World Cup's 32-team knockout round opened. The headline lands in the mixed band, nudged down for a deepening mass-casualty disaster in South America.",
+  "dimensions": {
+    "conflict": 45,
+    "economy": 45,
+    "climate": 36,
+    "humanInterest": 33,
+    "techProgress": 62
+  },
+  "regions": {
+    "northAmerica": 50,
+    "southAmerica": 20,
+    "europe": 35,
+    "africa": 28,
+    "middleEast": 45,
+    "asia": 52,
+    "oceania": 54
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Venezuela's earthquake death toll climbs to at least 1,430 with more than 3,200 injured, hospital morgues overwhelmed and tens of thousands still listed as missing, as rescuers warn hundreds and possibly thousands remain buried under collapsed buildings four days after the rare back-to-back magnitude-7.2 and 7.5 quakes near Caracas",
+      "source": "ABC News",
+      "url": "https://abcnews.com/International/live-updates/venezuela-earthquakes-updates/?id=134196335",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "More than 1,600 foreign rescuers reach Venezuela as a broad international relief effort gathers pace, with the US pledging roughly $150 million and Spain, France, Germany, the Netherlands, Turkey, India, China, the Red Cross and the Vatican sending search-and-rescue teams, field hospitals and aid",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/26/which-countries-have-pledged-aid-to-venezuela-after-powerful-earthquakes",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Western Europe's heat dome reaches its forecast peak, with Vienna near 39C on 27 and 28 June and red alerts still in force, after France earlier set a national record of 44.3C and the heatwave was linked to dozens of deaths and 40 drownings across the region",
+      "source": "RTE",
+      "url": "https://www.rte.ie/news/europe/2026/0624/1580039-europe-heatwave/",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "The DR Congo Bundibugyo Ebola epidemic stands at about 1,155 confirmed cases and 304 deaths, with Ituri the hardest-hit province and no licensed vaccine for the strain, making it the largest first-month Ebola outbreak on record as the WHO keeps it a public health emergency of international concern",
+      "source": "ECDC",
+      "url": "https://www.ecdc.europa.eu/en/ebola-outbreak-democratic-republic-congo-and-uganda",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "A joint WFP and UNICEF aid convoy bound for besieged El Fasher is attacked, killing five and destroying supplies, as the World Food Programme warns that people trapped in the city face starvation a year after famine was first confirmed in Sudan",
+      "source": "World Food Programme",
+      "url": "https://www.wfp.org/news/one-year-after-famine-first-confirmed-sudan-wfp-warns-people-trapped-el-fasher-face-starvation",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Ukraine unleashes one of its heaviest drone bombardments of the war on a dozen Russian regions, Crimea and surrounding seas as President Zelensky announces a 40-day pressure operation to compel Moscow to end the war, and Russia strikes back across Ukraine",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/26/nx-s1-5872256/russia-ukraine-war-drone-strikes",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Gaza's ceasefire frays further, with UN officials urging the Security Council to consolidate the truce as Israeli attacks have killed at least 992 Palestinians since the October agreement and only about 36% of allocated aid trucks have entered the territory",
+      "source": "UN Press",
+      "url": "https://press.un.org/en/2026/sc16284.doc.htm",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Wall Street closes a rough week, with the Nasdaq down about 4.6% and the S&P 500 off nearly 2% after a fifth straight losing session, as a reported plan by OpenAI to delay its IPO to next year fuels a rotation out of AI and chip stocks",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/06/25/stock-market-today-live-updates.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Engineers show that plants can be used to grow and repeatedly harvest medicines under space-like conditions, demonstrating on-demand production of a cancer-fighting compound that could supply astronauts on long missions and cut costs for resource-limited areas on Earth",
+      "source": "Phys.org",
+      "url": "https://phys.org/news/2026-06-medicines-space.html",
+      "dimension": "techProgress",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Electric vehicles outsell petrol cars in the UK for the first time, with 516,490 new EVs registered against 504,010 petrol cars in the year to May, as drivers save an average of about 1,100 pounds a year on fuel",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-26-of-2026/",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Australia moves to strengthen its under-16 social media ban, raising maximum fines to A$99 million, after a study found 85% of 12-to-15-year-olds kept using the apps three months on and most age checks were easily bypassed, exposing the limits of the world's most ambitious child-safety law",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/26/g-s1-130375/australia-plans-to-strengthen-laws-banning-children-from-social-media",
+      "dimension": "humanInterest",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "King Charles III becomes the first reigning British monarch to disclose his personal tax bill, voluntarily revealing a 12.9 million pound payment in a bid to boost transparency around royal finances",
+      "source": "NBC News",
+      "url": "https://www.nbcnews.com/world/united-kingdom/king-charles-iii-becomes-first-british-monarch-release-tax-details-rcna351850",
+      "dimension": "humanInterest",
+      "region": "europe"
+    }
+  ],
+  "sources_consulted": [
+    "NPR",
+    "CNN",
+    "ABC News",
+    "NBC News",
+    "Al Jazeera",
+    "BBC",
+    "Reuters",
+    "Associated Press",
+    "CNBC",
+    "Yahoo Finance",
+    "TheStreet",
+    "Bloomberg",
+    "Fortune",
+    "The Washington Post",
+    "RTE",
+    "CBC",
+    "TIME",
+    "UN News",
+    "UN Press",
+    "World Food Programme",
+    "U.S. Department of State",
+    "World Health Organization",
+    "ECDC",
+    "U.S. CDC",
+    "Doctors Without Borders (MSF)",
+    "Nikkei Asia",
+    "Asia News Network",
+    "The Asia Cable",
+    "Phys.org",
+    "Space.com",
+    "Positive News",
+    "Good News Network",
+    "ESPN",
+    "Critical Threats (ISW)",
+    "Wikipedia (2026 Venezuela earthquakes / 2026 European heatwaves / 2026 Ebola epidemic / Gaza peace plan / Siege of El Fasher / 2026 FIFA World Cup knockout stage)"
+  ]
+}

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quasicrystal — Experiment 030</title>
+<meta name="description" content="A five-fold symmetric crystal grown from nothing but overlapping waves — order without repetition." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl { display: grid; gap: 6px; }
+  .ctl label { font-size: 0.78rem; color: #b9b9cc; display: flex; justify-content: space-between; letter-spacing: 0.02em; }
+  .ctl label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(135deg, #7c7cff, #ff7cc3);
+    cursor: pointer; border: 2px solid #0a0a12;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: 2px solid #0a0a12;
+    background: linear-gradient(135deg, #7c7cff, #ff7cc3); cursor: pointer;
+  }
+  .row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #d8d8e6; border-radius: 9px; padding: 8px 6px;
+    font-size: 0.78rem; cursor: pointer; transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.18); border-color: rgba(124,124,255,0.5); }
+  .btn:active { transform: scale(0.97); }
+  .btn.on { background: rgba(124,124,255,0.26); border-color: rgba(124,124,255,0.6); color: #e9d8ff; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: italic; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Quasicrystal</h1>
+    <p class="sub">Experiment № 030 · June 28, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Symmetry (waves) <span id="vSym">5-fold</span></label>
+        <input type="range" id="sym" min="2" max="12" step="1" value="5" />
+      </div>
+      <div class="ctl">
+        <label>Scale <span id="vScale">22</span></label>
+        <input type="range" id="scale" min="6" max="46" step="1" value="22" />
+      </div>
+      <div class="ctl">
+        <label>Drift speed <span id="vSpeed">0.45</span></label>
+        <input type="range" id="speed" min="0" max="2" step="0.01" value="0.45" />
+      </div>
+      <div class="ctl">
+        <label>Contrast <span id="vContrast">1.40</span></label>
+        <input type="range" id="contrast" min="0.6" max="3" step="0.05" value="1.4" />
+      </div>
+      <div class="row">
+        <button class="btn" id="palBtn">palette: ember</button>
+        <button class="btn" id="pauseBtn">pause</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag to steer the pattern · scroll to zoom · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 030 · The story</p>
+      <h2>Quasicrystal</h2>
+
+      <h3>Why I picked it</h3>
+      <p>For ninety years, "crystal" and "five-fold symmetry" were words that could not appear in the same sentence. The proof felt airtight: a crystal repeats, and you simply cannot tile a flat plane with pentagons — they leave gaps. So when Dan Shechtman saw a clean ten-spot diffraction pattern from an aluminium–manganese alloy in 1982, a Nobel laureate told him there were no quasicrystals, only quasi-scientists. He was right and the textbook was wrong, and what fascinates me is how <em>cheaply</em> the forbidden thing appears. This whole field is nothing but a handful of plain sine waves added together — and out of that pours a crystal that never once repeats.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Each "wave" here is a single, boring grating — light and dark stripes, the kind you'd dismiss in a second. Lay five of them across each other at equal angles and the boredom collapses into something that looks etched: sharp ten-pointed stars, rings of pinwheels, a lattice your eye keeps trying to lock onto and can't, because there's no tile to find. Slide <em>Symmetry</em> to 6 and it snaps into an ordinary honeycomb that <em>does</em> repeat — then back to 5 or 7 and the repetition dissolves again. I love that one slider lets you feel exactly where the "allowed" symmetries stop and the impossible ones begin.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Order doesn't require repetition. We tend to treat "has a pattern" and "repeats" as the same idea, so when something never quite repeats we call it random. But a quasicrystal is the counterexample sitting in plain sight: utterly determined, richly structured, sharply diffracting — and aperiodic forever. The next time something refuses to fall into a neat loop, it's worth asking whether it's actually disordered, or just ordered by a rule that was never going to repeat.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- QUASICRYSTAL ----
+  // Sum N plane-wave gratings at equal angular spacing. Each grating is just
+  // cos(k · r + phase). Their sum, mapped through a colour ramp, is a
+  // quasiperiodic crystal: for N = 5, 7, 9 … it shows a rotational symmetry
+  // that no repeating lattice can possess (de Bruijn's wave dual of the
+  // Penrose tiling). For N = 2, 3, 4, 6 the sum is genuinely periodic.
+  (() => {
+    const cvs = document.getElementById('c');
+    const ctx = cvs.getContext('2d');
+
+    // Render at a modest internal resolution and let CSS scale it up — keeps it
+    // smooth on phones while staying crisp enough for the fine interference lace.
+    let W = 0, H = 0, img = null, buf = null;
+    const MAXDIM = 520; // longest internal edge, in pixels
+
+    const state = {
+      sym: 5,
+      scale: 22,     // higher = finer stripes / more cells on screen
+      speed: 0.45,
+      contrast: 1.4,
+      pal: 0,
+      paused: false,
+      cx: 0, cy: 0,  // view centre offset, in pattern units
+      zoom: 1,
+      t: 0,
+    };
+
+    const palettes = [
+      { name: 'ember',   stops: [[8,6,16],[60,12,40],[176,38,52],[245,150,72],[255,242,200]] },
+      { name: 'glacier', stops: [[4,8,20],[18,46,86],[40,116,150],[120,196,206],[233,247,250]] },
+      { name: 'violet',  stops: [[8,5,18],[44,18,78],[110,40,150],[200,110,210],[244,224,255]] },
+      { name: 'mono',    stops: [[6,6,9],[60,60,70],[128,128,140],[200,200,210],[247,247,252]] },
+    ];
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    // Precompute a 256-entry colour LUT for the active palette.
+    const lut = new Uint8ClampedArray(256 * 3);
+    function buildLUT() {
+      const stops = palettes[state.pal].stops;
+      const seg = stops.length - 1;
+      for (let i = 0; i < 256; i++) {
+        const f = i / 255 * seg;
+        const k = Math.min(seg - 1, Math.floor(f));
+        const u = f - k;
+        const a = stops[k], b = stops[k + 1];
+        lut[i*3]   = lerp(a[0], b[0], u);
+        lut[i*3+1] = lerp(a[1], b[1], u);
+        lut[i*3+2] = lerp(a[2], b[2], u);
+      }
+    }
+    buildLUT();
+
+    function resize() {
+      const dw = cvs.clientWidth || window.innerWidth;
+      const dh = cvs.clientHeight || window.innerHeight;
+      const s = MAXDIM / Math.max(dw, dh);
+      W = Math.max(2, Math.round(dw * s));
+      H = Math.max(2, Math.round(dh * s));
+      cvs.width = W; cvs.height = H;
+      img = ctx.createImageData(W, H);
+      buf = img.data;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function render() {
+      const N = state.sym;
+      // Direction vectors for the N gratings, evenly spaced over half a turn.
+      const dirs = [];
+      for (let i = 0; i < N; i++) {
+        const a = Math.PI * i / N;
+        dirs.push([Math.cos(a), Math.sin(a)]);
+      }
+      // A slowly evolving phase per grating so the crystal seems to breathe.
+      const phases = [];
+      for (let i = 0; i < N; i++) phases.push(state.t * (0.6 + 0.13 * i));
+
+      const k = state.scale * 0.16 / state.zoom;   // spatial frequency
+      const cx = W / 2, cy = H / 2;
+      const ox = state.cx, oy = state.cy;
+
+      let p = 0;
+      for (let y = 0; y < H; y++) {
+        const wy = (y - cy) * k + oy;
+        for (let x = 0; x < W; x++) {
+          const wx = (x - cx) * k + ox;
+          let s = 0;
+          for (let i = 0; i < N; i++) {
+            const d = dirs[i];
+            s += Math.cos((d[0] * wx + d[1] * wy) + phases[i]);
+          }
+          // s ranges roughly [-N, N]; fold it into 0..1 with a triangle wave
+          // so the high-frequency interference fringes stay visible (the
+          // classic "quasicrystal" look), then push it through contrast.
+          let v = 0.5 + 0.5 * (s / N) * state.contrast;
+          v = ((v % 1) + 1) % 1;          // wrap into [0,1)
+          if (v > 0.5) v = 1 - v;          // triangle fold -> [0,0.5]
+          v *= 2;                          // back to [0,1]
+          let idx = (v * 255) | 0;
+          if (idx > 255) idx = 255; else if (idx < 0) idx = 0;
+          const li = idx * 3;
+          buf[p++] = lut[li];
+          buf[p++] = lut[li + 1];
+          buf[p++] = lut[li + 2];
+          buf[p++] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (!state.paused) state.t += dt * state.speed;
+      render();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    // ---- controls ----
+    const $ = (id) => document.getElementById(id);
+    function symLabel(n) {
+      if (n === 6 || n === 4 || n === 3 || n === 2) return n + '-fold (periodic)';
+      return n + '-fold';
+    }
+    $('sym').addEventListener('input', (e) => {
+      state.sym = +e.target.value;
+      $('vSym').textContent = symLabel(state.sym);
+    });
+    $('scale').addEventListener('input', (e) => {
+      state.scale = +e.target.value; $('vScale').textContent = state.scale;
+    });
+    $('speed').addEventListener('input', (e) => {
+      state.speed = +e.target.value; $('vSpeed').textContent = state.speed.toFixed(2);
+    });
+    $('contrast').addEventListener('input', (e) => {
+      state.contrast = +e.target.value; $('vContrast').textContent = state.contrast.toFixed(2);
+    });
+    $('palBtn').addEventListener('click', () => {
+      state.pal = (state.pal + 1) % palettes.length;
+      buildLUT();
+      $('palBtn').textContent = 'palette: ' + palettes[state.pal].name;
+    });
+    $('pauseBtn').addEventListener('click', () => {
+      state.paused = !state.paused;
+      $('pauseBtn').textContent = state.paused ? 'play' : 'pause';
+      $('pauseBtn').classList.toggle('on', state.paused);
+    });
+
+    // ---- pan / zoom ----
+    let dragging = false, lx = 0, ly = 0;
+    const panUnit = () => state.scale * 0.16 / state.zoom;
+    function pointerDown(x, y) { dragging = true; lx = x; ly = y; }
+    function pointerMove(x, y) {
+      if (!dragging) return;
+      const sx = W / (cvs.clientWidth || 1), sy = H / (cvs.clientHeight || 1);
+      const u = panUnit();
+      state.cx -= (x - lx) * sx * u;
+      state.cy -= (y - ly) * sy * u;
+      lx = x; ly = y;
+    }
+    const pointerUp = () => { dragging = false; };
+
+    cvs.addEventListener('mousedown', (e) => pointerDown(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => pointerMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', pointerUp);
+    cvs.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) pointerDown(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    cvs.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1) pointerMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    cvs.addEventListener('touchend', pointerUp);
+
+    cvs.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const f = Math.exp(-e.deltaY * 0.0012);
+      state.zoom = Math.min(6, Math.max(0.25, state.zoom * f));
+    }, { passive: false });
+  })();
+</script>
+</body>
+</html>
