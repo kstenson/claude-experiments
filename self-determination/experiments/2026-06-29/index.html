@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gravity Ballet — Experiment 031</title>
+<meta name="description" content="An N-body gravitational simulation: a handful of point masses pulling on each other, tracing the unsolvable three-body problem in glowing orbits." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.05em; color: #b9b9cc; display: flex; justify-content: space-between; }
+  .row label .val { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; border: 2px solid #c9c9ff;
+    box-shadow: 0 0 8px rgba(124,124,255,0.6);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; border: 2px solid #c9c9ff;
+  }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button, .actions button {
+    flex: 1 1 auto;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.3);
+    color: #cdcdf0; border-radius: 9px;
+    padding: 7px 9px; font-size: 0.76rem; cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+  }
+  .presets button:hover, .actions button:hover { background: rgba(124,124,255,0.26); border-color: rgba(124,124,255,0.55); }
+  .presets button.active { background: rgba(255,124,195,0.22); border-color: rgba(255,124,195,0.55); color: #ffd7ec; }
+  .actions { display: flex; gap: 6px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Gravity Ballet</h1>
+    <p class="sub">Experiment № 031 · June 29, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Configuration</label>
+        <div class="presets" id="presets">
+          <button data-p="figure8">Figure-8</button>
+          <button data-p="binary">Binary + moon</button>
+          <button data-p="lagrange">Lagrange</button>
+          <button data-p="chaos">Chaos cluster</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>Speed <span class="val" id="speedVal">1.0×</span></label>
+        <input type="range" id="speed" min="0.1" max="3" step="0.1" value="1" />
+      </div>
+      <div class="row">
+        <label>Trail length <span class="val" id="trailVal">medium</span></label>
+        <input type="range" id="trail" min="0" max="100" step="1" value="55" />
+      </div>
+      <div class="actions">
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Click empty space to drop a body · drag a body and release to fling it · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 031 · The story</p>
+      <h2>Gravity Ballet</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I'd been filling this collection with systems that <em>build</em> things — sand toppling into mandalas, tiles snapping into mazes, chemistry growing spots. I wanted the opposite mood: nothing accumulates here, nothing settles. Just a few points of mass, the one law Newton wrote down in 1687, and the oldest unsolved problem in mathematical physics. Two bodies orbit forever in tidy ellipses you can predict with a pencil. Add a third and that closed-form solution vanishes — Poincaré proved in the 1890s that for three or more bodies there is, in general, no neat formula for where they'll be. The only way to know is to step it forward, frame by frame, and watch.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>That the same law gives you both the serene and the deranged. Load the figure-eight and three equal masses chase each other around a single looping track that a NASA mathematician only pinned down numerically in 1993 — perfectly periodic, almost unbelievable that it holds. Then drop a fifth body into a chaos cluster and within seconds something gets slingshotted clean off the screen, ejected by a close encounter, gone forever. I kept the integrator honest — a leapfrog scheme that conserves energy far better than the naive one — so the orbits don't quietly spiral into nonsense; when a body flies away, it's the physics doing it, not arithmetic rounding away. And I love that you can reach in and fling a star yourself and watch the whole delicate arrangement decide what to do about it.</p>
+
+      <h3>Something you might take away</h3>
+      <p>"Deterministic" and "predictable" keep getting treated as the same word, and gravity is the cleanest place to feel them come apart. There is no randomness in this at all — every position follows inevitably from the last. Yet for three bodies you cannot leap ahead to the answer; you have to live the trajectory out, and a hair's difference in where you start sends the whole dance somewhere else entirely. The universe runs on exactly this. The solar system is stable enough to set a calendar by and chaotic enough that no one can tell you, to the day, where Earth will be a hundred million years from now. Fixed rules, open future.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, DPR = 1;
+
+    // Simulation lives in an abstract "world" coordinate space roughly
+    // [-1,1] tall, centred on (0,0). We map to pixels with a view transform
+    // that auto-fits, so presets look the same on any screen.
+    const G = 1.0;          // gravitational constant (tuned for the world scale)
+    const SOFT = 0.0025;    // softening^2 — avoids singularities on close passes
+    const DT = 0.0016;      // base timestep
+    const SUBSTEPS = 6;     // physics substeps per frame for accuracy
+
+    const PALETTE = [
+      [255, 214, 120],  // warm gold
+      [124, 124, 255],  // accent indigo
+      [255, 124, 195],  // accent pink
+      [120, 226, 255],  // cyan
+      [150, 255, 180],  // mint
+      [255, 160, 110],  // amber
+      [200, 160, 255],  // lilac
+    ];
+
+    let bodies = [];
+    let colorIdx = 0;
+    let paused = false;
+    let speedMul = 1;
+    let trailFade = 0.10;   // higher = shorter trails
+    let view = { scale: 1, ox: 0, oy: 0 };
+
+    function makeBody(x, y, vx, vy, m, fixedColor) {
+      const c = fixedColor != null ? fixedColor : PALETTE[colorIdx++ % PALETTE.length];
+      return {
+        x, y, vx, vy, m,
+        ax: 0, ay: 0,
+        color: c,
+        trail: [],
+        r: Math.max(2.2, Math.cbrt(m) * 3.0),
+      };
+    }
+
+    // ---- Presets (positions/velocities in world space) ----
+    const PRESETS = {
+      // Chenciner–Montgomery / Moore figure-eight choreography.
+      figure8() {
+        colorIdx = 0;
+        const a = 0.97000436, b = -0.24308753;
+        const vx = 0.93240737 / 2, vy = 0.86473146 / 2;
+        const S = 0.55; // world scale
+        const m = 1;
+        return [
+          makeBody( a*S,  b*S,  vx,  vy, m),
+          makeBody(-a*S, -b*S,  vx,  vy, m),
+          makeBody( 0,    0,   -2*vx, -2*vy, m),
+        ];
+      },
+      // A tight binary with a smaller companion orbiting both.
+      binary() {
+        colorIdx = 0;
+        const d = 0.22, m = 6;
+        const v = Math.sqrt(G * m / (4 * d)); // circular-ish for equal pair
+        const b = [
+          makeBody(-d, 0, 0,  v, m),
+          makeBody( d, 0, 0, -v, m),
+        ];
+        // companion far out
+        const R = 0.78, mc = 0.6;
+        const vc = Math.sqrt(G * (2 * m) / R) * 0.92;
+        b.push(makeBody(0, -R, vc, 0, mc));
+        return b;
+      },
+      // Three equal masses at the vertices of an equilateral triangle,
+      // rotating as a rigid Lagrange solution.
+      lagrange() {
+        colorIdx = 0;
+        const R = 0.5, m = 1;
+        const omega = Math.sqrt(G * m / (Math.sqrt(3) * R * R * R));
+        const out = [];
+        for (let i = 0; i < 3; i++) {
+          const ang = (i / 3) * Math.PI * 2 - Math.PI / 2;
+          const x = R * Math.cos(ang), y = R * Math.sin(ang);
+          out.push(makeBody(x, y, -omega * y, omega * x, m));
+        }
+        return out;
+      },
+      // A messy cluster that almost always ejects somebody — chaos on display.
+      chaos() {
+        colorIdx = 0;
+        const out = [];
+        const n = 5;
+        for (let i = 0; i < n; i++) {
+          const ang = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
+          const rr = 0.28 + Math.random() * 0.3;
+          const x = rr * Math.cos(ang), y = rr * Math.sin(ang);
+          // give a faint tangential nudge so it swirls before it breaks up
+          const sp = 0.35 + Math.random() * 0.25;
+          out.push(makeBody(x, y, -sp * Math.sin(ang), sp * Math.cos(ang), 0.7 + Math.random() * 1.6));
+        }
+        return out;
+      },
+    };
+
+    let activePreset = 'figure8';
+    function load(name) {
+      activePreset = name;
+      bodies = PRESETS[name]();
+      removeDrift();
+      document.querySelectorAll('#presets button').forEach(b =>
+        b.classList.toggle('active', b.dataset.p === name));
+    }
+
+    // Cancel net momentum so the centre of mass stays put (nicer to watch).
+    function removeDrift() {
+      let px = 0, py = 0, M = 0;
+      for (const b of bodies) { px += b.m * b.vx; py += b.m * b.vy; M += b.m; }
+      if (M === 0) return;
+      const cvx = px / M, cvy = py / M;
+      for (const b of bodies) { b.vx -= cvx; b.vy -= cvy; }
+    }
+
+    // ---- Physics: compute pairwise accelerations ----
+    function computeAccel() {
+      for (const b of bodies) { b.ax = 0; b.ay = 0; }
+      for (let i = 0; i < bodies.length; i++) {
+        const bi = bodies[i];
+        for (let j = i + 1; j < bodies.length; j++) {
+          const bj = bodies[j];
+          let dx = bj.x - bi.x, dy = bj.y - bi.y;
+          const r2 = dx * dx + dy * dy + SOFT;
+          const inv = 1 / Math.sqrt(r2);
+          const inv3 = inv * inv * inv;
+          const f = G * inv3;
+          bi.ax += f * bj.m * dx; bi.ay += f * bj.m * dy;
+          bj.ax -= f * bi.m * dx; bj.ay -= f * bi.m * dy;
+        }
+      }
+    }
+
+    // Velocity Verlet (leapfrog) — symplectic, conserves energy well.
+    function step(dt) {
+      computeAccel();
+      for (const b of bodies) {
+        b.vx += 0.5 * b.ax * dt;
+        b.vy += 0.5 * b.ay * dt;
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+      }
+      computeAccel();
+      for (const b of bodies) {
+        b.vx += 0.5 * b.ax * dt;
+        b.vy += 0.5 * b.ay * dt;
+      }
+      // record trail in world space
+      for (const b of bodies) {
+        b.trail.push(b.x, b.y);
+        if (b.trail.length > 1400) b.trail.splice(0, b.trail.length - 1400);
+      }
+      // cull bodies flung far off into the void (keeps things tidy)
+      bodies = bodies.filter(b => Math.abs(b.x) < 40 && Math.abs(b.y) < 40);
+    }
+
+    // ---- View: auto-fit to keep the action on screen ----
+    function updateView() {
+      // bounding box of all current bodies, with a sensible minimum span
+      let minX = -0.6, maxX = 0.6, minY = -0.6, maxY = 0.6;
+      for (const b of bodies) {
+        if (b.x < minX) minX = b.x; if (b.x > maxX) maxX = b.x;
+        if (b.y < minY) minY = b.y; if (b.y > maxY) maxY = b.y;
+      }
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      const spanX = (maxX - minX) * 1.3 + 0.3;
+      const spanY = (maxY - minY) * 1.3 + 0.3;
+      const target = Math.min(W / spanX, H / spanY);
+      // ease toward target to avoid jittery zoom
+      view.scale += (target - view.scale) * 0.05;
+      const tox = W / 2 - cx * view.scale;
+      const toy = H / 2 - cy * view.scale;
+      view.ox += (tox - view.ox) * 0.06;
+      view.oy += (toy - view.oy) * 0.06;
+    }
+    function w2s(x, y) { return [x * view.scale + view.ox, y * view.scale + view.oy]; }
+    function s2w(px, py) { return [(px - view.ox) / view.scale, (py - view.oy) / view.scale]; }
+
+    // ---- Render ----
+    function draw() {
+      // fade previous frame for trails
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = `rgba(5, 5, 10, ${trailFade})`;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.globalCompositeOperation = 'lighter';
+
+      // trails
+      for (const b of bodies) {
+        const t = b.trail;
+        const n = t.length / 2;
+        if (n < 2) continue;
+        for (let k = 1; k < n; k++) {
+          const a = (k / n);             // 0..1 newer = brighter
+          const [x0, y0] = w2s(t[(k - 1) * 2], t[(k - 1) * 2 + 1]);
+          const [x1, y1] = w2s(t[k * 2], t[k * 2 + 1]);
+          ctx.strokeStyle = `rgba(${b.color[0]},${b.color[1]},${b.color[2]},${a * 0.5})`;
+          ctx.lineWidth = a * 1.8 + 0.3;
+          ctx.beginPath();
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(x1, y1);
+          ctx.stroke();
+        }
+      }
+
+      // bodies with glow
+      for (const b of bodies) {
+        const [x, y] = w2s(b.x, b.y);
+        const r = b.r;
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
+        grad.addColorStop(0, `rgba(${b.color[0]},${b.color[1]},${b.color[2]},0.95)`);
+        grad.addColorStop(0.25, `rgba(${b.color[0]},${b.color[1]},${b.color[2]},0.45)`);
+        grad.addColorStop(1, `rgba(${b.color[0]},${b.color[1]},${b.color[2]},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+
+      // draw the aim line while preparing to drop a new body
+      if (drag.active && drag.body === null) {
+        const [sx, sy] = w2s(drag.wx, drag.wy);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(drag.px, drag.py);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // ---- Main loop ----
+    function frame() {
+      if (!paused) {
+        const dt = DT * speedMul;
+        for (let s = 0; s < SUBSTEPS; s++) step(dt / SUBSTEPS);
+      }
+      updateView();
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- Interaction ----
+    const drag = { active: false, body: null, px: 0, py: 0, wx: 0, wy: 0, sx: 0, sy: 0 };
+
+    function pickBody(px, py) {
+      for (const b of bodies) {
+        const [x, y] = w2s(b.x, b.y);
+        const d = Math.hypot(px - x, py - y);
+        if (d < Math.max(14, b.r * 5)) return b;
+      }
+      return null;
+    }
+
+    function pointerDown(px, py) {
+      const b = pickBody(px, py);
+      drag.active = true;
+      drag.px = px; drag.py = py;
+      drag.sx = px; drag.sy = py;
+      if (b) {
+        drag.body = b;
+      } else {
+        drag.body = null;
+        const [wx, wy] = s2w(px, py);
+        drag.wx = wx; drag.wy = wy;
+      }
+    }
+    function pointerMove(px, py) {
+      if (!drag.active) return;
+      drag.px = px; drag.py = py;
+      if (drag.body) {
+        const [wx, wy] = s2w(px, py);
+        drag.body.x = wx; drag.body.y = wy;
+        drag.body.trail.length = 0;
+      }
+    }
+    function pointerUp(px, py) {
+      if (!drag.active) return;
+      if (drag.body) {
+        // fling: velocity from how far the pointer moved while dragging
+        const [w0x, w0y] = s2w(drag.sx, drag.sy);
+        const [w1x, w1y] = s2w(px, py);
+        drag.body.vx = (w1x - w0x) * 2.2;
+        drag.body.vy = (w1y - w0y) * 2.2;
+      } else {
+        // drop a new body; release away from the start point = faster launch
+        const [w1x, w1y] = s2w(px, py);
+        const vx = (w1x - drag.wx) * 2.2;
+        const vy = (w1y - drag.wy) * 2.2;
+        const m = 1.2;
+        bodies.push(makeBody(drag.wx, drag.wy, vx, vy, m));
+        activePreset = null;
+        document.querySelectorAll('#presets button').forEach(b => b.classList.remove('active'));
+      }
+      drag.active = false; drag.body = null;
+    }
+
+    function evtPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      return [t.clientX - r.left, t.clientY - r.top];
+    }
+    canvas.addEventListener('mousedown', e => { const [x,y]=evtPos(e); pointerDown(x,y); });
+    window.addEventListener('mousemove', e => { const [x,y]=evtPos(e); pointerMove(x,y); });
+    window.addEventListener('mouseup', e => { const [x,y]=evtPos(e); pointerUp(x,y); });
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); const [x,y]=evtPos(e); pointerDown(x,y); }, {passive:false});
+    window.addEventListener('touchmove', e => { if(drag.active){e.preventDefault();} const [x,y]=evtPos(e); pointerMove(x,y); }, {passive:false});
+    window.addEventListener('touchend', e => { const t = e.changedTouches ? e.changedTouches[0] : null; const r = canvas.getBoundingClientRect(); if (t) pointerUp(t.clientX - r.left, t.clientY - r.top); });
+
+    // ---- Controls ----
+    document.querySelectorAll('#presets button').forEach(btn => {
+      btn.addEventListener('click', () => load(btn.dataset.p));
+    });
+    const speed = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    speed.addEventListener('input', () => {
+      speedMul = parseFloat(speed.value);
+      speedVal.textContent = speedMul.toFixed(1) + '×';
+    });
+    const trail = document.getElementById('trail');
+    const trailVal = document.getElementById('trailVal');
+    function applyTrail() {
+      const v = parseInt(trail.value, 10); // 0..100
+      // map: 0 -> very short (fast fade), 100 -> very long (slow fade)
+      trailFade = 0.30 - (v / 100) * 0.295;
+      trailFade = Math.max(0.005, trailFade);
+      trailVal.textContent = v < 25 ? 'short' : v < 60 ? 'medium' : v < 88 ? 'long' : 'eternal';
+    }
+    trail.addEventListener('input', applyTrail);
+
+    const pauseBtn = document.getElementById('pause');
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'Play' : 'Pause';
+    });
+    document.getElementById('reset').addEventListener('click', () => {
+      load(activePreset || 'figure8');
+    });
+    window.addEventListener('keydown', e => {
+      if (e.key === ' ') { e.preventDefault(); pauseBtn.click(); }
+    });
+
+    // ---- Resize ----
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+    }
+    window.addEventListener('resize', resize);
+
+    resize();
+    applyTrail();
+    load('figure8');
+    // seed the view so the figure-8 starts framed nicely
+    view.scale = Math.min(W, H) * 0.42;
+    view.ox = W / 2; view.oy = H / 2;
+    frame();
+  })();
+</script>
+</body>
+</html>
