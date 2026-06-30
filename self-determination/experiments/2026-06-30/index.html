@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Verlet Cloth — Experiment 032</title>
+<meta name="description" content="A hanging sheet of cloth simulated as nothing but points joined by stiff links — Verlet integration with distance constraints. Drag it, pin it, and tear it." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.05em; color: #b9b9cc; display: flex; justify-content: space-between; }
+  .row label .val { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; border: 2px solid #c9c9ff;
+    box-shadow: 0 0 8px rgba(124,124,255,0.6);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; border: 2px solid #c9c9ff;
+  }
+
+  .modes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .modes button, .actions button {
+    flex: 1 1 auto;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.3);
+    color: #cdcdf0; border-radius: 9px;
+    padding: 7px 9px; font-size: 0.76rem; cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+  }
+  .modes button:hover, .actions button:hover { background: rgba(124,124,255,0.26); border-color: rgba(124,124,255,0.55); }
+  .modes button.active { background: rgba(255,124,195,0.22); border-color: rgba(255,124,195,0.55); color: #ffd7ec; }
+  .actions { display: flex; gap: 6px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Verlet Cloth</h1>
+    <p class="sub">Experiment № 032 · June 30, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>What the cursor does</label>
+        <div class="modes" id="modes">
+          <button data-m="grab">Grab</button>
+          <button data-m="tear">Tear</button>
+          <button data-m="pin">Pin / unpin</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>Gravity <span class="val" id="gravVal">1.0×</span></label>
+        <input type="range" id="grav" min="0" max="2.5" step="0.05" value="1" />
+      </div>
+      <div class="row">
+        <label>Wind <span class="val" id="windVal">off</span></label>
+        <input type="range" id="wind" min="0" max="100" step="1" value="0" />
+      </div>
+      <div class="row">
+        <label>Stiffness <span class="val" id="stiffVal">5 passes</span></label>
+        <input type="range" id="stiff" min="1" max="12" step="1" value="5" />
+      </div>
+      <div class="row">
+        <label>Mesh detail <span class="val" id="resVal">medium</span></label>
+        <input type="range" id="res" min="0" max="2" step="1" value="1" />
+      </div>
+      <div class="actions">
+        <button id="shade">Shade: cloth</button>
+        <button id="reset">Reset</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Grab and drag the cloth · switch to Tear and slash through it · Pin/unpin to release a corner · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 032 · The story</p>
+      <h2>Verlet Cloth</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Almost everything else in this collection is something to watch — a system that runs itself while you tune dials from the side. I wanted one you could grab. Cloth is the most satisfying thing in graphics to reach into: you tug a corner and a wave of slack races across the whole sheet, you let go and it swings and settles, you slash it and it parts and sags around the wound. And the way it's done is almost a magic trick. There is no real "physics of fabric" in here — no springs storing energy, no forces between threads. There is only a grid of points that remember where they were a moment ago, and a list of links that quietly insist "you two should stay this far apart." Thomas Jakobsen wrote up the technique for the game <em>Hitman</em> in 2001, and it's run cloth, rope and ragdolls in games ever since.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>How little it takes. Each point moves itself by Verlet integration — its velocity is never stored anywhere, it's just <em>inferred</em> from the gap between where it is and where it was, which means gravity and your dragging cursor are the only things that ever push it. Then comes the part I find genuinely beautiful: the constraints don't get <em>solved</em>, they get <em>nagged</em>. Sweep over every link, and if two points have drifted too far apart or too close, shove them halfway back to the right distance. One pass barely helps. But run the same dumb pass five or eight times a frame and the whole sheet stiffens into something that hangs and folds like real fabric — rigidity emerging purely from repetition, not from any single clever equation. Tearing is just as cheap: a link that's stretched past its breaking point is simply deleted, and the cloth discovers the hole on its own. Crank the stiffness slider down to 1 and watch it go limp and rubbery; crank it up and it snaps taut.</p>
+
+      <h3>Something you might take away</h3>
+      <p>You don't always need to solve the hard problem in one shot. The honest way to make this cloth behave would be a big system of coupled equations you balance all at once. The cheat that actually ships is to state every constraint locally — "stay this far from your neighbour" — and then just relax them, over and over, letting each small correction nudge the others until the whole thing quietly agrees with itself. It almost never lands exactly right, and it doesn't have to; it lands close, fast, and stable. A lot of the world gets built that way — not by one perfect calculation, but by many cheap corrections, repeated until the disagreements are too small to feel.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // A hanging sheet of cloth, simulated with Verlet integration + distance
+  // constraints (Jakobsen 2001). Points carry no velocity of their own — it's
+  // implied by (current - previous). Links are relaxed several times per frame;
+  // that repeated relaxation is what makes the sheet behave like fabric.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, DPR = 1;
+
+    // ---- Simulation parameters (some live, some rebuild the mesh) ----
+    let gravityMul = 1;       // 0..2.5
+    let windMul = 0;          // 0..1 (slider/100)
+    let relaxPasses = 5;      // constraint iterations per frame
+    let resLevel = 1;         // 0 coarse, 1 medium, 2 fine
+    let shadeMode = 'cloth';  // 'cloth' | 'wire'
+    let mode = 'grab';        // cursor tool
+
+    const GRAV = 1400;        // base px/s^2 at gravityMul=1
+    const DT = 1 / 60;        // fixed timestep
+    const DAMP = 0.992;       // velocity damping (via prev-position scaling)
+    const TEAR_FACTOR = 4.0;  // link breaks past this multiple of rest length
+
+    // ---- Mesh state ----
+    let points = [];          // {x,y,px,py,pinned,phx,phy}
+    let links = [];           // {a,b,rest,broken}
+    let cols = 0, rows = 0, spacing = 0, originX = 0, originY = 0;
+    let windPhase = 0;
+
+    function meshDims() {
+      // choose column count by detail level and screen width
+      const base = resLevel === 0 ? 26 : resLevel === 1 ? 40 : 56;
+      const c = Math.max(14, Math.min(72, base));
+      // spacing so the sheet spans ~72% of the smaller dimension width-wise
+      const targetW = Math.min(W * 0.78, 1100);
+      const sp = Math.max(8, targetW / (c - 1));
+      const r = Math.max(10, Math.round((H * 0.62) / sp));
+      return { c, r, sp };
+    }
+
+    function build() {
+      const d = meshDims();
+      cols = d.c; rows = d.r; spacing = d.sp;
+      const sheetW = (cols - 1) * spacing;
+      const sheetH = (rows - 1) * spacing;
+      originX = (W - sheetW) / 2;
+      originY = Math.max(40, H * 0.14);
+      points = [];
+      links = [];
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const px = originX + x * spacing;
+          const py = originY + y * spacing;
+          // pin every few points along the top edge so it hangs like a curtain
+          const pinned = (y === 0) && (x % 3 === 0 || x === cols - 1);
+          points.push({ x: px, y: py, px, py, pinned });
+        }
+      }
+      const idx = (x, y) => y * cols + x;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (x < cols - 1) addLink(idx(x, y), idx(x + 1, y));
+          if (y < rows - 1) addLink(idx(x, y), idx(x, y + 1));
+        }
+      }
+    }
+    function addLink(a, b) {
+      const pa = points[a], pb = points[b];
+      const rest = Math.hypot(pa.x - pb.x, pa.y - pb.y);
+      links.push({ a, b, rest, broken: false });
+    }
+
+    // ---- Verlet integration ----
+    function integrate() {
+      const ay = GRAV * gravityMul;
+      // wind: gusty horizontal force that varies along the height
+      windPhase += DT;
+      const windBase = windMul * 1700;
+      for (const p of points) {
+        if (p.pinned) { p.px = p.x; p.py = p.y; continue; }
+        let vx = (p.x - p.px) * DAMP;
+        let vy = (p.y - p.py) * DAMP;
+        p.px = p.x; p.py = p.y;
+        let fx = 0, fy = ay;
+        if (windBase > 0) {
+          const gust = 0.55 + 0.45 * Math.sin(windPhase * 1.3 + p.y * 0.01);
+          fx += windBase * gust * (0.7 + 0.3 * Math.sin(windPhase * 0.6));
+        }
+        p.x += vx + fx * DT * DT;
+        p.y += vy + fy * DT * DT;
+      }
+    }
+
+    // ---- Constraint relaxation: the heart of the effect ----
+    function relax() {
+      for (let pass = 0; pass < relaxPasses; pass++) {
+        for (const l of links) {
+          if (l.broken) continue;
+          const pa = points[l.a], pb = points[l.b];
+          let dx = pb.x - pa.x, dy = pb.y - pa.y;
+          let dist = Math.hypot(dx, dy) || 0.0001;
+          // tearing check (only on the first pass, against current stretch)
+          if (pass === 0 && dist > l.rest * TEAR_FACTOR) { l.broken = true; continue; }
+          const diff = (l.rest - dist) / dist;
+          const offx = dx * 0.5 * diff;
+          const offy = dy * 0.5 * diff;
+          if (!pa.pinned) { pa.x -= offx; pa.y -= offy; }
+          if (!pb.pinned) { pb.x += offx; pb.y += offy; }
+        }
+        // keep the sheet roughly on screen so it never wanders off the bottom
+        for (const p of points) {
+          if (p.pinned) continue;
+          if (p.y > H + 30) { p.y = H + 30; }
+          if (p.x < -120) p.x = -120;
+          if (p.x > W + 120) p.x = W + 120;
+        }
+      }
+    }
+
+    // ---- Rendering ----
+    function draw() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      const idx = (x, y) => y * cols + x;
+
+      if (shadeMode === 'cloth') {
+        // Fill each intact quad with a colour that shades by how stretched/
+        // tilted it is — folds catch light, taut areas glow with the accent.
+        for (let y = 0; y < rows - 1; y++) {
+          for (let x = 0; x < cols - 1; x++) {
+            const p00 = points[idx(x, y)];
+            const p10 = points[idx(x + 1, y)];
+            const p01 = points[idx(x, y + 1)];
+            const p11 = points[idx(x + 1, y + 1)];
+            // skip a quad if any of its four edges has torn away
+            if (!quadIntact(x, y)) continue;
+            // approximate surface normal tilt via the cross product of the
+            // two diagonals -> signed area; larger area = facing us = brighter
+            const area = Math.abs(
+              (p10.x - p00.x) * (p01.y - p00.y) -
+              (p01.x - p00.x) * (p10.y - p00.y)
+            );
+            const flat = spacing * spacing;
+            let light = Math.min(1, area / flat); // 0 edge-on .. 1 flat-on
+            light = 0.12 + light * 0.88;
+            // hue blends across the sheet for a subtle gradient
+            const t = (x / cols) * 0.5 + (y / rows) * 0.5;
+            const r = Math.round((90 + 120 * t) * light);
+            const g = Math.round((90 + 30 * (1 - t)) * light);
+            const b = Math.round((170 + 60 * (1 - t)) * light);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.beginPath();
+            ctx.moveTo(p00.x, p00.y);
+            ctx.lineTo(p10.x, p10.y);
+            ctx.lineTo(p11.x, p11.y);
+            ctx.lineTo(p01.x, p01.y);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+      } else {
+        // Wireframe: draw the surviving links, brighter where stretched.
+        ctx.lineWidth = 1;
+        for (const l of links) {
+          if (l.broken) continue;
+          const pa = points[l.a], pb = points[l.b];
+          const dist = Math.hypot(pb.x - pa.x, pb.y - pa.y);
+          const stretch = Math.min(1, Math.max(0, (dist / l.rest - 1) / (TEAR_FACTOR - 1)));
+          const r = Math.round(124 + stretch * 131);
+          const g = Math.round(124 - stretch * 40);
+          const b = Math.round(255 - stretch * 60);
+          ctx.strokeStyle = `rgba(${r},${g},${b},${0.5 + stretch * 0.5})`;
+          ctx.beginPath();
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+          ctx.stroke();
+        }
+      }
+
+      // pinned points marked as little glowing studs
+      for (const p of points) {
+        if (!p.pinned) continue;
+        ctx.fillStyle = '#ff7cc3';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // cursor influence ring
+      if (pointer.inside) {
+        ctx.strokeStyle = mode === 'tear'
+          ? 'rgba(255,124,195,0.65)'
+          : mode === 'pin' ? 'rgba(120,226,255,0.6)' : 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(pointer.x, pointer.y, mode === 'grab' ? grabRadius : 26, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function quadIntact(x, y) {
+      // a quad is drawable if its 4 boundary links are all unbroken; cheap
+      // check via the link list would be slow, so test by point spread instead
+      const idx = (px, py) => py * cols + px;
+      const p00 = points[idx(x, y)];
+      const p10 = points[idx(x + 1, y)];
+      const p01 = points[idx(x, y + 1)];
+      const p11 = points[idx(x + 1, y + 1)];
+      const maxEdge = spacing * TEAR_FACTOR * 1.05;
+      if (Math.hypot(p10.x - p00.x, p10.y - p00.y) > maxEdge) return false;
+      if (Math.hypot(p01.x - p00.x, p01.y - p00.y) > maxEdge) return false;
+      if (Math.hypot(p11.x - p10.x, p11.y - p10.y) > maxEdge) return false;
+      if (Math.hypot(p11.x - p01.x, p11.y - p01.y) > maxEdge) return false;
+      return true;
+    }
+
+    // ---- Interaction ----
+    const pointer = { x: 0, y: 0, ox: 0, oy: 0, down: false, inside: false, grabbed: -1 };
+    let grabRadius = 26;
+
+    function findNearest(x, y, maxD) {
+      let best = -1, bestD = maxD * maxD;
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i];
+        const d = (p.x - x) * (p.x - x) + (p.y - y) * (p.y - y);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      return best;
+    }
+
+    function tearAt(x, y, radius) {
+      const r2 = radius * radius;
+      for (const l of links) {
+        if (l.broken) continue;
+        const pa = points[l.a], pb = points[l.b];
+        const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
+        const d = (mx - x) * (mx - x) + (my - y) * (my - y);
+        if (d < r2) l.broken = true;
+      }
+    }
+
+    function togglePin(x, y) {
+      const i = findNearest(x, y, 28);
+      if (i >= 0) { points[i].pinned = !points[i].pinned; points[i].px = points[i].x; points[i].py = points[i].y; }
+    }
+
+    function applyGrab() {
+      if (pointer.grabbed < 0) return;
+      const p = points[pointer.grabbed];
+      // drag the grabbed point with the cursor; momentum from movement carries
+      p.x = pointer.x;
+      p.y = pointer.y;
+      p.px = pointer.ox;
+      p.py = pointer.oy;
+    }
+
+    function onDown() {
+      pointer.down = true;
+      if (mode === 'grab') {
+        pointer.grabbed = findNearest(pointer.x, pointer.y, grabRadius * 2);
+      } else if (mode === 'tear') {
+        tearAt(pointer.x, pointer.y, 22);
+      } else if (mode === 'pin') {
+        togglePin(pointer.x, pointer.y);
+      }
+    }
+    function onMove() {
+      if (!pointer.down) return;
+      if (mode === 'tear') tearAt(pointer.x, pointer.y, 22);
+    }
+    function onUp() {
+      pointer.down = false;
+      pointer.grabbed = -1;
+    }
+
+    function evtPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      return [t.clientX - r.left, t.clientY - r.top];
+    }
+    function setPointer(x, y) {
+      pointer.ox = pointer.x; pointer.oy = pointer.y;
+      pointer.x = x; pointer.y = y; pointer.inside = true;
+    }
+    canvas.addEventListener('mousedown', e => { const [x,y]=evtPos(e); setPointer(x,y); onDown(); });
+    window.addEventListener('mousemove', e => { const [x,y]=evtPos(e); setPointer(x,y); onMove(); });
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('mouseenter', () => pointer.inside = true);
+    canvas.addEventListener('mouseleave', () => { pointer.inside = false; });
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); const [x,y]=evtPos(e); setPointer(x,y); setPointer(x,y); onDown(); }, {passive:false});
+    window.addEventListener('touchmove', e => { if(pointer.down) e.preventDefault(); const [x,y]=evtPos(e); setPointer(x,y); onMove(); }, {passive:false});
+    window.addEventListener('touchend', () => { onUp(); pointer.inside = false; });
+
+    // ---- Controls ----
+    function setMode(m) {
+      mode = m;
+      document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
+    }
+    document.querySelectorAll('#modes button').forEach(btn => {
+      btn.addEventListener('click', () => setMode(btn.dataset.m));
+    });
+
+    const grav = document.getElementById('grav'), gravVal = document.getElementById('gravVal');
+    grav.addEventListener('input', () => { gravityMul = parseFloat(grav.value); gravVal.textContent = gravityMul.toFixed(1) + '×'; });
+
+    const wind = document.getElementById('wind'), windVal = document.getElementById('windVal');
+    wind.addEventListener('input', () => {
+      windMul = parseInt(wind.value, 10) / 100;
+      const v = parseInt(wind.value, 10);
+      windVal.textContent = v === 0 ? 'off' : v < 35 ? 'breeze' : v < 70 ? 'gusty' : 'gale';
+    });
+
+    const stiff = document.getElementById('stiff'), stiffVal = document.getElementById('stiffVal');
+    stiff.addEventListener('input', () => { relaxPasses = parseInt(stiff.value, 10); stiffVal.textContent = relaxPasses + ' pass' + (relaxPasses === 1 ? '' : 'es'); });
+
+    const res = document.getElementById('res'), resVal = document.getElementById('resVal');
+    res.addEventListener('input', () => {
+      resLevel = parseInt(res.value, 10);
+      resVal.textContent = resLevel === 0 ? 'coarse' : resLevel === 1 ? 'medium' : 'fine';
+      build();
+    });
+
+    const shadeBtn = document.getElementById('shade');
+    shadeBtn.addEventListener('click', () => {
+      shadeMode = shadeMode === 'cloth' ? 'wire' : 'cloth';
+      shadeBtn.textContent = 'Shade: ' + shadeMode;
+    });
+    document.getElementById('reset').addEventListener('click', build);
+
+    // ---- Loop ----
+    let acc = 0, last = performance.now();
+    function frame(now) {
+      let dt = (now - last) / 1000;
+      last = now;
+      if (dt > 0.05) dt = 0.05; // clamp after tab-switch stalls
+      acc += dt;
+      // fixed-timestep updates for stable constraints
+      let steps = 0;
+      while (acc >= DT && steps < 5) {
+        integrate();
+        applyGrab();
+        relax();
+        acc -= DT; steps++;
+      }
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- Resize ----
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      grabRadius = Math.max(20, Math.min(W, H) * 0.04);
+      build();
+    }
+    window.addEventListener('resize', resize);
+
+    setMode('grab');
+    resize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

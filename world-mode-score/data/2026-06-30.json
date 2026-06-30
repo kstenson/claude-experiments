@@ -1,0 +1,157 @@
+{
+  "date": "2026-06-30",
+  "score": 47,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "The day settled into a tense holding pattern rather than fresh catastrophe. The Gulf stayed quieter than the missile exchanges of 48 hours earlier: President Trump claimed Iran had 'requested a meeting' in Doha, but Tehran flatly denied any talks were planned and said it would only send an expert delegation over frozen funds, leaving the 17 June ceasefire memorandum intact but cold and the Strait of Hormuz reopened to widened traffic. That fragile pause was the main reason markets ran hot, with the Dow closing above 52,000 for the first time, the S&P 500 and Nasdaq at records, and Brent steady near $73 as shipping resumed. Conflict did not relent elsewhere: Pakistan's strikes along the Afghan border, which Islamabad said killed 29 militants, were described by Kabul as killing 36 civilians and wounding more than 160, and Russian attacks killed at least 12 across Ukraine as Kyiv pressed a 40-day drone campaign. The human ledger stayed grim. Venezuela's twin-quake toll passed 1,719 dead with more than 46,000 still listed missing; the DR Congo Bundibugyo Ebola epidemic held at about 1,155 cases and 304 deaths under a WHO emergency; thousands of African migrants fled South Africa ahead of a self-declared 30 June anti-foreigner 'deadline' that has already cost at least one life; and France mourned 11 killed in a skydiving-plane crash near Nancy. A sprawling US heat dome built over 200 million people toward a dangerous July 4 peak. Against that ran real lift: the US Supreme Court upheld grace periods for mailed ballots in a 5-4 win for voting access, Osaka researchers demonstrated a battery-free artificial-photosynthesis device that self-regulates solar-fuel output, and Denver reported its first drop in homelessness in nine years. The headline lands mid-band, an uneasy calm propped up by markets and held down by slow-burning losses.",
+  "dimensions": {
+    "conflict": 40,
+    "economy": 62,
+    "climate": 37,
+    "humanInterest": 35,
+    "techProgress": 64
+  },
+  "regions": {
+    "northAmerica": 52,
+    "southAmerica": 25,
+    "europe": 42,
+    "africa": 30,
+    "middleEast": 44,
+    "asia": 45,
+    "oceania": 55
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "The Iran-US ceasefire holds through a quieter day even as diplomacy stalls: President Trump says Iran requested a meeting in Doha on 30 June, but Tehran denies any talks are planned and says it will send only an expert delegation over frozen Iranian funds, with no new strikes reported and the Strait of Hormuz operating on a widened route after the worst of the missile exchanges",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/6/30/iran-war-live-tehran-denies-trumps-claims-of-meeting-in-doha",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Pakistan says a ground operation and 'calibrated strikes' along the Afghan border killed 29 militants in retaliation for a Karachi Rangers attack, but the Taliban government says the strikes in Paktia, Paktika and Kunar killed 36 civilians and wounded more than 160, condemning them as a 'cowardly act of aggression' in the latest flare of cross-border violence that has killed hundreds since February",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/29/g-s1-130826/pakistani-airstrikes-kill-36-civilians-in-afghanistan-and-wound-160-officials-say",
+      "dimension": "conflict",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Russian attacks across Ukraine kill at least 12 people and wound more than 40, including six killed by a missile on Dnipro and three by a drone strike on a minibus in Zaporizhzhia, as Ukraine presses one of its largest drone campaigns of the war under President Zelensky's 40-day pressure operation",
+      "source": "Forbes",
+      "url": "https://www.forbes.com/sites/katyasoldak/2026/06/29/monday-june-29-russias-war-on-ukraine-news-and-information-from-ukraine/",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "US stocks close at records as the Dow tops 52,000 for the first time and the Nasdaq jumps about 2 percent, with Brent crude steady near $73 a barrel, as Wall Street bets that the Iran-US pause will keep Strait of Hormuz shipping flowing ahead of Thursday's June jobs report",
+      "source": "Yahoo Finance",
+      "url": "https://finance.yahoo.com/markets/stocks/live/stock-market-today-monday-june-29-224230573.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Venezuela's twin-earthquake death toll passes 1,719 with more than 5,000 injured and over 46,600 still listed as missing nearly a week after back-to-back magnitude-7.2 and 7.5 quakes, as officials warn the figure may be a substantial undercount and rescue hopes fade across the devastated coast near Caracas and La Guaira",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/06/29/world/live-news/venezuela-earthquake-hnk",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Thousands of African migrants flee South Africa as a self-declared 30 June anti-foreigner 'deadline' pushed by Operation Dudula and allied groups stokes fear, with at least one Malawian man beaten to death and Nigeria, Ghana, Mozambique and Malawi flying or busing nearly 2,000 citizens home amid a fresh wave of xenophobic intimidation",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/30/migrants-in-south-africa-fear-violence-ahead-of-june-30-deadline",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "The DR Congo Bundibugyo Ebola epidemic holds at about 1,155 confirmed cases and 304 deaths, the third-largest Ebola outbreak on record, with Ituri the hardest-hit province and no licensed vaccine for the strain as the WHO keeps the outbreak a public health emergency of international concern",
+      "source": "U.S. CDC",
+      "url": "https://www.cdc.gov/ebola/situation-summary/index.html",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "All 11 people aboard a Pilatus PC-6 skydiving plane are killed when it falls almost vertically shortly after takeoff from Nancy-Essey airfield in northeastern France, the country's deadliest skydiving accident in about 30 years, as the BEA opens a safety investigation into a suspected engine failure",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/06/28/europe/plane-crash-france-skydiving-intl",
+      "dimension": "humanInterest",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "A sprawling heat dome builds over the central and eastern United States, set to expose roughly 200 million people to dangerous heat through the July Fourth weekend, with heat indices of 105 to 110 degrees across the Midwest and Great Lakes on 30 June and the most extreme conditions forecast to peak 3-4 July",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/dangerous-long-heat-wave-large-swathes-of-us-this-week/",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "The US Supreme Court upholds state grace periods for mailed ballots, ruling 5-4 in Watson v. Republican National Committee that Mississippi may count ballots postmarked by Election Day but received up to five days later, a win for voting access that advocates say protects military, rural and other mail voters ahead of the midterms",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/29/nx-s1-5815312/supreme-court-mail-ballot-grace-period-ruling",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Researchers at Osaka Metropolitan University demonstrate a battery-free artificial-photosynthesis device that self-regulates its own output, using the electrolyzer's thermal and impedance properties to steadily turn sunlight, water and CO2 into storable formic-acid fuel even as light fluctuates, cutting cost and complexity for clean solar fuel",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/releases/2026/06/260611024601.htm",
+      "dimension": "techProgress",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Denver reports its first drop in homelessness in nine years, with overall homelessness down 12.5 percent from 2025 to 2026, a rare bright spot in US housing data highlighted in this week's positive-news roundup",
+      "source": "Good Good Good",
+      "url": "https://www.goodgoodgood.co/articles/good-news-this-week-june-06-2026",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    }
+  ],
+  "sources_consulted": [
+    "NPR",
+    "CNN",
+    "ABC News",
+    "CBS News",
+    "PBS NewsHour",
+    "Al Jazeera",
+    "France 24",
+    "Forbes",
+    "The Washington Post",
+    "NBC News",
+    "Fox News",
+    "Yahoo Finance",
+    "TheStreet",
+    "Trading Economics",
+    "AccuWeather",
+    "The Hill",
+    "World Health Organization",
+    "U.S. CDC",
+    "ECDC",
+    "Human Rights Watch",
+    "The Conversation",
+    "Daily Maverick",
+    "AeroTime",
+    "Aviation Safety Network",
+    "The Asia Cable",
+    "Nikkei Asia",
+    "The Japan Times",
+    "ScienceDaily",
+    "SciTechDaily",
+    "EurekAlert",
+    "Universe Today",
+    "Good Good Good",
+    "Supreme Court of the United States",
+    "Wikipedia (2026 Iran war ceasefire / 2026 Strait of Hormuz crisis / 2026 Venezuela earthquakes / 2026 Ebola epidemic)"
+  ]
+}

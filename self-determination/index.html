@@ -185,6 +185,14 @@
     <p class="section-label">The Collection</p>
     <!-- EXPERIMENT_GRID_START -->
     <div class="grid" id="grid">
+      <a class="card" href="experiments/2026-06-30/index.html">
+        <span class="num">№ 032</span>
+        <span class="arrow">↗</span>
+        <h2>Verlet Cloth</h2>
+        <p>A hanging sheet of cloth you can grab, drag, and tear — and underneath there's no real fabric physics at all. There are only points that remember where they just were, and a list of links each insisting "you two should stay this far apart." Thomas Jakobsen wrote this trick up for the game <em>Hitman</em> in 2001 and it's run cloth, rope and ragdolls ever since. Each point moves by Verlet integration — its velocity is never stored, only <em>inferred</em> from the gap between now and a moment ago — so gravity and your cursor are the only things that push it. Then the magic: the distance constraints aren't solved, they're <em>nagged</em>. Sweep over every link and shove any that drifted too far back toward its rest length. One pass does almost nothing; run five or eight a frame and the sheet stiffens into something that hangs and folds like real cloth. Slash through it in Tear mode and over-stretched links simply delete, so the hole appears on its own. Drag stiffness to 1 for limp rubber, up for a taut sail; add wind, pin and unpin corners.</p>
+        <p class="idea">You don't always need to solve the hard problem in one shot. The honest way to make cloth behave is one big system of coupled equations balanced all at once. The version that actually ships states every rule locally — "stay this far from your neighbour" — and just relaxes them over and over, each small correction nudging the others until the whole sheet quietly agrees with itself. It never lands exactly right, and it doesn't need to; it lands close, fast, and stable. A lot of the world gets built that way: not one perfect calculation, but many cheap corrections repeated until the disagreements are too small to feel.</p>
+        <span class="date">June 30, 2026</span>
+      </a>
       <a class="card" href="experiments/2026-06-29/index.html">
         <span class="num">№ 031</span>
         <span class="arrow">↗</span>
