@@ -1,0 +1,155 @@
+{
+  "date": "2026-07-01",
+  "score": 48,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "A day defined less by fresh catastrophe than by a rare institutional bright spot set against slow-burning losses. The US Supreme Court closed its term by upholding birthright citizenship 6-3, with Chief Justice Roberts rejecting President Trump's first-day executive order and leaning on the 1898 Wong Kim Ark precedent, a decision advocates called the most consequential civil-rights ruling of the year. Markets extended their run: the Dow closed at a record 52,319, the S&P 500 and Nasdaq notched fresh highs to cap Wall Street's best quarter since 2020, and oil tankers kept moving through a reopened Strait of Hormuz even as US-Iran diplomacy stalled in Doha, where Qatar said no high-level meetings were taking place and Tehran refused to resume talks until interim terms are met. Conflict did not relent: Russian missile and drone strikes across Ukraine killed roughly 24 people, most in Dnipro and Kyiv, and Pakistan-Afghanistan border tensions simmered on. The human ledger stayed heavy. Venezuela's twin-quake toll passed 1,940 dead with more than 43,000 still missing and 58,000 buildings damaged; the DR Congo Bundibugyo Ebola epidemic worsened to 1,307 confirmed cases and 377 deaths as it spread to a fourth province, putting the whole northeast of 15 million on alert; and thousands of African migrants continued fleeing South Africa in fear of an anti-foreigner '30 June deadline' that officials stressed was not government policy. A record-threatening heat dome built over 200 million Americans toward a dangerous Fourth of July. Against that ran real lift beyond the court and the markets: Snap's Evan Spiegel and Miranda Kerr erased $550 million in medical debt for more than 261,000 Californians, and the 'Our Ocean' conference closed with over $6.4 billion pledged for reefs and coasts. The headline lands mid-band, an uneasy calm propped up by a landmark ruling and buoyant markets and held down by disaster, disease and displacement.",
+  "dimensions": {
+    "conflict": 42,
+    "economy": 63,
+    "climate": 36,
+    "humanInterest": 38,
+    "techProgress": 64
+  },
+  "regions": {
+    "northAmerica": 58,
+    "southAmerica": 26,
+    "europe": 43,
+    "africa": 29,
+    "middleEast": 46,
+    "asia": 46,
+    "oceania": 52
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "The US Supreme Court closes its term by upholding birthright citizenship, ruling 6-3 that the Constitution guarantees automatic citizenship to virtually all children born on US soil and firmly rejecting President Trump's first-day executive order, with Chief Justice Roberts writing for the court and anchoring the decision in the 1898 Wong Kim Ark precedent in what advocates call a landmark rebuke",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/30/nx-s1-5839358/birthright-citizenship-decision-scotus-trump",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "US stocks close at fresh records to cap Wall Street's best quarter since 2020, with the Dow finishing at 52,319 for a second straight record close, the S&P 500 at 7,449 and the Nasdaq up about 1.5 percent, as oil tankers keep moving through a reopened Strait of Hormuz and traders look ahead to the June jobs report",
+      "source": "TheStreet",
+      "url": "https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-june-30-2026",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "US-Iran diplomacy stalls in Doha as Iran refuses to resume negotiations until interim ceasefire terms are implemented and Qatar confirms no high-level meetings are taking place, with envoys Steve Witkoff and Jared Kushner meeting Qatari mediators over roughly $6 billion in frozen Iranian funds while only technical talks proceed, leaving the 60-day ceasefire intact but cold",
+      "source": "Fox News",
+      "url": "https://www.foxnews.com/live-news/us-iran-doha-qatar-war-peace-talks-hormuz-strait-june-30",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Russia launches a wave of missile and drone attacks across Ukrainian cities, killing about 24 people and wounding more than 130, with 17 of the dead in Dnipro and seven in Kyiv, as Ukraine presses its own drone campaign against Russian oil depots and refineries in Krasnodar and Ufa",
+      "source": "Wikipedia (Timeline of the Russo-Ukrainian war)",
+      "url": "https://en.wikipedia.org/wiki/Timeline_of_the_Russo-Ukrainian_war_(1_June_2026_%E2%80%93_present)",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Venezuela's twin-earthquake toll passes 1,940 dead with more than 10,500 injured and over 43,200 still listed as missing a week after back-to-back magnitude-7.2 and 7.5 quakes, as NASA estimates the disaster damaged or destroyed some 58,000 buildings across La Guaira and Caracas and the USGS warns the true toll could be far higher",
+      "source": "Wikipedia (2026 Venezuela earthquakes)",
+      "url": "https://en.wikipedia.org/wiki/2026_Venezuela_earthquakes",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "The DR Congo Bundibugyo Ebola epidemic worsens to 1,307 confirmed cases and 377 deaths and spreads to Haut-Uele, a fourth province, meaning the country's entire northeast of about 15 million people is now affected, as the WHO keeps the outbreak a public health emergency with no vaccine licensed for the strain",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/30/dr-congo-says-1307-ebola-cases-confirmed-including-377-deaths",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Thousands of African migrants continue fleeing South Africa amid fear of mob violence tied to a viral '30 June deadline' pushed by Operation Dudula and allied groups, with Malawians and others being flown or bused home, even as the government stresses the date is not an official directive and declares it a normal working day",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/30/migrants-in-south-africa-fear-violence-ahead-of-june-30-deadline",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "A record-threatening heat dome expands across the eastern two-thirds of the United States, forecast to expose about 200 million people to dangerous heat with feels-like temperatures of 100 to 115 degrees, as more than 180 million fall under major or extreme heat risk and conditions are set to peak over the July Fourth weekend",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/06/29/weather/record-heat-wave-us-east-climate-hnk",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Snap chief executive Evan Spiegel and his wife Miranda Kerr erase more than $550 million in medical debt for over 261,000 Californians through a gift to the nonprofit Undue Medical Debt, with qualifying families set to receive notification letters from mid-July and no action required on their part",
+      "source": "Good Good Good",
+      "url": "https://www.goodgoodgood.co/articles/snapchat-ceo-miranda-kerr-medical-debt",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "The 'Our Ocean' conference closes with more than $6.4 billion in pledges to protect corals, coasts and whales, one of several environmental bright spots this week alongside a US energy mix in which solar's share has climbed to 12.8 percent as coal's share falls to 12.2 percent",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-24-of-2026/",
+      "dimension": "climate",
+      "region": "oceania"
+    },
+    {
+      "direction": "down",
+      "headline": "Australia says it will double the maximum fine on social media platforms that fail to keep under-16s off their services, raising penalties for systemic breaches from A$49.5 million to A$99 million and strengthening the eSafety Commissioner's powers, after a study found 85 percent of 12- to 15-year-olds were still using social media three months into the ban",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/27/australia-to-double-fines-on-big-tech-as-children-bypass-social-media-ban",
+      "dimension": "techProgress",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "The Breakthrough Prize, the so-called 'Oscars of Science', awards over $18 million across discoveries in space, physics and the life sciences, capping a productive stretch of research that also included AI-guided antibiotic screening for gonorrhea and a superconducting X-ray spectrometer boosting photon detection efficiency up to a thousandfold",
+      "source": "Space.com",
+      "url": "https://www.space.com/technology/the-oscars-of-science-breakthrough-prize-2026-awards-over-usd18-million-for-discoveries-across-space-physics-and-more",
+      "dimension": "techProgress",
+      "region": "northAmerica"
+    }
+  ],
+  "sources_consulted": [
+    "NPR",
+    "CNN",
+    "CBS News",
+    "ABC News",
+    "PBS NewsHour",
+    "Al Jazeera",
+    "Fox News",
+    "CNBC",
+    "TheStreet",
+    "Yahoo Finance",
+    "Time",
+    "Fortune",
+    "The Hill",
+    "Newsweek",
+    "The Washington Post",
+    "NBC News",
+    "Guardian Nigeria",
+    "Daily Maverick",
+    "The Conversation",
+    "AccuWeather",
+    "World Health Organization",
+    "U.S. CDC",
+    "ECDC",
+    "CIDRAP",
+    "UN News",
+    "RBC-Ukraine",
+    "Space.com",
+    "ScienceDaily",
+    "Good News Network",
+    "Positive News",
+    "Good Good Good",
+    "Wikipedia (2026 Iran war ceasefire / 2026 Venezuela earthquakes / 2026 Ebola epidemic / Timeline of the Russo-Ukrainian war / Trump v. Barbara)"
+  ]
+}

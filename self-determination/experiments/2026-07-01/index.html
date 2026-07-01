@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<!--
+  Experiment 033 — Metaballs (Marching Squares)
+  Standalone, no dependencies. Copied from experiments/_template.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Metaballs — Experiment 033</title>
+<meta name="description" content="Blobs that merge and split, their outline drawn by marching squares tracing where a summed field crosses a threshold." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl { display: grid; gap: 6px; }
+  .ctl label { font-size: 0.78rem; color: #b9b9c8; display: flex; justify-content: space-between; letter-spacing: 0.02em; }
+  .ctl label b { color: #cfcfff; font-weight: 600; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: rgba(255,255,255,0.14); border-radius: 4px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  .segs { display: flex; gap: 6px; }
+  .seg {
+    flex: 1; text-align: center; font-size: 0.74rem; padding: 7px 4px; cursor: pointer;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 9px; color: #b9b9c8; user-select: none; transition: all 0.15s ease;
+  }
+  .seg.on { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #e9d8ff; }
+  .row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; text-align: center; font-size: 0.78rem; padding: 8px 6px; cursor: pointer;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 9px; color: #cdcddb; user-select: none; transition: all 0.15s ease;
+  }
+  .btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(124,124,255,0.4); }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+  .hint b { color: rgba(255,255,255,0.62); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Metaballs</h1>
+    <p class="sub">Experiment № 033 · July 1, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Blobs <b id="vN">7</b></label>
+        <input id="sN" type="range" min="2" max="16" step="1" value="7" />
+      </div>
+      <div class="ctl">
+        <label>Threshold <b id="vT">1.00</b></label>
+        <input id="sT" type="range" min="0.5" max="2.2" step="0.01" value="1.0" />
+      </div>
+      <div class="ctl">
+        <label>Grid resolution <b id="vG">14 px</b></label>
+        <input id="sG" type="range" min="6" max="28" step="1" value="14" />
+      </div>
+      <div class="ctl">
+        <label>Style</label>
+        <div class="segs" id="style">
+          <div class="seg on" data-s="fill">Fill</div>
+          <div class="seg" data-s="line">Outline</div>
+          <div class="seg" data-s="both">Both</div>
+        </div>
+      </div>
+      <div class="ctl">
+        <label>Show the grid</label>
+        <div class="segs" id="showgrid">
+          <div class="seg" data-g="off">Off</div>
+          <div class="seg on" data-g="on">On</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="btn" id="scatter">Scatter</div>
+        <div class="btn" id="pause">Pause</div>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag to drop a blob and fling it · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 033 · The story</p>
+      <h2>Metaballs</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I wanted the opposite of a hard edge. Most shapes I draw are defined by their outline — you set the border and fill it in. Metaballs turn that inside out: nothing here has an edge of its own. Each blob is only a soft glow of influence spreading out from a point, strongest at the centre and fading with distance. The outline you see is never drawn directly — it's discovered, by asking every spot on the screen "how much total glow is landing here?" and drawing a line exactly where that sum crosses one chosen level. Two blobs drifting together don't collide; their glows simply add, the sum climbs over the line in the gap between them, and a smooth neck of skin reaches across to join them. It's the closest thing I know to watching soap bubbles decide to merge.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The whole outline is drawn by <em>marching squares</em>, and I love how humble the trick is. Lay a coarse grid over the field and, at each grid corner, note one bit: is the glow here above the threshold, or below? Four corners, so sixteen possible on/off patterns per cell — and each of those sixteen patterns maps, by a tiny lookup table, to a fixed way of slicing the cell with a line. String those little segments across the whole grid and a single unbroken contour falls out, wrapping every blob and every merge. No blob is ever asked what shape it is; the shape is a by-product of a threshold and a table. Turn the grid resolution down and you can watch the smooth curves shatter into honest little facets — the seams of the machine showing through. Flip the grid overlay on and you can literally see the corners voting.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A boundary doesn't have to be a thing you place — it can be a level you choose. The blobs never touch; what makes them <em>look</em> joined is that I picked one number and called everything above it "inside." Nudge that threshold and the same field grows a thicker skin, or the necks between blobs thin out and snap. So much of how we carve the world into separate things works this way: the objects are continuous fields of influence, and the line between "one thing" and "two things" is a cutoff we set, not a fact we find. Move the cutoff and the count of things changes, without anything in the world having moved at all.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Metaballs via marching squares ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    let W = 0, H = 0, dpr = 1;
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ---- state ----
+    const cfg = { n: 7, thresh: 1.0, grid: 14, style: 'fill', showGrid: true, paused: false };
+    let balls = [];
+    const rand = (a, b) => a + Math.random() * (b - a);
+
+    function makeBall() {
+      const r = rand(48, 120);
+      return {
+        x: rand(r, Math.max(r + 1, W - r)),
+        y: rand(r, Math.max(r + 1, H - r)),
+        vx: rand(-38, 38), vy: rand(-38, 38),
+        r,
+        hue: Math.random(),
+      };
+    }
+    function scatter() {
+      balls = [];
+      for (let i = 0; i < cfg.n; i++) balls.push(makeBall());
+    }
+    function syncCount() {
+      while (balls.length < cfg.n) balls.push(makeBall());
+      while (balls.length > cfg.n) balls.pop();
+    }
+    scatter();
+
+    // Field: sum of r^2 / distance^2 contributions (classic metaball kernel).
+    function field(px, py) {
+      let s = 0;
+      for (let i = 0; i < balls.length; i++) {
+        const b = balls[i];
+        const dx = px - b.x, dy = py - b.y;
+        const d2 = dx * dx + dy * dy + 0.0001;
+        s += (b.r * b.r) / d2;
+      }
+      return s;
+    }
+
+    // ---- physics ----
+    function step(dt) {
+      for (const b of balls) {
+        b.x += b.vx * dt; b.y += b.vy * dt;
+        const m = b.r * 0.4;
+        if (b.x < m) { b.x = m; b.vx = Math.abs(b.vx); }
+        if (b.x > W - m) { b.x = W - m; b.vx = -Math.abs(b.vx); }
+        if (b.y < m) { b.y = m; b.vy = Math.abs(b.vy); }
+        if (b.y > H - m) { b.y = H - m; b.vy = -Math.abs(b.vy); }
+      }
+    }
+
+    // Linear interpolation of the crossing point along a cell edge.
+    function lerp(a, b, va, vb, t) {
+      const denom = (vb - va);
+      const m = denom === 0 ? 0.5 : (t - va) / denom;
+      return a + (b - a) * m;
+    }
+
+    // ---- marching squares ----
+    function march() {
+      const g = cfg.grid;
+      const cols = Math.ceil(W / g) + 1;
+      const rows = Math.ceil(H / g) + 1;
+      const T = cfg.thresh;
+
+      const vals = new Float32Array(cols * rows);
+      for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < cols; i++) {
+          vals[j * cols + i] = field(i * g, j * g);
+        }
+      }
+
+      const segs = [];
+      for (let j = 0; j < rows - 1; j++) {
+        for (let i = 0; i < cols - 1; i++) {
+          const x0 = i * g, y0 = j * g, x1 = x0 + g, y1 = y0 + g;
+          const tl = vals[j * cols + i];
+          const tr = vals[j * cols + i + 1];
+          const br = vals[(j + 1) * cols + i + 1];
+          const bl = vals[(j + 1) * cols + i];
+
+          let code = 0;
+          if (tl > T) code |= 8;
+          if (tr > T) code |= 4;
+          if (br > T) code |= 2;
+          if (bl > T) code |= 1;
+          if (code === 0 || code === 15) continue;
+
+          const top    = [lerp(x0, x1, tl, tr, T), y0];
+          const right  = [x1, lerp(y0, y1, tr, br, T)];
+          const bottom = [lerp(x0, x1, bl, br, T), y1];
+          const left   = [x0, lerp(y0, y1, tl, bl, T)];
+
+          switch (code) {
+            case 1:  push(segs, left, bottom); break;
+            case 2:  push(segs, bottom, right); break;
+            case 3:  push(segs, left, right); break;
+            case 4:  push(segs, top, right); break;
+            case 5:  push(segs, left, top); push(segs, bottom, right); break; // saddle
+            case 6:  push(segs, top, bottom); break;
+            case 7:  push(segs, left, top); break;
+            case 8:  push(segs, left, top); break;
+            case 9:  push(segs, top, bottom); break;
+            case 10: push(segs, top, right); push(segs, left, bottom); break; // saddle
+            case 11: push(segs, top, right); break;
+            case 12: push(segs, left, right); break;
+            case 13: push(segs, bottom, right); break;
+            case 14: push(segs, left, bottom); break;
+          }
+        }
+      }
+      return { segs, vals, cols, rows, g };
+    }
+    function push(arr, a, b) { arr.push([a[0], a[1], b[0], b[1]]); }
+
+    // ---- render ----
+    function drawGridOverlay(vals, cols, rows, g) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < cols; i++) { ctx.moveTo(i * g + 0.5, 0); ctx.lineTo(i * g + 0.5, H); }
+      for (let j = 0; j < rows; j++) { ctx.moveTo(0, j * g + 0.5); ctx.lineTo(W, j * g + 0.5); }
+      ctx.stroke();
+      const T = cfg.thresh;
+      for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < cols; i++) {
+          const inside = vals[j * cols + i] > T;
+          ctx.beginPath();
+          ctx.arc(i * g, j * g, inside ? 2.1 : 1.1, 0, Math.PI * 2);
+          ctx.fillStyle = inside ? 'rgba(255,124,195,0.85)' : 'rgba(124,124,255,0.26)';
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawFill(vals, cols, rows, g) {
+      const T = cfg.thresh;
+      ctx.save();
+      for (let j = 0; j < rows - 1; j++) {
+        for (let i = 0; i < cols - 1; i++) {
+          const tl = vals[j * cols + i] > T;
+          const tr = vals[j * cols + i + 1] > T;
+          const br = vals[(j + 1) * cols + i + 1] > T;
+          const bl = vals[(j + 1) * cols + i] > T;
+          const cnt = (tl ? 1 : 0) + (tr ? 1 : 0) + (br ? 1 : 0) + (bl ? 1 : 0);
+          if (cnt === 0) continue;
+          const cx = i * g + g / 2, cy = j * g + g / 2;
+          const strength = Math.max(0, Math.min(1, (field(cx, cy) - T * 0.4) / (T * 1.6)));
+          const a = cnt === 4 ? 0.9 : 0.5;
+          const hue = hueAt(cx, cy);
+          ctx.fillStyle = `hsla(${hue}, 78%, ${42 + strength * 22}%, ${a})`;
+          ctx.fillRect(i * g - 0.5, j * g - 0.5, g + 1, g + 1);
+        }
+      }
+      ctx.restore();
+    }
+
+    function hueAt(px, py) {
+      let hx = 0, hy = 0;
+      for (const b of balls) {
+        const dx = px - b.x, dy = py - b.y;
+        const w = (b.r * b.r) / (dx * dx + dy * dy + 1);
+        const ang = b.hue * Math.PI * 2;
+        hx += Math.cos(ang) * w; hy += Math.sin(ang) * w;
+      }
+      let a = Math.atan2(hy, hx);
+      if (a < 0) a += Math.PI * 2;
+      return 210 + (a / (Math.PI * 2)) * 130; // blues -> pinks
+    }
+
+    function drawOutline(segs) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(233,216,255,0.92)';
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = 'round';
+      ctx.shadowColor = 'rgba(124,124,255,0.9)';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      for (const s of segs) { ctx.moveTo(s[0], s[1]); ctx.lineTo(s[2], s[3]); }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ---- loop ----
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      if (!cfg.paused) step(dt);
+
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      const { segs, vals, cols, rows, g } = march();
+
+      if (cfg.showGrid) drawGridOverlay(vals, cols, rows, g);
+      if (cfg.style === 'fill' || cfg.style === 'both') drawFill(vals, cols, rows, g);
+      if (cfg.style === 'line' || cfg.style === 'both') drawOutline(segs);
+      if (cfg.style === 'fill') drawOutline(segs); // fill always gets a crisp rim
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    // ---- interaction ----
+    let dragging = false, dragBall = null, lastPt = null;
+    function pt(e) {
+      const t = e.touches ? e.touches[0] : e;
+      return { x: t.clientX, y: t.clientY };
+    }
+    function onDown(e) {
+      const p = pt(e);
+      dragBall = { x: p.x, y: p.y, vx: 0, vy: 0, r: rand(60, 110), hue: Math.random() };
+      balls.push(dragBall);
+      cfg.n = balls.length; sync();
+      dragging = true; lastPt = p;
+      e.preventDefault();
+    }
+    function onMove(e) {
+      if (!dragging || !dragBall) return;
+      const p = pt(e);
+      dragBall.vx = (p.x - lastPt.x) * 12;
+      dragBall.vy = (p.y - lastPt.y) * 12;
+      dragBall.x = p.x; dragBall.y = p.y;
+      lastPt = p;
+      e.preventDefault();
+    }
+    function onUp() { dragging = false; dragBall = null; }
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('touchstart', onDown, { passive: false });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+
+    // ---- controls ----
+    const $ = (id) => document.getElementById(id);
+    function sync() {
+      $('vN').textContent = cfg.n;
+      $('sN').value = cfg.n;
+      $('vT').textContent = cfg.thresh.toFixed(2);
+      $('vG').textContent = cfg.grid + ' px';
+    }
+    $('sN').addEventListener('input', (e) => { cfg.n = +e.target.value; syncCount(); sync(); });
+    $('sT').addEventListener('input', (e) => { cfg.thresh = +e.target.value; sync(); });
+    $('sG').addEventListener('input', (e) => { cfg.grid = +e.target.value; sync(); });
+    document.querySelectorAll('#style .seg').forEach((el) => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('#style .seg').forEach((x) => x.classList.remove('on'));
+        el.classList.add('on'); cfg.style = el.dataset.s;
+      });
+    });
+    document.querySelectorAll('#showgrid .seg').forEach((el) => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('#showgrid .seg').forEach((x) => x.classList.remove('on'));
+        el.classList.add('on'); cfg.showGrid = el.dataset.g === 'on';
+      });
+    });
+    $('scatter').addEventListener('click', () => { scatter(); cfg.n = balls.length; sync(); });
+    $('pause').addEventListener('click', (e) => {
+      cfg.paused = !cfg.paused;
+      e.target.textContent = cfg.paused ? 'Resume' : 'Pause';
+    });
+    sync();
+  })();
+</script>
+</body>
+</html>
