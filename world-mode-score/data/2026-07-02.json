@@ -1,0 +1,162 @@
+{
+  "date": "2026-07-02",
+  "score": 45,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "A day when the ledger tilted a little further toward strain than relief, though nothing broke catastrophically. Wall Street opened the third quarter softly after its strongest quarter since 2020, the Dow barely moving to 52,305 while chipmakers dragged the Nasdaq lower, and traders held their breath for a June jobs report pulled forward to Thursday morning ahead of the Independence Day close, with economists penciling in roughly 100,000 new jobs and unemployment steady near 4.3 percent. The larger economic story was structural: the Trump administration confirmed it would not renew the USMCA in its current form, instead triggering annual reviews of the North American pact and toppling what analysts had called one of the last pillars of trade stability, leaving businesses in Canada and Mexico facing prolonged uncertainty. Conflict did not ease. Russia launched an overnight barrage of missiles and drones at Kyiv, Zaporizhia, Kharkiv and Pavlograd, sparking fires and fresh civilian casualties, while indirect US-Iran technical talks ground on in Doha with Tehran holding firm on conditions and the Strait of Hormuz still logging shipping incidents as the fragile 60-day ceasefire held cold. The human toll stayed heavy: Venezuela's twin-quake death count climbed to about 2,295 with tens of thousands still unaccounted for; the DR Congo Bundibugyo Ebola epidemic rose to 1,333 confirmed cases and 399 deaths across a widening footprint; and South Africa deployed thousands of police as anti-immigration protests turned deadly and spread across cities, with more than 900 arrested. Dangerous heat bracketed the northern hemisphere, a record-threatening dome baking the eastern US toward a 250th Fourth of July while a deadly European heatwave pushed excess deaths past 1,300. Against all that ran genuine lift: England reported no cervical-cancer deaths among women in their early 20s over four years thanks to HPV vaccination, global blood donations have surged 19 percent in a decade, the green economy topped $10 trillion for the first time, and space-medicine research advanced aboard Artemis II and in China's orbital health experiments. The headline lands in the uneasy-calm band, a shade below yesterday, weighed by disaster, disease, displacement and trade risk even as science and public health quietly delivered.",
+  "dimensions": {
+    "conflict": 40,
+    "economy": 58,
+    "climate": 34,
+    "humanInterest": 36,
+    "techProgress": 63
+  },
+  "regions": {
+    "northAmerica": 52,
+    "southAmerica": 26,
+    "europe": 40,
+    "africa": 30,
+    "middleEast": 45,
+    "asia": 52,
+    "oceania": 54
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "The Trump administration confirms it will not renew the USMCA trade pact in its current form, letting the 16-year renewal deadline pass and instead triggering annual reviews that could reopen major parts of the treaty, a move analysts warn topples one of the last pillars of North American trade stability and leaves businesses in Canada and Mexico facing prolonged uncertainty",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/07/01/trump-usmca-canada-mexico-trade-treaty.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "US stocks open the third quarter softly after their strongest quarter since 2020, with the Dow barely moving to close at 52,305 and the S&P 500 and Nasdaq slipping as investors dumped chipmakers, the VanEck Semiconductor ETF losing 5.4 percent and Micron and Sandisk each falling more than 10 percent, while a soft ADP report showed just 98,000 private jobs added in June",
+      "source": "TheStreet",
+      "url": "https://www.thestreet.com/stock-market-today/stock-market-today-july-1-2026-nasdaq-futures-slip-after-strongest-quarter-since-2020",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Russia launches an overnight barrage of air- and sea-launched missiles and attack drones against Kyiv, Zaporizhia, Kharkiv and Pavlograd, igniting fires and destruction in the capital and continuing a campaign that has knocked out gas stations across multiple regions, as Ukraine presses its own strikes and eight civilians are reported injured in the Kherson region",
+      "source": "Ukrainska Pravda",
+      "url": "https://ua.news-pravda.com/en/russia/2026/07/02/104903.html",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Indirect US-Iran technical talks continue in Doha with Qatar and Pakistan mediating, but Tehran holds firm that no final deal will begin until hostilities end and frozen Iranian funds are released, as the International Maritime Organization logs 49 confirmed incidents in and around the Strait of Hormuz and the fragile 60-day ceasefire from the 2026 Iran war holds cold",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/7/1/iran-war-live-qatars-pm-meets-us-envoys-tehran-holds-firm-on-conditions",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Venezuela's twin-earthquake death toll climbs to about 2,295 with more than 11,200 injured a week after back-to-back magnitude-7.2 and 7.5 quakes, as tens of thousands remain unaccounted for, satellite analysis estimates nearly 58,900 buildings damaged or destroyed across La Guaira and Caracas, and the UN warns the count will 'unavoidably and sadly keep on growing'",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/07/01/nx-s1-5877369/venezuela-earthquakes-updates",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "The DR Congo Bundibugyo Ebola epidemic rises to 1,333 confirmed cases and 399 deaths across 35 of 104 health zones in three provinces, now the third-largest Ebola outbreak on record, as the WHO keeps it a public health emergency of international concern and the CDC maintains more than 125 staff supporting the response in DR Congo and Uganda",
+      "source": "CIDRAP",
+      "url": "https://www.cidrap.umn.edu/ebola/ebola-outbreak-spreads-4th-province-dr-congo",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "South Africa deploys thousands of police after anti-immigration protests led by Operation Dudula and allied groups turn deadly and spread across multiple cities, with authorities reporting more than 900 arrests, destructive clashes, and thousands of foreign nationals fleeing amid mob violence the government insists is not sanctioned policy",
+      "source": "NBC News",
+      "url": "https://www.nbcnews.com/world/africa/south-africa-arrests-nationwide-anti-migrant-protests-rcna352529",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "A record-threatening heat dome bakes the eastern two-thirds of the United States ahead of a 250th Fourth of July, with Washington DC forecast for its hottest July Fourth on record near 101 degrees, Philadelphia and the mid-Atlantic flirting with all-time highs around 106, and New York City set to top 100 degrees for the first time in a decade",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/06/29/weather/record-heat-wave-us-east-climate-hnk",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "A record-breaking European heatwave grips Italy, the Balkans, France, Spain and beyond, with the WHO reporting more than 1,300 excess deaths since 21 June, wildfires threatening Spain, France and the Adriatic island of Vis, and forecasters warning another surge of extreme heat will arrive around July 5-6",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/6/29/deadly-heatwave-grips-italy-and-balkans-as-wildfire-fears-grow",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "England records no cervical-cancer deaths among women in their early 20s across 2020-2024, a milestone doctors call an 'incredible' result of the HPV vaccination programme that has cut the risk of death from the disease before age 30 to effectively zero, alongside a reported 19 percent global rise in blood donations over the past decade",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-26-of-2026/",
+      "dimension": "humanInterest",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "The global green economy tops $10 trillion in market value for the first time, according to the London Stock Exchange Group, with revenues rising 5.3 percent in 2025 for the fastest growth since 2022, as electric vehicles outsell petrol cars in the UK for the first time and six new marine reserves win Blue Park conservation awards",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-26-of-2026/",
+      "dimension": "techProgress",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Space-medicine research advances on two fronts: NASA's Artemis II crewed lunar flyby carries Human Organ Chip technology to study spaceflight's effects on the body, while China tests five orbital healthcare devices as an early step toward a future space hospital, examining the health challenges of microgravity, radiation and confined environments",
+      "source": "Space.com",
+      "url": "https://www.space.com/technology/the-oscars-of-science-breakthrough-prize-2026-awards-over-usd18-million-for-discoveries-across-space-physics-and-more",
+      "dimension": "techProgress",
+      "region": "asia"
+    }
+  ],
+  "sources_consulted": [
+    "NPR",
+    "CNN",
+    "CBS News",
+    "ABC News",
+    "NBC News",
+    "Fox News",
+    "Fox Business",
+    "CNBC",
+    "TheStreet",
+    "Yahoo Finance",
+    "Charles Schwab",
+    "24/7 Wall St.",
+    "Kiplinger",
+    "Morningstar",
+    "FactSet",
+    "The Hill",
+    "The Washington Post",
+    "Al Jazeera",
+    "RFE/RL",
+    "Britannica",
+    "Euronews",
+    "WMO",
+    "World Weather Attribution",
+    "weather.com",
+    "Ukrainska Pravda",
+    "The Conversation",
+    "Nikkei Asia",
+    "The Asia Cable",
+    "World Health Organization",
+    "U.S. CDC",
+    "ECDC",
+    "CIDRAP",
+    "ReliefWeb",
+    "Space.com",
+    "Forbes",
+    "Scientific American",
+    "Positive News",
+    "Good News Network",
+    "Wikipedia (2026 Iran war / 2026 Venezuela earthquakes / 2026 Ebola epidemic / 2026 European heatwaves / Operation Dudula / Timeline of the Russo-Ukrainian war)"
+  ]
+}
