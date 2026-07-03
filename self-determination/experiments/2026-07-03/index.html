@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Percolation — Experiment 035</title>
+<meta name="description" content="Open each cell with probability p and watch a single cluster suddenly reach clear across the grid — the moment a random medium starts to conduct." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; touch-action: none; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 330px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .row label { display: block; font-size: 0.78rem; color: #b9b9cc; margin-bottom: 6px; letter-spacing: 0.02em; }
+  .row .val { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; cursor: pointer; }
+
+  .readout {
+    display: flex; gap: 10px; margin-top: 2px;
+  }
+  .stat {
+    flex: 1; text-align: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 8px 6px;
+  }
+  .stat .k { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: #9a9ab0; }
+  .stat .v { font-size: 1.05rem; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .stat .v.on { color: #ff7cc3; }
+  .stat .v.off { color: #6f6f88; }
+
+  .btns { display: flex; gap: 10px; }
+  .btn {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #d7d7e6; border-radius: 10px; padding: 9px 10px;
+    font-size: 0.82rem; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.18); border-color: rgba(124,124,255,0.4); }
+  .btn.pri { color: #cfcfff; border-color: rgba(124,124,255,0.4); background: rgba(124,124,255,0.14); }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: normal; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+  @media (max-width: 640px) {
+    .ui { left: 12px; right: 12px; top: 12px; max-width: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Percolation</h1>
+    <p class="sub">Experiment № 035 · July 3, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Open probability <span class="val" id="pLabel">0.500</span></label>
+        <input type="range" id="p" min="0" max="1" step="0.001" value="0.5" />
+      </div>
+
+      <div class="readout">
+        <div class="stat">
+          <div class="k">Filled</div>
+          <div class="v" id="fillStat">50%</div>
+        </div>
+        <div class="stat">
+          <div class="k">Spanning</div>
+          <div class="v off" id="spanStat">NO</div>
+        </div>
+        <div class="stat">
+          <div class="k">Biggest</div>
+          <div class="v" id="bigStat">—</div>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button class="btn" id="reroll">↻ Re-roll</button>
+        <button class="btn pri" id="sweep">▶ Sweep p</button>
+      </div>
+      <div class="row">
+        <label>Grid size <span class="val" id="szLabel">160</span></label>
+        <input type="range" id="sz" min="60" max="260" step="20" value="160" />
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag the top slider through <b style="color:#ff7cc3">p ≈ 0.593</b> and watch one cluster suddenly reach top-to-bottom. Press <b>H</b> to hide panel.</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 035 · The story</p>
+      <h2>Percolation</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I keep coming back to threshold phenomena in this collection — the Ising model freezing, the fireflies snapping into sync — because there's something almost unbelievable about a system that stays boring, boring, boring, and then <em>lurches</em> at one exact value with nothing dramatic being added. Percolation is the purest example I know. There is no physics here at all: I flip an independent coin for every cell, open it or leave it closed, and ask one question — is there an unbroken path of open cells from the top edge to the bottom? Below a critical fraction the answer is almost always no; above it, almost always yes; and the switch is razor-sharp. I wanted to build the thing where you can grab that switch with your own hand and feel it click.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The magic is in what the cells <em>don't</em> know. Each cell is decided in total isolation — it has no idea what its neighbours did, no plan, no communication. Nothing coordinates them. Yet somewhere around p ≈ 0.593 (the famous, still-not-exactly-solved threshold for a square lattice), one connected blob abruptly outgrows every other and stitches itself clean across the grid. I light that spanning cluster in pink so you can catch the instant it forms: nudge the slider up a thousandth and a shape that touched neither edge suddenly bridges both. The <em>Biggest</em> readout is the tell — it creeps up gently, then explodes near the threshold. Watching that number leap while I've only moved p by a hair still gets me every time.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A network can be almost entirely built and still carry nothing — and then a tiny bit more connectivity flips it from disconnected to <em>global</em>, all at once. That's not a story about the last cell being special; it's about crossing a threshold that was always waiting. Forest fires spreading, a rumour going viral, a gel setting, a power grid cascading, an idea reaching everyone — they share this shape. The question is rarely "what was the final straw?" It's "how close to the critical fraction were we already?" Connectedness isn't gradual. It has a cliff.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT: site percolation on a square lattice ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const pSlider = document.getElementById('p');
+    const szSlider = document.getElementById('sz');
+    const pLabel = document.getElementById('pLabel');
+    const szLabel = document.getElementById('szLabel');
+    const fillStat = document.getElementById('fillStat');
+    const spanStat = document.getElementById('spanStat');
+    const bigStat = document.getElementById('bigStat');
+    const rerollBtn = document.getElementById('reroll');
+    const sweepBtn = document.getElementById('sweep');
+
+    let N = 160;            // grid is N x N
+    let rand;              // per-cell random threshold [0,1)
+    let open;             // boolean open state
+    let label;           // union-find / cluster id
+    let img;            // ImageData
+    const CELL = 4;    // device pixels per cell in the ImageData
+
+    // Colour palette (RGB)
+    const BG = [10, 10, 20];
+    const CLOSED = [16, 16, 28];
+    const OPEN = [70, 78, 150];       // ordinary open cell — indigo
+    const SPAN = [255, 124, 195];     // spanning cluster — accent pink
+    const BIG = [124, 124, 255];      // biggest (non-spanning) cluster — accent blue
+
+    function resize() {
+      const px = N * CELL;
+      canvas.width = px;
+      canvas.height = px;
+      // Fit on screen while staying crisp.
+      const maxSide = Math.min(window.innerWidth - 40, window.innerHeight - 40);
+      const disp = Math.min(maxSide, 760);
+      canvas.style.width = disp + 'px';
+      canvas.style.height = disp + 'px';
+      img = ctx.createImageData(px, px);
+    }
+
+    // Assign each cell a fixed random threshold so that raising p only ever
+    // OPENS cells (monotone) — this makes the sweep feel like a real phase change.
+    function reroll() {
+      rand = new Float32Array(N * N);
+      for (let i = 0; i < rand.length; i++) rand[i] = Math.random();
+      open = new Uint8Array(N * N);
+      label = new Int32Array(N * N);
+      recompute();
+    }
+
+    // Union-find
+    let parent;
+    function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+    function union(a, b) { const ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb; }
+
+    let spanning = false, biggestSize = 0, filledFrac = 0;
+    let spanRoots = new Set();
+    let biggestRoot = -1;
+
+    function recompute() {
+      const p = +pSlider.value;
+      const n2 = N * N;
+      parent = new Int32Array(n2);
+      let openCount = 0;
+      for (let i = 0; i < n2; i++) {
+        parent[i] = i;
+        const o = rand[i] < p ? 1 : 0;
+        open[i] = o;
+        if (o) openCount++;
+      }
+      // Connect open neighbours (4-connectivity)
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          const i = y * N + x;
+          if (!open[i]) continue;
+          if (x + 1 < N && open[i + 1]) union(i, i + 1);
+          if (y + 1 < N && open[i + N]) union(i, i + N);
+        }
+      }
+      // Cluster sizes + which clusters touch top and bottom rows.
+      const size = new Map();
+      const topRoots = new Set();
+      const bottomRoots = new Set();
+      for (let i = 0; i < n2; i++) {
+        if (!open[i]) continue;
+        const r = find(i);
+        size.set(r, (size.get(r) || 0) + 1);
+      }
+      for (let x = 0; x < N; x++) {
+        if (open[x]) topRoots.add(find(x));                    // top row
+        const b = (N - 1) * N + x;
+        if (open[b]) bottomRoots.add(find(b));                 // bottom row
+      }
+      spanRoots = new Set();
+      for (const r of topRoots) if (bottomRoots.has(r)) spanRoots.add(r);
+      spanning = spanRoots.size > 0;
+
+      // biggest cluster (for the readout + colour)
+      biggestSize = 0; biggestRoot = -1;
+      for (const [r, s] of size) { if (s > biggestSize) { biggestSize = s; biggestRoot = r; } }
+
+      filledFrac = openCount / n2;
+      draw();
+      updateReadout();
+    }
+
+    function draw() {
+      const px = N * CELL;
+      const data = img.data;
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          const i = y * N + x;
+          let col;
+          if (!open[i]) {
+            col = CLOSED;
+          } else {
+            const r = find(i);
+            if (spanRoots.has(r)) col = SPAN;
+            else if (r === biggestRoot) col = BIG;
+            else col = OPEN;
+          }
+          // paint the CELL x CELL block
+          const bx = x * CELL, by = y * CELL;
+          for (let dy = 0; dy < CELL; dy++) {
+            let off = ((by + dy) * px + bx) * 4;
+            for (let dx = 0; dx < CELL; dx++) {
+              data[off]     = col[0];
+              data[off + 1] = col[1];
+              data[off + 2] = col[2];
+              data[off + 3] = 255;
+              off += 4;
+            }
+          }
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    function updateReadout() {
+      pLabel.textContent = (+pSlider.value).toFixed(3);
+      fillStat.textContent = Math.round(filledFrac * 100) + '%';
+      spanStat.textContent = spanning ? 'YES' : 'NO';
+      spanStat.className = 'v ' + (spanning ? 'on' : 'off');
+      const frac = biggestSize / (N * N);
+      bigStat.textContent = frac < 0.001 ? '—' : Math.round(frac * 100) + '%';
+      bigStat.className = 'v' + (spanning ? ' on' : '');
+    }
+
+    // ---- Sweep animation ----
+    let sweeping = false, sweepRAF = 0;
+    function startSweep() {
+      if (sweeping) { stopSweep(); return; }
+      sweeping = true;
+      sweepBtn.textContent = '⏸ Stop';
+      let val = 0.30, dir = 1;
+      const step = () => {
+        if (!sweeping) return;
+        val += dir * 0.0016;
+        if (val >= 0.82) { val = 0.82; dir = -1; }
+        if (val <= 0.30) { val = 0.30; dir = 1; }
+        pSlider.value = val.toFixed(3);
+        recompute();
+        sweepRAF = requestAnimationFrame(step);
+      };
+      step();
+    }
+    function stopSweep() {
+      sweeping = false;
+      sweepBtn.textContent = '▶ Sweep p';
+      cancelAnimationFrame(sweepRAF);
+    }
+
+    // ---- Events ----
+    pSlider.addEventListener('input', () => { if (sweeping) stopSweep(); recompute(); });
+    szSlider.addEventListener('input', () => {
+      N = +szSlider.value; szLabel.textContent = N;
+      resize(); reroll();
+    });
+    rerollBtn.addEventListener('click', () => { if (sweeping) stopSweep(); reroll(); });
+    sweepBtn.addEventListener('click', startSweep);
+    window.addEventListener('resize', () => { resize(); draw(); });
+
+    // Init
+    szLabel.textContent = N;
+    resize();
+    reroll();
+  })();
+</script>
+</body>
+</html>
