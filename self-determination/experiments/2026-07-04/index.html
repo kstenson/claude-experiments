@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Standard Map — Experiment 036</title>
+<meta name="description" content="The Chirikov standard map: seed points and iterate one area-preserving kick to watch islands of order dissolve into a chaotic sea." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.78rem; letter-spacing: 0.04em; color: #b8b8c8; display: flex; justify-content: space-between; }
+  .row label b { color: #cfcfff; font-variant-numeric: tabular-nums; font-weight: 600; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: linear-gradient(120deg, #7c7cff, #ff7cc3);
+    cursor: pointer; border: 2px solid #12121c;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; border: 2px solid #12121c;
+    background: #9a8cff; cursor: pointer;
+  }
+  .btns { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; text-align: center;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #cfcfff; border-radius: 10px; padding: 9px 8px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: background 0.18s ease, transform 0.1s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.96); }
+  .btn.on { background: rgba(255,124,195,0.22); border-color: rgba(255,124,195,0.5); color: #ffd7ec; }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.42); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+  .readout {
+    position: fixed; right: 20px; top: 20px; z-index: 10;
+    font-size: 0.72rem; letter-spacing: 0.06em; color: #9a9ab0;
+    text-align: right; line-height: 1.7; pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout b { color: #ff7cc3; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="readout" id="readout"></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Standard Map</h1>
+    <p class="sub">Experiment № 036 · July 4, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Kick strength <b><span id="kVal">0.97</span></b></label>
+        <input type="range" id="k" min="0" max="6" step="0.001" value="0.971635" />
+      </div>
+      <div class="row">
+        <label>Orbits <b><span id="nVal">220</span></b></label>
+        <input type="range" id="n" min="40" max="600" step="10" value="220" />
+      </div>
+      <div class="btns">
+        <button class="btn" id="reseed">Re-seed</button>
+        <button class="btn on" id="sweep">Sweep K</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Click to drop one glowing orbit · drag K to melt the islands · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 036 · The story</p>
+      <h2>Standard Map</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I keep coming back to systems that are completely deterministic yet refuse to be predictable, and I wanted the cleanest possible one — no forces to integrate, no differential equations, no time-stepping error to argue about. The Chirikov standard map is exactly that: two lines of arithmetic. Give a spinning rotor a periodic kick, and each kick just updates its momentum and angle by <em>p → p + K·sin θ</em>, then <em>θ → θ + p</em>. That is the entire universe. I love that something so plain is the canonical model physicists reach for when they want to talk about the onset of chaos — it shows up in particle accelerators, plasma confinement and the orbits of comets. Drawing its phase space felt like sketching a portrait of chaos itself using nothing but a sine and two additions.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Every dot on screen is one orbit iterated hundreds of times — not travelling through space, but returning again and again to a snapshot of its <em>state</em>. When the kick is gentle, each orbit is trapped on a smooth closed loop and the screen fills with nested rings, like the grain of polished wood. Then you drag K upward and watch those rings fray from the outside in: the tidy loops dissolve into a grey static of scattered points — the "chaotic sea" — while stubborn islands of order survive in the middle, refusing to break. The sweep animation rides that transition back and forth, and there is a specific value, near K ≈ 0.9716, where the last barrier holding the sea apart finally snaps. I find it hard to stop watching at that edge.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Order and chaos are not two different regions of a map — here they are braided together in the same picture, at the same setting, separated by boundaries that stay thin at every scale. A single knob decides not <em>whether</em> the system is chaotic but <em>how much</em> of it is, and where. That is closer to how real complex things behave than the tidy story of "stable, and then it breaks." The interesting question is rarely "is this predictable or not?" — it is "which parts survive a nudge, and which have already dissolved into sea?"</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // The Chirikov–Taylor "standard map": an area-preserving map on the torus
+  // (θ, p) ∈ [0, 2π) × [0, 2π).  One kick:  p += K·sin θ ;  θ += p   (both mod 2π).
+  // We seed a grid of initial conditions, iterate each many times, and plot every
+  // visited state. Gentle K → nested KAM tori (rings). Large K → a chaotic sea.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const TAU = Math.PI * 2;
+
+    let W = 0, H = 0, DPR = 1;
+    // Square drawing region centred in the canvas (phase space is a square torus).
+    let side = 0, ox = 0, oy = 0;
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      side = Math.min(W, H) * 0.94;
+      ox = (W - side) / 2;
+      oy = (H - side) / 2;
+    }
+
+    // Colour an orbit by its seed so neighbouring tori read as a smooth spectrum;
+    // the chaotic sea (which visits everything) averages into a soft haze.
+    function hueColor(hue, a) {
+      return `hsla(${hue}, 82%, 66%, ${a})`;
+    }
+
+    // Build a grid of seed initial conditions across the torus.
+    function buildSeeds(count) {
+      const seeds = [];
+      const cols = Math.max(3, Math.round(Math.sqrt(count) * 0.7));
+      const rows = Math.ceil(count / cols);
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const th = (j + 0.5) / cols * TAU;
+          const p = (i + 0.5) / rows * TAU;
+          const hue = ((i / rows) * 300 + (j / cols) * 60) % 360;
+          seeds.push({ th, p, hue });
+        }
+      }
+      return seeds;
+    }
+
+    // Draw the full phase portrait for a given K.
+    function render(K, nSeeds, iters) {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      // Frame the phase-space square subtly.
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ox, oy, side, side);
+
+      ctx.globalCompositeOperation = 'lighter';
+      const seeds = buildSeeds(nSeeds);
+      const dotA = 0.42; // per-point alpha; accumulates into bright rings
+      for (const s of seeds) {
+        let th = s.th, p = s.p;
+        ctx.fillStyle = hueColor(s.hue, dotA);
+        for (let n = 0; n < iters; n++) {
+          p += K * Math.sin(th);   // the kick
+          th += p;                 // free rotation
+          th -= TAU * Math.floor(th / TAU);
+          p  -= TAU * Math.floor(p  / TAU);
+          const x = ox + (th / TAU) * side;
+          const y = oy + (1 - p / TAU) * side;
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // ---- One special glowing orbit dropped by the user ----
+    let liveOrbit = null; // { th, p, i }
+    function stepLiveOrbit(K) {
+      if (!liveOrbit) return;
+      ctx.globalCompositeOperation = 'lighter';
+      let { th, p } = liveOrbit;
+      const batch = 900;
+      for (let n = 0; n < batch; n++) {
+        p += K * Math.sin(th);
+        th += p;
+        th -= TAU * Math.floor(th / TAU);
+        p  -= TAU * Math.floor(p  / TAU);
+        const x = ox + (th / TAU) * side;
+        const y = oy + (1 - p / TAU) * side;
+        const t = liveOrbit.i / 6000;
+        ctx.fillStyle = `hsla(${(200 + t * 160) % 360}, 95%, 72%, 0.5)`;
+        ctx.fillRect(x, y, 1.4, 1.4);
+        liveOrbit.i++;
+      }
+      liveOrbit.th = th; liveOrbit.p = p;
+      ctx.globalCompositeOperation = 'source-over';
+      if (liveOrbit.i > 60000) liveOrbit = null;
+    }
+
+    // ---- Controls & state ----
+    const kSlider = document.getElementById('k');
+    const nSlider = document.getElementById('n');
+    const kVal = document.getElementById('kVal');
+    const nVal = document.getElementById('nVal');
+    const reseed = document.getElementById('reseed');
+    const sweepBtn = document.getElementById('sweep');
+    const readout = document.getElementById('readout');
+
+    let K = parseFloat(kSlider.value);
+    let nSeeds = parseInt(nSlider.value, 10);
+    let iters = 380;
+    let sweeping = true;
+    let sweepDir = 1;
+    let dirty = true;
+
+    function updateReadout() {
+      let phase;
+      if (K < 0.6) phase = 'nested tori · order';
+      else if (K < 0.9716) phase = 'islands, thin barriers';
+      else if (K < 1.5) phase = 'the last barrier breaks';
+      else if (K < 3) phase = 'chaotic sea + island chains';
+      else phase = 'sea floods almost everywhere';
+      readout.innerHTML =
+        `K = <b>${K.toFixed(3)}</b><br>${phase}<br>θ → &nbsp; p ↑ &nbsp; torus 2π`;
+    }
+
+    function requestRender() { dirty = true; }
+
+    kSlider.addEventListener('input', () => {
+      K = parseFloat(kSlider.value);
+      kVal.textContent = K.toFixed(3);
+      sweeping = false; sweepBtn.classList.remove('on');
+      liveOrbit = null;
+      requestRender();
+    });
+    nSlider.addEventListener('input', () => {
+      nSeeds = parseInt(nSlider.value, 10);
+      nVal.textContent = nSeeds;
+      liveOrbit = null;
+      requestRender();
+    });
+    reseed.addEventListener('click', () => {
+      iters = 320 + Math.floor(Math.random() * 220);
+      liveOrbit = null;
+      requestRender();
+    });
+    sweepBtn.addEventListener('click', () => {
+      sweeping = !sweeping;
+      sweepBtn.classList.toggle('on', sweeping);
+    });
+
+    // Click drops one high-contrast orbit at the pointer's phase-space location.
+    canvas.addEventListener('pointerdown', (e) => {
+      const r = canvas.getBoundingClientRect();
+      const px = e.clientX - r.left, py = e.clientY - r.top;
+      if (px < ox || px > ox + side || py < oy || py > oy + side) return;
+      const th = ((px - ox) / side) * TAU;
+      const p = (1 - (py - oy) / side) * TAU;
+      liveOrbit = { th, p, i: 0 };
+    });
+
+    window.addEventListener('resize', () => { resize(); requestRender(); });
+
+    resize();
+
+    let last = performance.now();
+    function frame(t) {
+      const dt = Math.min(0.05, (t - last) / 1000);
+      last = t;
+
+      if (sweeping) {
+        // Ease K back and forth across the interesting band [0, 4].
+        K += sweepDir * dt * 0.32;
+        if (K > 4) { K = 4; sweepDir = -1; }
+        if (K < 0) { K = 0; sweepDir = 1; }
+        kSlider.value = K;
+        kVal.textContent = K.toFixed(3);
+        liveOrbit = null;
+        dirty = true;
+      }
+
+      if (dirty) {
+        render(K, nSeeds, iters);
+        updateReadout();
+        dirty = false;
+      }
+      // Keep advancing a live orbit on top of the static portrait.
+      stepLiveOrbit(K);
+
+      requestAnimationFrame(frame);
+    }
+
+    kVal.textContent = K.toFixed(3);
+    nVal.textContent = nSeeds;
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
