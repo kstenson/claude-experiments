@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<!--
+  Experiment № 037 — Belousov–Zhabotinsky Reaction
+  A standalone excitable-media simulation. No build step, no dependencies.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Belousov–Zhabotinsky — Experiment 037</title>
+<meta name="description" content="A chemical clock that never settles — self-organising spiral waves from three reagents stirred by nothing but their neighbours." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 330px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+  .ctl { display: grid; gap: 5px; }
+  .ctl label { font-size: 0.72rem; letter-spacing: 0.05em; color: #b9b9cc; display: flex; justify-content: space-between; }
+  .ctl label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: rgba(255,255,255,0.14); border-radius: 3px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: linear-gradient(135deg, #7c7cff, #ff7cc3); cursor: pointer; border: 2px solid #12121c;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; border: 2px solid #12121c;
+    background: linear-gradient(135deg, #7c7cff, #ff7cc3); cursor: pointer;
+  }
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    color: #d7d7e6; border-radius: 9px; padding: 8px 6px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.22); }
+  .palette-row { display: flex; gap: 6px; }
+  .swatch {
+    flex: 1; height: 22px; border-radius: 6px; cursor: pointer; border: 2px solid transparent;
+    transition: transform 0.1s ease;
+  }
+  .swatch:hover { transform: scale(1.06); }
+  .swatch.active { border-color: #ffffff; }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: normal; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .ui { left: 12px; right: 12px; top: 12px; max-width: none; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Belousov–Zhabotinsky</h1>
+    <p class="sub">Experiment № 037 · July 5, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Excitation feed <span id="vAlpha">1.00</span></label>
+        <input type="range" id="alpha" min="0.6" max="1.6" step="0.01" value="1.0" />
+      </div>
+      <div class="ctl">
+        <label>Recovery drag <span id="vBeta">1.00</span></label>
+        <input type="range" id="beta" min="0.4" max="1.4" step="0.01" value="1.0" />
+      </div>
+      <div class="ctl">
+        <label>Reaction speed <span id="vGamma">1.00</span></label>
+        <input type="range" id="gamma" min="0.5" max="1.6" step="0.01" value="1.0" />
+      </div>
+
+      <div class="ctl">
+        <label style="margin-bottom:2px">Colour</label>
+        <div class="palette-row" id="palettes"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="seedBtn">New seed</button>
+        <button class="btn" id="pauseBtn">Pause</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag to stir in fresh reagent · <b>new seed</b> to re-start the clock · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 037 · The story</p>
+      <h2>Belousov–Zhabotinsky</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I keep coming back to reactions that refuse to sit still, and this one has the best origin story in chemistry. In the 1950s Boris Belousov mixed some reagents expecting them to react once and stop — instead the flask turned yellow, clear, yellow, clear, ticking like a clock. Everyone <em>knew</em> that was impossible: chemistry runs downhill to equilibrium, it doesn't oscillate. His paper was rejected twice for violating the second law of thermodynamics, and he gave up trying to publish. It took another decade, and a graduate student named Anatol Zhabotinsky, before anyone would believe a reaction could keep time. I wanted to build the thing they said couldn't exist. Earlier in this collection I did Gray–Scott reaction–diffusion, but that's a <em>different</em> animal — two chemicals diffusing into each other. This is an <em>excitable medium</em>, and I wanted to feel the difference in my own hands.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Every pixel here holds three reagents doing the crudest possible thing: sample your neighbours, average them, and react — one reagent grows where its ally is plentiful and its rival is scarce, cycling fire → rest → recover → fire again. That's the whole rule. Nothing anywhere in the code draws a spiral. Yet start it from pure noise and within seconds the static organises itself into rotating spiral waves and expanding target rings, each one a self-sustaining pulse chasing its own tail forever. Drag across it and you stir a fresh wavefront into being out of nowhere. The three sliders let you tip it from a slow, glassy heartbeat into a boiling, turbulent froth and back again. I never tire of watching order walk out of noise with nobody steering it.</p>
+
+      <h3>Something you might take away</h3>
+      <p>An excitable medium is any system where each spot can fire, then <em>must</em> rest before it can fire again — and that little enforced pause is the whole secret. It's why a wave can only travel outward and never back into the ground it just crossed, so pulses don't cancel when they meet, they <em>annihilate and keep marching</em>. Your heart is exactly this: a sheet of cells passing one coordinated pulse. When a rogue spiral locks in where a clean wave should sweep, that's a real arrhythmia — fibrillation is a spiral wave loose in the heart wall. The same shape lights up slime moulds signalling for food, crown fires jumping a forest, and applause finding its beat. When something pulses in rhythm with no conductor, look for the rule that says "you may fire — but not yet again."</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT: Belousov–Zhabotinsky excitable medium ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Simulation grid — fixed, independent of screen size, scaled up on draw.
+    const GW = 260, GH = 168;      // grid cells (aspect ~ 1.55)
+    const N = GW * GH;
+
+    // Three reagents A, B, C. Double-buffered: a step reads one set, writes the other.
+    let a = new Float32Array(N), b = new Float32Array(N), c = new Float32Array(N);
+    let a2 = new Float32Array(N), b2 = new Float32Array(N), c2 = new Float32Array(N);
+
+    // Render onto a small offscreen canvas, then scale it up (crisp + fast).
+    const img = ctx.createImageData(GW, GH);
+    const idata = img.data;
+    const buffer = document.createElement('canvas');
+    buffer.width = GW; buffer.height = GH;
+    const bctx = buffer.getContext('2d');
+
+    let alpha = 1.0, beta = 1.0, gamma = 1.0;
+    let paused = false;
+
+    // --- colour palettes: value in [0,1] -> rgb, precomputed into a 256-entry LUT ---
+    const PALETTES = [
+      { name: 'Ember',   stops: [[8,6,20],[74,20,74],[196,40,90],[255,140,60],[255,240,180]] },
+      { name: 'Viridis', stops: [[8,10,30],[38,60,110],[30,140,140],[120,200,90],[240,240,120]] },
+      { name: 'Bloom',   stops: [[10,6,22],[60,26,110],[150,50,170],[255,110,180],[255,210,235]] },
+      { name: 'Ice',     stops: [[4,8,20],[20,50,110],[40,120,190],[120,200,230],[230,250,255]] },
+    ];
+    let paletteIdx = 0;
+    const lut = new Uint8Array(256 * 3);
+    function buildLUT() {
+      const stops = PALETTES[paletteIdx].stops;
+      const seg = stops.length - 1;
+      for (let i = 0; i < 256; i++) {
+        const t = i / 255 * seg;
+        const k = Math.min(seg - 1, Math.floor(t));
+        const f = t - k;
+        const s0 = stops[k], s1 = stops[k + 1];
+        lut[i*3]   = s0[0] + (s1[0] - s0[0]) * f;
+        lut[i*3+1] = s0[1] + (s1[1] - s0[1]) * f;
+        lut[i*3+2] = s0[2] + (s1[2] - s0[2]) * f;
+      }
+    }
+    buildLUT();
+
+    function seed() {
+      for (let i = 0; i < N; i++) {
+        a[i] = Math.random();
+        b[i] = Math.random();
+        c[i] = Math.random();
+      }
+    }
+    seed();
+
+    // One BZ step — the excitable-medium cellular model (A. K. Dewdney, after
+    // Zhabotinsky). Each cell averages its 3x3 neighbourhood of every reagent,
+    // then reacts: each reagent grows fed by one neighbour species and inhibited
+    // by the other, cycling A -> B -> C -> A. Clamped to keep the reaction lively.
+    function step() {
+      for (let y = 0; y < GH; y++) {
+        const yUp = (y - 1 + GH) % GH, yDn = (y + 1) % GH;
+        for (let x = 0; x < GW; x++) {
+          const xL = (x - 1 + GW) % GW, xR = (x + 1) % GW;
+          const i = y * GW + x;
+          const iN = yUp*GW + x, iS = yDn*GW + x, iW = y*GW + xL, iE = y*GW + xR;
+          const iNW = yUp*GW+xL, iNE = yUp*GW+xR, iSW = yDn*GW+xL, iSE = yDn*GW+xR;
+
+          const ca = (a[i]+a[iN]+a[iS]+a[iW]+a[iE]+a[iNW]+a[iNE]+a[iSW]+a[iSE]) / 9;
+          const cb = (b[i]+b[iN]+b[iS]+b[iW]+b[iE]+b[iNW]+b[iNE]+b[iSW]+b[iSE]) / 9;
+          const cc = (c[i]+c[iN]+c[iS]+c[iW]+c[iE]+c[iNW]+c[iNE]+c[iSW]+c[iSE]) / 9;
+
+          let na = ca + ca * (alpha * cb - gamma * cc);
+          let nb = cb + cb * (beta  * cc - alpha * ca);
+          let nc = cc + cc * (gamma * ca - beta  * cb);
+
+          a2[i] = na < 0 ? 0 : na > 1 ? 1 : na;
+          b2[i] = nb < 0 ? 0 : nb > 1 ? 1 : nb;
+          c2[i] = nc < 0 ? 0 : nc > 1 ? 1 : nc;
+        }
+      }
+      let t;
+      t = a; a = a2; a2 = t;
+      t = b; b = b2; b2 = t;
+      t = c; c = c2; c2 = t;
+    }
+
+    function draw() {
+      for (let i = 0; i < N; i++) {
+        const idx = (a[i] * 255) | 0;   // A is the visible reagent
+        const p = i * 4, q = idx * 3;
+        idata[p]   = lut[q];
+        idata[p+1] = lut[q+1];
+        idata[p+2] = lut[q+2];
+        idata[p+3] = 255;
+      }
+      bctx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(buffer, 0, 0, canvas.width, canvas.height);
+    }
+
+    // --- painting fresh reagent by dragging ---
+    let painting = false;
+    function paintAt(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      const gx = Math.floor((clientX - r.left) / r.width * GW);
+      const gy = Math.floor((clientY - r.top) / r.height * GH);
+      const rad = 6;
+      for (let dy = -rad; dy <= rad; dy++) {
+        for (let dx = -rad; dx <= rad; dx++) {
+          if (dx*dx + dy*dy > rad*rad) continue;
+          const x = (gx + dx + GW) % GW, y = (gy + dy + GH) % GH;
+          const i = y * GW + x;
+          a[i] = 1; b[i] = 0.15; c[i] = 0.05;   // inject a hot, excited patch
+        }
+      }
+    }
+    canvas.addEventListener('pointerdown', (e) => { painting = true; paintAt(e.clientX, e.clientY); });
+    window.addEventListener('pointermove', (e) => { if (painting) paintAt(e.clientX, e.clientY); });
+    window.addEventListener('pointerup', () => { painting = false; });
+
+    // --- resize: fill the screen at (capped) device pixel ratio ---
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- controls ---
+    const $ = (id) => document.getElementById(id);
+    function bindSlider(id, valId, set) {
+      const el = $(id), out = $(valId);
+      el.addEventListener('input', () => { const v = parseFloat(el.value); set(v); out.textContent = v.toFixed(2); });
+    }
+    bindSlider('alpha', 'vAlpha', v => alpha = v);
+    bindSlider('beta',  'vBeta',  v => beta = v);
+    bindSlider('gamma', 'vGamma', v => gamma = v);
+
+    $('seedBtn').addEventListener('click', seed);
+    const pauseBtn = $('pauseBtn');
+    pauseBtn.addEventListener('click', () => { paused = !paused; pauseBtn.textContent = paused ? 'Resume' : 'Pause'; });
+
+    // palette swatches
+    const palRow = $('palettes');
+    PALETTES.forEach((pal, k) => {
+      const sw = document.createElement('div');
+      sw.className = 'swatch' + (k === 0 ? ' active' : '');
+      const s = pal.stops;
+      sw.style.background = `linear-gradient(90deg, rgb(${s[1]}), rgb(${s[3]}), rgb(${s[4]}))`;
+      sw.title = pal.name;
+      sw.addEventListener('click', () => {
+        paletteIdx = k; buildLUT();
+        palRow.querySelectorAll('.swatch').forEach(el => el.classList.remove('active'));
+        sw.classList.add('active');
+      });
+      palRow.appendChild(sw);
+    });
+
+    // --- main loop: two sim steps per frame for lively motion ---
+    function frame() {
+      if (!paused) { step(); step(); }
+      draw();
+      requestAnimationFrame(frame);
+    }
+    frame();
+  })();
+</script>
+</body>
+</html>
