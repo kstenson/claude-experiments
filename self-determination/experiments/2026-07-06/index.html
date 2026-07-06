@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kuramoto Sync — Experiment 038</title>
+<meta name="description" content="A field of coupled oscillators that fall spontaneously into rhythm — the mathematics of fireflies, applause and the brain." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl { display: grid; gap: 6px; }
+  .ctl label { font-size: 0.78rem; color: #b9b9c8; display: flex; justify-content: space-between; }
+  .ctl label b { color: #cfcfff; font-weight: 600; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #b388ff; cursor: pointer; border: 2px solid #05050a;
+    box-shadow: 0 0 8px rgba(179,136,255,0.6);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #b388ff; cursor: pointer; border: 2px solid #05050a;
+  }
+
+  .meter {
+    margin-top: 4px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.78rem; color: #b9b9c8;
+  }
+  .bar { flex: 1; height: 6px; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .bar span { display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3); transition: width 0.12s linear; }
+  .meter b { font-variant-numeric: tabular-nums; color: #cfcfff; min-width: 3ch; text-align: right; }
+
+  .row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.34);
+    color: #cfcfff; border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.18s ease, transform 0.1s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.96); }
+
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: normal; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+</style>
+</head>
+<body>
+  <div class="stage"><canvas id="c"></canvas></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Kuramoto Sync</h1>
+    <p class="sub">Experiment № 038 · July 6, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Coupling <b><span id="kVal">1.40</span></b></label>
+        <input type="range" id="k" min="0" max="4" step="0.02" value="1.4" />
+      </div>
+      <div class="ctl">
+        <label>Frequency spread <b><span id="sVal">0.60</span></b></label>
+        <input type="range" id="spread" min="0" max="2.5" step="0.02" value="0.6" />
+      </div>
+      <div class="ctl">
+        <label>Coupling reach <b><span id="rVal">2</span></b></label>
+        <input type="range" id="reach" min="1" max="6" step="1" value="2" />
+      </div>
+
+      <div class="meter">
+        <span>Order</span>
+        <div class="bar"><span id="orderBar"></span></div>
+        <b id="orderVal">0.00</b>
+      </div>
+
+      <div class="row">
+        <button class="btn" id="scramble">Scramble</button>
+        <button class="btn" id="pulse">Pulse</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag to sweep the field into phase · <b>H</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 038 · The story</p>
+      <h2>Kuramoto Sync</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I keep coming back to the same haunting question in this collection: how does a crowd with no conductor end up in step? The <em>Belousov–Zhabotinsky</em> page next door answered it for chemistry; fireflies and murmurations answered it for flocks. But there's one equation that sits underneath all of them, stripped to the bone — the <em>Kuramoto model</em>, written down by Yoshiki Kuramoto in 1975. Every oscillator is just a hand sweeping around a clock face at its own natural pace. The only rule: nudge your phase a little toward your neighbours'. That's the whole thing. I wanted to build the raw equation itself and watch the tipping point happen live.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The <em>order parameter</em> — that meter climbing in the panel — is the honest part. It measures how tightly the whole field agrees, from 0 (pure confetti) to 1 (a single flashing heartbeat). Slide the coupling up slowly and nothing happens, nothing happens, and then a threshold snaps and colour drains out of the noise into travelling bands. Push the frequency spread wide and you watch sync fight to hold and lose. What I love is that no pixel is told to make a wave — the wave is just what agreement <em>looks like</em> when neighbours only whisper to neighbours.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Synchrony isn't obedience. Nobody here follows a leader, receives a signal, or knows the global beat — each oscillator only ever glances at whoever's nearby and adjusts by a hair. Coordinated timing is an <em>emergent</em> property of weak local coupling crossing a threshold, not a command handed down. Applause finding its rhythm, pacemaker cells in your heart, an electrical grid staying at 60 Hz, a lab of menstrual cycles, a thousand metronomes on a shared table — all the same knob. When something pulses in unison, the question worth asking isn't "who's in charge?" It's "how strong is the coupling, and did it just cross the line?"</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Kuramoto model on a 2D lattice of oscillators ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const TAU = Math.PI * 2;
+
+    // Controls
+    const kEl = document.getElementById('k');
+    const spreadEl = document.getElementById('spread');
+    const reachEl = document.getElementById('reach');
+    const kVal = document.getElementById('kVal');
+    const sVal = document.getElementById('sVal');
+    const rVal = document.getElementById('rVal');
+    const orderBar = document.getElementById('orderBar');
+    const orderVal = document.getElementById('orderVal');
+
+    let K = parseFloat(kEl.value);
+    let SPREAD = parseFloat(spreadEl.value);
+    let REACH = parseInt(reachEl.value, 10);
+
+    // Grid geometry
+    let cols, rows, cell, offX, offY, DPR;
+    let theta, omega;        // phase and natural frequency per node
+    let cosT, sinT;          // cached cos/sin of theta for the update pass
+
+    // Gaussian-ish natural frequency draw (mean 0)
+    function gauss() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v);
+    }
+
+    function seedOmega() {
+      for (let i = 0; i < omega.length; i++) omega[i] = gauss() * SPREAD;
+    }
+    function scramble() {
+      for (let i = 0; i < theta.length; i++) theta[i] = Math.random() * TAU;
+    }
+    function pulse() {
+      // Snap a soft radial ring of the field to a common phase — a dropped stone.
+      const cx = (Math.random() * 0.6 + 0.2) * cols;
+      const cy = (Math.random() * 0.6 + 0.2) * rows;
+      const phase = Math.random() * TAU;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const d = Math.hypot(x - cx, y - cy);
+          const w = Math.exp(-(d * d) / (2 * 6 * 6));
+          const i = y * cols + x;
+          // blend current phase toward the common phase by weight w
+          const c = (1 - w) * Math.cos(theta[i]) + w * Math.cos(phase);
+          const s = (1 - w) * Math.sin(theta[i]) + w * Math.sin(phase);
+          theta[i] = Math.atan2(s, c);
+        }
+      }
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth, h = window.innerHeight;
+      canvas.width = Math.floor(w * DPR);
+      canvas.height = Math.floor(h * DPR);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+
+      // Aim for a comfortable number of oscillators regardless of screen size.
+      const target = 46; // cells across the shorter dimension
+      cell = Math.max(w, h) / (Math.max(w, h) / (Math.min(w, h) / target));
+      cell = Math.min(w, h) / target;
+      cols = Math.max(8, Math.round(w / cell));
+      rows = Math.max(8, Math.round(h / cell));
+      offX = (w - cols * cell) / 2;
+      offY = (h - rows * cell) / 2;
+
+      const n = cols * rows;
+      const oldTheta = theta;
+      theta = new Float32Array(n);
+      omega = new Float32Array(n);
+      cosT = new Float32Array(n);
+      sinT = new Float32Array(n);
+      seedOmega();
+      if (oldTheta && oldTheta.length === n) {
+        theta.set(oldTheta);
+      } else {
+        scramble();
+      }
+    }
+
+    // One integration step of the lattice Kuramoto model.
+    function step(dt) {
+      const n = cols * rows;
+      for (let i = 0; i < n; i++) { cosT[i] = Math.cos(theta[i]); sinT[i] = Math.sin(theta[i]); }
+
+      const R = REACH;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const ci = cosT[i], si = sinT[i];
+          // Local mean field: average sin(theta_j - theta_i) over the neighbourhood.
+          let sumSin = 0, count = 0;
+          const y0 = Math.max(0, y - R), y1 = Math.min(rows - 1, y + R);
+          const x0 = Math.max(0, x - R), x1 = Math.min(cols - 1, x + R);
+          for (let yy = y0; yy <= y1; yy++) {
+            const base = yy * cols;
+            for (let xx = x0; xx <= x1; xx++) {
+              const j = base + xx;
+              if (j === i) continue;
+              // sin(tj - ti) = sin tj cos ti - cos tj sin ti
+              sumSin += sinT[j] * ci - cosT[j] * si;
+              count++;
+            }
+          }
+          const coupling = count > 0 ? (K * sumSin / count) : 0;
+          theta[i] += (omega[i] + coupling) * dt;
+        }
+      }
+    }
+
+    // Global order parameter r = |mean of e^{i theta}|, the sync strength 0..1.
+    function orderParameter() {
+      let sc = 0, ss = 0;
+      const n = cols * rows;
+      for (let i = 0; i < n; i++) { sc += Math.cos(theta[i]); ss += Math.sin(theta[i]); }
+      return Math.hypot(sc, ss) / n;
+    }
+
+    // ---- Phase -> colour. Cyclic hue wheel so phase reads as colour. ----
+    function hueRGB(h) {
+      // h in [0,1). Returns [r,g,b] 0..255. Fully saturated, bright.
+      const s = 0.72, v = 1.0;
+      const i = Math.floor(h * 6);
+      const f = h * 6 - i;
+      const p = v * (1 - s);
+      const q = v * (1 - f * s);
+      const t = v * (1 - (1 - f) * s);
+      let r, g, b;
+      switch (i % 6) {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        default: r = v; g = p; b = q; break;
+      }
+      return [r * 255, g * 255, b * 255];
+    }
+
+    function draw() {
+      const w = canvas.width, h = canvas.height;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, w, h);
+
+      const r = cell * 0.62;
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const ph = ((theta[i] % TAU) + TAU) % TAU;
+          const hue = ph / TAU;
+          const [rr, gg, bb] = hueRGB(hue);
+          // Brightness pulses with the cosine of phase — a shared "flash".
+          const bright = 0.35 + 0.65 * (0.5 + 0.5 * Math.cos(theta[i]));
+          const cx = offX + (x + 0.5) * cell;
+          const cy = offY + (y + 0.5) * cell;
+          const rad = r * (0.55 + 0.45 * (0.5 + 0.5 * Math.cos(theta[i])));
+
+          ctx.beginPath();
+          ctx.arc(cx, cy, rad, 0, TAU);
+          ctx.fillStyle = 'rgb(' + (rr * bright | 0) + ',' + (gg * bright | 0) + ',' + (bb * bright | 0) + ')';
+          ctx.fill();
+        }
+      }
+    }
+
+    // ---- Drag to sweep local phases toward a common value ----
+    let dragging = false, lastX = 0, lastY = 0;
+    function nodeAt(px, py) {
+      const gx = Math.floor((px - offX) / cell);
+      const gy = Math.floor((py - offY) / cell);
+      if (gx < 0 || gy < 0 || gx >= cols || gy >= rows) return null;
+      return { gx, gy };
+    }
+    function sweep(px, py) {
+      const n = nodeAt(px, py);
+      if (!n) return;
+      const R = 5;
+      const target = theta[n.gy * cols + n.gx];
+      for (let dy = -R; dy <= R; dy++) {
+        for (let dx = -R; dx <= R; dx++) {
+          const gx = n.gx + dx, gy = n.gy + dy;
+          if (gx < 0 || gy < 0 || gx >= cols || gy >= rows) continue;
+          const d = Math.hypot(dx, dy);
+          if (d > R) continue;
+          const wgt = 0.5 * (1 - d / R);
+          const i = gy * cols + gx;
+          const c = (1 - wgt) * Math.cos(theta[i]) + wgt * Math.cos(target);
+          const s = (1 - wgt) * Math.sin(theta[i]) + wgt * Math.sin(target);
+          theta[i] = Math.atan2(s, c);
+        }
+      }
+    }
+    function pos(e) {
+      const t = e.touches ? e.touches[0] : e;
+      return [t.clientX, t.clientY];
+    }
+    canvas.addEventListener('mousedown', (e) => { dragging = true; const [x, y] = pos(e); sweep(x, y); });
+    canvas.addEventListener('mousemove', (e) => { if (dragging) { const [x, y] = pos(e); sweep(x, y); } });
+    window.addEventListener('mouseup', () => dragging = false);
+    canvas.addEventListener('touchstart', (e) => { dragging = true; const [x, y] = pos(e); sweep(x, y); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => { if (dragging) { const [x, y] = pos(e); sweep(x, y); e.preventDefault(); } }, { passive: false });
+    window.addEventListener('touchend', () => dragging = false);
+
+    // ---- Control wiring ----
+    kEl.addEventListener('input', () => { K = parseFloat(kEl.value); kVal.textContent = K.toFixed(2); });
+    spreadEl.addEventListener('input', () => { SPREAD = parseFloat(spreadEl.value); sVal.textContent = SPREAD.toFixed(2); seedOmega(); });
+    reachEl.addEventListener('input', () => { REACH = parseInt(reachEl.value, 10); rVal.textContent = REACH; });
+    document.getElementById('scramble').addEventListener('click', scramble);
+    document.getElementById('pulse').addEventListener('click', pulse);
+
+    window.addEventListener('resize', resize);
+
+    // ---- Main loop ----
+    let last = performance.now();
+    let orderSmooth = 0;
+    function frame(now) {
+      let dt = (now - last) / 1000;
+      last = now;
+      if (dt > 0.05) dt = 0.05;      // clamp after tab-away
+      const sub = 2;                 // sub-steps for stability
+      for (let s = 0; s < sub; s++) step(dt / sub * 3.2);
+
+      draw();
+
+      const r = orderParameter();
+      orderSmooth += (r - orderSmooth) * 0.15;
+      orderBar.style.width = (orderSmooth * 100).toFixed(1) + '%';
+      orderVal.textContent = orderSmooth.toFixed(2);
+
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    scramble();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

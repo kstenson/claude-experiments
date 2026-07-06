@@ -1,0 +1,165 @@
+{
+  "date": "2026-07-06",
+  "score": 43,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "The world stayed lodged in the same uneasy-calm band it has held all week, with a Category 5 super typhoon, an imminent-massacre warning and grinding war on one side and quiet markets, sport and science on the other. Super Typhoon Bavi, the third Category 5 storm on Earth this year, tore across the US Northern Mariana Islands with sustained winds near 180 mph, its eyewall passing over Rota and threatening Saipan and Tinian, where many residents still lacked power more than two months after April's Typhoon Sinlaku, before setting course toward Taiwan or China by week's end. In Sudan, UN rights chief Volker Turk kept a 'red alert' over besieged El Obeid, where the Rapid Support Forces have encircled roughly half a million trapped civilians and food prices have surged up to 300 percent, with the UN Human Rights Council convened over fears of an El-Fasher-style assault. Europe's deadliest conflict since 1945 escalated further as Ukraine pressed its 40-day campaign, striking Russian energy substations, an oil terminal and Crimea while both sides swapped 160 prisoners each. The humanitarian ledger stayed heavy: Venezuela's twin-quake toll reached about 2,954 dead with more than 41,000 still missing as recovery replaced rescue, and DR Congo's Bundibugyo Ebola epidemic passed 452 deaths among 1,460 cases. In Gaza, an Israeli drone strike killed at least three Palestinians despite the fraying October ceasefire. Against that ran genuine lift: US markets reopened after Independence Day with the Dow near record highs, buoyed by a soft June jobs report that eased Fed-hike fears; the World Cup delivered a marquee Portugal-Spain last-16 tie in Dallas and a US-Belgium knockout in Seattle; and researchers reported a near-100-fold gain in quantum magnon lifetimes, a possible obesity target in the protein 'Mitch,' and news that the world's trachoma caseload has fallen below 100 million for the first time. The headline settles at 43, a notch below neutral, weighed by storm, siege and war even as science, sport and public health quietly delivered.",
+  "dimensions": {
+    "conflict": 35,
+    "economy": 57,
+    "climate": 30,
+    "humanInterest": 38,
+    "techProgress": 64
+  },
+  "regions": {
+    "northAmerica": 49,
+    "southAmerica": 28,
+    "europe": 37,
+    "africa": 29,
+    "middleEast": 43,
+    "asia": 50,
+    "oceania": 33
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Super Typhoon Bavi, the third Category 5 storm on Earth in 2026, tracks across the US Northern Mariana Islands with maximum sustained winds near 180 miles per hour, its eyewall passing over Rota under an extreme wind warning as residents are ordered to shelter in place and Saipan and Tinian brace for catastrophic damage, striking a region where many people still lack power more than two months after Typhoon Sinlaku, with forecasters warning the storm could threaten Taiwan or China by July 10",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/07/05/g-s1-132052/guam-pacific-islands-brace-super-typhoon-bavi",
+      "dimension": "climate",
+      "region": "oceania"
+    },
+    {
+      "direction": "down",
+      "headline": "UN human rights chief Volker Turk keeps a 'red alert' over Sudan's besieged city of El Obeid, where the Rapid Support Forces have encircled roughly half a million trapped civilians and control every route out except to the east, with 15 drone strikes documented in three weeks killing at least 45 people and food prices surging up to 300 percent, as the UN Human Rights Council convenes an urgent debate amid fears of an El-Fasher-style massacre",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/3/un-sounds-red-alert-over-human-rights-catastrophe-in-sudans-el-obeid",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Ukraine presses the 40-day escalation ordered by President Volodymyr Zelenskyy, striking 12 Russian energy substations in 48 hours, hitting a St. Petersburg oil terminal and Belgorod's power and water supply and keeping fires burning at occupied Crimea's ferry terminal and airfield to starve Russian front-line logistics, as Moscow and Kyiv exchange 160 prisoners of war on each side in the war's deadliest year",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/06/26/nx-s1-5872256/russia-ukraine-war-drone-strikes",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Venezuela's twin-earthquake death toll reaches about 2,954 with more than 12,000 injured and over 41,000 people still missing as officials shift from rescue to recovery nearly two weeks after the June 24 back-to-back magnitude-7.2 and 7.5 quakes west of Caracas, with the UN Development Programme estimating some 6.7 billion dollars in direct damage and about 58,870 structures harmed, even as a father of two was pulled alive from a collapsed shopping mall after 120 hours",
+      "source": "U.S. News & World Report",
+      "url": "https://www.usnews.com/news/world/articles/2026-07-03/death-toll-of-venezuela-earthquakes-rises-to-2-645",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "An Israeli drone strike kills at least three Palestinians in northern Gaza City near the al-Hilu station, which houses a private hospital and a fuel station, as the enclave marks roughly 1,000 days of war and attacks continue despite the October 2025 ceasefire, under which the UN says at least 992 Palestinians have been killed and thousands of violations recorded while a promised second phase of withdrawal and disarmament stalls",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/1/israel-kills-three-palestinians-in-gaza-despite-ceasefire",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Iran continues a dayslong state funeral for slain supreme leader Ayatollah Ali Khamenei, killed in a February airstrike on the opening day of the US-Israeli war, with processions moving between Tehran, Qom and Mashhad and on to Najaf and Karbala in Iraq and authorities expecting millions of mourners, as US-Iran denuclearization talks over sanctions, frozen funds and enrichment stay paused until they resume on July 11",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/live-updates/us-iran-war-trump-negotiations-pause-ayatollah-funeral/",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "The DR Congo Bundibugyo Ebola epidemic, a public health emergency of international concern since May, passes 452 confirmed deaths among 1,460 cases with 641 patients hospitalised in isolation, remaining concentrated in Ituri province with 1,333 cases and 380 deaths across 24 health zones, as responders confront a strain for which no licensed vaccine or specific treatment yet exists",
+      "source": "ECDC",
+      "url": "https://www.ecdc.europa.eu/en/ebola-outbreak-democratic-republic-congo-and-uganda",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "US markets reopen after the Independence Day holiday with the Dow Jones Industrial Average near all-time highs, extending gains after a soft June jobs report showing just 57,000 positions added, well below the roughly 115,000 expected, eased fears that the Federal Reserve would be forced into a near-term rate hike, with the Fed holding rates at 4.25 to 4.50 percent and signaling two possible cuts later this year",
+      "source": "TheStreet",
+      "url": "https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-july-2-2026",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "The FIFA World Cup, co-hosted across North America, reaches its last-16 knockout stage with a marquee Iberian derby as Portugal meet Spain in Dallas, Cristiano Ronaldo having scored his first knockout goal against Croatia, while a resurgent United States face Belgium in Seattle after reaching the round of 16 for a second straight tournament, giving hundreds of millions of fans a shared summer lift",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/sports/2026/7/4/fifa-world-cup-round-of-16-match-schedule-which-teams-qualified",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Researchers report a run of science and medicine advances, extending the lifetime of magnons, tiny magnetic waves once thought too fleeting to be useful, nearly 100-fold to about 18 microseconds to open a path to carrying quantum information, while a separate team finds that disabling a protein nicknamed 'Mitch' in human cells boosts fat burning, pointing toward a new generation of obesity treatments",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/news/top/science/",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Global public-health data offers quiet encouragement as the number of people needing treatment for trachoma, the world's leading infectious cause of blindness, falls below 100 million for the first time, dropping from 1.5 billion at risk in 2002 to about 97.1 million, a 94 percent decline, with Burundi, Egypt, Fiji, Mauritania, Papua New Guinea and Senegal recently eliminating the disease as a public health problem",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-27-of-2026/",
+      "dimension": "humanInterest"
+    },
+    {
+      "direction": "up",
+      "headline": "Australia deepens its Pacific engagement in the wake of the Vanuatu security deal, restoring Vanuatu's Pacific Engagement Visa allocation, as Fiji opens its 2026 sugarcane crushing season across the Lautoka, Ba and Labasa mills and New Caledonia's newly elected provincial assemblies choose their presidents, signs of routine regional life proceeding even as Super Typhoon Bavi menaces the western Pacific",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/pacific",
+      "dimension": "humanInterest",
+      "region": "oceania"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "CNN",
+    "CBS News",
+    "Fox News",
+    "CNBC",
+    "Bloomberg",
+    "Yahoo Finance",
+    "TheStreet",
+    "ABC News",
+    "U.S. News & World Report",
+    "The Washington Post",
+    "Al Jazeera",
+    "BBC",
+    "Euronews",
+    "Time",
+    "The Times of Israel",
+    "UN News",
+    "UN Meetings Coverage and Press Releases",
+    "Human Rights Watch",
+    "Arab News",
+    "The Africa Report",
+    "The Irish Times",
+    "Yale Climate Connections",
+    "The Watchers",
+    "WMO",
+    "World Weather Attribution",
+    "World Health Organization",
+    "U.S. CDC",
+    "ECDC",
+    "Doctors Without Borders",
+    "Medical Xpress",
+    "Britannica",
+    "Miyamoto International",
+    "ScienceDaily",
+    "Science News",
+    "ESPN",
+    "Sky Sports",
+    "RNZ",
+    "Nikkei Asia",
+    "Positive News",
+    "Mongabay",
+    "Wikipedia (Timeline of the Russo-Ukrainian war / 2026 Venezuela earthquakes / 2026 Ebola epidemic / 2026 European heatwaves / Gaza peace plan / 2026 in science)"
+  ]
+}
