@@ -1,0 +1,169 @@
+{
+  "date": "2026-07-07",
+  "score": 43,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "The world held in its now-familiar uneasy-calm band, with a super typhoon, a rising earthquake toll and grinding sieges on one side and record markets, cautious diplomacy and quiet medical progress on the other. Super Typhoon Bavi, having raked Rota at Category 5 intensity, churned on across the warm Pacific toward Taiwan and eastern China with sustained winds near 250 kilometres per hour, forecasters warning of destructive gusts from Friday into Monday even as Taiwan's weather agency judged it more likely to pass north of the island than make landfall. Southern Europe burned in parallel, with wildfires across France, Spain, Portugal and Greece scorching more than 19,000 hectares and forcing tens of thousands to evacuate after June's record heat. The humanitarian ledger stayed heavy: Venezuela's twin-quake death toll jumped to 3,535 with about 17,900 left homeless and health experts now warning of an epidemic in crowded shelters, while in Sudan the Rapid Support Forces tightened their siege of El Obeid, leaving half a million civilians trapped in darkness as the UN and Human Rights Watch warned of an El-Fasher-style massacre. Israeli strikes killed at least six Palestinians in Gaza despite the fraying October ceasefire. Against that ran genuine, if guarded, lift: Hamas announced the dissolution of its Gaza government to hand day-to-day rule to a technocratic committee, a step toward the US-backed peace framework; NATO leaders gathered in Ankara set to pledge some 70 billion euros in fresh aid to Ukraine as Russia's summer advance collapsed to barely a square kilometre a day; US markets pushed the Dow above 53,000 for the first time on revived AI optimism; and in health, DR Congo began the first clinical trial of experimental Bundibugyo Ebola treatments while England's NHS approved teplizumab, the first therapy shown to delay the onset of type 1 diabetes. The headline settles at 43, a notch below neutral, weighed by storm, fire and siege even as diplomacy, markets and medicine quietly delivered.",
+  "dimensions": {
+    "conflict": 37,
+    "economy": 59,
+    "climate": 28,
+    "humanInterest": 37,
+    "techProgress": 63
+  },
+  "regions": {
+    "northAmerica": 50,
+    "southAmerica": 26,
+    "europe": 36,
+    "africa": 28,
+    "middleEast": 45,
+    "asia": 44,
+    "oceania": 33
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Super Typhoon Bavi, after raking the US island of Rota at Category 5 intensity with peak winds near 180 miles per hour and battering Saipan and the Northern Mariana Islands, tracks over warm Pacific waters toward Taiwan and eastern China packing maximum sustained winds around 250 kilometres per hour, with forecasters warning of destructive wind gusts and heavy rain from Friday into Monday even as Taiwan's Central Weather Administration judges the storm more likely to pass north of the island than make landfall",
+      "source": "Bloomberg",
+      "url": "https://www.bloomberg.com/news/articles/2026-07-07/super-typhoon-bavi-set-to-bring-more-heavy-rain-to-china-this-week",
+      "dimension": "climate",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Wildfires burn across southern Europe following June's record-breaking heatwave, with active blazes in France, Spain, Portugal and Greece scorching more than 19,000 hectares, an area more than twice the size of Manhattan, as around 10,000 people are evacuated near Perpignan in the French Pyrenees, nearly 50,000 face shelter or evacuation orders around a Costa Brava fire in Spain, and more than 1,200 firefighters battle a 12,000-hectare blaze in Portugal's Vouzela, with temperatures forecast to climb back toward 40 degrees Celsius",
+      "source": "Time Out",
+      "url": "https://www.timeout.com/news/is-it-safe-to-visit-southern-europe-latest-advice-as-wildfires-blaze-in-greece-france-and-more-070626",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Venezuela's twin-earthquake death toll jumps to 3,535 with 16,740 injured and 17,854 left homeless nearly two weeks after the June 24 back-to-back magnitude-7.2 and 7.5 quakes struck within seconds of each other west of Caracas, damaging or destroying about 60,000 buildings, as health experts warn of an impending epidemic among thousands crowded into some 80 shelters without adequate sanitation and civil-society volunteers complain the state has been 'the last responder'",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/7/venezuela-earthquakes-death-toll-jumps-to-more-than-3500",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "The Rapid Support Forces tighten their siege of El Obeid, capital of Sudan's North Kordofan state, leaving roughly half a million civilians trapped in darkness as drone and artillery strikes hit markets, schools, fuel stations and water infrastructure, food prices surge up to 300 percent and water prices double, with the UN human rights office, Human Rights Watch and aid groups warning the bombardment is 'eerily reminiscent' of the weeks before the RSF's El-Fasher takeover and cautioning of an imminent atrocity",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/6/el-obeid-under-siege-by-rsf-could-this-be-sudans-next-el-fasher",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Israeli air attacks kill at least six Palestinians and wound more than 20 in Gaza as ceasefire violations continue, with Gaza's health ministry saying Israeli violations of the US-brokered October truce have now killed at least 1,072 people and wounded 3,463 others, while a promised second phase of the peace plan covering Israeli withdrawal and Hamas disarmament remains stalled",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/6/israeli-attacks-on-gaza-kill-at-least-6-as-ceasefire-violations-continue",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Hamas announces the dissolution of the body that has governed Gaza for nearly two decades, with its emergency committee head submitting his resignation to clear the way for a US-backed National Committee for the Administration of Gaza to run the enclave's day-to-day affairs, in a step toward the stalled peace framework, though the largely symbolic move makes no mention of the disarmament that the second phase of the ceasefire deal requires",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/07/06/middleeast/hamas-dissolves-gaza-government-intl",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "NATO leaders including US President Donald Trump gather in Ankara for the alliance's 36th summit on July 7 and 8, set to affirm an 'ironclad commitment' to collective defence and to pledge some 70 billion euros in military assistance to Ukraine for 2026 with at least equivalent support in 2027, as Secretary General Mark Rutte pushes higher defence spending and Trump holds bilateral talks with Turkish President Erdogan and Ukraine's Volodymyr Zelenskyy",
+      "source": "U.S. News & World Report",
+      "url": "https://www.usnews.com/news/world/articles/2026-07-03/nato-leaders-to-affirm-ironclad-commitment-to-collective-defence-in-ankara-summit-text-says",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Russia's summer offensive in Ukraine slows to a crawl, with forces gaining just about 1.03 square kilometres a day in June 2026 against 16.6 square kilometres a day in early 2025, as Ukraine reports roughly 39,490 Russian casualties in June and analysts estimate the cost of advance has soared to nearly 1,300 casualties per square kilometre, gains Kyiv credits to expanded drone production and long-range strikes on Russian fuel and logistics",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/3/russian-advance-collapses-in-ukraine-as-anxiety-rises-in-moscow",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "US stocks rally to fresh records as the Dow Jones Industrial Average closes above 53,000 for the first time and the Nasdaq Composite jumps on revived optimism about the artificial-intelligence trade, with Alphabet, Apple, Meta, Tesla and semiconductor stocks leading gains after a soft June jobs report showing just 57,000 positions added quieted talk of a near-term Federal Reserve rate hike, even as inflation runs near 4.2 percent",
+      "source": "Yahoo Finance",
+      "url": "https://finance.yahoo.com/markets/stocks/live/stock-market-today-monday-july-7-225645420.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Patients in DR Congo's Ituri province begin receiving experimental treatments in the first clinical trial for Bundibugyo virus disease, testing Mapp Biopharmaceutical's monoclonal antibody cocktail MBP134 and Gilead's antiviral remdesivir alongside optimised supportive care, offering the first prospect of a proven therapy against an outbreak that has now recorded more than 500 confirmed deaths among over 1,500 cases across the DRC and Uganda",
+      "source": "Bloomberg",
+      "url": "https://www.bloomberg.com/news/articles/2026-07-06/congo-begins-clinical-trial-of-experimental-treatments-for-bundibugyo-ebola",
+      "dimension": "techProgress",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "England's health regulator NICE recommends teplizumab for NHS use, making it the first disease-modifying therapy shown to delay the onset of type 1 diabetes, with a landmark trial finding the immunotherapy pushes back the insulin-treated stage of the disease by an average of three years for eligible people aged eight and over, a step diabetes charities call a new era in care",
+      "source": "NICE",
+      "url": "https://www.nice.org.uk/news/articles/teplizumab-to-delay-the-onset-of-type-1-diabetes-recommended",
+      "dimension": "techProgress",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "The FIFA World Cup, co-hosted across North America, reaches the final day of its round of 16 with knockout ties including Argentina against Egypt and Switzerland against Colombia locking in the quarter-final bracket, and Morocco set to meet France in Boston on July 9, giving hundreds of millions of fans a shared summer lift even as FIFA's decision to suspend US striker Folarin Balogun's red-card ban draws criticism from UEFA",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/sports/2026/7/6/fifa-world-cup-round-of-16-bracket-schedule-portugal-vs-spain-prediction",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "CNN",
+    "CBS News",
+    "ABC News",
+    "NBC News",
+    "CNBC",
+    "Bloomberg",
+    "Yahoo Finance",
+    "TheStreet",
+    "Kiplinger",
+    "U.S. News & World Report",
+    "The Washington Post",
+    "Al Jazeera",
+    "BBC",
+    "Euronews",
+    "The National",
+    "The Times of Israel",
+    "UN News",
+    "Human Rights Watch",
+    "Amnesty International",
+    "World Health Organization",
+    "ECDC",
+    "U.S. CDC",
+    "ReliefWeb",
+    "Doctors Without Borders",
+    "NICE",
+    "Diabetes UK",
+    "Positive News",
+    "Good News Network",
+    "weather.com",
+    "AccuWeather",
+    "Time Out",
+    "IQAir",
+    "Common Dreams",
+    "Focus Taiwan",
+    "Taipei Times",
+    "ScienceDaily",
+    "Space.com",
+    "ESPN",
+    "Sky Sports",
+    "Olympics.com",
+    "NATO",
+    "Congress.gov (CRS)",
+    "Wikipedia (Timeline of the Russo-Ukrainian war / 2026 Venezuela earthquakes / 2026 Ebola epidemic / Gaza peace plan / 2026 Ankara NATO summit)"
+  ]
+}

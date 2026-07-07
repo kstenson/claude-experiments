@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<!--
+  Experiment 039 — Snowflake (Reiter's hexagonal cellular automaton)
+  Standalone: no build step, no external dependencies.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Snowflake — Experiment 039</title>
+<meta name="description" content="A six-fold snow crystal grown from one local rule, no blueprint anywhere." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9D%84%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  canvas { display: block; max-width: 100vw; max-height: 100vh; image-rendering: auto; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl { display: grid; gap: 5px; }
+  .ctl label { font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: #b7b7cc; display: flex; justify-content: space-between; }
+  .ctl label b { color: #ff7cc3; font-weight: 600; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 3px;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #fff; border: 2px solid #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,.6);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; background: #fff; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .row { display: flex; gap: 10px; }
+  .btn {
+    flex: 1; background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.36);
+    color: #cfcfff; border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.18s ease, transform 0.1s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+
+  .story-btn {
+    margin-top: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45); color: #e9d8ff; border-radius: 11px;
+    padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Snowflake</h1>
+    <p class="sub">Experiment № 039 · July 7, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Vapour <b id="betaV">0.42</b></label>
+        <input type="range" id="beta" min="0.28" max="0.60" step="0.005" value="0.42" />
+      </div>
+      <div class="ctl">
+        <label>Diffusion <b id="alphaV">1.40</b></label>
+        <input type="range" id="alpha" min="1.05" max="1.90" step="0.01" value="1.40" />
+      </div>
+      <div class="ctl">
+        <label>Vapour feed <b id="gammaV">0.0006</b></label>
+        <input type="range" id="gamma" min="0.0000" max="0.0040" step="0.0001" value="0.0006" />
+      </div>
+      <div class="row">
+        <button class="btn" id="grow">Grow new</button>
+        <button class="btn" id="rand">Surprise me</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">no arm is ever drawn — each cell only watches its six neighbours · click to grow a fresh flake · press H to hide</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 039 · The story</p>
+      <h2>Snowflake</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Everyone has heard that no two snowflakes are alike, and almost everyone quietly assumes something must be <em>drawing</em> those six matching arms — a template, a symmetry the crystal is somehow told to keep. I wanted to sit with the more astonishing truth: nobody draws the snowflake. This is Clifford Reiter's 2005 model, a cellular automaton on a hexagonal grid where every cell holds just one number — how much water it has — and follows one dull local rule: frozen cells hoard their vapour, unfrozen cells let a fraction of theirs diffuse to the six cells around them, and a whisper of fresh vapour keeps feeding in. That is the entire program. I gave it real snow-physics knobs and let it fall.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The six-fold symmetry is the part that gets me every time. I never enforce it — I don't mirror anything, don't copy one wedge into the other five. It falls out for free, purely because a hexagonal lattice hands every cell the same six directions and every cell runs the same rule, so the same instabilities bite in all six at once. And because the whole crystal grows inside one shared, thinning vapour field, its arms stay eerily in step with each other while looking nothing like the arms of the flake you grew a second ago. Nudge the vapour a hair and you get fat stubby plates; nudge diffusion and you get spidery ferns. Same code, endless flakes.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Matching symmetry doesn't need a matcher. We keep reaching for a blueprint whenever we see order repeated — six identical arms <em>must</em> have been coordinated somehow — but the arms match for the plainest reason there is: they were grown by identical rules in identical conditions, and identical causes make identical shapes without ever comparing notes. The next time something is suspiciously symmetric, the question isn't "who's keeping the halves in sync?" It's "are both halves just running the same rule in the same weather?"</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Snowflake: Reiter's hexagonal cellular automaton ----
+  // Each cell holds a scalar "water" value s. A cell is "in the crystal"
+  // (frozen/receptive) when s >= 1. Per step:
+  //   - Classify each cell as receptive (frozen OR neighbouring a frozen cell)
+  //     or non-receptive. Split s into a held part v and a diffusive part u.
+  //   - Receptive cells hold their water and get a constant vapour feed gamma.
+  //   - The non-receptive part u diffuses on the hex lattice (weight alpha).
+  //   - Background empty space sits at ambient vapour beta.
+  // Six-fold symmetry is never imposed; it emerges from the uniform hex
+  // neighbourhood plus one identical rule applied everywhere.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    let W = 0, H = 0;         // grid dimensions in cells
+    let s, u, v, frozen;      // Float32 fields + Uint8 frozen mask
+    let cell = 3;             // pixel size of one hex cell (auto-set)
+    let raf = 0;
+    let done = false;         // stops growth once the flake fills its radius
+    let maxR = 0;             // growth radius in cells
+
+    // parameters
+    let beta = 0.42;    // ambient vapour
+    let alpha = 1.40;   // diffusion constant
+    let gamma = 0.0006; // vapour added to receptive cells
+
+    // colour ramp: deep indigo -> violet -> pink -> icy white core
+    const ramp = buildRamp();
+    function buildRamp() {
+      const stops = [
+        [0.00, [10, 10, 22]],
+        [0.35, [46, 40, 96]],
+        [0.62, [124, 124, 255]],
+        [0.82, [255, 124, 195]],
+        [1.00, [244, 246, 255]],
+      ];
+      const N = 256, out = new Uint8Array(N * 3);
+      for (let i = 0; i < N; i++) {
+        const t = i / (N - 1);
+        let a = stops[0], b = stops[stops.length - 1];
+        for (let k = 0; k < stops.length - 1; k++) {
+          if (t >= stops[k][0] && t <= stops[k + 1][0]) { a = stops[k]; b = stops[k + 1]; break; }
+        }
+        const f = (t - a[0]) / Math.max(1e-6, b[0] - a[0]);
+        out[i * 3]     = (a[1][0] + (b[1][0] - a[1][0]) * f) | 0;
+        out[i * 3 + 1] = (a[1][1] + (b[1][1] - a[1][1]) * f) | 0;
+        out[i * 3 + 2] = (a[1][2] + (b[1][2] - a[1][2]) * f) | 0;
+      }
+      return out;
+    }
+
+    // six neighbours on an offset hex lattice (pointy-top, odd-r offset)
+    function nbList(x, y) {
+      const odd = y & 1;
+      return odd
+        ? [[x, y - 1], [x + 1, y - 1], [x - 1, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]]
+        : [[x - 1, y - 1], [x, y - 1], [x - 1, y], [x + 1, y], [x - 1, y + 1], [x, y + 1]];
+    }
+
+    function alloc() {
+      const N = W * H;
+      s = new Float32Array(N);
+      u = new Float32Array(N);
+      v = new Float32Array(N);
+      frozen = new Uint8Array(N);
+    }
+
+    function seed() {
+      s.fill(beta);
+      u.fill(0); v.fill(0); frozen.fill(0);
+      const cx = W >> 1, cy = H >> 1;
+      s[cy * W + cx] = 1;
+      frozen[cy * W + cx] = 1;
+      done = false;
+      // stop growing once any arm reaches this radius, so the flake stays
+      // centred and never smears into the reflecting walls.
+      maxR = Math.min(W, H) * 0.44;
+    }
+
+    // returns true once the crystal has reached the growth radius
+    function reachedEdge() {
+      const cx = W >> 1, cy = H >> 1, r2 = maxR * maxR;
+      // only the outermost ring matters; sample frozen cells cheaply
+      for (let y = 0; y < H; y++) {
+        const dy = y - cy;
+        for (let x = 0; x < W; x++) {
+          if (!frozen[y * W + x]) continue;
+          const dx = x - cx;
+          if (dx * dx + dy * dy >= r2) return true;
+        }
+      }
+      return false;
+    }
+
+    function step() {
+      const N = W * H;
+      // 1) classify + split
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const i = y * W + x;
+          let receptive = frozen[i] === 1;
+          if (!receptive) {
+            const nb = nbList(x, y);
+            for (let k = 0; k < 6; k++) {
+              const nx = nb[k][0], ny = nb[k][1];
+              if (nx >= 0 && nx < W && ny >= 0 && ny < H && frozen[ny * W + nx]) { receptive = true; break; }
+            }
+          }
+          if (receptive) { v[i] = s[i] + gamma; u[i] = 0; }
+          else           { u[i] = s[i]; v[i] = 0; }
+        }
+      }
+      // 2) diffuse the non-receptive part, then recombine with held part
+      const half = alpha * 0.5;
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const i = y * W + x;
+          const nb = nbList(x, y);
+          let sum = 0;
+          for (let k = 0; k < 6; k++) {
+            const nx = nb[k][0], ny = nb[k][1];
+            sum += (nx >= 0 && nx < W && ny >= 0 && ny < H) ? u[ny * W + nx] : u[i]; // reflecting edge
+          }
+          const avg = sum / 6;
+          const nu = u[i] + half * (avg - u[i]);
+          s[i] = nu + v[i];
+        }
+      }
+      // 3) freeze cells that crossed the threshold
+      for (let i = 0; i < N; i++) {
+        if (!frozen[i] && s[i] >= 1) frozen[i] = 1;
+      }
+    }
+
+    // ---- rendering ----
+    let img, buf;
+    function ensureImage() {
+      img = ctx.createImageData(canvas.width, canvas.height);
+      buf = new Uint32Array(img.data.buffer);
+    }
+
+    const RT3 = Math.sqrt(3);
+    function draw() {
+      const cw = canvas.width, ch = canvas.height;
+      const hStep = cell;
+      const vStep = cell * RT3 / 2;
+      const bg = (255 << 24) | (22 << 16) | (10 << 8) | 10;
+      for (let py = 0; py < ch; py++) {
+        let y = Math.round(py / vStep);
+        const rowBase = (y >= 0 && y < H) ? y * W : -1;
+        const odd = y & 1;
+        for (let px = 0; px < cw; px++) {
+          if (rowBase < 0) { buf[py * cw + px] = bg; continue; }
+          let x = Math.round((px - (odd ? hStep / 2 : 0)) / hStep);
+          if (x < 0) x = 0; else if (x >= W) x = W - 1;
+          const i = rowBase + x;
+          let val;
+          if (frozen[i]) {
+            const t = Math.min(1, 0.55 + (s[i] - 1) * 0.5);
+            val = 0.45 + t * 0.55;
+          } else {
+            val = Math.min(0.34, u[i] * 0.34);
+          }
+          let idx = (val * 255) | 0;
+          if (idx < 0) idx = 0; else if (idx > 255) idx = 255;
+          idx *= 3;
+          buf[py * cw + px] = (255 << 24) | (ramp[idx + 2] << 16) | (ramp[idx + 1] << 8) | ramp[idx];
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    // ---- sizing ----
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // fall back to a sane size if the viewport reports 0 (e.g. hidden tab,
+      // pre-layout load) so the canvas is never zero-sized.
+      const vw = window.innerWidth || document.documentElement.clientWidth || 600;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 600;
+      const side = Math.max(240, Math.min(vw, vh));
+      canvas.style.width = side + 'px';
+      canvas.style.height = side + 'px';
+      canvas.width = Math.floor(side * dpr);
+      canvas.height = Math.floor(side * dpr);
+
+      const target = side < 560 ? 170 : 240; // cells across
+      cell = canvas.width / target;
+      W = Math.ceil(canvas.width / cell) + 2;
+      H = Math.ceil(canvas.height / (cell * RT3 / 2)) + 2;
+      alloc();
+      seed();
+      ensureImage();
+    }
+
+    // ---- loop ----
+    let sinceCheck = 0;
+    function frame() {
+      if (!done) {
+        step(); step();
+        // check the boundary occasionally (it's the only O(N) sweep)
+        if (++sinceCheck >= 6) { sinceCheck = 0; if (reachedEdge()) done = true; }
+        draw();
+      }
+      raf = requestAnimationFrame(frame);
+    }
+
+    // ---- controls ----
+    const betaEl = document.getElementById('beta');
+    const alphaEl = document.getElementById('alpha');
+    const gammaEl = document.getElementById('gamma');
+    const betaV = document.getElementById('betaV');
+    const alphaV = document.getElementById('alphaV');
+    const gammaV = document.getElementById('gammaV');
+
+    function syncLabels() {
+      betaV.textContent = beta.toFixed(2);
+      alphaV.textContent = alpha.toFixed(2);
+      gammaV.textContent = gamma.toFixed(4);
+    }
+    betaEl.addEventListener('input', () => { beta = +betaEl.value; syncLabels(); });
+    alphaEl.addEventListener('input', () => { alpha = +alphaEl.value; syncLabels(); });
+    gammaEl.addEventListener('input', () => { gamma = +gammaEl.value; syncLabels(); });
+
+    function regrow() { seed(); }
+    document.getElementById('grow').addEventListener('click', regrow);
+    document.getElementById('rand').addEventListener('click', () => {
+      beta = 0.30 + Math.random() * 0.26;
+      alpha = 1.10 + Math.random() * 0.72;
+      gamma = 0.0001 + Math.random() * 0.0022;
+      betaEl.value = beta; alphaEl.value = alpha; gammaEl.value = gamma;
+      syncLabels();
+      seed();
+    });
+
+    canvas.addEventListener('click', regrow);
+    // Only re-fit on a genuine viewport change (debounced) — never on every
+    // stray layout tick, so growth isn't restarted mid-flake.
+    let lastSide = 0, resizeTimer = 0;
+    function onResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const side = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+        if (side && Math.abs(side - lastSide) > 4) { lastSide = side; resize(); }
+      }, 200);
+    }
+    window.addEventListener('resize', onResize);
+
+    resize();
+    lastSide = Math.min(window.innerWidth || 0, window.innerHeight || 0);
+    // if the viewport reported 0 at load (pre-layout), fit again once it settles.
+    if (!lastSide) setTimeout(() => { const s = Math.min(window.innerWidth || 0, window.innerHeight || 0); if (s) { lastSide = s; resize(); } }, 250);
+    syncLabels();
+    frame();
+  })();
+</script>
+</body>
+</html>
