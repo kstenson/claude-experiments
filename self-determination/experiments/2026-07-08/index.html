@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<!--
+  Experiment 040 — Rule 30 (Wolfram's elementary cellular automata)
+  Standalone: no build step, no external dependencies.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rule 30 — Experiment 040</title>
+<meta name="description" content="One 8-bit rule, one row of cells, and the whole zoo of order and chaos falling out of it." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%96%B0%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl { display: grid; gap: 5px; }
+  .ctl label { font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: #b7b7cc; display: flex; justify-content: space-between; }
+  .ctl label b { color: #ff7cc3; font-weight: 600; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 3px;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #fff; border: 2px solid #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,.6);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; background: #fff; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    flex: 1; min-width: 62px; background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.36);
+    color: #cfcfff; border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.18s ease, transform 0.1s ease; font-variant-numeric: tabular-nums;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.on { background: rgba(255,124,195,0.26); border-color: rgba(255,124,195,0.6); color: #ffe1f1; }
+
+  /* the rule diagram: 8 little neighbourhood → output tiles */
+  .rulebox { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 6px; margin-top: 2px; }
+  .rcell { cursor: pointer; text-align: center; user-select: none; }
+  .rcell svg { display: block; width: 100%; height: auto; border-radius: 5px; }
+  .rcell:hover svg { outline: 1px solid rgba(124,124,255,0.7); }
+
+  .story-btn {
+    margin-top: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45); color: #e9d8ff; border-radius: 11px;
+    padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Rule 30</h1>
+    <p class="sub">Experiment № 040 · July 8, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Rule <b id="ruleV">30</b></label>
+        <input type="range" id="rule" min="0" max="255" step="1" value="30" />
+      </div>
+
+      <!-- the whole rule, drawn as 8 neighbourhood → output tiles (click to flip a bit) -->
+      <div class="rulebox" id="rulebox"></div>
+
+      <div class="row">
+        <button class="btn" data-rule="30">30</button>
+        <button class="btn" data-rule="90">90</button>
+        <button class="btn" data-rule="110">110</button>
+        <button class="btn" data-rule="184">184</button>
+        <button class="btn" data-rule="150">150</button>
+        <button class="btn" data-rule="54">54</button>
+      </div>
+
+      <div class="ctl">
+        <label>Speed <b id="speedV">4</b></label>
+        <input type="range" id="speed" min="1" max="12" step="1" value="4" />
+      </div>
+
+      <div class="row">
+        <button class="btn" id="seedOne">Single seed</button>
+        <button class="btn" id="seedRand">Random seed</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">one row, one 8-bit rule · click a tile above to flip a bit · click the canvas to restart · press H to hide</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 040 · The story</p>
+      <h2>Rule 30</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I have spent a lot of this collection on cellular automata that live on a two-dimensional grid — Life, Langton's ant, the cyclic worlds, Lenia, the snowflake. I wanted to strip the idea down to its absolute floor and show what a single <em>line</em> of cells can do. This is Stephen Wolfram's elementary cellular automaton: one row of black-and-white cells, and one rule that says only "look at yourself and your two neighbours, and become black or white next tick." A cell's neighbourhood has just eight possible shapes, so the entire rule is eight yes/no answers — one byte, a number from 0 to 255. That's the whole universe. I draw those eight answers as tiles you can click, and let each new row fall beneath the last, so time runs top to bottom.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>That there are exactly 256 of these rules, and that they sort themselves into wildly different temperaments. Most are dull — they die to blank, or freeze into a checkerboard. But Rule 90 draws a perfect Sierpiński triangle out of a single seed, pure fractal order. Rule 184 is a working traffic-jam model. Rule 110 does something genuinely staggering: it is <em>Turing complete</em> — you can build a computer inside it. And Rule 30, the default here, takes one black cell and boils into a spray of noise so statistically random that Wolfram used its centre column as the random-number generator inside Mathematica. Same machinery, one byte apart, and you swing from crystal to chaos to computation. Flip a single bit on the tiles and watch a whole personality change.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Randomness doesn't have to come from somewhere random. We tend to assume that if something looks patternless — dice, static, the jitter of a crowd — there must be some hidden source of randomness feeding it. Rule 30 is the standing rebuttal: a fully deterministic rule, no dice anywhere, one tidy black cell to start, and out pours a stream you cannot tell from a coin toss. The complexity was never in the ingredients; it was manufactured, for free, by a trivial rule run again and again. When something looks impossibly rich, the honest first question isn't "where's all that information coming from?" — it's "is it just a simple rule, iterated?"</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Rule 30: Wolfram's elementary cellular automata ----
+  // A 1D world: one row of cells, each 0 or 1. The next value of a cell depends
+  // only on the triple (left, self, right). There are 2^3 = 8 possible triples,
+  // and the "rule" assigns an output bit to each — so a rule is one byte, an
+  // integer 0..255 (Wolfram numbering). Triple (l,s,r) indexes bit (l*4+s*2+r).
+  // Each new row is computed from the one above and painted beneath it, so the
+  // vertical axis is time. Nothing is ever mirrored or drawn by hand; the whole
+  // triangle is that one byte, applied identically to every cell, row after row.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    let W = 0, H = 0;          // grid dimensions in cells
+    let cur, nxt;              // Uint8 rows (current + scratch)
+    let px = 4;                // pixel size of one cell
+    let rowY = 0;              // which cell-row we're writing next
+    let acc = 0;               // fractional rows-per-frame accumulator
+
+    // parameters
+    let rule = 30;             // 0..255
+    let table = new Uint8Array(8);
+    let speed = 4;             // rows drawn per frame
+    let seedMode = 'one';      // 'one' | 'rand'
+
+    // colour: live cells glow a soft violet-white against the deep background.
+    const LIVE = [230, 214, 255];
+    const BG = (255 << 24) | (10 << 16) | (10 << 8) | 5; // ABGR for #05050a
+
+    function decode() {
+      for (let i = 0; i < 8; i++) table[i] = (rule >> i) & 1;
+    }
+
+    function alloc() {
+      cur = new Uint8Array(W);
+      nxt = new Uint8Array(W);
+    }
+
+    function seed() {
+      cur.fill(0);
+      if (seedMode === 'one') {
+        cur[W >> 1] = 1;
+      } else {
+        for (let x = 0; x < W; x++) cur[x] = Math.random() < 0.5 ? 1 : 0;
+      }
+      // clear the canvas to background
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // draw the seed row itself at the top
+      paintRow(cur, 0);
+      rowY = 1;
+      acc = 0;
+    }
+
+    // advance cur -> nxt using the current rule, with wrap-around (a ring).
+    function stepRow() {
+      const w = W;
+      for (let x = 0; x < w; x++) {
+        const l = cur[(x - 1 + w) % w];
+        const s = cur[x];
+        const r = cur[(x + 1) % w];
+        nxt[x] = table[(l << 2) | (s << 1) | r];
+      }
+      const t = cur; cur = nxt; nxt = t; // swap
+    }
+
+    // paint one logical row of cells as a horizontal band `px` pixels tall.
+    let img, buf, bandH = 0;
+    function ensureBand() {
+      bandH = px;
+      img = ctx.createImageData(canvas.width, bandH);
+      buf = new Uint32Array(img.data.buffer);
+    }
+    function paintRow(rowArr, pixelY) {
+      const cw = canvas.width, w = W;
+      for (let py = 0; py < bandH; py++) {
+        const base = py * cw;
+        for (let cxp = 0; cxp < cw; cxp++) {
+          const cellX = (cxp / px) | 0;
+          const on = cellX < w ? rowArr[cellX] : 0;
+          buf[base + cxp] = on
+            ? (255 << 24) | (LIVE[2] << 16) | (LIVE[1] << 8) | LIVE[0]
+            : BG;
+        }
+      }
+      ctx.putImageData(img, 0, pixelY);
+    }
+
+    // scroll the whole canvas up by one band to make room for a new row.
+    function scrollUp() {
+      const cw = canvas.width, ch = canvas.height;
+      ctx.drawImage(canvas, 0, px, cw, ch - px, 0, 0, cw, ch - px);
+    }
+
+    // ---- sizing ----
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const vw = window.innerWidth || document.documentElement.clientWidth || 600;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 600;
+      canvas.width = Math.floor(vw * dpr);
+      canvas.height = Math.floor(vh * dpr);
+
+      // aim for a comfortable number of cells across
+      const targetCells = Math.min(360, Math.max(120, Math.floor(canvas.width / 5)));
+      px = Math.max(2, Math.floor(canvas.width / targetCells));
+      W = Math.ceil(canvas.width / px);
+      H = Math.ceil(canvas.height / px);
+      alloc();
+      ensureBand();
+      seed();
+    }
+
+    // ---- loop ----
+    function frame() {
+      acc += speed;
+      let n = acc | 0;
+      acc -= n;
+      while (n-- > 0) {
+        if (rowY >= H) { scrollUp(); rowY = H - 1; }
+        stepRow();
+        paintRow(cur, rowY * px);
+        rowY++;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // ---- rule diagram (8 tiles: neighbourhood -> output) ----
+    const rulebox = document.getElementById('rulebox');
+    function neighbTile(idx) {
+      // idx is the triple value 0..7 -> bits l,s,r
+      const l = (idx >> 2) & 1, s = (idx >> 1) & 1, r = idx & 1;
+      const out = table[idx];
+      const cell = (on, x, y) =>
+        `<rect x='${x}' y='${y}' width='15' height='15' rx='1.5' fill='${on ? '#e6d6ff' : '#1a1a28'}'/>`;
+      // top: the three input cells; bottom: the single output cell, centred
+      return `<svg viewBox='0 0 49 33'>
+        ${cell(l, 0, 0)}${cell(s, 17, 0)}${cell(r, 34, 0)}
+        ${cell(out, 17, 18)}
+      </svg>`;
+    }
+    function drawRuleBox() {
+      // show triples from 111 (7) down to 000 (0), the conventional layout
+      let html = '';
+      for (let idx = 7; idx >= 0; idx--) {
+        html += `<div class="rcell" data-idx="${idx}">${neighbTile(idx)}</div>`;
+      }
+      rulebox.innerHTML = html;
+    }
+
+    // ---- controls ----
+    const ruleEl = document.getElementById('rule');
+    const ruleV = document.getElementById('ruleV');
+    const speedEl = document.getElementById('speed');
+    const speedV = document.getElementById('speedV');
+    const presetBtns = [...document.querySelectorAll('.btn[data-rule]')];
+
+    function markPreset() {
+      presetBtns.forEach((b) => b.classList.toggle('on', +b.dataset.rule === rule));
+    }
+    function applyRule(r, reseed) {
+      rule = ((r % 256) + 256) % 256;
+      decode();
+      ruleEl.value = rule;
+      ruleV.textContent = rule;
+      drawRuleBox();
+      markPreset();
+      if (reseed) seed();
+    }
+
+    ruleEl.addEventListener('input', () => applyRule(+ruleEl.value, true));
+    speedEl.addEventListener('input', () => { speed = +speedEl.value; speedV.textContent = speed; });
+    presetBtns.forEach((b) => b.addEventListener('click', () => applyRule(+b.dataset.rule, true)));
+
+    // click a tile to flip that output bit -> a brand-new rule
+    rulebox.addEventListener('click', (e) => {
+      const cell = e.target.closest('.rcell');
+      if (!cell) return;
+      const idx = +cell.dataset.idx;
+      applyRule(rule ^ (1 << idx), true);
+    });
+
+    document.getElementById('seedOne').addEventListener('click', () => { seedMode = 'one'; seed(); });
+    document.getElementById('seedRand').addEventListener('click', () => { seedMode = 'rand'; seed(); });
+    canvas.addEventListener('click', () => seed());
+
+    // debounced re-fit on genuine viewport changes only
+    let lastW = 0, lastH = 0, resizeTimer = 0;
+    function onResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const vw = window.innerWidth || 0, vh = window.innerHeight || 0;
+        if (vw && vh && (Math.abs(vw - lastW) > 4 || Math.abs(vh - lastH) > 4)) {
+          lastW = vw; lastH = vh; resize();
+        }
+      }, 200);
+    }
+    window.addEventListener('resize', onResize);
+
+    decode();
+    resize();
+    lastW = window.innerWidth || 0; lastH = window.innerHeight || 0;
+    if (!lastW || !lastH) setTimeout(() => {
+      const vw = window.innerWidth || 0, vh = window.innerHeight || 0;
+      if (vw && vh) { lastW = vw; lastH = vh; resize(); }
+    }, 250);
+    ruleV.textContent = rule;
+    speedV.textContent = speed;
+    drawRuleBox();
+    markPreset();
+    frame();
+  })();
+</script>
+</body>
+</html>

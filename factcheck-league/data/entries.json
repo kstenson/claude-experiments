@@ -3,21 +3,101 @@
     "title": "UK Politics Fact-Check League",
     "description": "A daily fact-check of the most-discussed claim in UK politics, scored on a 0-100 truth meter, with a running league table of everyone featured.",
     "scoringScale": [
-      { "band": "True", "min": 90, "max": 100, "color": "#1a7f37" },
-      { "band": "Mostly True", "min": 70, "max": 89, "color": "#4caf50" },
-      { "band": "Half True / Needs Context", "min": 50, "max": 69, "color": "#c9a227" },
-      { "band": "Mostly False", "min": 30, "max": 49, "color": "#e8800c" },
-      { "band": "False", "min": 10, "max": 29, "color": "#d1242f" },
-      { "band": "Fabricated", "min": 0, "max": 9, "color": "#7a0a12" }
+      {
+        "band": "True",
+        "min": 90,
+        "max": 100,
+        "color": "#1a7f37"
+      },
+      {
+        "band": "Mostly True",
+        "min": 70,
+        "max": 89,
+        "color": "#4caf50"
+      },
+      {
+        "band": "Half True / Needs Context",
+        "min": 50,
+        "max": 69,
+        "color": "#c9a227"
+      },
+      {
+        "band": "Mostly False",
+        "min": 30,
+        "max": 49,
+        "color": "#e8800c"
+      },
+      {
+        "band": "False",
+        "min": 10,
+        "max": 29,
+        "color": "#d1242f"
+      },
+      {
+        "band": "Fabricated",
+        "min": 0,
+        "max": 9,
+        "color": "#7a0a12"
+      }
     ],
-    "lastUpdated": "2026-07-07",
+    "lastUpdated": "2026-07-08",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-07-08",
+      "date": "2026-07-08",
+      "headline": true,
+      "topic": "Is Reform UK now the largest political party in Britain by membership?",
+      "claim": "Reform UK is the largest political party in Britain by membership, with more than 268,000 paid-up members - having overtaken Labour.",
+      "speaker": "Nigel Farage",
+      "party": "Reform UK",
+      "role": "Leader of Reform UK; MP for Clacton until his 7 July 2026 resignation, which triggered a by-election he intends to contest as a 'people vs the establishment' fight",
+      "discussionScore": 82,
+      "discussionNote": "Farage's shock resignation as MP for Clacton on 7 July 2026 - to force a by-election over Sunday Times revelations about undeclared benefits from convicted fraudster George Cottrell - was the dominant UK political story of the 6-8 July window, splashed by CNN, Al Jazeera, CNBC and Fox and framed by Farage as 'people vs the establishment'. His pitch rests on the claim that Reform is now the biggest force in British politics, and the party's signature, endlessly repeated 'largest party in Britain by membership' boast - first made when The Times, Bloomberg and LBC reported in December 2025 that Reform's counter had passed Labour's - was thrust back to the centre of the coverage. It is a discrete, superlative, directly checkable number, testable against Reform's own membership counter, Labour's audited annual-report figure, the House of Commons Library party-membership briefing (SN05125) and a dedicated UK Fact Check Politics analysis, and it targets a fresh subject distinct from the recent Starmer defence/migration entries, the Burnham NEET headline and the Badenoch defence entry - putting the claim underpinning Reform's whole 'insurgent front-runner' framing in the dock on the day its leader dominated the news.",
+      "score": 72,
+      "verdict": "Mostly True",
+      "explanation": "The headline is broadly supported by the reported numbers - Reform genuinely does appear to have more paid members than any other British party right now - which is why this sits in Mostly True; it falls to the low end of that band, and not into the True band, because the comparison is not like-for-like and the word 'largest' rests on two figures counted in fundamentally different ways. The numbers: Reform UK's own live membership counter passed 268,000 in late 2025 (LBC reported 268,631 'active members'), and The Times, Bloomberg and LBC all reported in December 2025 that this put Reform ahead of Labour, whose paid membership had slid below 250,000 after haemorrhaging roughly 100,000 members since the 2024 general election. On those figures Reform is the largest, and it is also comfortably ahead of the Conservatives, who last disclosed around 131,000 members at their 2024 leadership election and rarely publish a running total. The context that keeps it out of the True band: Reform's number is a self-reported, continuously updating website counter, while Labour's is an audited figure published in an annual report under constitutional membership rules. These are not the same thing. A live sign-up counter can capture new joiners instantly but lag on lapses and cancellations, so it may overstate the number of people who are actually paid-up at any given moment; 'paid-up' can also mean 'ever paid once' rather than 'currently in good standing'; and no independent audit has compared the two parties on a shared definition. That is why UK Fact Check Politics rated the specific claim 74/100 and called the comparison 'apples-to-oranges' rather than simply true. What is fair to Farage: when Reform first crossed the line, it invited the Financial Times, Sky News, The Spectator and The Telegraph to inspect its website code and underlying data, and those outlets reported the ticker to be accurate, so this is not a fabricated figure - Kemi Badenoch's earlier suggestion that the numbers were invented was not borne out. The claim is therefore a real, corroborated, plausibly-leading figure stated as a simple 'largest party' fact, with the genuine caveat that it compares a live counter against audited rolls; that is context rather than a factual error, so it is Mostly True.",
+      "evidence": [
+        "Claim/context (resignation, 7 July 2026): Farage resigned as MP for Clacton to force a 'people vs the establishment' by-election after Sunday Times reports of undeclared benefits from convicted fraudster George Cottrell; the story led CNN, Al Jazeera, CNBC and Fox across 6-8 July, foregrounding Reform's claim to be the biggest party in Britain.",
+        "Core number (Reform's counter): Reform UK's live membership counter passed 268,000 in late 2025 - LBC reported 268,631 'active members' - the figure the party cites for its 'largest party in Britain' claim.",
+        "Comparison (Labour): The Times, Bloomberg and LBC reported in December 2025 that Labour's paid membership had fallen below 250,000, having lost roughly 100,000 members since the 2024 general election, putting Reform ahead on the reported figures.",
+        "Comparison (Conservatives): the Conservatives last disclosed around 131,000 members at their 2024 leadership election and rarely publish a running total, so Reform is clearly ahead of them too.",
+        "Key caveat (not like-for-like): Reform's figure is a self-reported live website counter, while Labour's is an audited figure in its annual report; a live counter can lag on cancellations and may overstate current paid-up membership, and 'paid-up' is defined differently by each party - so UK Fact Check Politics rated the comparison 'apples-to-oranges' (74/100).",
+        "Fairness / not fabricated: when it first crossed the line, Reform invited the FT, Sky News, The Spectator and The Telegraph to inspect its website code and data, and those outlets reported the ticker to be accurate; Badenoch's earlier claim that the figures were fabricated was not substantiated."
+      ],
+      "confidence": "Medium-high. The ~268,000 Reform figure (LBC: 268,631) and the sub-250,000 Labour figure are consistently reported by The Times, Bloomberg, LBC and Nation.Cymru for December 2025, and corroborated by a dedicated UK Fact Check Politics analysis and the Wikipedia Reform UK entry; the Conservatives' ~131,000 comes from their 2024 leadership election. The soft spots are real and are why this is not scored higher: both parties' totals are moving targets, Reform's counter is self-reported rather than audited (and the party disabled its public ticker in January 2026, so recent figures are partly estimated), Labour publishes only annually, and one secondary source (Wikipedia) carries an internally inconsistent forward-dated table showing Labour above Reform, which I have discounted in favour of the consistent December 2025 reporting from The Times, Bloomberg and LBC. I could not load the House of Commons Library party-membership briefing (SN05125) directly - it returned a 403 to automated fetching - so the Library figure is cited by title/URL rather than quoted. The main judgement call is the band: the numbers do support 'largest party by membership', which puts it above half-true, but the comparison mixes a live counter with audited rolls, so it is Mostly True at the low end rather than True.",
+      "sources": [
+        {
+          "title": "LBC - Reform UK now the country's largest party as Labour membership plummets",
+          "url": "https://www.lbc.co.uk/article/reform-uk-largest-party-labour-members-5HjdPKk_2/"
+        },
+        {
+          "title": "Bloomberg - Farage's Reform Overtakes Labour as Largest UK Party by Members (12 December 2025)",
+          "url": "https://www.bloomberg.com/news/articles/2025-12-12/farage-s-reform-overtakes-labour-as-largest-uk-party-by-members"
+        },
+        {
+          "title": "UK Fact Check Politics - Reform UK's 'largest party' membership claim relies on a live counter not directly comparable to Labour's audited rolls",
+          "url": "https://www.ukfactcheck.com/article/114/reform-uks-largest-party-membership-claim-relies-on-a-live-counter-not-directly-comparable-to-labours-audited-rolls"
+        },
+        {
+          "title": "House of Commons Library - Membership of political parties in Great Britain (SN05125)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn05125/"
+        },
+        {
+          "title": "Nation.Cymru - Reform claims to be largest UK political party amid reports of Labour slide",
+          "url": "https://nation.cymru/news/reform-claims-to-be-largest-uk-political-party-amid-reports-of-labour-slide/"
+        },
+        {
+          "title": "Al Jazeera - Reform UK's Farage resigns as MP amid funding scandal, forcing by-election (7 July 2026)",
+          "url": "https://www.aljazeera.com/news/2026/7/7/reform-uks-farage-resigns-as-mp-amid-funding-scandal-forcing-by-election"
+        }
+      ]
+    },
+    {
       "id": "2026-07-07",
       "date": "2026-07-07",
-      "headline": true,
+      "headline": false,
       "topic": "Are 'almost a million' young people in Britain not in education, employment or training?",
       "claim": "Almost a million young people out of education, work or training - that should be a source of national shame.",
       "speaker": "Andy Burnham",
@@ -38,12 +118,30 @@
       ],
       "confidence": "High. The 1,012,000 total, the 13.5 per cent rate, the first-time-over-one-million-since-2013 milestone (1,038,000 in Oct-Dec 2013), the +89,000 year-on-year and +55,000 quarterly rises, and the 400,000-unemployed / 613,000-economically-inactive split all come directly from the ONS 'Young people not in education, employment or training (NEET), UK' bulletin (January to March 2026), corroborated by the House of Commons Library NEET briefing (SN06705), the Youth Employment UK quarterly data explainer and the New Statesman's 6 July NEET piece, which independently confirm the same figures and the 'highest economic inactivity since 2001' point. Burnham's framing of the number is attested across FE Week, LabourList, the New Statesman and Novara Media, though the precise 'national shame' wording is a close paraphrase in the coverage rather than a confirmed verbatim quote, so it is presented as his framing rather than a locked transcript line. The main judgement call is the band: the figure is genuinely correct and if anything understated, which puts it well above half-true, but the NEET label bundles the unemployed with the economically inactive and long-term sick, and 'out of education, work or training' invites the inference that these are all idle young people, which is context the headline number omits - so it is Mostly True rather than True. The one soft spot is that NEET is a survey estimate subject to revision and the exact total can move, though this does not change the assessment of the claim as made.",
       "sources": [
-        { "title": "Office for National Statistics - Young people not in education, employment or training (NEET), UK: May 2026 (data for January to March 2026)", "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/bulletins/youngpeoplenotineducationemploymentortrainingneet/may2026" },
-        { "title": "House of Commons Library - NEET: Young People Not in Education, Employment or Training (SN06705)", "url": "https://commonslibrary.parliament.uk/research-briefings/sn06705/" },
-        { "title": "Youth Employment UK - May 2026 Quarterly NEET Data", "url": "https://www.youthemployment.org.uk/may-2026-quarterly-neet-data/" },
-        { "title": "New Statesman - How to solve the Neet crisis (6 July 2026)", "url": "https://www.newstatesman.com/politics/uk-politics/2026/07/how-to-solve-the-neet-crisis" },
-        { "title": "FE Week - Burnham's speech: Groundhog Day rhetoric, Manchesterism in practice", "url": "https://feweek.co.uk/burnhams-speech-groundhog-day-rhetoric-manchesterism-in-practice/" },
-        { "title": "LabourList - 'Manchesterism at home and abroad'", "url": "https://labourlist.org/2026/07/manchesterism-at-home-and-abroad/" }
+        {
+          "title": "Office for National Statistics - Young people not in education, employment or training (NEET), UK: May 2026 (data for January to March 2026)",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/bulletins/youngpeoplenotineducationemploymentortrainingneet/may2026"
+        },
+        {
+          "title": "House of Commons Library - NEET: Young People Not in Education, Employment or Training (SN06705)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn06705/"
+        },
+        {
+          "title": "Youth Employment UK - May 2026 Quarterly NEET Data",
+          "url": "https://www.youthemployment.org.uk/may-2026-quarterly-neet-data/"
+        },
+        {
+          "title": "New Statesman - How to solve the Neet crisis (6 July 2026)",
+          "url": "https://www.newstatesman.com/politics/uk-politics/2026/07/how-to-solve-the-neet-crisis"
+        },
+        {
+          "title": "FE Week - Burnham's speech: Groundhog Day rhetoric, Manchesterism in practice",
+          "url": "https://feweek.co.uk/burnhams-speech-groundhog-day-rhetoric-manchesterism-in-practice/"
+        },
+        {
+          "title": "LabourList - 'Manchesterism at home and abroad'",
+          "url": "https://labourlist.org/2026/07/manchesterism-at-home-and-abroad/"
+        }
       ]
     },
     {
@@ -70,12 +168,30 @@
       ],
       "confidence": "High. The £272.2bn four-year total, the £62.2bn-to-£73.5bn per-year budget path, the ~£1.9bn and ~£3.3bn real year-on-year increases, the 2.6%-of-GDP-by-2027 and 3.5%-by-2035 NATO commitments, and Luke Pollard's confirmation that £270bn 'is the total of the Ministry of Defence's budget from financial year 2025/26 to 2028/29' all come from the 2025 Spending Review, the House of Commons Library defence-spending briefing (CBP-8175) and Full Fact's two dedicated fact-checks, which independently establish that £270bn is a total rather than an increase and rate Starmer's 'more than we would otherwise have done' framing 'Incorrect'. Starmer's exact wording is taken from his 23 March 2026 Liaison Committee evidence; the 30 June £15bn/~£300bn Defence Investment Plan figures are corroborated across Al Jazeera, France 24, LBC and Forces News. The main judgement call is the band: because the £270bn is a genuine Spending Review figure and defence spending is genuinely rising, the claim is above the False band, but presenting the MoD's entire four-year total as money spent 'more than we would otherwise have done' misrepresents the figure by an order of magnitude - the same error corrected twice - which keeps it in Mostly False rather than Half True. The one soft spot is the exact size of the fresh DIP top-up (variously ~£15bn headline versus ~£11bn of genuinely new spend), which does not change the assessment of the £270bn claim itself.",
       "sources": [
-        { "title": "Full Fact - Defence spending not set to increase by an 'extra' £270 billion (30 June 2026)", "url": "https://fullfact.org/politics/270-bn-defence-extra-repeat/" },
-        { "title": "Full Fact - Defence spending is not set to get an extra £270 billion (23 March 2026)", "url": "https://fullfact.org/politics/keir-starmer-270-billion-defence/" },
-        { "title": "House of Commons Library - UK defence spending (CBP-8175)", "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8175/" },
-        { "title": "Liaison Committee - Oral evidence: work of the Prime Minister (23 March 2026)", "url": "https://committees.parliament.uk/oralevidence/17382/html/" },
-        { "title": "Al Jazeera - UK's Starmer announces £300bn defence investment plan (30 June 2026)", "url": "https://www.aljazeera.com/economy/2026/6/30/uks-starmer-announces-300-billion-pound-defence-investment-plan" },
-        { "title": "France 24 - Outgoing UK PM Starmer announces 'record' defence spending (30 June 2026)", "url": "https://www.france24.com/en/live-news/20260630-outgoing-uk-pm-starmer-announces-record-defence-spending" }
+        {
+          "title": "Full Fact - Defence spending not set to increase by an 'extra' £270 billion (30 June 2026)",
+          "url": "https://fullfact.org/politics/270-bn-defence-extra-repeat/"
+        },
+        {
+          "title": "Full Fact - Defence spending is not set to get an extra £270 billion (23 March 2026)",
+          "url": "https://fullfact.org/politics/keir-starmer-270-billion-defence/"
+        },
+        {
+          "title": "House of Commons Library - UK defence spending (CBP-8175)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8175/"
+        },
+        {
+          "title": "Liaison Committee - Oral evidence: work of the Prime Minister (23 March 2026)",
+          "url": "https://committees.parliament.uk/oralevidence/17382/html/"
+        },
+        {
+          "title": "Al Jazeera - UK's Starmer announces £300bn defence investment plan (30 June 2026)",
+          "url": "https://www.aljazeera.com/economy/2026/6/30/uks-starmer-announces-300-billion-pound-defence-investment-plan"
+        },
+        {
+          "title": "France 24 - Outgoing UK PM Starmer announces 'record' defence spending (30 June 2026)",
+          "url": "https://www.france24.com/en/live-news/20260630-outgoing-uk-pm-starmer-announces-record-defence-spending"
+        }
       ]
     },
     {
@@ -102,12 +218,30 @@
       ],
       "confidence": "High. The 34,400 grantees, the ~£4.9bn indicative net lifetime fiscal cost, the ~£141,000 per-person figure and every caveat (indicative not precise, dependants excluded, visa-fee/IHS income excluded, wider macroeconomic effects ignored, decades-long assumptions) come directly from the Home Office's published 'Estimated lifetime net fiscal impact of Article 8 main applicants' analysis on GOV.UK, corroborated by the Preston Blog data explainer, which independently sets out that the £4.9bn is a lifetime present-value model rather than a year's spending and that the source does not classify the cohort as asylum seekers or people avoiding deportation. Farage's verbatim wording ('over the last year alone... 5 billion pounds'; 'allowing those boats to cross the Channel is bankrupting Britain') is reported in the Breitbart write-up of his 30 June video and echoed by GB News, AOL/PA and MSN. The main judgement call is the band: the £4.9bn and 34,400 are genuinely the Home Office's own figures, so this is well above the False band, but Farage converts a caveat-laden lifetime present-value estimate into an annual 'last year alone' cost, reassigns a family-life immigration category to Channel-crossing asylum abuse, and strips every uncertainty the Home Office attached - three material misrepresentations of a real number - which keeps it in Mostly False rather than Half True. The one soft spot is the exact per-person figure (variously reported as £141,000 and £141,100) and rounding of £4.9bn to '£5bn', neither of which changes the assessment.",
       "sources": [
-        { "title": "GOV.UK / Home Office - Estimated lifetime net fiscal impact of Article 8 main applicants", "url": "https://www.gov.uk/government/publications/estimated-lifetime-net-fiscal-impact-of-article-8-main-applicants/estimated-lifetime-net-fiscal-impact-of-article-8-main-applicants" },
-        { "title": "Preston Blog - What Are Home Office ECHR Migrant Costs? Official Data", "url": "https://www.prestonblog.co.uk/home-office-echr-migrant-costs/" },
-        { "title": "Breitbart - 'Bankrupting Britain': Migrants Using ECHR to Stay in the UK Will Cost Taxpayer £4.9bn", "url": "https://www.breitbart.com/europe/2026/06/30/bankrupting-britain-migrants-using-echr-to-stay-in-the-u-k-will-cost-taxpayer-4-9bn/" },
-        { "title": "GB News - Migrant crisis: Nigel Farage fumes after Home Office admits migrants using ECHR to avoid deportation will cost £4.9billion", "url": "https://www.gbnews.com/politics/migrant-crisis-asylum-seekers-echr-labour" },
-        { "title": "AOL / PA - Migrants using ECHR to stay in Britain will cost taxpayer £4.9bn", "url": "https://www.aol.com/articles/migrants-using-echr-stay-britain-140149000.html" },
-        { "title": "GOV.UK - Mahmood: My reforms will save the asylum system for a generation", "url": "https://www.gov.uk/government/news/mahmood-myreforms-will-save-the-asylum-system-for-a-generation" }
+        {
+          "title": "GOV.UK / Home Office - Estimated lifetime net fiscal impact of Article 8 main applicants",
+          "url": "https://www.gov.uk/government/publications/estimated-lifetime-net-fiscal-impact-of-article-8-main-applicants/estimated-lifetime-net-fiscal-impact-of-article-8-main-applicants"
+        },
+        {
+          "title": "Preston Blog - What Are Home Office ECHR Migrant Costs? Official Data",
+          "url": "https://www.prestonblog.co.uk/home-office-echr-migrant-costs/"
+        },
+        {
+          "title": "Breitbart - 'Bankrupting Britain': Migrants Using ECHR to Stay in the UK Will Cost Taxpayer £4.9bn",
+          "url": "https://www.breitbart.com/europe/2026/06/30/bankrupting-britain-migrants-using-echr-to-stay-in-the-u-k-will-cost-taxpayer-4-9bn/"
+        },
+        {
+          "title": "GB News - Migrant crisis: Nigel Farage fumes after Home Office admits migrants using ECHR to avoid deportation will cost £4.9billion",
+          "url": "https://www.gbnews.com/politics/migrant-crisis-asylum-seekers-echr-labour"
+        },
+        {
+          "title": "AOL / PA - Migrants using ECHR to stay in Britain will cost taxpayer £4.9bn",
+          "url": "https://www.aol.com/articles/migrants-using-echr-stay-britain-140149000.html"
+        },
+        {
+          "title": "GOV.UK - Mahmood: My reforms will save the asylum system for a generation",
+          "url": "https://www.gov.uk/government/news/mahmood-myreforms-will-save-the-asylum-system-for-a-generation"
+        }
       ]
     },
     {
@@ -134,12 +268,30 @@
       ],
       "confidence": "High. The 0.6 per cent UK Q1 2026 growth figure and the G7 ranking (US 0.5, Canada 0.4, Germany 0.3, Italy 0.2, France 0.0, Japan outstanding at ~0.4) come directly from the ONS GDP first-quarterly-estimate bulletin (January to March 2026), corroborated by the House of Commons Library GDP international-comparisons briefing and The London Economic's G7 write-up; the per-head 0.6 per cent (fastest in four years) is from the ONS; the IMF's upgrade from 0.8 to 1.0 per cent is from its May 2026 update, and the OECD's 0.9 per cent from its 3 June 2026 forecast. The single-quarter caveat and the April 2026 -0.1 per cent contraction come from Full Fact's government-tracker on sustained G7 growth. Starmer's verbatim wording is reported in the Yorkshire Post PMQs write-up and the GOV.UK Downing Street readout. The main judgement call is the band: the specific claim - fastest-growing in the G7 in Q1 2026 - is true, correctly measured and correctly sourced, so it is well above half-true, but it cherry-picks one quarter that was followed by a contraction and the 'upgraded by the IMF and the OECD' element is only half-right (IMF yes, OECD a forecast not a clear upgrade), which keeps it in Mostly True rather than the True band. The one soft spot is that Japan had not reported its Q1 figure and the OECD comparison data is subject to revision, though on current figures the UK ranking holds.",
       "sources": [
-        { "title": "Office for National Statistics - GDP first quarterly estimate, UK: January to March 2026", "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpfirstquarterlyestimateuk/januarytomarch2026" },
-        { "title": "House of Commons Library - GDP international comparisons: Economic indicators", "url": "https://commonslibrary.parliament.uk/research-briefings/sn02784/" },
-        { "title": "Full Fact - Is the government on course to secure 'the highest sustained growth in the G7'?", "url": "https://fullfact.org/government-tracker/sustained-G7-growth/" },
-        { "title": "The London Economic - UK economy expected to see fastest growth of G7 nations so far in 2026", "url": "https://www.thelondoneconomic.com/news/uk-economy-growth-figures-start-of-2026-406166/" },
-        { "title": "The London Economic - IMF upgrades UK's growth forecast for 2026", "url": "https://www.thelondoneconomic.com/news/imf-upgrades-uks-growth-forecast-for-2026-406278/" },
-        { "title": "Yorkshire Post - Sir Keir Starmer defends Rachel Reeves' record from Badenoch attacks at PMQs", "url": "https://www.yorkshirepost.co.uk/news/politics/sir-keir-starmer-rachel-reeves-badenoch-pmqs-8760001" }
+        {
+          "title": "Office for National Statistics - GDP first quarterly estimate, UK: January to March 2026",
+          "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpfirstquarterlyestimateuk/januarytomarch2026"
+        },
+        {
+          "title": "House of Commons Library - GDP international comparisons: Economic indicators",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn02784/"
+        },
+        {
+          "title": "Full Fact - Is the government on course to secure 'the highest sustained growth in the G7'?",
+          "url": "https://fullfact.org/government-tracker/sustained-G7-growth/"
+        },
+        {
+          "title": "The London Economic - UK economy expected to see fastest growth of G7 nations so far in 2026",
+          "url": "https://www.thelondoneconomic.com/news/uk-economy-growth-figures-start-of-2026-406166/"
+        },
+        {
+          "title": "The London Economic - IMF upgrades UK's growth forecast for 2026",
+          "url": "https://www.thelondoneconomic.com/news/imf-upgrades-uks-growth-forecast-for-2026-406278/"
+        },
+        {
+          "title": "Yorkshire Post - Sir Keir Starmer defends Rachel Reeves' record from Badenoch attacks at PMQs",
+          "url": "https://www.yorkshirepost.co.uk/news/politics/sir-keir-starmer-rachel-reeves-badenoch-pmqs-8760001"
+        }
       ]
     },
     {
@@ -166,12 +318,30 @@
       ],
       "confidence": "High. The £28bn requirement attributed to the Chief of the Defence Staff (Air Chief Marshal Sir Rich Knighton), the extra £15bn in the Defence Investment Plan, the almost-£80bn-by-2029 trajectory, the shadow defence secretary's 'barely half that requirement' line and the £4.7bn 'to be funded at Budget 2026' gap all come from Forces News, Defense News, the IISS analysis and the DIP itself; the £28bn MoD ask and Healey's 'unwilling to commit the resources' wording come from his 11 June 2026 resignation and its contemporaneous reporting (Al Jazeera, CBS News, Bloomberg, Politics.co.uk). Badenoch's PMQs framing (£28bn 'minimum', Starmer offering 'half', the 'black hole') is reported across LBC, the New Statesman and the Spectator. The main judgement call is the band: the £28bn is correctly attributed to the head of the armed forces and the plan does deliver only about half, so the claim is well above half-true, but £28bn was a requested figure to fully fund the plan rather than a formally accepted absolute minimum, and the extra committed is nearer 54 per cent than a literal half, which keeps it in Mostly True rather than the True band. The one soft spot is a modest source discrepancy on the exact settlement (£15bn extra versus a £13.5-14.5bn underlying figure), but both leave the plan at roughly half of £28bn, so the comparison holds.",
       "sources": [
-        { "title": "LBC - Badenoch accuses Starmer of leaving defence spending 'mess to his successor' amid £5billion black hole", "url": "https://www.lbc.co.uk/article/badenoch-attacks-starmer-pmqs-defence-spending-5HjdcNY_2/" },
-        { "title": "Forces News - Armed Forces funding announced at last: everything you need to know (Defence Investment Plan)", "url": "https://www.forcesnews.com/services/tri-service/live-defence-investment-plan-announcements-what-they-mean-uks-military" },
-        { "title": "Defense News - UK's Starmer unveils $20 billion defense boost in long-delayed investment plan", "url": "https://www.defensenews.com/global/europe/2026/07/01/uks-starmer-unveils-20-billion-defense-boost-in-long-delayed-investment-plan/" },
-        { "title": "Politics.co.uk - John Healey resigns as defence secretary - letter in full", "url": "https://www.politics.co.uk/news/2026/06/11/john-healey-resigns-as-defence-secretary-letter-in-full/" },
-        { "title": "GOV.UK - The Defence Investment Plan (2026)", "url": "https://www.gov.uk/government/publications/the-defence-investment-plan" },
-        { "title": "New Statesman - PMQs Review: Starmer and Badenoch spar over defence funding", "url": "https://www.newstatesman.com/politics/uk-politics/2026/07/pmqs-review-starmer-and-badenoch-spar-over-defence-funding" }
+        {
+          "title": "LBC - Badenoch accuses Starmer of leaving defence spending 'mess to his successor' amid £5billion black hole",
+          "url": "https://www.lbc.co.uk/article/badenoch-attacks-starmer-pmqs-defence-spending-5HjdcNY_2/"
+        },
+        {
+          "title": "Forces News - Armed Forces funding announced at last: everything you need to know (Defence Investment Plan)",
+          "url": "https://www.forcesnews.com/services/tri-service/live-defence-investment-plan-announcements-what-they-mean-uks-military"
+        },
+        {
+          "title": "Defense News - UK's Starmer unveils $20 billion defense boost in long-delayed investment plan",
+          "url": "https://www.defensenews.com/global/europe/2026/07/01/uks-starmer-unveils-20-billion-defense-boost-in-long-delayed-investment-plan/"
+        },
+        {
+          "title": "Politics.co.uk - John Healey resigns as defence secretary - letter in full",
+          "url": "https://www.politics.co.uk/news/2026/06/11/john-healey-resigns-as-defence-secretary-letter-in-full/"
+        },
+        {
+          "title": "GOV.UK - The Defence Investment Plan (2026)",
+          "url": "https://www.gov.uk/government/publications/the-defence-investment-plan"
+        },
+        {
+          "title": "New Statesman - PMQs Review: Starmer and Badenoch spar over defence funding",
+          "url": "https://www.newstatesman.com/politics/uk-politics/2026/07/pmqs-review-starmer-and-badenoch-spar-over-defence-funding"
+        }
       ]
     },
     {
@@ -198,12 +368,30 @@
       ],
       "confidence": "High. The 944,000 peak (year ending March 2023), the 171,000 latest figure (year ending December 2025) and the resulting ~81.9 per cent fall come directly from the ONS long-term international migration bulletin; the ~74 per cent fall since Labour took office and the shared-attribution finding ('most of the roughly 80 per cent decrease... under the current government, not all of it') come from Full Fact's dedicated migration-attribution article, corroborated by the Migration Observatory (fall 'results from the measures of both the current and the previous administrations') and by the ONS attribution of the drop to 2024 and 2025 rule changes. Starmer's verbatim 'very proud that this government has brought down net migration by 82 per cent' is reported in the New Statesman's 1 July 2026 PMQs review. The main judgement call is the band: the 82 per cent is accurate and correctly labelled net migration, so it is well above Mostly False, but it uses a pre-Labour (March 2023) baseline and credits the whole fall to 'this government' when responsibility is genuinely shared with the previous Conservative government, which keeps it in Half True / Needs Context rather than Mostly True. One soft spot is a minor source discrepancy on the exact December 2025 figure (171,000 in the ONS bulletin versus a 117,000 figure quoted in one secondary reference), but both yield a fall of about 82 per cent from the 944,000 peak, so the headline percentage is robust.",
       "sources": [
-        { "title": "New Statesman - PMQs Review: Starmer and Badenoch spar over defence funding", "url": "https://www.newstatesman.com/politics/uk-politics/2026/07/pmqs-review-starmer-and-badenoch-spar-over-defence-funding" },
-        { "title": "Office for National Statistics - Long-term international migration, provisional: year ending December 2025", "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingdecember2025" },
-        { "title": "Full Fact - Are the Conservatives or Labour responsible for the fall in net migration?", "url": "https://fullfact.org/immigration/makerfield-debate-migration-claims/" },
-        { "title": "Full Fact - 'Immigration' has not fallen by 82% under Labour", "url": "https://fullfact.org/immigration/anna-turley-immigration-down-82-percent-under-labour/" },
-        { "title": "Migration Observatory - Net migration roller-coaster ride sees record fall from record peak", "url": "https://migrationobservatory.ox.ac.uk/press/net-migration-roller-coaster-ride-sees-record-fall-from-record-peak/" },
-        { "title": "ITV News - UK net migration hits lowest level since 2012, excluding pandemic", "url": "https://www.itv.com/news/2026-05-21/uk-net-migration-hits-lowest-level-since-2012-excluding-pandemic" }
+        {
+          "title": "New Statesman - PMQs Review: Starmer and Badenoch spar over defence funding",
+          "url": "https://www.newstatesman.com/politics/uk-politics/2026/07/pmqs-review-starmer-and-badenoch-spar-over-defence-funding"
+        },
+        {
+          "title": "Office for National Statistics - Long-term international migration, provisional: year ending December 2025",
+          "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingdecember2025"
+        },
+        {
+          "title": "Full Fact - Are the Conservatives or Labour responsible for the fall in net migration?",
+          "url": "https://fullfact.org/immigration/makerfield-debate-migration-claims/"
+        },
+        {
+          "title": "Full Fact - 'Immigration' has not fallen by 82% under Labour",
+          "url": "https://fullfact.org/immigration/anna-turley-immigration-down-82-percent-under-labour/"
+        },
+        {
+          "title": "Migration Observatory - Net migration roller-coaster ride sees record fall from record peak",
+          "url": "https://migrationobservatory.ox.ac.uk/press/net-migration-roller-coaster-ride-sees-record-fall-from-record-peak/"
+        },
+        {
+          "title": "ITV News - UK net migration hits lowest level since 2012, excluding pandemic",
+          "url": "https://www.itv.com/news/2026-05-21/uk-net-migration-hits-lowest-level-since-2012-excluding-pandemic"
+        }
       ]
     },
     {
@@ -230,12 +418,30 @@
       ],
       "confidence": "High. The 'since at least 2011', narrowing-gap and 2026/27-reversal findings come directly from the UK Statistics Authority / Office for Statistics Regulation letter from Penny Young to Kemi Badenoch (24 June 2026) and are corroborated by Full Fact (drawing on OBR data and the IFS) and by OBR public-finances material; the income tax figure (~£302.8 billion, 2024-25) is from HMRC's annual receipts bulletin and the welfare total (~£324-333 billion, 2025-26) from the OBR; the ~55% pensioner share is from the UKSA letter and Full Fact. Badenoch's verbatim wording is documented in the Alternative King's Speech (11 May) and her 29 April PMQs line and quoted in the UKSA correspondence and Full Fact. The main judgement call is the band: the arithmetic that welfare currently exceeds income tax is correct and Badenoch did not invent the comparison, so it is not Fabricated, but the defining 'for the first time ever' superlative is demonstrably untrue, has been formally corrected by the statistics regulator, and the Conservatives reportedly conceded the inaccuracy - which puts it firmly in the False band rather than Half True.",
       "sources": [
-        { "title": "UK Statistics Authority - Letter from Penny Young to Kemi Badenoch MP: welfare spending (24 June 2026)", "url": "https://uksa.statisticsauthority.gov.uk/correspondence/letter-from-penny-young-to-kemi-badenoch-mp-welfare-spending/" },
-        { "title": "Office for Statistics Regulation - Penny Young to Kemi Badenoch MP: welfare spending", "url": "https://osr.statisticsauthority.gov.uk/correspondence/penny-young-to-kemi-badenoch-mp-welfare-spending/" },
-        { "title": "Full Fact - Statistics watchdog challenges Badenoch over welfare claim after Full Fact intervention", "url": "https://fullfact.org/economy/statistics-watchdog-challenges-badenoch-over-welfare-claim-after-full-fact-intervention/" },
-        { "title": "Full Fact - Welfare payments have not exceeded income tax 'for the first time ever'", "url": "https://fullfact.org/economy/income-tax-versus-welfare-spending/" },
-        { "title": "GOV.UK / HMRC - HMRC tax receipts and National Insurance contributions for the UK (annual bulletin)", "url": "https://www.gov.uk/government/statistics/hmrc-tax-and-nics-receipts-for-the-uk/hmrc-tax-receipts-and-national-insurance-contributions-for-the-uk-new-annual-bulletin" },
-        { "title": "Office for Budget Responsibility - Economic and fiscal outlook, November 2025 (welfare spending)", "url": "https://obr.uk/efo/economic-and-fiscal-outlook-november-2025/" }
+        {
+          "title": "UK Statistics Authority - Letter from Penny Young to Kemi Badenoch MP: welfare spending (24 June 2026)",
+          "url": "https://uksa.statisticsauthority.gov.uk/correspondence/letter-from-penny-young-to-kemi-badenoch-mp-welfare-spending/"
+        },
+        {
+          "title": "Office for Statistics Regulation - Penny Young to Kemi Badenoch MP: welfare spending",
+          "url": "https://osr.statisticsauthority.gov.uk/correspondence/penny-young-to-kemi-badenoch-mp-welfare-spending/"
+        },
+        {
+          "title": "Full Fact - Statistics watchdog challenges Badenoch over welfare claim after Full Fact intervention",
+          "url": "https://fullfact.org/economy/statistics-watchdog-challenges-badenoch-over-welfare-claim-after-full-fact-intervention/"
+        },
+        {
+          "title": "Full Fact - Welfare payments have not exceeded income tax 'for the first time ever'",
+          "url": "https://fullfact.org/economy/income-tax-versus-welfare-spending/"
+        },
+        {
+          "title": "GOV.UK / HMRC - HMRC tax receipts and National Insurance contributions for the UK (annual bulletin)",
+          "url": "https://www.gov.uk/government/statistics/hmrc-tax-and-nics-receipts-for-the-uk/hmrc-tax-receipts-and-national-insurance-contributions-for-the-uk-new-annual-bulletin"
+        },
+        {
+          "title": "Office for Budget Responsibility - Economic and fiscal outlook, November 2025 (welfare spending)",
+          "url": "https://obr.uk/efo/economic-and-fiscal-outlook-november-2025/"
+        }
       ]
     },
     {
@@ -262,12 +468,30 @@
       ],
       "confidence": "High on the substance, medium on the precise tax benchmark. The 'most centralised in the G7 / twice as centralised as Italy' framing and the ~5% sub-national tax share come directly from the Centre for Cities and the Institute for Government; the ~80% of English public spending controlled centrally and the ~5-8% local tax figures are from the Institute for Government; and the OECD averages (sub-national ~40% of public expenditure; sub-national tax shares of ~25% in federal and ~10% in unitary countries) come from the OECD's fiscal-decentralisation and Revenue Statistics work. Burnham's verbatim figures ('6% of taxes and 20% of spending ... OECD averages of 30% and 38%') are reported in the 29-30 June coverage of the speech (Yahoo Finance / Bloomberg). The main judgement call is the band: the headline claim is true and the UK figures and the 38% spending benchmark are accurate, so it is well above half-true, but the '30%' OECD tax average is at the high end of what OECD data support (closer to ~25% for federal and ~10% for unitary countries) and the underlying percentages mix slightly different tax-raising/retention definitions across sources, which keeps it at the top of Mostly True rather than in the True band.",
       "sources": [
-        { "title": "Yahoo Finance / Bloomberg - Burnham Vows to Grow Economy by Taking Powers Out of London", "url": "https://finance.yahoo.com/economy/policy/articles/burnham-vows-grow-economy-taking-124017279.html" },
-        { "title": "Time - Introducing 'No. 10 North': U.K.'s Likely Next Prime Minister Andy Burnham Lays Out Devolution Plans", "url": "https://time.com/article/2026/06/29/andy-burnham-uk-prime-minister-plans-economics-devolution-backlash/" },
-        { "title": "Centre for Cities - England needs fiscal devolution - here is how to design it for growth and fairness", "url": "https://www.centreforcities.org/blog/england-needs-fiscal-devolution-here-is-how-to-design-it-for-growth-and-fairness/" },
-        { "title": "Institute for Government - Tax and devolution", "url": "https://www.instituteforgovernment.org.uk/explainer/tax-and-devolution" },
-        { "title": "Institute for Government - Subnational government in England: an international comparison", "url": "https://www.instituteforgovernment.org.uk/sites/default/files/2022-12/subnational-government-in-england-international-comparison.pdf" },
-        { "title": "OECD - Revenue Statistics 2025 (tax revenues by subsectors of general government)", "url": "https://www.oecd.org/en/publications/revenue-statistics-2025_3a264267-en.html" }
+        {
+          "title": "Yahoo Finance / Bloomberg - Burnham Vows to Grow Economy by Taking Powers Out of London",
+          "url": "https://finance.yahoo.com/economy/policy/articles/burnham-vows-grow-economy-taking-124017279.html"
+        },
+        {
+          "title": "Time - Introducing 'No. 10 North': U.K.'s Likely Next Prime Minister Andy Burnham Lays Out Devolution Plans",
+          "url": "https://time.com/article/2026/06/29/andy-burnham-uk-prime-minister-plans-economics-devolution-backlash/"
+        },
+        {
+          "title": "Centre for Cities - England needs fiscal devolution - here is how to design it for growth and fairness",
+          "url": "https://www.centreforcities.org/blog/england-needs-fiscal-devolution-here-is-how-to-design-it-for-growth-and-fairness/"
+        },
+        {
+          "title": "Institute for Government - Tax and devolution",
+          "url": "https://www.instituteforgovernment.org.uk/explainer/tax-and-devolution"
+        },
+        {
+          "title": "Institute for Government - Subnational government in England: an international comparison",
+          "url": "https://www.instituteforgovernment.org.uk/sites/default/files/2022-12/subnational-government-in-england-international-comparison.pdf"
+        },
+        {
+          "title": "OECD - Revenue Statistics 2025 (tax revenues by subsectors of general government)",
+          "url": "https://www.oecd.org/en/publications/revenue-statistics-2025_3a264267-en.html"
+        }
       ]
     },
     {
@@ -294,11 +518,26 @@
       ],
       "confidence": "High on the substance, medium on the precise framing. The pre-crisis ~2.3%/year vs post-crisis ~0.6%/year RHDI-per-head comparison, the 7% (2005-25) vs 35% (1995-2005) typical-income figures and the ~£20,000 lost-growth estimate come directly from the Resolution Foundation; the ~7.2% rise over 2007-08 to 2022-23 (under 0.5%/year) and the worst-parliament-since-the-1960s framing come from the IFS and OBR; and the 'decade of falling incomes' characterisation from the JRF. Burnham's verbatim 'life has got harder for most year on year since the financial crash in 2008' is sourced to his 28 May Times article and re-reported in the 29 June speech coverage. The main judgement call is the band: the underlying living-standards stagnation is real, severe and uncontested, so the claim is far more than half-true, but 'year on year' is not literally accurate because RHDI per head rose in several post-2008 years (notably ~2% in 2023-24) even though it fell hard in 2022-23, which keeps it at the top of Mostly True rather than in the True band. The one soft spot is that the exact verbatim line originates in his late-May article rather than a verbatim 29 June transcript, though it is the explicit premise of the dominant 29 June speech and is re-quoted in that coverage.",
       "sources": [
-        { "title": "ITV News - Andy Burnham to propose a 'No 10 in the North' in first major speech of leadership bid", "url": "https://www.itv.com/news/2026-06-28/andy-burnham-labour-leadership-major-speech-proposes-no-10-in-north" },
-        { "title": "Resolution Foundation - Families have suffered from £20,000 of lost living standards growth over the past 20 years", "url": "https://www.resolutionfoundation.org/press-releases/families-have-suffered-from-20000-of-lost-living-standards-growth-over-the-past-20-years/" },
-        { "title": "Institute for Fiscal Studies - Living standards since the last election", "url": "https://ifs.org.uk/publications/living-standards-last-election" },
-        { "title": "Office for National Statistics - Households: Real disposable Income, per head (time series CRXX)", "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/crxx/ukea" },
-        { "title": "Joseph Rowntree Foundation - A decade of falling incomes? JRF's pre-budget assessment of living standards", "url": "https://www.jrf.org.uk/cost-of-living/a-decade-of-falling-incomes-jrfs-pre-budget-assessment-of-living-standards" }
+        {
+          "title": "ITV News - Andy Burnham to propose a 'No 10 in the North' in first major speech of leadership bid",
+          "url": "https://www.itv.com/news/2026-06-28/andy-burnham-labour-leadership-major-speech-proposes-no-10-in-north"
+        },
+        {
+          "title": "Resolution Foundation - Families have suffered from £20,000 of lost living standards growth over the past 20 years",
+          "url": "https://www.resolutionfoundation.org/press-releases/families-have-suffered-from-20000-of-lost-living-standards-growth-over-the-past-20-years/"
+        },
+        {
+          "title": "Institute for Fiscal Studies - Living standards since the last election",
+          "url": "https://ifs.org.uk/publications/living-standards-last-election"
+        },
+        {
+          "title": "Office for National Statistics - Households: Real disposable Income, per head (time series CRXX)",
+          "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/crxx/ukea"
+        },
+        {
+          "title": "Joseph Rowntree Foundation - A decade of falling incomes? JRF's pre-budget assessment of living standards",
+          "url": "https://www.jrf.org.uk/cost-of-living/a-decade-of-falling-incomes-jrfs-pre-budget-assessment-of-living-standards"
+        }
       ]
     },
     {
@@ -325,11 +564,26 @@
       ],
       "confidence": "High. The £24,400 / £19,500 London figures reconcile exactly to the ONS-published London net fiscal surplus of about £4,900 per head for FYE2023, and the ONS's headline finding that only London and the South East ran a net fiscal surplus (every other region in deficit) is corroborated directly on the ONS release and via the House of Commons Library briefing on country and regional public sector finances. Burnham's verbatim figures are reported consistently across Yahoo News UK / The Independent, LBC and inkl on 27 June 2026. The main judgement call is the band: the numbers are accurate and correctly attributed, so the claim is not merely half-true, but they come from the FYE2023 edition rather than the newer FYE2025 release published about a month earlier, and 'tax'/'spending on public services' slightly simplifies the ONS revenue-and-expenditure measure, which is why it sits at the top of Mostly True rather than in the True band. The one soft spot is that the exact South East per-head figures were not separately reconfirmed line-by-line against the ONS supplementary tables, though they are internally consistent with the South East being the only other surplus region.",
       "sources": [
-        { "title": "Yahoo News UK / The Independent - Andy Burnham to claim London and the south 'paying price' for north's economic failure", "url": "https://uk.news.yahoo.com/andy-burnham-claim-london-south-083952188.html" },
-        { "title": "LBC - Andy Burnham to argue London and the south 'paying the price' for north's economic failure", "url": "https://www.lbc.co.uk/article/andy-burnham-london-south-paying-north-england-5HjdcDp_2/" },
-        { "title": "Office for National Statistics - Country and regional public sector finances, UK: financial year ending 2023", "url": "https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance/articles/countryandregionalpublicsectorfinances/financialyearending2023" },
-        { "title": "House of Commons Library - Country and regional public sector finances (CBP-8027)", "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8027/" },
-        { "title": "Office for National Statistics - Country and regional public sector finances, UK: financial year ending 2025 (release)", "url": "https://www.ons.gov.uk/releases/countryandregionalpublicsectorfinancesukfinancialyearending2025" }
+        {
+          "title": "Yahoo News UK / The Independent - Andy Burnham to claim London and the south 'paying price' for north's economic failure",
+          "url": "https://uk.news.yahoo.com/andy-burnham-claim-london-south-083952188.html"
+        },
+        {
+          "title": "LBC - Andy Burnham to argue London and the south 'paying the price' for north's economic failure",
+          "url": "https://www.lbc.co.uk/article/andy-burnham-london-south-paying-north-england-5HjdcDp_2/"
+        },
+        {
+          "title": "Office for National Statistics - Country and regional public sector finances, UK: financial year ending 2023",
+          "url": "https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance/articles/countryandregionalpublicsectorfinances/financialyearending2023"
+        },
+        {
+          "title": "House of Commons Library - Country and regional public sector finances (CBP-8027)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8027/"
+        },
+        {
+          "title": "Office for National Statistics - Country and regional public sector finances, UK: financial year ending 2025 (release)",
+          "url": "https://www.ons.gov.uk/releases/countryandregionalpublicsectorfinancesukfinancialyearending2025"
+        }
       ]
     },
     {
@@ -356,11 +610,26 @@
       ],
       "confidence": "High. The cross-authority Band D figures (Westminster ~£1,017, Wigan ~£2,150 for 2025/26) come from the councils' own published council-tax-band charges and are corroborated across CouncilTax.info, council resolutions and London Datastore data; the Band A comparison (~£1,435 Makerfield vs ~£699 Westminster) is reported via the Fairer Share campaign and The i; and the regressivity findings (1991 valuations, Band H cap, Band H paying ~3x Band A despite being worth 8x+ more) come directly from the IFS's council-tax reform analysis. Burnham's verbatim quote is reported consistently across LabourList, Fairer Share and Tax Justice UK. The main judgement call is the band: the comparison is accurate on the official figures, so it is not merely half-true, but the framing conflates cross-authority disparity with within-authority banding (where mansions do pay more), which is why it sits at the top of Mostly True rather than in the True band. The one soft spot is that his exact wording is drawn from his repeated campaign framing rather than a single 26-27 June transcript, and precise charges vary by a few pounds between the 2025/26 and 2026/27 settlements.",
       "sources": [
-        { "title": "ITV News — Andy Burnham to set out economic vision in first major speech of leadership bid", "url": "https://www.itv.com/news/2026-06-26/andy-burnham-to-set-out-economic-vision-in-first-major-speech-of-leadership-bid" },
-        { "title": "Institute for Fiscal Studies — Revaluation and reform: bringing council tax in England into the 21st century", "url": "https://ifs.org.uk/publications/revaluation-and-reform-bringing-council-tax-england-21st-century" },
-        { "title": "Fairer Share — Burnham Wins Backing to Scrap Council Tax (The i Paper)", "url": "https://fairershare.org.uk/fairer-share-in-the-i-newspaper-burnham-wins-backing-to-scrap-council-tax/" },
-        { "title": "Westminster City Council — Council Tax bands and charges 2025/26", "url": "https://www.westminster.gov.uk/council-tax/council-tax-bands-and-charges" },
-        { "title": "LabourList — What would Andy Burnham do if he becomes Prime Minister?", "url": "https://labourlist.org/2026/06/andy-burnham-policies-downing-street/" }
+        {
+          "title": "ITV News — Andy Burnham to set out economic vision in first major speech of leadership bid",
+          "url": "https://www.itv.com/news/2026-06-26/andy-burnham-to-set-out-economic-vision-in-first-major-speech-of-leadership-bid"
+        },
+        {
+          "title": "Institute for Fiscal Studies — Revaluation and reform: bringing council tax in England into the 21st century",
+          "url": "https://ifs.org.uk/publications/revaluation-and-reform-bringing-council-tax-england-21st-century"
+        },
+        {
+          "title": "Fairer Share — Burnham Wins Backing to Scrap Council Tax (The i Paper)",
+          "url": "https://fairershare.org.uk/fairer-share-in-the-i-newspaper-burnham-wins-backing-to-scrap-council-tax/"
+        },
+        {
+          "title": "Westminster City Council — Council Tax bands and charges 2025/26",
+          "url": "https://www.westminster.gov.uk/council-tax/council-tax-bands-and-charges"
+        },
+        {
+          "title": "LabourList — What would Andy Burnham do if he becomes Prime Minister?",
+          "url": "https://labourlist.org/2026/06/andy-burnham-policies-downing-street/"
+        }
       ]
     },
     {
@@ -387,11 +656,26 @@
       ],
       "confidence": "High. The ISC 2026 Census figures (526,611 pupils, -3.5%, ~30,000 fewer since VAT, ~20,000 in the past year) are corroborated across The National, ISC reporting and education-sector outlets; the IFS 3-7% / 20,000-40,000 projection and the OBR's ~35,000 steady-state forecast are on the public record via the IFS and OBR; and the ~11,000 first-year fall vs ~3,000 government prediction comes from DfE census reporting. Badenoch's 'displaced 40,000 pupils' line at the 24 June PMQs is reported consistently (Tes, AOL). The main judgement call is the band: a real, policy-linked fall exists and 40,000 sits within the forecasters' eventual range, so the claim is not fabricated or mostly false, but it overstates the realised figure (~30,000) and uses 'displaced' loosely, placing it in Half True / Needs Context. The soft spot is that her exact verbatim wording is paraphrased consistently across reports rather than taken from a single published transcript, and the share of the fall attributable to VAT versus demographics/visas is genuinely uncertain.",
       "sources": [
-        { "title": "The National — International students turn away from UK private schools after VAT added to fees (ISC Census 2026)", "url": "https://www.thenationalnews.com/news/uk/2026/06/23/international-students-turn-away-from-uk-private-schools-after-vat-added-to-fees/" },
-        { "title": "Tes — Badenoch calls Phillipson 'spiteful class warrior' over private school tax", "url": "https://www.tes.com/magazine/news/general/badenoch-calls-phillipson-spiteful-class-warrior-over-private-school-tax" },
-        { "title": "Institute for Fiscal Studies — Tax, private school fees and state school spending", "url": "https://ifs.org.uk/publications/tax-private-school-fees-and-state-school-spending" },
-        { "title": "House of Commons Library — VAT on private school fees (CBP-10125)", "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-10125/" },
-        { "title": "LBC — Kemi Badenoch refuses to apologise amid growing row after calling Bridget Phillipson a 'spiteful class warrior'", "url": "https://www.lbc.co.uk/article/kemi-badenoch-refuses-to-apologise-bridget-phillipson-row-5Hjdc9J_2/" }
+        {
+          "title": "The National — International students turn away from UK private schools after VAT added to fees (ISC Census 2026)",
+          "url": "https://www.thenationalnews.com/news/uk/2026/06/23/international-students-turn-away-from-uk-private-schools-after-vat-added-to-fees/"
+        },
+        {
+          "title": "Tes — Badenoch calls Phillipson 'spiteful class warrior' over private school tax",
+          "url": "https://www.tes.com/magazine/news/general/badenoch-calls-phillipson-spiteful-class-warrior-over-private-school-tax"
+        },
+        {
+          "title": "Institute for Fiscal Studies — Tax, private school fees and state school spending",
+          "url": "https://ifs.org.uk/publications/tax-private-school-fees-and-state-school-spending"
+        },
+        {
+          "title": "House of Commons Library — VAT on private school fees (CBP-10125)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-10125/"
+        },
+        {
+          "title": "LBC — Kemi Badenoch refuses to apologise amid growing row after calling Bridget Phillipson a 'spiteful class warrior'",
+          "url": "https://www.lbc.co.uk/article/kemi-badenoch-refuses-to-apologise-bridget-phillipson-row-5Hjdc9J_2/"
+        }
       ]
     },
     {
@@ -418,11 +702,26 @@
       ],
       "confidence": "High. The Deltapoll/NEU figures (4,131 members, 3-8 June 2026; 0% 'very well', 9% 'doing well', 74% 'badly') are corroborated across the NEU's own press release, Tes and Guido Fawkes, and Badenoch's verbatim PMQs quote ('zero per cent of teachers think the Education Secretary is doing a good job') is reported consistently across the New Statesman PMQs review, AOL and The Spectator. The main judgement call is the band: the poll is real and strongly negative, so the claim is not fabricated, but the specific number is misquoted (9% do think she is doing a good job, while 0% is the 'very well' subset), which places it in Half True / Needs Context. The one soft spot is that exact category labels ('fairly well' vs 'well') vary slightly between write-ups, but every source agrees on 0% 'very well', ~9% positive overall and 74% negative.",
       "sources": [
-        { "title": "National Education Union — The Government fails in new polls of teachers and support staff, and Labour's own members", "url": "https://neu.org.uk/latest/press-releases/government-fails-new-polls-teachers-and-support-staff-and-labours-own-members" },
-        { "title": "Tes — Bridget Phillipson 'bad' as education secretary, NEU members say", "url": "https://www.tes.com/magazine/news/general/phillipson-doing-bad-job-education-secretary-neu-members-say" },
-        { "title": "New Statesman — PMQs Review: Kemi Badenoch loses her head", "url": "https://www.newstatesman.com/politics/uk-politics/2026/06/pmqs-review-kemi-badenoch-loses-her-head" },
-        { "title": "Guido Fawkes — 0% of Teachers Think Bridget Phillipson Is Doing Very Well as Education Secretary", "url": "https://order-order.com/2026/06/23/0-of-teachers-think-bridget-phillipson-is-doing-very-well-as-education-secretary/" },
-        { "title": "HuffPost UK — 'Absolute Gutter Politics': Badenoch Slammed Over PMQs Attack On Starmer", "url": "https://www.huffingtonpost.co.uk/entry/kemi-badenoch-keir-starmer-pmqs_uk_6a3bbc88e4b0488a51b1a171" }
+        {
+          "title": "National Education Union — The Government fails in new polls of teachers and support staff, and Labour's own members",
+          "url": "https://neu.org.uk/latest/press-releases/government-fails-new-polls-teachers-and-support-staff-and-labours-own-members"
+        },
+        {
+          "title": "Tes — Bridget Phillipson 'bad' as education secretary, NEU members say",
+          "url": "https://www.tes.com/magazine/news/general/phillipson-doing-bad-job-education-secretary-neu-members-say"
+        },
+        {
+          "title": "New Statesman — PMQs Review: Kemi Badenoch loses her head",
+          "url": "https://www.newstatesman.com/politics/uk-politics/2026/06/pmqs-review-kemi-badenoch-loses-her-head"
+        },
+        {
+          "title": "Guido Fawkes — 0% of Teachers Think Bridget Phillipson Is Doing Very Well as Education Secretary",
+          "url": "https://order-order.com/2026/06/23/0-of-teachers-think-bridget-phillipson-is-doing-very-well-as-education-secretary/"
+        },
+        {
+          "title": "HuffPost UK — 'Absolute Gutter Politics': Badenoch Slammed Over PMQs Attack On Starmer",
+          "url": "https://www.huffingtonpost.co.uk/entry/kemi-badenoch-keir-starmer-pmqs_uk_6a3bbc88e4b0488a51b1a171"
+        }
       ]
     },
     {
@@ -449,11 +748,26 @@
       ],
       "confidence": "High on the historical comparison. The ~245,000 (1953) council peak, the never-below-100,000 run from 1949-1978, and the ~126,000/year 1946-1980 average are corroborated across the House of Commons HCLG Committee report on social housing, the BRE Trust's '100 Years of Council Housing', ITV News and Inside Housing, and the 1968 all-tenure peak from Full Fact. Burnham's ~500,000-homes / £40bn-bond framing is reported consistently across ITV News, Building, Building Design and City AM. The main soft spots are that the exact annual target depends on which timeframe Burnham uses (end of decade vs eight years) and that his verbatim wording is taken from his repeated campaign framing rather than a single 23-24 June transcript; neither changes the verdict, since on any plausible reading ~60,000 council homes a year falls well short of the post-war norm.",
       "sources": [
-        { "title": "ITV News — What are Andy Burnham's plans for the country?", "url": "https://www.itv.com/news/2026-06-22/what-are-andy-burnhams-plans-for-the-country" },
-        { "title": "Building Design — What would prime minister Burnham look like for housing and construction?", "url": "https://www.bdonline.co.uk/briefing/what-would-prime-minister-burnham-look-like-for-housing-and-construction/5142820.article" },
-        { "title": "House of Commons HCLG Committee — Building more social housing", "url": "https://publications.parliament.uk/pa/cm5801/cmselect/cmcomloc/173/17305.htm" },
-        { "title": "BRE Trust — 100 Years of Council Housing", "url": "https://files.bregroup.com/bretrust/100_years_of_council_housing.pdf" },
-        { "title": "Full Fact — Conservative and Labour claims on house building fact checked", "url": "https://fullfact.org/economy/house-building-levels-PMQs/" }
+        {
+          "title": "ITV News — What are Andy Burnham's plans for the country?",
+          "url": "https://www.itv.com/news/2026-06-22/what-are-andy-burnhams-plans-for-the-country"
+        },
+        {
+          "title": "Building Design — What would prime minister Burnham look like for housing and construction?",
+          "url": "https://www.bdonline.co.uk/briefing/what-would-prime-minister-burnham-look-like-for-housing-and-construction/5142820.article"
+        },
+        {
+          "title": "House of Commons HCLG Committee — Building more social housing",
+          "url": "https://publications.parliament.uk/pa/cm5801/cmselect/cmcomloc/173/17305.htm"
+        },
+        {
+          "title": "BRE Trust — 100 Years of Council Housing",
+          "url": "https://files.bregroup.com/bretrust/100_years_of_council_housing.pdf"
+        },
+        {
+          "title": "Full Fact — Conservative and Labour claims on house building fact checked",
+          "url": "https://fullfact.org/economy/house-building-levels-PMQs/"
+        }
       ]
     },
     {
@@ -480,11 +794,26 @@
       ],
       "confidence": "High on the headline finding. The identities and dates of the six prime ministers since 2016 (Cameron, May, Johnson, Truss, Sunak, Starmer) are a matter of uncontested public record, and the 'seventh PM in 10 years' framing is corroborated across Al Jazeera, NPR, CNBC, Time, PBS and the Globe and Mail, all published on 22 June 2026 around Starmer's resignation. The only soft spots are definitional rather than factual: '10 years' is rounded from a span of about ten years and two months (Cameron's June 2016 exit to the successor's ~September 2026 start), and a handful of outlets used imprecise sibling phrasings ('sixth in seven years'), which is why the verdict is top-of-band Mostly True rather than True. The claim is a media/commentator framing of the day rather than a single named politician's verbatim quote, so it is attributed to the dominant coverage of the resignation.",
       "sources": [
-        { "title": "Al Jazeera — Political turmoil: UK will see its seventh prime minister in 10 years", "url": "https://www.aljazeera.com/news/2026/6/22/political-turmoil-uk-will-see-its-seventh-prime-minister-in-10-years" },
-        { "title": "NPR — Keir Starmer has resigned, paving way for a 7th U.K. prime minister in 10 years", "url": "https://www.npr.org/2026/06/22/nx-s1-5866231/keir-starmer-resigns" },
-        { "title": "PBS NewsHour — 6 leaders in 10 years: a look at the quick succession of British prime ministers", "url": "https://www.pbs.org/newshour/world/6-leaders-in-10-years-a-look-at-the-quick-succession-of-british-prime-ministers" },
-        { "title": "CNBC — UK PM Starmer resigns as Britain faces its seventh leader in 10 years", "url": "https://www.cnbc.com/2026/06/22/keir-starmer-resigns-uk-prime-minister.html" },
-        { "title": "The Globe and Mail — A look at the six prime ministers the UK has had in the past 10 years", "url": "https://www.theglobeandmail.com/world/article-uk-prime-minister-keir-starmer-labour-resignation-brexit/" }
+        {
+          "title": "Al Jazeera — Political turmoil: UK will see its seventh prime minister in 10 years",
+          "url": "https://www.aljazeera.com/news/2026/6/22/political-turmoil-uk-will-see-its-seventh-prime-minister-in-10-years"
+        },
+        {
+          "title": "NPR — Keir Starmer has resigned, paving way for a 7th U.K. prime minister in 10 years",
+          "url": "https://www.npr.org/2026/06/22/nx-s1-5866231/keir-starmer-resigns"
+        },
+        {
+          "title": "PBS NewsHour — 6 leaders in 10 years: a look at the quick succession of British prime ministers",
+          "url": "https://www.pbs.org/newshour/world/6-leaders-in-10-years-a-look-at-the-quick-succession-of-british-prime-ministers"
+        },
+        {
+          "title": "CNBC — UK PM Starmer resigns as Britain faces its seventh leader in 10 years",
+          "url": "https://www.cnbc.com/2026/06/22/keir-starmer-resigns-uk-prime-minister.html"
+        },
+        {
+          "title": "The Globe and Mail — A look at the six prime ministers the UK has had in the past 10 years",
+          "url": "https://www.theglobeandmail.com/world/article-uk-prime-minister-keir-starmer-labour-resignation-brexit/"
+        }
       ]
     },
     {
@@ -511,11 +840,26 @@
       ],
       "confidence": "High on the headline finding, medium on the precise magnitude. The 3.1%-vs-1.5% (2015-2023) figures, the 'fastest-growing city region' status, the £100bn 2023 GVA and the productivity leadership are corroborated across the January 2026 IFS/GMCA paper (built on ONS regional GVA), Centre for Cities and Oxford Economics. The data-reliability problems (legal/accounting anomaly, self-employment undercount, the ~14%-to-~9% adjustment) come from the Economics Observatory, and the distribution/per-head caveats from Oxford Economics, Bloomberg and ONS. The main soft spots are that Burnham's exact 19-22 June wording is taken from his consistent, repeatedly-reported 'fastest growing city region / twice the rate' framing (e.g. Mipim) rather than a single verbatim by-election-week transcript, and that the headline GVA growth rate is genuinely contested in magnitude even though GM's relative outperformance is not.",
       "sources": [
-        { "title": "Greater Manchester Combined Authority / IFS — Economic growth in Greater Manchester (January 2026)", "url": "https://www.greatermanchester-ca.gov.uk/media/dwen3ltn/ifs-gm-economic-growth-paper-web-final-accessible.pdf" },
-        { "title": "Economics Observatory — Have the UK's northern cities really experienced a productivity miracle?", "url": "https://www.economicsobservatory.com/have-the-uks-northern-cities-really-experienced-a-productivity-miracle" },
-        { "title": "Oxford Economics — 'Manchesterism' and the realities of growth", "url": "https://www.oxfordeconomics.com/resource/manchesterism-and-the-realities-of-growth/" },
-        { "title": "Bloomberg — Andy Burnham's Manchester Is Booming in Rare Bright Spot for UK Economy", "url": "https://www.bloomberg.com/news/features/2026-01-29/andy-burnham-s-manchester-is-booming-in-rare-bright-spot-for-uk-economy" },
-        { "title": "Fortune — Meet Labour's 'King of the North,' the 56-year-old representing Greater Manchester and challenging Keir Starmer", "url": "https://fortune.com/2026/06/21/andy-burnham-makerfield-labour-leadership-starmer/" }
+        {
+          "title": "Greater Manchester Combined Authority / IFS — Economic growth in Greater Manchester (January 2026)",
+          "url": "https://www.greatermanchester-ca.gov.uk/media/dwen3ltn/ifs-gm-economic-growth-paper-web-final-accessible.pdf"
+        },
+        {
+          "title": "Economics Observatory — Have the UK's northern cities really experienced a productivity miracle?",
+          "url": "https://www.economicsobservatory.com/have-the-uks-northern-cities-really-experienced-a-productivity-miracle"
+        },
+        {
+          "title": "Oxford Economics — 'Manchesterism' and the realities of growth",
+          "url": "https://www.oxfordeconomics.com/resource/manchesterism-and-the-realities-of-growth/"
+        },
+        {
+          "title": "Bloomberg — Andy Burnham's Manchester Is Booming in Rare Bright Spot for UK Economy",
+          "url": "https://www.bloomberg.com/news/features/2026-01-29/andy-burnham-s-manchester-is-booming-in-rare-bright-spot-for-uk-economy"
+        },
+        {
+          "title": "Fortune — Meet Labour's 'King of the North,' the 56-year-old representing Greater Manchester and challenging Keir Starmer",
+          "url": "https://fortune.com/2026/06/21/andy-burnham-makerfield-labour-leadership-starmer/"
+        }
       ]
     },
     {
@@ -542,11 +886,26 @@
       ],
       "confidence": "High — the 268 (2017) and 154 (2024) single-night figures, the ~42% fall, and the bucking of the national trend come directly from MHCLG/GMCA official snapshot statistics, and the England autumn-2024 totals (4,667; ~2% below the 2017 peak; +20% on 2023; +164% since 2010) come from the GOV.UK rough sleeping snapshot. The four-year rise since the 2021 low of 89 to ~197 in 2025 is corroborated by the Manchester Mill's reporting on GMCA data. The main soft spots are that Burnham's exact 20-21 June wording is paraphrased from his consistent, repeatedly-reported framing rather than a single verbatim transcript, and that the 2025 snapshot figure is reported but not yet formally announced by GMCA — but the qualitative findings (a real ~42% fall from the 2017 baseline, a genuine divergence from the national trend, and a four-year upward reversal since 2021) are robust.",
       "sources": [
-        { "title": "GOV.UK / MHCLG — Rough sleeping snapshot in England: autumn 2024", "url": "https://www.gov.uk/government/statistics/rough-sleeping-snapshot-in-england-autumn-2024/rough-sleeping-snapshot-in-england-autumn-2024" },
-        { "title": "Greater Manchester Combined Authority — Greater Manchester sees bigger reductions in rough sleeping than England average (official figures)", "url": "https://www.greatermanchester-ca.gov.uk/news/greater-manchester-sees-bigger-reductions-in-rough-sleeping-than-england-average-official-figures/" },
-        { "title": "Manchester Mill — Exclusive: Rough sleeping in Greater Manchester has risen for the fourth year in a row", "url": "https://manchestermill.co.uk/exclusive-rough-sleeping-in-greater-manchester-has-risen-for-the-fourth-year-in-a-row/" },
-        { "title": "Big Issue — Nationalisation, buses and homes for rough sleepers: This is what Andy Burnham's Britain would look like", "url": "https://www.bigissue.com/news/politics/andy-burnham-politics-britain-manchesterism/" },
-        { "title": "ITV News — Government policies 'creating' more homelessness, says Andy Burnham", "url": "https://www.itv.com/news/2025-12-10/homelessness-is-being-made-worse-by-the-government-andy-burnham-says" }
+        {
+          "title": "GOV.UK / MHCLG — Rough sleeping snapshot in England: autumn 2024",
+          "url": "https://www.gov.uk/government/statistics/rough-sleeping-snapshot-in-england-autumn-2024/rough-sleeping-snapshot-in-england-autumn-2024"
+        },
+        {
+          "title": "Greater Manchester Combined Authority — Greater Manchester sees bigger reductions in rough sleeping than England average (official figures)",
+          "url": "https://www.greatermanchester-ca.gov.uk/news/greater-manchester-sees-bigger-reductions-in-rough-sleeping-than-england-average-official-figures/"
+        },
+        {
+          "title": "Manchester Mill — Exclusive: Rough sleeping in Greater Manchester has risen for the fourth year in a row",
+          "url": "https://manchestermill.co.uk/exclusive-rough-sleeping-in-greater-manchester-has-risen-for-the-fourth-year-in-a-row/"
+        },
+        {
+          "title": "Big Issue — Nationalisation, buses and homes for rough sleepers: This is what Andy Burnham's Britain would look like",
+          "url": "https://www.bigissue.com/news/politics/andy-burnham-politics-britain-manchesterism/"
+        },
+        {
+          "title": "ITV News — Government policies 'creating' more homelessness, says Andy Burnham",
+          "url": "https://www.itv.com/news/2025-12-10/homelessness-is-being-made-worse-by-the-government-andy-burnham-says"
+        }
       ]
     },
     {
@@ -573,11 +932,26 @@
       ],
       "confidence": "High — the £100 million net-cost central estimate, the ~£3.0-3.4 billion static cost, the 0.45 elasticity and the IFS 'raise little revenue' / 'summit of the Laffer curve' conclusions are corroborated across HMRC's 2012 analysis, the IFS, the OBR and the House of Commons Library briefing SN00249, and the OBR's downward revision from £2.6bn to £0.6bn is on the record. The main soft spots are that Burnham's exact 18-19 June wording is paraphrased from his renewed 'definitely a case' framing reported around the by-election rather than a single verbatim transcript, and that the underlying HMRC/OBR estimates date from the 2010-13 episode, so the precise revenue under today's tax base and thresholds would differ — but the qualitative finding (highly uncertain, central estimate small) is robust.",
       "sources": [
-        { "title": "House of Commons Library — Income tax: the additional 50p rate (SN00249)", "url": "https://commonslibrary.parliament.uk/research-briefings/sn00249/" },
-        { "title": "Institute for Fiscal Studies — 50p tax: strolling across the summit of the Laffer curve?", "url": "https://ifs.org.uk/articles/50p-tax-strolling-across-summit-laffer-curve" },
-        { "title": "Office for Budget Responsibility — Effect of the additional rate of income tax on receipts", "url": "https://obr.uk/box/effect-of-the-additional-rate-of-income-tax-on-receipts/" },
-        { "title": "Yahoo Finance — What Andy Burnham as prime minister might mean for your mortgage, taxes and more", "url": "https://uk.finance.yahoo.com/news/andy-burnham-prime-minister-might-125040072.html" },
-        { "title": "NPR — Labour's Andy Burnham wins a special election, setting up a showdown with Starmer", "url": "https://www.npr.org/2026/06/19/nx-s1-5864087/labour-andy-burnham-wins-special-election" }
+        {
+          "title": "House of Commons Library — Income tax: the additional 50p rate (SN00249)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn00249/"
+        },
+        {
+          "title": "Institute for Fiscal Studies — 50p tax: strolling across the summit of the Laffer curve?",
+          "url": "https://ifs.org.uk/articles/50p-tax-strolling-across-summit-laffer-curve"
+        },
+        {
+          "title": "Office for Budget Responsibility — Effect of the additional rate of income tax on receipts",
+          "url": "https://obr.uk/box/effect-of-the-additional-rate-of-income-tax-on-receipts/"
+        },
+        {
+          "title": "Yahoo Finance — What Andy Burnham as prime minister might mean for your mortgage, taxes and more",
+          "url": "https://uk.finance.yahoo.com/news/andy-burnham-prime-minister-might-125040072.html"
+        },
+        {
+          "title": "NPR — Labour's Andy Burnham wins a special election, setting up a showdown with Starmer",
+          "url": "https://www.npr.org/2026/06/19/nx-s1-5864087/labour-andy-burnham-wins-special-election"
+        }
       ]
     },
     {
@@ -604,11 +978,26 @@
       ],
       "confidence": "High — that the UK imports zero gas and oil from Russia (since 2022, with LNG and crude bans from 2022-23) is corroborated by DESNZ Energy Trends, NESO and the House of Commons Library briefing on fossil-fuel imports from Russia, and the Norway/domestic/US/Qatar shares come directly from DESNZ Energy Trends. The exact Coutinho quote and her shadow-energy-secretary role are confirmed by the PA wire report. The only soft spot is that the precise 2025 percentage decimals are provisional and the Qatar share varies slightly (1.2-1.8%) by year and dataset, but this does not change the verdict.",
       "sources": [
-        { "title": "GOV.UK / DESNZ — Energy Trends: UK gas (Section 4)", "url": "https://www.gov.uk/government/statistics/gas-section-4-energy-trends" },
-        { "title": "House of Commons Library — Imports of fossil fuels from Russia (CBP-9523)", "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-9523/" },
-        { "title": "Enfield Independent / PA — Labour accused of 'destroying' North Sea jobs ahead of Aberdeen by-election", "url": "https://www.enfieldindependent.co.uk/news/national/26203054.labour-accused-destroying-north-sea-jobs-ahead-aberdeen-by-election/" },
-        { "title": "Sunsave — Where does the UK get its gas from? [2026]", "url": "https://www.sunsave.energy/blog/uk-gas-sources" },
-        { "title": "New Statesman — PMQs review: Lammy battles Coutinho", "url": "https://www.newstatesman.com/politics/uk-politics/2026/06/pmqs-review-lammy-battles-coutinho" }
+        {
+          "title": "GOV.UK / DESNZ — Energy Trends: UK gas (Section 4)",
+          "url": "https://www.gov.uk/government/statistics/gas-section-4-energy-trends"
+        },
+        {
+          "title": "House of Commons Library — Imports of fossil fuels from Russia (CBP-9523)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-9523/"
+        },
+        {
+          "title": "Enfield Independent / PA — Labour accused of 'destroying' North Sea jobs ahead of Aberdeen by-election",
+          "url": "https://www.enfieldindependent.co.uk/news/national/26203054.labour-accused-destroying-north-sea-jobs-ahead-aberdeen-by-election/"
+        },
+        {
+          "title": "Sunsave — Where does the UK get its gas from? [2026]",
+          "url": "https://www.sunsave.energy/blog/uk-gas-sources"
+        },
+        {
+          "title": "New Statesman — PMQs review: Lammy battles Coutinho",
+          "url": "https://www.newstatesman.com/politics/uk-politics/2026/06/pmqs-review-lammy-battles-coutinho"
+        }
       ]
     },
     {
@@ -635,11 +1024,26 @@
       ],
       "confidence": "High — the pledge wording, the 'appears off track' rating and the 342,100 / 22.8% progress figures come from Full Fact's government tracker; the falling 208,600 net-additions figure for 2024/25 is MHCLG National Statistics; and the ~1.49m UK / ~1m England OBR forecast and the ~500,000 shortfall are corroborated across Full Fact, the OBR and multiple housing-sector outlets. The main judgement call is the verdict band: the 1.5 million figure is a real official target, so the claim is not fabricated, but as a delivery assertion it is contradicted by current data and independent forecasts, placing it in Mostly False.",
       "sources": [
-        { "title": "Full Fact — Is the government on track to deliver 1.5 million new homes?", "url": "https://fullfact.org/government-tracker/1-5-million-homes/" },
-        { "title": "GOV.UK / MHCLG — Housing supply: net additional dwellings, England: 2024 to 2025", "url": "https://www.gov.uk/government/statistics/housing-supply-net-additional-dwellings-england-2024-to-2025/housing-supply-net-additional-dwellings-england-2024-to-2025" },
-        { "title": "GOV.UK — Planning overhaul to reach 1.5 million new homes", "url": "https://www.gov.uk/government/news/planning-overhaul-to-reach-15-million-new-homes" },
-        { "title": "Bloomberg — Starmer's New Homes Goal Is Unravelling as Housebuilding Slumps", "url": "https://www.bloomberg.com/news/articles/2026-02-17/starmer-s-new-homes-goal-is-unravelling-as-housebuilding-slumps" },
-        { "title": "Big Issue — How Reeves' autumn budget dealt a brutal blow to Labour's 1.5 million new homes pledge", "url": "https://www.bigissue.com/news/housing/autumn-budget-labour-housebuilding-housing-pledge/" }
+        {
+          "title": "Full Fact — Is the government on track to deliver 1.5 million new homes?",
+          "url": "https://fullfact.org/government-tracker/1-5-million-homes/"
+        },
+        {
+          "title": "GOV.UK / MHCLG — Housing supply: net additional dwellings, England: 2024 to 2025",
+          "url": "https://www.gov.uk/government/statistics/housing-supply-net-additional-dwellings-england-2024-to-2025/housing-supply-net-additional-dwellings-england-2024-to-2025"
+        },
+        {
+          "title": "GOV.UK — Planning overhaul to reach 1.5 million new homes",
+          "url": "https://www.gov.uk/government/news/planning-overhaul-to-reach-15-million-new-homes"
+        },
+        {
+          "title": "Bloomberg — Starmer's New Homes Goal Is Unravelling as Housebuilding Slumps",
+          "url": "https://www.bloomberg.com/news/articles/2026-02-17/starmer-s-new-homes-goal-is-unravelling-as-housebuilding-slumps"
+        },
+        {
+          "title": "Big Issue — How Reeves' autumn budget dealt a brutal blow to Labour's 1.5 million new homes pledge",
+          "url": "https://www.bigissue.com/news/housing/autumn-budget-labour-housebuilding-housing-pledge/"
+        }
       ]
     },
     {
@@ -665,11 +1069,26 @@
       ],
       "confidence": "Medium-High — the 'worst in the G7' comparison is firmly corroborated by the OECD's September 2025 forecasts and consistent reporting that the UK is the only G7 economy above 3%, and the April 2.8% and July-2024 2.2% figures come directly from the ONS and Full Fact. The main soft spot is the exact May 2026 headline figure, released only hours before publication and not yet in the long-form ONS bulletin at time of writing; it is anchored here to the Bank of England and consensus forecasts (~3.0-3.3%) and same-day reporting of a rise, so the qualitative 'up again' claim is secure even though the precise decimal should be reconfirmed against the final ONS May 2026 bulletin.",
       "sources": [
-        { "title": "Full Fact — Is inflation up or down under Labour?", "url": "https://fullfact.org/economy/reeves-stride-inflation-down-up/" },
-        { "title": "ONS — Consumer price inflation, UK: April 2026", "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/consumerpriceinflation/april2026" },
-        { "title": "ONS — Consumer price inflation, UK: May 2026 (release)", "url": "https://www.ons.gov.uk/releases/consumerpriceinflationukmay2026" },
-        { "title": "Yahoo Finance / PA — UK braced for highest inflation in G7 and lagging growth, says OECD", "url": "https://uk.finance.yahoo.com/news/uk-inflation-growth-oecd-latest-projections-102301780.html" },
-        { "title": "Investing.com — Is UK inflation heating up again ahead of summer?", "url": "https://www.investing.com/news/economy-news/is-uk-inflation-heating-up-again-ahead-of-summer-4736636" }
+        {
+          "title": "Full Fact — Is inflation up or down under Labour?",
+          "url": "https://fullfact.org/economy/reeves-stride-inflation-down-up/"
+        },
+        {
+          "title": "ONS — Consumer price inflation, UK: April 2026",
+          "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/consumerpriceinflation/april2026"
+        },
+        {
+          "title": "ONS — Consumer price inflation, UK: May 2026 (release)",
+          "url": "https://www.ons.gov.uk/releases/consumerpriceinflationukmay2026"
+        },
+        {
+          "title": "Yahoo Finance / PA — UK braced for highest inflation in G7 and lagging growth, says OECD",
+          "url": "https://uk.finance.yahoo.com/news/uk-inflation-growth-oecd-latest-projections-102301780.html"
+        },
+        {
+          "title": "Investing.com — Is UK inflation heating up again ahead of summer?",
+          "url": "https://www.investing.com/news/economy-news/is-uk-inflation-heating-up-again-ahead-of-summer-4736636"
+        }
       ]
     },
     {
@@ -696,10 +1115,22 @@
       ],
       "confidence": "High — the 65.3% March 2026 figure, the 7.11 million list total, the 450,000/515,000 reductions and the 312,000 (16-year) and single-month (17-year) falls all come directly from NHS England's 14 May 2026 release, and the central caveats (the 92% constitutional standard last met in September 2015, the ~27-point gap, the four missed targets and the ~1.9 million further reduction needed) are corroborated by the Health Foundation, the King's Fund, the Royal College of Surgeons and Full Fact's government tracker. The only soft spot is the exact wording attributed to Starmer/No 10, which paraphrases the government's recycled record-defence line rather than a single verbatim PMQs quote.",
       "sources": [
-        { "title": "NHS England — 'Huge moment' as the health service hits 18-week target amid half-a-million waiting list drop", "url": "https://www.england.nhs.uk/2026/05/health-service-hits-18-week-target-amid-half-million-waiting-list-drop/" },
-        { "title": "Full Fact — Is the government on course to meet the NHS 18-week standard on waiting times?", "url": "https://fullfact.org/government-tracker/cut-waiting-times-18-week-standard/" },
-        { "title": "The Health Foundation — NHS meets headline waiting times target but falls short on other key measures", "url": "https://www.health.org.uk/press-office/press-releases/nhs-meets-headline-waiting-times-target-but-falls-short-on-other-key-measures" },
-        { "title": "The King's Fund — Waiting times for elective (non-urgent) treatment: Referral to Treatment (RTT)", "url": "https://www.kingsfund.org.uk/insight-and-analysis/data-and-charts/waiting-times-non-urgent-treatment" }
+        {
+          "title": "NHS England — 'Huge moment' as the health service hits 18-week target amid half-a-million waiting list drop",
+          "url": "https://www.england.nhs.uk/2026/05/health-service-hits-18-week-target-amid-half-million-waiting-list-drop/"
+        },
+        {
+          "title": "Full Fact — Is the government on course to meet the NHS 18-week standard on waiting times?",
+          "url": "https://fullfact.org/government-tracker/cut-waiting-times-18-week-standard/"
+        },
+        {
+          "title": "The Health Foundation — NHS meets headline waiting times target but falls short on other key measures",
+          "url": "https://www.health.org.uk/press-office/press-releases/nhs-meets-headline-waiting-times-target-but-falls-short-on-other-key-measures"
+        },
+        {
+          "title": "The King's Fund — Waiting times for elective (non-urgent) treatment: Referral to Treatment (RTT)",
+          "url": "https://www.kingsfund.org.uk/insight-and-analysis/data-and-charts/waiting-times-non-urgent-treatment"
+        }
       ]
     },
     {
@@ -726,10 +1157,22 @@
       ],
       "confidence": "High — the 46% fall in the initial-decision backlog is confirmed by both the Migration Observatory and a government spokesperson citing Home Office data, and the offsetting roughly-doubled appeals backlog, the ~31,000 hotel figure and the 2025 decisions/refusals numbers are all on the record from the Migration Observatory, the Ministry of Justice and Home Office statistics via PA. The only soft spots are minor reporting differences in the appeals total (~70,000 to ~80,000 depending on the cut-off date) and that 'backlog' is undefined in the claim itself.",
       "sources": [
-        { "title": "Migration Observatory — The UK's asylum backlog", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/the-uks-asylum-backlog/" },
-        { "title": "Migration Observatory — Asylum hotel numbers remain high as processing cuts one backlog but increases another", "url": "https://migrationobservatory.ox.ac.uk/press/asylum-hotel-numbers-remain-high-as-asylum-processing-cuts-one-backlog-but-increases-another/" },
-        { "title": "AOL / PA — UK asylum appeal backlog at record high of 80,000", "url": "https://www.aol.com/articles/uk-asylum-appeal-backlog-record-195125969.html" },
-        { "title": "LBC — Farage doubles down on 'two-tier policing' claims as Starmer rounds on him over Nowak comments", "url": "https://www.lbc.co.uk/article/nigel-farage-two-tier-policing-starmer-khan-lawrence-badenoch-henry-nowak-5Hjdb78_2/" }
+        {
+          "title": "Migration Observatory — The UK's asylum backlog",
+          "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/the-uks-asylum-backlog/"
+        },
+        {
+          "title": "Migration Observatory — Asylum hotel numbers remain high as processing cuts one backlog but increases another",
+          "url": "https://migrationobservatory.ox.ac.uk/press/asylum-hotel-numbers-remain-high-as-asylum-processing-cuts-one-backlog-but-increases-another/"
+        },
+        {
+          "title": "AOL / PA — UK asylum appeal backlog at record high of 80,000",
+          "url": "https://www.aol.com/articles/uk-asylum-appeal-backlog-record-195125969.html"
+        },
+        {
+          "title": "LBC — Farage doubles down on 'two-tier policing' claims as Starmer rounds on him over Nowak comments",
+          "url": "https://www.lbc.co.uk/article/nigel-farage-two-tier-policing-starmer-khan-lawrence-badenoch-henry-nowak-5Hjdb78_2/"
+        }
       ]
     },
     {
@@ -756,10 +1199,22 @@
       ],
       "confidence": "High — the historical GDP-share comparison (4-6% in the 1980s versus ~2.3-2.6% now) comes from the House of Commons Library and IFS, the current and committed percentages are confirmed by Full Fact and NATO data, and the critique of the £13.4bn figure is on the record from the IFS (Paul Johnson and Ben Zaranko) and was effectively conceded by Healey himself. The only soft spot is that 'sustained increase' is partly a forward-looking projection dependent on a Defence Investment Plan not yet published.",
       "sources": [
-        { "title": "Full Fact — UK defence spending: explained", "url": "https://fullfact.org/news/uk-gdp-defence-spending/" },
-        { "title": "House of Commons Library — UK defence spending (CBP-8175)", "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8175/" },
-        { "title": "IFS — Response to defence spending announcement", "url": "https://ifs.org.uk/articles/ifs-response-defence-spending-announcement" },
-        { "title": "New Statesman — Defence Secretary John Healey resigns over military spending", "url": "https://www.newstatesman.com/politics/uk-politics/2026/06/defence-secretary-john-healey-resigns-over-military-spending" }
+        {
+          "title": "Full Fact — UK defence spending: explained",
+          "url": "https://fullfact.org/news/uk-gdp-defence-spending/"
+        },
+        {
+          "title": "House of Commons Library — UK defence spending (CBP-8175)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8175/"
+        },
+        {
+          "title": "IFS — Response to defence spending announcement",
+          "url": "https://ifs.org.uk/articles/ifs-response-defence-spending-announcement"
+        },
+        {
+          "title": "New Statesman — Defence Secretary John Healey resigns over military spending",
+          "url": "https://www.newstatesman.com/politics/uk-politics/2026/06/defence-secretary-john-healey-resigns-over-military-spending"
+        }
       ]
     },
     {
@@ -786,10 +1241,22 @@
       ],
       "confidence": "High — the 82% headline fall and the 171,000 / 944,000 figures come directly from ONS provisional migration statistics, and the attribution caveats (74% under Labour; the fall largely driven by Conservative-era 2024 rule changes) are corroborated by Full Fact, the ONS commentary and the Migration Observatory. The only soft spot is that exact policy attribution is inherently uncertain and the latest figure is provisional.",
       "sources": [
-        { "title": "Full Fact — Are the Conservatives or Labour responsible for the fall in net migration?", "url": "https://fullfact.org/immigration/makerfield-debate-migration-claims/" },
-        { "title": "ONS — Long-term international migration, provisional: year ending December 2025 (21 May 2026)", "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingdecember2025" },
-        { "title": "Migration Observatory — Net migration to the UK", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/long-term-international-migration-flows-to-and-from-the-uk/" },
-        { "title": "AOL / PA — All the key points from the Makerfield by-election debate", "url": "https://www.aol.com/articles/key-points-makerfield-election-debate-165248544.html" }
+        {
+          "title": "Full Fact — Are the Conservatives or Labour responsible for the fall in net migration?",
+          "url": "https://fullfact.org/immigration/makerfield-debate-migration-claims/"
+        },
+        {
+          "title": "ONS — Long-term international migration, provisional: year ending December 2025 (21 May 2026)",
+          "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingdecember2025"
+        },
+        {
+          "title": "Migration Observatory — Net migration to the UK",
+          "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/long-term-international-migration-flows-to-and-from-the-uk/"
+        },
+        {
+          "title": "AOL / PA — All the key points from the Makerfield by-election debate",
+          "url": "https://www.aol.com/articles/key-points-makerfield-election-debate-165248544.html"
+        }
       ]
     },
     {
@@ -816,10 +1283,22 @@
       ],
       "confidence": "Medium-High — the direction and rough magnitude of the £88bn real-terms rise are well supported by Resolution Foundation analysis of DWP/OBR welfare data, and the composition caveats (pensions and disability driving the rise while working-age benefits were cut) are firmly documented. The precise £88bn cumulative figure rests on a specific real-terms baseline and deflator that the government has not fully published, and the '£33bn under Stride' sub-figure could not be confirmed against a single primary source, so the exact numbers carry some uncertainty even though the overall picture is sound.",
       "sources": [
-        { "title": "Hansard — Engagements (PMQs), House of Commons, 10 June 2026", "url": "https://hansard.parliament.uk/commons/2026-06-10/debates/3219CC50-6B6A-4F88-8661-9E71FDEDF276/Engagements" },
-        { "title": "Resolution Foundation — Is welfare spending 'out of control'?", "url": "https://www.resolutionfoundation.org/comment/is-welfare-spending-out-of-control/" },
-        { "title": "Resolution Foundation — Ratchets, retrenchment and reform: the social security system since 2010", "url": "https://www.resolutionfoundation.org/app/uploads/2024/06/Ratchets-retrenchment-and-reform.pdf" },
-        { "title": "ITV News — Starmer refuses to rule out tax hikes to fund defence spending", "url": "https://www.itv.com/news/2026-06-10/starmer-refuses-to-rule-out-tax-hikes-to-fund-defence-spending" }
+        {
+          "title": "Hansard — Engagements (PMQs), House of Commons, 10 June 2026",
+          "url": "https://hansard.parliament.uk/commons/2026-06-10/debates/3219CC50-6B6A-4F88-8661-9E71FDEDF276/Engagements"
+        },
+        {
+          "title": "Resolution Foundation — Is welfare spending 'out of control'?",
+          "url": "https://www.resolutionfoundation.org/comment/is-welfare-spending-out-of-control/"
+        },
+        {
+          "title": "Resolution Foundation — Ratchets, retrenchment and reform: the social security system since 2010",
+          "url": "https://www.resolutionfoundation.org/app/uploads/2024/06/Ratchets-retrenchment-and-reform.pdf"
+        },
+        {
+          "title": "ITV News — Starmer refuses to rule out tax hikes to fund defence spending",
+          "url": "https://www.itv.com/news/2026-06-10/starmer-refuses-to-rule-out-tax-hikes-to-fund-defence-spending"
+        }
       ]
     },
     {
@@ -846,10 +1325,22 @@
       ],
       "confidence": "Medium — the £28bn figure is consistently reported across several independent outlets and attributed to military chiefs, and Badenoch quotes it accurately, but it originates in briefing rather than a published primary costing (MoD/NAO/OBR), so the precise figure and its status as a fixed 'requirement' cannot be fully verified against a primary source. The surrounding GDP figures are confirmed by Full Fact and the Commons Library.",
       "sources": [
-        { "title": "Defense News — UK running out of time to boost defense as investment plan stalls, military chief warns", "url": "https://www.defensenews.com/global/europe/2026/06/05/uk-running-out-of-time-to-boost-defense-as-investment-plan-stalls-military-chief-warns/" },
-        { "title": "The Spectator — Keir Starmer's weakness was on display at PMQs", "url": "https://spectator.com/article/keir-starmers-weakness-was-on-display-at-pmqs/" },
-        { "title": "Full Fact — Is the UK's defence spending increasing?", "url": "https://fullfact.org/politics/defence-spending-increase-pmqs/" },
-        { "title": "House of Commons Library — UK defence spending", "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8175/" }
+        {
+          "title": "Defense News — UK running out of time to boost defense as investment plan stalls, military chief warns",
+          "url": "https://www.defensenews.com/global/europe/2026/06/05/uk-running-out-of-time-to-boost-defense-as-investment-plan-stalls-military-chief-warns/"
+        },
+        {
+          "title": "The Spectator — Keir Starmer's weakness was on display at PMQs",
+          "url": "https://spectator.com/article/keir-starmers-weakness-was-on-display-at-pmqs/"
+        },
+        {
+          "title": "Full Fact — Is the UK's defence spending increasing?",
+          "url": "https://fullfact.org/politics/defence-spending-increase-pmqs/"
+        },
+        {
+          "title": "House of Commons Library — UK defence spending",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-8175/"
+        }
       ]
     },
     {
@@ -876,10 +1367,22 @@
       ],
       "confidence": "High — the figures come directly from the DfE's 4 June 2026 School Workforce statistics and are corroborated independently by Full Fact and Schools Week, which reach the same conclusion: the number is right but the framing omits the falling overall workforce and the narrow target definition.",
       "sources": [
-        { "title": "Full Fact — Do the latest teacher figures show Labour is on track to deliver its manifesto recruitment pledge?", "url": "https://fullfact.org/education/labour-manifesto-pledge-teacher-numbers/" },
-        { "title": "Full Fact — How many of the promised 6,500 'new expert teachers' has the government recruited?", "url": "https://fullfact.org/government-tracker/6500-new-expert-teachers/" },
-        { "title": "Schools Week — DfE 'hits 70% of 6,500 teachers target', but overall workforce shrinks", "url": "https://schoolsweek.co.uk/dfe-hits-70-of-6500-teachers-target-but-overall-workforce-shrinks/" },
-        { "title": "GOV.UK — School Workforce in England", "url": "https://explore-education-statistics.service.gov.uk/find-statistics/school-workforce-in-england" }
+        {
+          "title": "Full Fact — Do the latest teacher figures show Labour is on track to deliver its manifesto recruitment pledge?",
+          "url": "https://fullfact.org/education/labour-manifesto-pledge-teacher-numbers/"
+        },
+        {
+          "title": "Full Fact — How many of the promised 6,500 'new expert teachers' has the government recruited?",
+          "url": "https://fullfact.org/government-tracker/6500-new-expert-teachers/"
+        },
+        {
+          "title": "Schools Week — DfE 'hits 70% of 6,500 teachers target', but overall workforce shrinks",
+          "url": "https://schoolsweek.co.uk/dfe-hits-70-of-6500-teachers-target-but-overall-workforce-shrinks/"
+        },
+        {
+          "title": "GOV.UK — School Workforce in England",
+          "url": "https://explore-education-statistics.service.gov.uk/find-statistics/school-workforce-in-england"
+        }
       ]
     },
     {
@@ -905,9 +1408,18 @@
       ],
       "confidence": "High — corroborated by two Full Fact analyses and the IFS, all drawing on OBR public-finances data; the OBR is the underlying primary source.",
       "sources": [
-        { "title": "Full Fact — Katie Lam wrongly claims welfare has exceeded income tax 'for the first time ever'", "url": "https://fullfact.org/economy/katie-lam-welfare-income-tax/" },
-        { "title": "Full Fact — Welfare payments have not exceeded income tax 'for the first time ever'", "url": "https://fullfact.org/economy/income-tax-versus-welfare-spending/" },
-        { "title": "OBR — Economic and fiscal outlook (March 2026)", "url": "https://obr.uk/economic-and-fiscal-outlooks/" }
+        {
+          "title": "Full Fact — Katie Lam wrongly claims welfare has exceeded income tax 'for the first time ever'",
+          "url": "https://fullfact.org/economy/katie-lam-welfare-income-tax/"
+        },
+        {
+          "title": "Full Fact — Welfare payments have not exceeded income tax 'for the first time ever'",
+          "url": "https://fullfact.org/economy/income-tax-versus-welfare-spending/"
+        },
+        {
+          "title": "OBR — Economic and fiscal outlook (March 2026)",
+          "url": "https://obr.uk/economic-and-fiscal-outlooks/"
+        }
       ]
     },
     {
@@ -933,9 +1445,18 @@
       ],
       "confidence": "High — corroborated by Full Fact's analysis of Home Office small-boat arrivals data and the Migration Observatory's Channel crossings briefing, two independent sources.",
       "sources": [
-        { "title": "Full Fact — How many migrants come to the UK by small boat each day?", "url": "https://fullfact.org/immigration/robert-kenyon-small-boats-question-time/" },
-        { "title": "Migration Observatory — People crossing the English Channel in small boats", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/people-crossing-the-english-channel-in-small-boats/" },
-        { "title": "ITV News Granada — Reform UK and Andy Burnham to go head to head in Makerfield by-election", "url": "https://www.itv.com/news/granada/2026-05-19/reform-uk-and-andy-burnham-to-go-head-to-head-in-by-election" }
+        {
+          "title": "Full Fact — How many migrants come to the UK by small boat each day?",
+          "url": "https://fullfact.org/immigration/robert-kenyon-small-boats-question-time/"
+        },
+        {
+          "title": "Migration Observatory — People crossing the English Channel in small boats",
+          "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/people-crossing-the-english-channel-in-small-boats/"
+        },
+        {
+          "title": "ITV News Granada — Reform UK and Andy Burnham to go head to head in Makerfield by-election",
+          "url": "https://www.itv.com/news/granada/2026-05-19/reform-uk-and-andy-burnham-to-go-head-to-head-in-by-election"
+        }
       ]
     },
     {
@@ -961,9 +1482,18 @@
       ],
       "confidence": "High — the single-quarter ranking is confirmed by the ONS first quarterly estimate (with its own G7 comparison table) and corroborated by OECD Q1 2026 data, while the sustained-growth caveat rests on IMF projections and Full Fact's tracker.",
       "sources": [
-        { "title": "ONS — GDP first quarterly estimate, UK: January to March 2026", "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpfirstquarterlyestimateuk/januarytomarch2026" },
-        { "title": "Full Fact — Is the government on course to secure 'the highest sustained growth in the G7'?", "url": "https://fullfact.org/government-tracker/sustained-G7-growth/" },
-        { "title": "Yahoo Finance / Reuters — UK growth outlook trails only US and Canada among G7, IMF says", "url": "https://uk.finance.yahoo.com/news/uk-growth-outlook-imf-gdp-2027-110647675.html" }
+        {
+          "title": "ONS — GDP first quarterly estimate, UK: January to March 2026",
+          "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpfirstquarterlyestimateuk/januarytomarch2026"
+        },
+        {
+          "title": "Full Fact — Is the government on course to secure 'the highest sustained growth in the G7'?",
+          "url": "https://fullfact.org/government-tracker/sustained-G7-growth/"
+        },
+        {
+          "title": "Yahoo Finance / Reuters — UK growth outlook trails only US and Canada among G7, IMF says",
+          "url": "https://uk.finance.yahoo.com/news/uk-growth-outlook-imf-gdp-2027-110647675.html"
+        }
       ]
     },
     {
@@ -990,10 +1520,22 @@
       ],
       "confidence": "High — DWP PIP statistics, Centre for Social Justice analysis and IFS research all corroborate the underlying trend; PIP eligibility criteria are published by DWP.",
       "sources": [
-        { "title": "DWP — Personal Independence Payment statistics (January 2026)", "url": "https://www.gov.uk/government/statistics/personal-independence-payment-statistics" },
-        { "title": "Centre for Social Justice — Disability benefits for anxiety hit new record high", "url": "https://www.centreforsocialjustice.org.uk/newsroom/disability-benefits-for-anxiety-hit-new-record-high" },
-        { "title": "IFS — The role of changing health in rising health-related benefit claims", "url": "https://ifs.org.uk/publications/role-changing-health-rising-health-related-benefit-claims" },
-        { "title": "Disability News Service — Farage finally confirms: A Reform UK government would slash spending on disability benefits", "url": "https://www.disabilitynewsservice.com/farage-finally-confirms-a-reform-uk-government-would-slash-spending-on-disability-benefits/" }
+        {
+          "title": "DWP — Personal Independence Payment statistics (January 2026)",
+          "url": "https://www.gov.uk/government/statistics/personal-independence-payment-statistics"
+        },
+        {
+          "title": "Centre for Social Justice — Disability benefits for anxiety hit new record high",
+          "url": "https://www.centreforsocialjustice.org.uk/newsroom/disability-benefits-for-anxiety-hit-new-record-high"
+        },
+        {
+          "title": "IFS — The role of changing health in rising health-related benefit claims",
+          "url": "https://ifs.org.uk/publications/role-changing-health-rising-health-related-benefit-claims"
+        },
+        {
+          "title": "Disability News Service — Farage finally confirms: A Reform UK government would slash spending on disability benefits",
+          "url": "https://www.disabilitynewsservice.com/farage-finally-confirms-a-reform-uk-government-would-slash-spending-on-disability-benefits/"
+        }
       ]
     },
     {
@@ -1020,10 +1562,22 @@
       ],
       "confidence": "High — OBR, IFS and Resolution Foundation analyses provide clear benchmarks against which the £40bn claim can be assessed. No independent body has endorsed the figure.",
       "sources": [
-        { "title": "Gov.uk — Reforms to welfare system set to save £1.9 billion by 2030/31", "url": "https://www.gov.uk/government/news/reforms-to-welfare-system-set-to-save-19-billion-by-the-end-of-203031" },
-        { "title": "IFS — Changes to benefit reforms reduce saving by £3bn in 2029/30", "url": "https://ifs.org.uk/articles/changes-benefit-reforms-reduce-saving-bill-ps3bn-2029-30-create-huge-difference-support" },
-        { "title": "British Brief — Reform UK reverses stance on triple lock, pledges £40bn welfare cuts to fund pension guarantee", "url": "https://britbrief.co.uk/politics/westminster/reform-uks-triple-lock-u-turn-welfare-cuts-fund-pensions.html" },
-        { "title": "London Loves Business — Farage unveils sweeping welfare cuts in bid to slash £330bn benefits bill", "url": "https://londonlovesbusiness.com/farage-unveils-sweeping-welfare-cuts-in-bid-to-slash-330bn-benefits-bill/" }
+        {
+          "title": "Gov.uk — Reforms to welfare system set to save £1.9 billion by 2030/31",
+          "url": "https://www.gov.uk/government/news/reforms-to-welfare-system-set-to-save-19-billion-by-the-end-of-203031"
+        },
+        {
+          "title": "IFS — Changes to benefit reforms reduce saving by £3bn in 2029/30",
+          "url": "https://ifs.org.uk/articles/changes-benefit-reforms-reduce-saving-bill-ps3bn-2029-30-create-huge-difference-support"
+        },
+        {
+          "title": "British Brief — Reform UK reverses stance on triple lock, pledges £40bn welfare cuts to fund pension guarantee",
+          "url": "https://britbrief.co.uk/politics/westminster/reform-uks-triple-lock-u-turn-welfare-cuts-fund-pensions.html"
+        },
+        {
+          "title": "London Loves Business — Farage unveils sweeping welfare cuts in bid to slash £330bn benefits bill",
+          "url": "https://londonlovesbusiness.com/farage-unveils-sweeping-welfare-cuts-in-bid-to-slash-330bn-benefits-bill/"
+        }
       ]
     },
     {
@@ -1049,10 +1603,22 @@
       ],
       "confidence": "High — figures verified directly against OBR data; Full Fact's analysis provides definitive context on the historical pattern.",
       "sources": [
-        { "title": "Full Fact — Welfare payments have not exceeded income tax 'for the first time ever'", "url": "https://fullfact.org/economy/income-tax-versus-welfare-spending/" },
-        { "title": "OBR — Economic and Fiscal Outlook, March 2026", "url": "https://obr.uk/efo/economic-and-fiscal-outlook-march-2026/" },
-        { "title": "Dr Luke Evans MP — Labour spends more on welfare than it raises in Income Tax", "url": "https://www.drlukeevans.org.uk/news/welfare-spending-more-than-income-tax-receipts" },
-        { "title": "VisaVerge — UK Welfare vs Income Tax: Full Fact 2026 Analysis", "url": "https://www.visaverge.com/news/welfare-spending-tops-income-tax-receipts-as-budget-watchdog-warns-of-death-spiral/" }
+        {
+          "title": "Full Fact — Welfare payments have not exceeded income tax 'for the first time ever'",
+          "url": "https://fullfact.org/economy/income-tax-versus-welfare-spending/"
+        },
+        {
+          "title": "OBR — Economic and Fiscal Outlook, March 2026",
+          "url": "https://obr.uk/efo/economic-and-fiscal-outlook-march-2026/"
+        },
+        {
+          "title": "Dr Luke Evans MP — Labour spends more on welfare than it raises in Income Tax",
+          "url": "https://www.drlukeevans.org.uk/news/welfare-spending-more-than-income-tax-receipts"
+        },
+        {
+          "title": "VisaVerge — UK Welfare vs Income Tax: Full Fact 2026 Analysis",
+          "url": "https://www.visaverge.com/news/welfare-spending-tops-income-tax-receipts-as-budget-watchdog-warns-of-death-spiral/"
+        }
       ]
     },
     {
@@ -1078,10 +1644,22 @@
       ],
       "confidence": "High — Home Affairs Committee findings, Home Office stop-and-search statistics and IOPC statements all directly relevant. No official body or independent review has found evidence of systemic two-tier policing as Farage describes.",
       "sources": [
-        { "title": "Home Office — Stop and search, arrests and mental health detentions, year ending March 2025", "url": "https://www.gov.uk/government/statistics/stop-and-search-arrests-and-mental-health-detentions-march-2025/police-powers-and-procedures-stop-and-search-arrests-and-mental-health-detentions-england-and-wales-year-ending-31-march-2025" },
-        { "title": "LBC — Farage doubles down on 'two-tier policing' claims as Khan, Lawrence and Starmer round on him", "url": "https://www.lbc.co.uk/article/nigel-farage-two-tier-policing-starmer-khan-lawrence-badenoch-henry-nowak-5Hjdb78_2/" },
-        { "title": "LSE British Politics and Policy — The truth about 'two-tier policing'", "url": "https://blogs.lse.ac.uk/politicsandpolicy/the-truth-about-two-tier-policing/" },
-        { "title": "NPR — In Britain, video of a dying teen handcuffed by police sparks outrage and riots", "url": "https://www.npr.org/2026/06/03/nx-s1-5844898/british-student-nowak-handcuffed-police-video-farage" }
+        {
+          "title": "Home Office — Stop and search, arrests and mental health detentions, year ending March 2025",
+          "url": "https://www.gov.uk/government/statistics/stop-and-search-arrests-and-mental-health-detentions-march-2025/police-powers-and-procedures-stop-and-search-arrests-and-mental-health-detentions-england-and-wales-year-ending-31-march-2025"
+        },
+        {
+          "title": "LBC — Farage doubles down on 'two-tier policing' claims as Khan, Lawrence and Starmer round on him",
+          "url": "https://www.lbc.co.uk/article/nigel-farage-two-tier-policing-starmer-khan-lawrence-badenoch-henry-nowak-5Hjdb78_2/"
+        },
+        {
+          "title": "LSE British Politics and Policy — The truth about 'two-tier policing'",
+          "url": "https://blogs.lse.ac.uk/politicsandpolicy/the-truth-about-two-tier-policing/"
+        },
+        {
+          "title": "NPR — In Britain, video of a dying teen handcuffed by police sparks outrage and riots",
+          "url": "https://www.npr.org/2026/06/03/nx-s1-5844898/british-student-nowak-handcuffed-police-video-farage"
+        }
       ]
     },
     {
@@ -1108,11 +1686,26 @@
       ],
       "confidence": "High — Q1 2026 figures taken directly from the ONS quarterly GDP bulletin and corroborated by Full Fact's government tracker and House of Commons Library GDP comparisons.",
       "sources": [
-        { "title": "ONS — GDP first quarterly estimate, UK: January to March 2026 (released 14 May 2026)", "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpfirstquarterlyestimateuk/januarytomarch2026" },
-        { "title": "Full Fact — Is the government on course to secure 'the highest sustained growth in the G7'?", "url": "https://fullfact.org/government-tracker/sustained-G7-growth/" },
-        { "title": "The London Economic — UK expected to have fastest economic growth of G7 nations so far in 2026 (14 May 2026)", "url": "https://www.thelondoneconomic.com/news/uk-economy-growth-figures-start-of-2026-406166/" },
-        { "title": "House of Commons Library — GDP international comparisons: Economic indicators", "url": "https://commonslibrary.parliament.uk/research-briefings/sn02784/" },
-        { "title": "Bloomberg — Britain's Economy Turns Sour Just as Starmer Had a Reason to Brag (22 May 2026)", "url": "https://www.bloomberg.com/news/articles/2026-05-22/britain-s-economy-turns-sour-just-as-starmer-had-a-reason-to-brag" }
+        {
+          "title": "ONS — GDP first quarterly estimate, UK: January to March 2026 (released 14 May 2026)",
+          "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpfirstquarterlyestimateuk/januarytomarch2026"
+        },
+        {
+          "title": "Full Fact — Is the government on course to secure 'the highest sustained growth in the G7'?",
+          "url": "https://fullfact.org/government-tracker/sustained-G7-growth/"
+        },
+        {
+          "title": "The London Economic — UK expected to have fastest economic growth of G7 nations so far in 2026 (14 May 2026)",
+          "url": "https://www.thelondoneconomic.com/news/uk-economy-growth-figures-start-of-2026-406166/"
+        },
+        {
+          "title": "House of Commons Library — GDP international comparisons: Economic indicators",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn02784/"
+        },
+        {
+          "title": "Bloomberg — Britain's Economy Turns Sour Just as Starmer Had a Reason to Brag (22 May 2026)",
+          "url": "https://www.bloomberg.com/news/articles/2026-05-22/britain-s-economy-turns-sour-just-as-starmer-had-a-reason-to-brag"
+        }
       ]
     },
     {
@@ -1138,10 +1731,22 @@
       ],
       "confidence": "High — figures taken directly from ONS provisional migration statistics and corroborated by the Migration Observatory and House of Commons Library.",
       "sources": [
-        { "title": "ONS — Long-term international migration, provisional: year ending December 2025 (21 May 2026)", "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingdecember2025" },
-        { "title": "ONS blog — Net migration continues to fall (21 May 2026)", "url": "https://blog.ons.gov.uk/2026/05/21/net-migration-continues-to-fall/" },
-        { "title": "Migration Observatory — Net migration to the UK", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/long-term-international-migration-flows-to-and-from-the-uk/" },
-        { "title": "Shabana Mahmood (X) — 'Net migration is now at 171,000, down from a high of 944,000 under the Conservatives'", "url": "https://x.com/ShabanaMahmood/status/2057384020472713376" }
+        {
+          "title": "ONS — Long-term international migration, provisional: year ending December 2025 (21 May 2026)",
+          "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingdecember2025"
+        },
+        {
+          "title": "ONS blog — Net migration continues to fall (21 May 2026)",
+          "url": "https://blog.ons.gov.uk/2026/05/21/net-migration-continues-to-fall/"
+        },
+        {
+          "title": "Migration Observatory — Net migration to the UK",
+          "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/long-term-international-migration-flows-to-and-from-the-uk/"
+        },
+        {
+          "title": "Shabana Mahmood (X) — 'Net migration is now at 171,000, down from a high of 944,000 under the Conservatives'",
+          "url": "https://x.com/ShabanaMahmood/status/2057384020472713376"
+        }
       ]
     },
     {
@@ -1168,11 +1773,26 @@
       ],
       "confidence": "High — corroborated across the National Audit Office, the Migration Observatory and Full Fact.",
       "sources": [
-        { "title": "Full Fact — Housing asylum seekers in hotels costs around £8 million a day", "url": "https://fullfact.org/immigration/sunak-8m-asylum-hotels/" },
-        { "title": "Migration Observatory — Asylum accommodation in the UK", "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/asylum-accommodation-in-the-uk/" },
-        { "title": "NAO — The Home Office's management of asylum accommodation contracts (HC 874, 7 May 2025)", "url": "https://www.nao.org.uk/wp-content/uploads/2025/05/home-offices-asylum-accommodation-contracts.pdf" },
-        { "title": "NAO — An analysis of the asylum system (10 Dec 2025)", "url": "https://www.nao.org.uk/wp-content/uploads/2025/12/an-analysis-of-the-asylum-system.pdf" },
-        { "title": "Ipsos — Immigration seen as the biggest issue facing Britain (May 2026)", "url": "https://www.ipsos.com/en-uk/immigration-seen-biggest-issue-facing-britain-public-concern-rises" }
+        {
+          "title": "Full Fact — Housing asylum seekers in hotels costs around £8 million a day",
+          "url": "https://fullfact.org/immigration/sunak-8m-asylum-hotels/"
+        },
+        {
+          "title": "Migration Observatory — Asylum accommodation in the UK",
+          "url": "https://migrationobservatory.ox.ac.uk/resources/briefings/asylum-accommodation-in-the-uk/"
+        },
+        {
+          "title": "NAO — The Home Office's management of asylum accommodation contracts (HC 874, 7 May 2025)",
+          "url": "https://www.nao.org.uk/wp-content/uploads/2025/05/home-offices-asylum-accommodation-contracts.pdf"
+        },
+        {
+          "title": "NAO — An analysis of the asylum system (10 Dec 2025)",
+          "url": "https://www.nao.org.uk/wp-content/uploads/2025/12/an-analysis-of-the-asylum-system.pdf"
+        },
+        {
+          "title": "Ipsos — Immigration seen as the biggest issue facing Britain (May 2026)",
+          "url": "https://www.ipsos.com/en-uk/immigration-seen-biggest-issue-facing-britain-public-concern-rises"
+        }
       ]
     },
     {
@@ -1194,7 +1814,10 @@
       ],
       "confidence": "Medium-High — per Full Fact; reconfirm latest ONS Labour Market figures.",
       "sources": [
-        { "title": "Full Fact — Prime Minister's Questions fact-checked", "url": "https://fullfact.org/pmqs-fact-checked/" }
+        {
+          "title": "Full Fact — Prime Minister's Questions fact-checked",
+          "url": "https://fullfact.org/pmqs-fact-checked/"
+        }
       ]
     },
     {
@@ -1215,7 +1838,10 @@
       ],
       "confidence": "Medium — per Full Fact (28 May 2026); reconfirm exact spending definitions.",
       "sources": [
-        { "title": "Full Fact — Latest fact checks", "url": "https://fullfact.org/latest/" }
+        {
+          "title": "Full Fact — Latest fact checks",
+          "url": "https://fullfact.org/latest/"
+        }
       ]
     },
     {
@@ -1237,8 +1863,14 @@
       ],
       "confidence": "Medium — claim direction well documented; savings figures contested. Reconfirm against costings.",
       "sources": [
-        { "title": "Full Fact — Reform UK", "url": "https://fullfact.org/reform-uk/" },
-        { "title": "Friends of the Earth — Fact check: Net Zero and UK jobs", "url": "https://policy.friendsoftheearth.uk/insight/fact-check-net-zero-and-uk-jobs" }
+        {
+          "title": "Full Fact — Reform UK",
+          "url": "https://fullfact.org/reform-uk/"
+        },
+        {
+          "title": "Friends of the Earth — Fact check: Net Zero and UK jobs",
+          "url": "https://policy.friendsoftheearth.uk/insight/fact-check-net-zero-and-uk-jobs"
+        }
       ]
     },
     {
@@ -1260,7 +1892,10 @@
       ],
       "confidence": "High — per Full Fact and NHS England statistics.",
       "sources": [
-        { "title": "Full Fact — Health secretary again overstates size of NHS waiting list", "url": "https://fullfact.org/live/2025/apr/streeting-nhs-seven-million-waiting-list/" }
+        {
+          "title": "Full Fact — Health secretary again overstates size of NHS waiting list",
+          "url": "https://fullfact.org/live/2025/apr/streeting-nhs-seven-million-waiting-list/"
+        }
       ]
     }
   ]
