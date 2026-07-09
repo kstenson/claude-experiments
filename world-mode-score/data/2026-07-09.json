@@ -1,0 +1,171 @@
+{
+  "date": "2026-07-09",
+  "score": 40,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "The world slipped two points to the bottom of its uneasy-calm band as the fragile US-Iran truce came apart. A day after Iran's Revolutionary Guard struck three commercial ships near the Strait of Hormuz, President Trump told the NATO summit in Ankara that the ceasefire was 'over' and a 'waste of time,' and US Central Command launched fresh strikes on more than 80 Iranian targets while Washington reimposed sanctions on Iranian oil. Iran retaliated by claiming attacks on US bases in Bahrain and Kuwait, and Brent crude jumped about 5 percent toward 78 dollars a barrel; the Dow fell 1.09 percent to 52,348 even as the Nasdaq edged higher. Trump later tempered the alarm, saying he did not think full-scale war would resume. The rest of the ledger stayed heavy: Russia's earlier bombardment of Kyiv still weighed on Ukraine as NATO closed with a 70-billion-euro annual aid pledge and US assent to Patriot missile production; Venezuela declared national mourning with its twin-quake toll at 3,535 dead and tens of thousands missing; the RSF's siege of Sudan's El Obeid left half a million trapped in darkness; Gaza truce violations continued; and Uganda's confirmed Marburg case shadowed the region's Bundibugyo Ebola outbreak. Super Typhoon Bavi tracked west toward Taiwan and eastern China later in the week. Against that ran real lift: an AI-guided discovery of two new superconductors, Spain's record sixth straight World Cup clean sheet, and steady environmental gains. The headline settles at 40, held down by open US-Iran fighting even as diplomacy and science quietly delivered.",
+  "dimensions": {
+    "conflict": 28,
+    "economy": 45,
+    "climate": 38,
+    "humanInterest": 37,
+    "techProgress": 64
+  },
+  "regions": {
+    "northAmerica": 46,
+    "southAmerica": 27,
+    "europe": 46,
+    "africa": 29,
+    "middleEast": 30,
+    "asia": 42,
+    "oceania": 58
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "President Trump declares the US-Iran ceasefire 'over' and a 'waste of time' at the NATO summit in Ankara, and US Central Command launches fresh strikes on Iranian military sites near the Strait of Hormuz a day after Iran's Revolutionary Guard fired on three commercial vessels, as Washington reimposes sanctions on Iran's oil exports and revokes its waiver to sell crude, pushing the two sides back toward open war just weeks after signing a 60-day memorandum of understanding to halt hostilities",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/07/08/world/live-news/iran-war-nato-summit-ukraine-trump",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Iran's Armed Forces say they have retaliated for the latest US strikes by targeting dozens of American military installations, claiming attacks on 85 sites including Salman Port and the 5th Fleet in Bahrain and the Ali Al Salem Air Base in Kuwait, in the most serious crisis since the two sides signed their interim truce and a sharp escalation of the fight over control of the Strait of Hormuz",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/07/08/g-s1-132460/us-iran-attacks",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Oil prices surge as US strikes on Iran reverse crude's return to pre-war levels, with Brent crude futures jumping about 5.2 percent to settle near 78 dollars a barrel and West Texas Intermediate rising 4.4 percent to about 73.52 dollars, after Trump threatened to bomb Iran for a second day and reimpose a naval blockade, though prices eased off session highs when he said he did not believe the two countries would return to full-scale war",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/8/oil-prices-surge-as-us-strikes-iran-reversing-fall-to-pre-war-levels",
+      "dimension": "economy",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "US stocks retreat as renewed Middle East tensions rattle markets, with the Dow Jones Industrial Average dropping 576.76 points, or 1.09 percent, to close at 52,348.39 and the S&P 500 slipping 0.28 percent to 7,482.71, after Trump told the NATO summit that the ceasefire with Iran was over and oil prices climbed, though the Nasdaq Composite bucked the trend to edge up 0.2 percent to 25,870.65 on AI optimism",
+      "source": "Yahoo Finance",
+      "url": "https://finance.yahoo.com/markets/stocks/live/stock-market-today-wednedsay-july-8-230111117.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Venezuela declares national mourning as the death toll from its twin June earthquakes rises past 3,500, with 16,740 people injured and 17,854 left homeless two weeks after back-to-back magnitude-7.2 and 7.5 quakes struck seconds apart, as survivors gather for candlelit vigils in Caracas and Maracaibo, forensic teams bury the dead in trenches marked with white crosses and tens of thousands remain missing",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/7/venezuela-earthquakes-death-toll-jumps-to-more-than-3500",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "The Rapid Support Forces maintain their siege of El Obeid, capital of Sudan's North Kordofan state, leaving roughly half a million civilians trapped in a city without electricity for nearly a month, as the UN human rights office documents at least 15 drone strikes killing more than 45 civilians and rights groups warn of an El-Fasher-style atrocity in what could become Sudan's next humanitarian catastrophe",
+      "source": "UN News",
+      "url": "https://news.un.org/en/story/2026/07/1167871",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Uganda's confirmed case of Marburg virus disease, a 1.5-year-old child who died in Kyegegwa district, threatens to complicate the region's response to a cross-border Bundibugyo Ebola outbreak, as Ebola deaths across the Democratic Republic of the Congo and Uganda top 400 in what has become the third-largest Ebola outbreak on record in Central Africa, straining health systems fighting two viral hemorrhagic fevers at once",
+      "source": "CIDRAP",
+      "url": "https://www.cidrap.umn.edu/ebola/ebola-deaths-africa-top-400-uganda-reports-death-child-marburg",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Super Typhoon Bavi tracks west over waters east of the Philippines and is forecast to bring torrential rain to Taiwan on Friday and Saturday before an expected landfall in China's eastern Fujian province, with Taiwan's weather agency warning of more than a metre of rain, nearly 29,000 troops placed on disaster-prevention standby, ferry services to outlying islands suspended and Bavi set to be the largest storm by size to strike the island since 1987",
+      "source": "Taipei Times",
+      "url": "https://www.taipeitimes.com/News/taiwan/archives/2026/07/09/2003860465",
+      "dimension": "climate",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "The second impeachment trial of Philippine Vice President Sara Duterte proceeds in the Senate amid tight security in Manila, with Duterte facing charges of betrayal of public trust, misuse of confidential government funds and alleged threats against President Ferdinand Marcos Jr., in a politically volatile case that could determine whether she is barred from the next presidential race",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/6/philippine-vice-president-dutertes-impeachment-trial-begins-what-we-know",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "NATO closes its two-day summit in Ankara with a pledge of 70 billion euros in military assistance to Ukraine for 2026 and a sovereign commitment to sustain at least equivalent levels in 2027, as Trump grants Ukraine the right to produce Patriot missile systems domestically, hails 'tremendous unity' and progress toward the alliance's 5 percent defence-spending target, and says an end to the war may be closer than people realise",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/8/nato-pledges-70-billion-euros-for-ukraine-as-trump-praises-peace-progress",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Scientists combine machine learning with quantum physics to discover two previously unknown superconductors, YRu3B2 and LuRu3B2, in the first machine-learning-guided superconductor discovery, with an algorithm screening enormous numbers of material combinations before targeted quantum calculations and lab synthesis confirmed the results, a technique researchers say could bring the long-sought goal of a room-temperature superconductor significantly closer",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/releases/2026/07/260701205006.htm",
+      "dimension": "techProgress",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Spain sets a FIFA World Cup record with a sixth consecutive clean sheet, becoming the first team in tournament history to do so, as substitute Mikel Merino's 91st-minute winner beats Portugal 1-0 in the round of 16 and goalkeeper Unai Simon extends his shutout streak to 609 minutes, sending Spain to the quarter-finals of the 2026 World Cup",
+      "source": "Inquirer",
+      "url": "https://sports.inquirer.net/685472/world-cup-spain-sets-record-with-6th-clean-sheet-in-a-row/amp",
+      "dimension": "humanInterest",
+      "region": "europe"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "NPR",
+    "CNN",
+    "CBS News",
+    "ABC News",
+    "NBC News",
+    "CNBC",
+    "Bloomberg",
+    "Yahoo Finance",
+    "TheStreet",
+    "24/7 Wall St.",
+    "Washington Post",
+    "Washington Times",
+    "UPI",
+    "Al Jazeera",
+    "BBC",
+    "France 24",
+    "Euronews",
+    "The National",
+    "Time",
+    "UN News",
+    "Amnesty International",
+    "WHO",
+    "CDC",
+    "ECDC",
+    "CIDRAP",
+    "STAT News",
+    "Arab News",
+    "Positive News",
+    "Good News Network",
+    "Good Good Good",
+    "Smiley Movement",
+    "The Watchers",
+    "Taipei Times",
+    "Zoom Earth",
+    "ABS-CBN",
+    "GMA News",
+    "Manila Times",
+    "Inquirer",
+    "USTR",
+    "White & Case",
+    "ScienceDaily",
+    "Space.com",
+    "Opta Analyst",
+    "Obama Foundation",
+    "Chicago Sun-Times",
+    "Wikipedia (2026 Iran war / 2026 Iran war ceasefire / 2026 Strait of Hormuz crisis / Typhoon Bavi 2026 / 2026 Venezuela earthquakes / 2026 Ebola epidemic / Gaza peace plan / Second impeachment of Sara Duterte / Portal:Current events July 2026)"
+  ]
+}

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Force-Directed Graph — Experiment 041</title>
+<meta name="description" content="A tangle of nodes and springs that finds its own layout — no designer places anything, the shape falls out of the forces." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  #canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #canvas.dragging { cursor: grabbing; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+  .ctl { display: grid; gap: 5px; }
+  .ctl label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #b7b7c8; display: flex; justify-content: space-between; }
+  .ctl label .val { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border: none; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  .row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; text-align: center;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #d7d7e4; border-radius: 9px;
+    padding: 8px 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); }
+  .btn:active { transform: scale(0.97); }
+  .seg { display: flex; border: 1px solid rgba(255,255,255,0.14); border-radius: 9px; overflow: hidden; }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #b7b7c8;
+    padding: 7px 4px; font-size: 0.72rem; font-weight: 600; cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .seg button.on { background: rgba(124,124,255,0.28); color: #ecebff; }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px;
+    padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+
+  @media (max-width: 560px) {
+    .ui { left: 12px; right: 12px; top: 12px; max-width: none; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Force-Directed Graph</h1>
+    <p class="sub">Experiment № 041 · July 9, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Graph shape
+          <span class="val" id="shapeName">lattice</span>
+        </label>
+        <div class="seg" id="shape">
+          <button data-shape="lattice" class="on">Lattice</button>
+          <button data-shape="tree">Tree</button>
+          <button data-shape="clusters">Clusters</button>
+          <button data-shape="ring">Rings</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label>Repulsion <span class="val" id="repVal">1.0</span></label>
+        <input type="range" id="rep" min="0" max="2.5" step="0.05" value="1" />
+      </div>
+      <div class="ctl">
+        <label>Spring stiffness <span class="val" id="stiffVal">0.06</span></label>
+        <input type="range" id="stiff" min="0.005" max="0.2" step="0.005" value="0.06" />
+      </div>
+      <div class="ctl">
+        <label>Link length <span class="val" id="lenVal">70</span></label>
+        <input type="range" id="len" min="24" max="150" step="2" value="70" />
+      </div>
+      <div class="ctl">
+        <label>Gravity <span class="val" id="gravVal">0.03</span></label>
+        <input type="range" id="grav" min="0" max="0.14" step="0.005" value="0.03" />
+      </div>
+      <div class="row">
+        <button class="btn" id="shake">Shake</button>
+        <button class="btn" id="regen">New graph</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag any node — the whole graph rearranges itself to make room · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 041 · The story</p>
+      <h2>Force-Directed Graph</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Most of this collection is about physical or chemical systems finding their own order. I wanted to try the same idea on something completely abstract — a graph, just dots and the lines between them, with no coordinates at all. A graph doesn't come with a picture; it's only a list of who's connected to whom. So how do you <em>draw</em> one? The trick that stuck, invented by Eades in 1984 and refined by Fruchterman and Reingold, is almost cheeky: pretend every node is a little magnet that shoves the others away, and every link is a spring that pulls its two ends together. Then just let go. Nobody decides where anything belongs — the layout is whatever position leaves all those pushes and pulls in balance. It felt like the purest "self-determination" piece I could build: the shape is literally not authored, it's discovered.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment I love is grabbing one node and dragging it across the screen — and watching the entire structure ripple, stretch, and then flow back into a comfortable shape once I let go. It's tactile in a way a static diagram never is; the graph feels like it <em>wants</em> something. I also enjoy how the same two rules draw such different things depending on what's connected: a lattice relaxes into a neat mesh, a tree fans out into branches, loosely-linked clusters drift into separate islands joined by taut threads. I didn't program any of those pictures. They're just what balance looks like for that particular set of connections.</p>
+
+      <h3>Something you might take away</h3>
+      <p>This is how nearly every network diagram you've ever seen — social graphs, org charts, knowledge maps, the little bubble views in apps — actually gets laid out. No human positions the nodes; a physics simulation settles them. It's worth remembering that such a layout is a <em>found</em> equilibrium, not a truth: nudge the forces and the same graph rearranges into a different-looking picture, all of them equally valid. When a diagram makes a network look clustered or central or sprawling, that shape is partly the data and partly the springs. Meaning and layout aren't the same thing.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT: a force-directed graph layout ----
+  (() => {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, DPR = 1;
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ---- Parameters (bound to sliders) ----
+    const P = { rep: 1.0, stiff: 0.06, len: 70, grav: 0.03, shape: 'lattice' };
+
+    // ---- Graph state ----
+    let nodes = [];   // {x,y,vx,vy,group,r,pinned}
+    let edges = [];   // {a,b}
+    const GROUP_COLORS = [
+      [124,124,255], [255,124,195], [90,210,255], [120,230,160],
+      [255,190,110], [200,150,255]
+    ];
+
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+
+    // ---- Graph builders ----
+    function buildLattice() {
+      nodes = []; edges = [];
+      const cols = 8, rows = 6;
+      const idx = (c, r) => r * cols + c;
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          nodes.push(mkNode(0));
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (c < cols - 1) edges.push({ a: idx(c, r), b: idx(c + 1, r) });
+          if (r < rows - 1) edges.push({ a: idx(c, r), b: idx(c, r + 1) });
+        }
+      }
+    }
+
+    function buildTree() {
+      nodes = []; edges = [];
+      nodes.push(mkNode(0));
+      const depthOf = [0];
+      const target = 60;
+      while (nodes.length < target) {
+        // attach a new node to a random existing one, favouring shallower nodes
+        let parent;
+        let tries = 0;
+        do {
+          parent = (Math.random() * nodes.length) | 0;
+          tries++;
+        } while (depthOf[parent] > 4 && tries < 8);
+        const g = depthOf[parent] === 0 ? (nodes.length % GROUP_COLORS.length) : nodes[parent].group;
+        const n = mkNode(g);
+        nodes.push(n);
+        depthOf.push(depthOf[parent] + 1);
+        edges.push({ a: parent, b: nodes.length - 1 });
+      }
+    }
+
+    function buildClusters() {
+      nodes = []; edges = [];
+      const groups = 4, perGroup = 12;
+      const starts = [];
+      for (let g = 0; g < groups; g++) {
+        starts.push(nodes.length);
+        for (let i = 0; i < perGroup; i++) nodes.push(mkNode(g));
+        const s = starts[g];
+        // dense-ish random links within the cluster
+        for (let i = 0; i < perGroup; i++) {
+          const nlinks = 1 + ((Math.random() * 2) | 0);
+          for (let k = 0; k < nlinks; k++) {
+            let j = s + ((Math.random() * perGroup) | 0);
+            if (j !== s + i) edges.push({ a: s + i, b: j });
+          }
+        }
+      }
+      // a few bridges between clusters
+      for (let g = 0; g < groups; g++) {
+        const g2 = (g + 1) % groups;
+        edges.push({ a: starts[g] + ((Math.random() * perGroup) | 0),
+                     b: starts[g2] + ((Math.random() * perGroup) | 0) });
+      }
+    }
+
+    function buildRing() {
+      nodes = []; edges = [];
+      const ringCount = 3, per = 14;
+      const starts = [];
+      for (let ri = 0; ri < ringCount; ri++) {
+        starts.push(nodes.length);
+        for (let i = 0; i < per; i++) nodes.push(mkNode(ri));
+        const s = starts[ri];
+        for (let i = 0; i < per; i++) edges.push({ a: s + i, b: s + (i + 1) % per });
+      }
+      // link the rings in a chain by one node each
+      for (let ri = 0; ri < ringCount - 1; ri++)
+        edges.push({ a: starts[ri], b: starts[ri + 1] });
+      edges.push({ a: starts[ringCount - 1] + (per >> 1), b: starts[0] + (per >> 1) });
+    }
+
+    function mkNode(group) {
+      const cx = W / 2, cy = H / 2;
+      return {
+        x: cx + rnd(-140, 140),
+        y: cy + rnd(-140, 140),
+        vx: 0, vy: 0,
+        group: group % GROUP_COLORS.length,
+        r: rnd(4.5, 7.5),
+        pinned: false
+      };
+    }
+
+    // adjacency degree for sizing
+    function computeDegrees() {
+      const deg = new Array(nodes.length).fill(0);
+      for (const e of edges) { deg[e.a]++; deg[e.b]++; }
+      for (let i = 0; i < nodes.length; i++)
+        nodes[i].r = 4 + Math.min(7, Math.sqrt(deg[i]) * 2.2);
+    }
+
+    function regen() {
+      if (P.shape === 'lattice') buildLattice();
+      else if (P.shape === 'tree') buildTree();
+      else if (P.shape === 'clusters') buildClusters();
+      else buildRing();
+      computeDegrees();
+    }
+    regen();
+
+    // ---- Physics step (Fruchterman–Reingold style) ----
+    function step() {
+      const n = nodes.length;
+      const repK = P.rep * P.len * P.len * 0.9;   // repulsion strength scales with ideal length²
+      const cx = W / 2, cy = H / 2;
+
+      // pairwise repulsion (n ~ 60, so O(n²) is fine)
+      for (let i = 0; i < n; i++) {
+        const a = nodes[i];
+        for (let j = i + 1; j < n; j++) {
+          const b = nodes[j];
+          let dx = a.x - b.x, dy = a.y - b.y;
+          let d2 = dx * dx + dy * dy;
+          if (d2 < 0.01) { dx = rnd(-1, 1); dy = rnd(-1, 1); d2 = dx * dx + dy * dy; }
+          const d = Math.sqrt(d2);
+          const f = repK / d2;
+          const fx = (dx / d) * f, fy = (dy / d) * f;
+          a.vx += fx; a.vy += fy;
+          b.vx -= fx; b.vy -= fy;
+        }
+      }
+
+      // spring attraction along edges (Hooke toward ideal length)
+      for (const e of edges) {
+        const a = nodes[e.a], b = nodes[e.b];
+        let dx = b.x - a.x, dy = b.y - a.y;
+        let d = Math.hypot(dx, dy) || 0.001;
+        const f = (d - P.len) * P.stiff;
+        const fx = (dx / d) * f, fy = (dy / d) * f;
+        a.vx += fx; a.vy += fy;
+        b.vx -= fx; b.vy -= fy;
+      }
+
+      // gentle gravity toward centre keeps disconnected bits on-screen
+      for (let i = 0; i < n; i++) {
+        const a = nodes[i];
+        a.vx += (cx - a.x) * P.grav * 0.02;
+        a.vy += (cy - a.y) * P.grav * 0.02;
+      }
+
+      // integrate with damping
+      for (let i = 0; i < n; i++) {
+        const a = nodes[i];
+        if (a.pinned) { a.vx = 0; a.vy = 0; continue; }
+        a.vx *= 0.82; a.vy *= 0.82;
+        // clamp for stability
+        const sp = Math.hypot(a.vx, a.vy);
+        const maxV = 18;
+        if (sp > maxV) { a.vx = a.vx / sp * maxV; a.vy = a.vy / sp * maxV; }
+        a.x += a.vx; a.y += a.vy;
+        // soft bounds
+        const m = 24;
+        if (a.x < m) { a.x = m; a.vx *= -0.4; }
+        if (a.x > W - m) { a.x = W - m; a.vx *= -0.4; }
+        if (a.y < m) { a.y = m; a.vy *= -0.4; }
+        if (a.y > H - m) { a.y = H - m; a.vy *= -0.4; }
+      }
+    }
+
+    // ---- Render ----
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // edges
+      ctx.lineWidth = 1.1;
+      for (const e of edges) {
+        const a = nodes[e.a], b = nodes[e.b];
+        const ca = GROUP_COLORS[a.group], cb = GROUP_COLORS[b.group];
+        const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+        grad.addColorStop(0, `rgba(${ca[0]},${ca[1]},${ca[2]},0.32)`);
+        grad.addColorStop(1, `rgba(${cb[0]},${cb[1]},${cb[2]},0.32)`);
+        ctx.strokeStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+
+      // nodes
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        const c = GROUP_COLORS[a.group];
+        const glow = (i === hoverIdx || a.pinned) ? 1 : 0.7;
+        ctx.beginPath();
+        ctx.arc(a.x, a.y, a.r + 6, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a.pinned ? 0.28 : 0.12})`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${glow})`;
+        ctx.fill();
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        ctx.stroke();
+      }
+    }
+
+    // ---- Interaction ----
+    let dragIdx = -1, hoverIdx = -1;
+    let px = 0, py = 0;
+
+    function pos(ev) {
+      const t = ev.touches ? ev.touches[0] : ev;
+      return { x: t.clientX, y: t.clientY };
+    }
+    function pick(x, y) {
+      let best = -1, bestD = 22 * 22;
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        const dx = a.x - x, dy = a.y - y;
+        const d = dx * dx + dy * dy;
+        const rr = (a.r + 10) * (a.r + 10);
+        if (d < rr && d < bestD) { bestD = d; best = i; }
+      }
+      return best;
+    }
+
+    function onDown(ev) {
+      const p = pos(ev);
+      const i = pick(p.x, p.y);
+      if (i >= 0) {
+        dragIdx = i;
+        nodes[i].pinned = true;
+        canvas.classList.add('dragging');
+        ev.preventDefault();
+      }
+    }
+    function onMove(ev) {
+      const p = pos(ev);
+      if (dragIdx >= 0) {
+        const a = nodes[dragIdx];
+        a.x = p.x; a.y = p.y; a.vx = 0; a.vy = 0;
+        ev.preventDefault();
+      } else {
+        hoverIdx = pick(p.x, p.y);
+        canvas.style.cursor = hoverIdx >= 0 ? 'grab' : 'default';
+      }
+    }
+    function onUp() {
+      if (dragIdx >= 0) { nodes[dragIdx].pinned = false; dragIdx = -1; }
+      canvas.classList.remove('dragging');
+    }
+
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('touchstart', onDown, { passive: false });
+    canvas.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+
+    // ---- Controls ----
+    const bind = (id, valId, key, fmt) => {
+      const el = document.getElementById(id), out = document.getElementById(valId);
+      const upd = () => { P[key] = parseFloat(el.value); out.textContent = fmt(P[key]); };
+      el.addEventListener('input', upd); upd();
+    };
+    bind('rep', 'repVal', 'rep', v => v.toFixed(2));
+    bind('stiff', 'stiffVal', 'stiff', v => v.toFixed(3));
+    bind('len', 'lenVal', 'len', v => v.toFixed(0));
+    bind('grav', 'gravVal', 'grav', v => v.toFixed(3));
+
+    document.getElementById('shake').addEventListener('click', () => {
+      for (const a of nodes) { a.vx += rnd(-40, 40); a.vy += rnd(-40, 40); }
+    });
+    document.getElementById('regen').addEventListener('click', regen);
+
+    const shapeSeg = document.getElementById('shape');
+    const shapeName = document.getElementById('shapeName');
+    shapeSeg.addEventListener('click', (e) => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      shapeSeg.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      P.shape = btn.dataset.shape;
+      shapeName.textContent = btn.textContent.toLowerCase();
+      regen();
+    });
+
+    // ---- Loop ----
+    function frame() {
+      // a couple of sub-steps per frame settles faster and stays stable
+      step();
+      step();
+      draw();
+      requestAnimationFrame(frame);
+    }
+    frame();
+  })();
+</script>
+</body>
+</html>
