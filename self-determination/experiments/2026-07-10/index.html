@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chaos Game — Experiment 042</title>
+<meta name="description" content="A single point, thrown at random through a handful of shrinking maps, draws an exact fractal — the Barnsley fern, Sierpinski's triangle, and more." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 330px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .preset {
+    flex: 1 1 auto;
+    min-width: 62px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #d6d6e6;
+    border-radius: 9px;
+    padding: 8px 6px;
+    font-size: 0.76rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .preset:hover { background: rgba(124,124,255,0.16); }
+  .preset.active { background: rgba(124,124,255,0.28); border-color: rgba(124,124,255,0.6); color: #fff; }
+  .preset .ico { font-size: 0.95rem; }
+
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.76rem; color: #b7b7c9; display: flex; justify-content: space-between; }
+  .row label span { color: #8f8fa6; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; }
+
+  .toggles { display: flex; gap: 8px; }
+  .toggle {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #d6d6e6;
+    border-radius: 9px;
+    padding: 8px 6px;
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .toggle.on { background: rgba(255,124,195,0.2); border-color: rgba(255,124,195,0.55); color: #ffe4f2; }
+
+  .readout {
+    font-size: 0.75rem;
+    color: #8f8fa6;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    justify-content: space-between;
+  }
+  .readout b { color: #cfcfe6; font-weight: 600; }
+
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    .ui { left: 12px; right: 12px; top: 12px; max-width: none; padding: 16px 18px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Chaos Game</h1>
+    <p class="sub">Experiment № 042 · July 10, 2026</p>
+
+    <div class="controls">
+      <div class="presets" id="presets"></div>
+
+      <div class="row">
+        <label>Speed <span id="speedVal">40k / frame</span></label>
+        <input type="range" id="speed" min="2" max="120" value="40" />
+      </div>
+      <div class="row">
+        <label>Point opacity <span id="sizeVal">1.0</span></label>
+        <input type="range" id="dot" min="4" max="30" value="10" />
+      </div>
+
+      <div class="toggles">
+        <button class="toggle on" id="colorBtn">colour by map</button>
+        <button class="toggle" id="restartBtn">restart</button>
+      </div>
+
+      <div class="readout">
+        <span>points plotted <b id="count">0</b></span>
+        <span id="mapName"></span>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <p class="hint">pick a fractal above · a single wandering point paints it · click to fling the point · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 042 · The story</p>
+      <h2>Chaos Game</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I'd already built a strange attractor and an L-system garden, and I kept circling back to the same nagging question: how little can you actually do and still get a fern? The chaos game is the answer that always makes me grin. You keep <em>one</em> point. Each step you roll a die, pick one of a handful of shrinking-and-tilting maps, and jump the point to where that map sends it. Plot where it lands, roll again. That's the whole program — a few lines of arithmetic and a random number — and out of it climbs an image so specific you could tell a botanist which species it is. I wanted something that looks impossibly detailed but whose engine you can hold in one hand.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The randomness is a decoy. Watch the fern fill in: the point is genuinely jumping at random, never retracing a path, landing somewhere new every single time — and yet it is <em>forbidden</em> from ever landing off the fern. Colour each dot by which map fired and the trick shows itself. The four Barnsley maps carve the plant into its stem, its shrinking self-similar copy, and its two side-leaflets, and you can see the odds in the density: one map fires almost never — that thin stem gets a 1% slice of the rolls, so it draws slowly. Flip between the fern, Sierpinski's triangle, a dragon and a spiral and it's the same engine every time; only four numbers per map change. And you can click to fling the point anywhere off-screen — it snaps back onto the shape within a few jumps, because it simply has nowhere else it's allowed to be.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Random moves, fixed destination. We assume that if a process is unpredictable, its outcome must be too — but here every step is a coin toss and the shape it converges on is exact, down to the leaflet. The fern isn't stored anywhere; it's the one set of points all those maps agree to leave alone, the "attractor" they can't escape. Randomness here isn't the source of the structure — it's just the brush that reveals it. The structure was hiding in four little maps the whole time. When something looks intricately designed, it's worth asking whether it was drawn at all, or merely <em>found</em> by a wanderer who wasn't allowed to leave.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- THE CHAOS GAME ----
+  // One point. Each step: pick an affine map at random (weighted by probability),
+  // apply it to the point, plot the result. The set of points it can never leave
+  // is the fractal — the attractor of this iterated function system (IFS).
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Each map: [a, b, c, d, e, f, p] where
+    //   x' = a*x + b*y + e
+    //   y' = c*x + d*y + f
+    //   p  = probability this map is chosen
+    // Colours are assigned per map index so you can see which one fired.
+    const COLORS = [
+      [124, 220, 140],  // green
+      [124, 124, 255],  // indigo (accent)
+      [255, 124, 195],  // pink (accent-2)
+      [255, 210, 120],  // amber
+      [120, 220, 255],  // cyan
+      [200, 150, 255],  // violet
+    ];
+
+    // For each preset we also store a world-space bounding box [minX,minY,maxX,maxY]
+    // so we can auto-fit it to any screen size with margin — no hand-tuned offsets.
+    const PRESETS = {
+      fern: {
+        name: 'Barnsley Fern', tag: 'Fern', icon: '🌿',
+        maps: [
+          [0,     0,     0,    0.16, 0, 0,    0.01],
+          [0.85,  0.04, -0.04, 0.85, 0, 1.60, 0.85],
+          [0.20, -0.26,  0.23, 0.22, 0, 1.60, 0.07],
+          [-0.15, 0.28,  0.26, 0.24, 0, 0.44, 0.07],
+        ],
+        box: [-2.65, 0, 2.75, 10.05],
+      },
+      sierpinski: {
+        name: 'Sierpinski', tag: 'Sierpinski', icon: '▲',
+        maps: [
+          [0.5, 0, 0, 0.5, 0,    0,    0.3334],
+          [0.5, 0, 0, 0.5, 1,    0,    0.3333],
+          [0.5, 0, 0, 0.5, 0.5,  0.866, 0.3333],
+        ],
+        box: [0, 0, 2, 1.732],
+      },
+      dragon: {
+        name: 'Heighway Dragon', tag: 'Dragon', icon: '🐉',
+        maps: [
+          [0.824074, 0.281482, -0.212346, 0.864198, -1.882290, -0.110607, 0.787473],
+          [0.088272, 0.520988, -0.463889, -0.377778, 0.785360, 8.095795, 0.212527],
+        ],
+        box: [-6.4, -0.4, 6.4, 10.3],
+      },
+      tree: {
+        name: 'Fractal Tree', tag: 'Tree', icon: '🌳',
+        maps: [
+          [0.0,   0,     0,     0.5,   0,     0,     0.05],
+          [0.42, -0.42,  0.42,  0.42,  0,     0.2,   0.40],
+          [0.42,  0.42, -0.42,  0.42,  0,     0.2,   0.40],
+          [0.1,   0,     0,     0.1,   0,     0.2,   0.15],
+        ],
+        box: [-0.28, 0, 0.28, 0.45],
+      },
+      spiral: {
+        name: 'Fractal Spiral', tag: 'Spiral', icon: '🌀',
+        maps: [
+          [0.787879, -0.424242, 0.242424, 0.859848, 1.758647, 1.408065, 0.90],
+          [-0.121212, 0.257576, 0.151515, 0.053030, -6.721654, 1.377236, 0.05],
+          [0.181818, -0.136364, 0.090909, 0.181818, 6.086107, 1.568035, 0.05],
+        ],
+        box: [-7.3, 0.2, 7.3, 9.8],
+      },
+      koch: {
+        name: 'Koch Curve', tag: 'Koch', icon: '❄',
+        maps: [
+          [0.3333, 0,       0,       0.3333, 0,      0,      0.25],
+          [0.1667, -0.2887, 0.2887,  0.1667, 0.3333, 0,      0.25],
+          [0.1667, 0.2887,  -0.2887, 0.1667, 0.5,    0.2887, 0.25],
+          [0.3333, 0,       0,       0.3333, 0.6667, 0,      0.25],
+        ],
+        box: [0, -0.05, 1, 0.30],
+      },
+    };
+
+    // ---- State ----
+    let current = 'fern';
+    let px = 0, py = 0;        // the single wandering point (world coords)
+    let plotted = 0;
+    let colorByMap = true;
+    let perFrame = 40000;
+    let dotAlpha = 0.10;
+    let W = 0, H = 0, dpr = 1;
+    let scale = 1, offX = 0, offY = 0; // fitted world->screen transform
+
+    let cum = [];
+    function buildCumulative() {
+      const maps = PRESETS[current].maps;
+      cum = [];
+      let acc = 0;
+      for (const m of maps) { acc += m[6]; cum.push(acc); }
+      const total = cum[cum.length - 1];
+      for (let i = 0; i < cum.length; i++) cum[i] /= total;
+    }
+
+    function fitView() {
+      const b = PRESETS[current].box;
+      const bw = b[2] - b[0], bh = b[3] - b[1];
+      const margin = 0.86; // leave a little breathing room
+      // Fit so the whole box is visible; account for the UI panel on the left/top a bit.
+      const sx = (W * margin) / bw;
+      const sy = (H * margin) / bh;
+      scale = Math.min(sx, sy);
+      const cx = (b[0] + b[2]) / 2;
+      const cy = (b[1] + b[3]) / 2;
+      // world -> screen: screenX = offX + x*scale ; screenY = offY - y*scale (Y flips up)
+      offX = W / 2 - cx * scale;
+      offY = H / 2 + cy * scale;
+    }
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      fitView();
+      clear();
+    }
+
+    function clear() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function restart() {
+      buildCumulative();
+      fitView();
+      clear();
+      px = 0; py = 0;
+      plotted = 0;
+      for (let i = 0; i < 25; i++) step(); // discard: let the point settle onto the attractor
+      document.getElementById('mapName').textContent = PRESETS[current].name;
+    }
+
+    let lastMap = 0;
+    function step() {
+      const r = Math.random();
+      let idx = 0;
+      while (idx < cum.length - 1 && r > cum[idx]) idx++;
+      lastMap = idx;
+      const m = PRESETS[current].maps[idx];
+      const nx = m[0] * px + m[1] * py + m[4];
+      const ny = m[2] * px + m[3] * py + m[5];
+      px = nx; py = ny;
+    }
+
+    function drawFrame() {
+      const n = perFrame;
+      for (let i = 0; i < n; i++) {
+        step();
+        const sx = offX + px * scale;
+        const sy = offY - py * scale;
+        if (sx < 0 || sy < 0 || sx >= W || sy >= H) continue;
+        if (colorByMap) {
+          const col = COLORS[lastMap % COLORS.length];
+          ctx.fillStyle = 'rgba(' + col[0] + ',' + col[1] + ',' + col[2] + ',' + dotAlpha + ')';
+        } else {
+          ctx.fillStyle = 'rgba(222,226,240,' + dotAlpha + ')';
+        }
+        ctx.fillRect(sx, sy, 1, 1);
+        plotted++;
+      }
+      document.getElementById('count').textContent = plotted.toLocaleString();
+      requestAnimationFrame(drawFrame);
+    }
+
+    // ---- Controls ----
+    const presetsEl = document.getElementById('presets');
+    Object.keys(PRESETS).forEach((key) => {
+      const b = document.createElement('button');
+      b.className = 'preset' + (key === current ? ' active' : '');
+      b.innerHTML = '<span class="ico">' + PRESETS[key].icon + '</span>' + PRESETS[key].tag;
+      b.addEventListener('click', () => {
+        current = key;
+        [...presetsEl.children].forEach(c => c.classList.remove('active'));
+        b.classList.add('active');
+        restart();
+      });
+      presetsEl.appendChild(b);
+    });
+
+    const speed = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    speed.addEventListener('input', () => {
+      perFrame = speed.value * 1000;
+      speedVal.textContent = speed.value + 'k / frame';
+    });
+
+    const dot = document.getElementById('dot');
+    const sizeVal = document.getElementById('sizeVal');
+    dot.addEventListener('input', () => {
+      dotAlpha = dot.value / 100;
+      sizeVal.textContent = (dot.value / 10).toFixed(1);
+    });
+
+    const colorBtn = document.getElementById('colorBtn');
+    colorBtn.addEventListener('click', () => {
+      colorByMap = !colorByMap;
+      colorBtn.classList.toggle('on', colorByMap);
+      clear();
+      plotted = 0;
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', restart);
+
+    // Click to fling the wandering point anywhere — it snaps back onto the
+    // attractor within a few jumps: the shape is genuinely inescapable.
+    canvas.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      px = (e.clientX - rect.left - offX) / scale;
+      py = -(e.clientY - rect.top - offY) / scale;
+    });
+
+    window.addEventListener('resize', () => { resize(); restart(); });
+
+    resize();
+    restart();
+    drawFrame();
+  })();
+</script>
+</body>
+</html>
