@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mandelbrot &amp; Julia — Experiment 043</title>
+<meta name="description" content="Hover the Mandelbrot set to pick a number c, and watch its own Julia set draw itself beside it — the famous map is a catalogue of every Julia set at once." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%80%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Two-view stage ---- */
+  .stage { position: fixed; inset: 0; display: flex; }
+  .view {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0; min-height: 0;
+    overflow: hidden;
+  }
+  .view + .view { border-left: 1px solid rgba(255,255,255,0.08); }
+  .view canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    background: #05050a;
+  }
+  #mandelView { cursor: crosshair; }
+
+  .caption {
+    position: absolute; z-index: 5;
+    bottom: 14px; left: 14px;
+    font-size: 0.72rem; letter-spacing: 0.05em;
+    color: rgba(255,255,255,0.62);
+    background: rgba(5,5,10,0.42);
+    padding: 5px 11px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.09);
+    pointer-events: none;
+  }
+  .caption b { color: #cfcfff; font-weight: 600; }
+
+  /* the little ring showing which c is selected on the map */
+  .marker {
+    position: absolute; z-index: 6;
+    width: 15px; height: 15px;
+    margin: -7.5px 0 0 -7.5px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.65), 0 0 14px rgba(124,124,255,0.95);
+    pointer-events: none;
+  }
+  .marker.pinned { background: #ff7cc3; box-shadow: 0 0 0 1px rgba(0,0,0,0.65), 0 0 16px rgba(255,124,195,0.95); }
+
+  /* ---- Floating control panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+
+  .palettes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pal {
+    flex: 1 1 auto;
+    min-width: 60px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #d6d6e6;
+    border-radius: 9px;
+    padding: 8px 6px;
+    font-size: 0.76rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .pal:hover { background: rgba(124,124,255,0.16); }
+  .pal.active { background: rgba(124,124,255,0.28); border-color: rgba(124,124,255,0.6); color: #fff; }
+  .pal .sw { width: 26px; height: 8px; border-radius: 3px; }
+
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.76rem; color: #b7b7c9; display: flex; justify-content: space-between; }
+  .row label span { color: #8f8fa6; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; }
+
+  .toggles { display: flex; gap: 8px; }
+  .toggle {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #d6d6e6;
+    border-radius: 9px;
+    padding: 8px 6px;
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+  }
+  .toggle:hover { background: rgba(124,124,255,0.14); }
+  .toggle.on { background: rgba(255,124,195,0.2); border-color: rgba(255,124,195,0.55); color: #ffe4f2; }
+
+  .readout {
+    font-size: 0.78rem;
+    color: #9a9ab0;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+  }
+  .readout b { color: #cfcfe6; font-weight: 600; }
+  .status .conn { color: #8ee6a6; }
+  .status .dust { color: #ff9ecb; }
+
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e7d7ff; font-style: italic; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.42); letter-spacing: 0.04em;
+    pointer-events: none; text-align: center;
+    max-width: 92vw;
+  }
+
+  @media (max-width: 640px) {
+    .stage { flex-direction: column; }
+    .view + .view { border-left: none; border-top: 1px solid rgba(255,255,255,0.08); }
+    #juliaView { order: 1; }   /* Julia on top... */
+    #mandelView { order: 2; }  /* ...Mandelbrot below, clear of the panel so it stays draggable */
+    .ui { left: 12px; right: 12px; top: 12px; max-width: none; padding: 15px 17px; }
+    .caption { font-size: 0.66rem; padding: 4px 9px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="view" id="mandelView">
+      <canvas id="mandel"></canvas>
+      <div class="marker" id="marker"></div>
+      <div class="caption">The <b>Mandelbrot</b> set · every possible <b>c</b></div>
+    </div>
+    <div class="view" id="juliaView">
+      <canvas id="julia"></canvas>
+      <div class="caption">The <b>Julia</b> set for the marked <b>c</b></div>
+    </div>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Mandelbrot &amp; Julia</h1>
+    <p class="sub">Experiment № 043 · July 11, 2026</p>
+
+    <div class="controls">
+      <div class="palettes" id="palettes"></div>
+
+      <div class="row">
+        <label>Detail <span id="detailVal">110</span></label>
+        <input type="range" id="detail" min="50" max="420" value="110" />
+      </div>
+
+      <div class="toggles">
+        <button class="toggle" id="pinBtn">pin c</button>
+        <button class="toggle" id="sweepBtn">sweep</button>
+        <button class="toggle" id="resetBtn">reset map</button>
+      </div>
+
+      <div class="readout">c = <b id="cVal">…</b></div>
+      <div class="readout status" id="statusVal">…</div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <p class="hint">hover the map on the left to pick <b>c</b> · its Julia set draws on the right · click to pin · scroll to zoom the map · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 043 · The story</p>
+      <h2>Mandelbrot &amp; Julia</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Forty-two experiments in, I'd somehow never built the most famous fractal of all — and I realised the reason I'd been avoiding it was that showing the Mandelbrot set on its own felt like a postcard everyone already owns. What I actually wanted was the thing the postcard hides: the Mandelbrot set isn't <em>a</em> shape, it's an <em>index</em>. Every single point of it stands for a completely different fractal — a Julia set — and the map is really a table of contents for infinitely many of them. So I built the two side by side and wired them together: move your cursor over the map, and the Julia set it points at draws itself live in the other pane. One formula, <em>z → z² + c</em>, generates both. The left pane sweeps <em>c</em> across the plane; the right pane fixes that <em>c</em> and sweeps the starting point instead.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Drag the cursor slowly across the boundary of the black region and watch the Julia set on the right transform — spirals tighten, dragons sprout tails, dust scatters and gathers — and then feel the moment it snaps. Inside the black Mandelbrot body, every Julia set is one <em>connected</em> piece; step even a hair outside, and the very same picture shatters into disconnected dust that can never be joined. That's not decoration, it's a theorem (Fatou and Julia, 1918): <em>c</em> is in the Mandelbrot set precisely when its Julia set holds together. The readout tells you which side of the line you're on and why — it just checks whether one number, iterated, runs off to infinity. The richest, most ornate Julias live right on the coastline, where the answer is only barely yes.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A single yes-or-no question can decide an entire world's shape. To find out if <em>c</em> belongs to the set, you ask one thing: start at zero, apply <em>z² + c</em> over and over — does it stay bounded, or escape? That lone bit of information — bounded or not — is the difference between a Julia set that's a single unbroken curve and one that's an infinite scatter of specks. Nothing in between. We tend to expect a spectrum, a gradual fraying from "connected" to "dust", but here the global character of the whole object flips on the fate of one orbit. Sometimes the deepest fact about a thing isn't a measurement at all — it's the answer to a question you can only get by running it and watching where it goes.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- MANDELBROT & JULIA ----
+  // Both panes iterate the same map z -> z^2 + c.
+  //   Mandelbrot pane: c varies per pixel, z starts at 0. A pixel is "in the set"
+  //     if the orbit of 0 never escapes.
+  //   Julia pane: c is fixed (the number under your cursor), z starts at the pixel.
+  // The tie between them: c is in the Mandelbrot set exactly when the Julia set
+  // for that c is a single connected piece rather than scattered dust.
+  (() => {
+    const mandel = document.getElementById('mandel');
+    const julia  = document.getElementById('julia');
+    const mctx = mandel.getContext('2d');
+    const jctx = julia.getContext('2d');
+    const marker = document.getElementById('marker');
+
+    // ---- Palettes: build 256-entry lookup tables from a few colour stops ----
+    // Each entry is a packed little-endian 0xAABBGGRR integer for fast pixel writes.
+    function buildLUT(stops) {
+      const lut = new Uint32Array(256);
+      for (let i = 0; i < 256; i++) {
+        const t = i / 255;
+        let a = stops[0], b = stops[stops.length - 1];
+        for (let s = 0; s < stops.length - 1; s++) {
+          if (t >= stops[s][0] && t <= stops[s + 1][0]) { a = stops[s]; b = stops[s + 1]; break; }
+        }
+        const span = (b[0] - a[0]) || 1, f = (t - a[0]) / span;
+        const r = Math.round(a[1] + (b[1] - a[1]) * f);
+        const g = Math.round(a[2] + (b[2] - a[2]) * f);
+        const bl = Math.round(a[3] + (b[3] - a[3]) * f);
+        lut[i] = (255 << 24) | (bl << 16) | (g << 8) | r;
+      }
+      return lut;
+    }
+    function packColor(r, g, bl) { return ((255 << 24) | (bl << 16) | (g << 8) | r) >>> 0; }
+
+    const PALETTES = {
+      aurora: {
+        name: 'Aurora', swatch: 'linear-gradient(90deg,#151033,#7c7cff,#ff7cc3,#ffe8c7)',
+        interior: packColor(7, 6, 18),
+        lut: buildLUT([
+          [0.00, 12, 10, 32], [0.30, 60, 66, 190], [0.55, 124, 124, 255],
+          [0.78, 255, 124, 195], [0.92, 255, 200, 170], [1.00, 255, 244, 220],
+        ]),
+      },
+      ember: {
+        name: 'Ember', swatch: 'linear-gradient(90deg,#0a0400,#c0341a,#ff9d2e,#fff2c0)',
+        interior: packColor(8, 4, 6),
+        lut: buildLUT([
+          [0.00, 6, 2, 8], [0.28, 110, 24, 20], [0.55, 214, 70, 26],
+          [0.78, 255, 160, 48], [0.92, 255, 224, 130], [1.00, 255, 248, 224],
+        ]),
+      },
+      ice: {
+        name: 'Ice', swatch: 'linear-gradient(90deg,#03121c,#1f6f9e,#4fd6e6,#f0ffff)',
+        interior: packColor(3, 8, 14),
+        lut: buildLUT([
+          [0.00, 4, 10, 20], [0.30, 24, 78, 120], [0.55, 46, 150, 190],
+          [0.78, 96, 216, 232], [0.92, 190, 244, 250], [1.00, 240, 255, 255],
+        ]),
+      },
+      mono: {
+        name: 'Mono', swatch: 'linear-gradient(90deg,#0a0a12,#6a6a86,#d7d7e6,#ffffff)',
+        interior: packColor(6, 6, 12),
+        lut: buildLUT([
+          [0.00, 10, 10, 18], [0.40, 90, 90, 112], [0.70, 176, 176, 200],
+          [0.90, 226, 226, 240], [1.00, 255, 255, 255],
+        ]),
+      },
+    };
+    let palKey = 'aurora';
+
+    // ---- Colouring: map a smooth (fractional) escape count to a LUT index ----
+    const COLOR_DENSITY = 6.5;   // how many colour bands per unit of iteration
+    const COLOR_SHIFT = 12;
+    const INV_LOG2 = 1 / Math.log(2);
+
+    // ---- View state ----
+    // Mandelbrot pane can be panned/zoomed; Julia pane stays framed on the origin.
+    const mView = { cx: -0.6, cy: 0, w: 3.3 };   // w = complex width across the pane
+    const jView = { cx: 0, cy: 0, w: 3.2 };
+    let maxIter = 110;
+
+    // The selected c (the number the two panes share), and whether it's pinned.
+    let cRe = -0.7269, cIm = 0.1889;
+    let pinned = false;
+
+    // ---- Core renderer ----
+    // Renders into a canvas at an internal buffer resolution chosen by `quality`.
+    // The buffer is put 1:1 into the canvas backing store and CSS scales it to fill.
+    function bufferDims(canvasEl, target) {
+      const cw = canvasEl.clientWidth || 1, ch = canvasEl.clientHeight || 1;
+      let bw, bh;
+      if (cw >= ch) { bw = target; bh = Math.max(1, Math.round(target * ch / cw)); }
+      else { bh = target; bw = Math.max(1, Math.round(target * cw / ch)); }
+      return { bw, bh, cw, ch };
+    }
+
+    function render(canvasEl, ctx, view, isJulia, target) {
+      const { bw, bh } = bufferDims(canvasEl, target);
+      if (canvasEl.width !== bw || canvasEl.height !== bh) { canvasEl.width = bw; canvasEl.height = bh; }
+      const img = ctx.createImageData(bw, bh);
+      const buf = new Uint32Array(img.data.buffer);
+      const pal = PALETTES[palKey];
+      const lut = pal.lut, interior = pal.interior;
+
+      const upp = view.w / bw;                 // complex units per buffer pixel
+      const startX = view.cx - (bw / 2) * upp;
+      const startY = view.cy + (bh / 2) * upp; // imaginary decreases going downward
+      const bail2 = 65536;                      // |z|^2 escape threshold (large = smooth)
+      const jRe = cRe, jIm = cIm;
+      let p = 0;
+
+      for (let py = 0; py < bh; py++) {
+        const y0 = startY - py * upp;
+        for (let px = 0; px < bw; px++) {
+          const x0 = startX + px * upp;
+          let zx, zy, ca, cb;
+          if (isJulia) { zx = x0; zy = y0; ca = jRe; cb = jIm; }
+          else { zx = 0; zy = 0; ca = x0; cb = y0; }
+          let zx2 = zx * zx, zy2 = zy * zy;
+          let i = 0;
+          while (i < maxIter && zx2 + zy2 <= bail2) {
+            zy = 2 * zx * zy + cb;
+            zx = zx2 - zy2 + ca;
+            zx2 = zx * zx; zy2 = zy * zy;
+            i++;
+          }
+          if (i >= maxIter) {
+            buf[p++] = interior;
+          } else {
+            // smooth (continuous) iteration count for band-free gradients
+            const logZn = 0.5 * Math.log(zx2 + zy2);
+            const nu = Math.log(logZn * INV_LOG2) * INV_LOG2;
+            const smooth = i + 1 - nu;
+            let idx = smooth * COLOR_DENSITY + COLOR_SHIFT;
+            idx = idx - Math.floor(idx / 256) * 256; // positive modulo 256
+            buf[p++] = lut[idx | 0];
+          }
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    // ---- Quality scheduling: draw a fast low-res frame now, a crisp one when idle ----
+    const Q = { mandelLow: 240, mandelHigh: 560, juliaLow: 200, juliaHigh: 540 };
+
+    let juliaHiTimer = null;
+    function renderJulia(quality) {
+      render(julia, jctx, jView, true, quality === 'high' ? Q.juliaHigh : Q.juliaLow);
+    }
+    function refreshJulia() {
+      renderJulia('low');
+      clearTimeout(juliaHiTimer);
+      juliaHiTimer = setTimeout(() => renderJulia('high'), 150);
+    }
+
+    let mandelHiTimer = null;
+    function renderMandel(quality) {
+      render(mandel, mctx, mView, false, quality === 'high' ? Q.mandelHigh : Q.mandelLow);
+    }
+    function refreshMandel() {
+      renderMandel('low');
+      clearTimeout(mandelHiTimer);
+      mandelHiTimer = setTimeout(() => { renderMandel('high'); placeMarker(); }, 180);
+    }
+
+    // ---- Selected-point readout, marker, and connectivity check ----
+    function classify(re, im) {
+      // Iterate the orbit of 0 under z^2 + c; report whether/when it escapes.
+      let zx = 0, zy = 0, zx2 = 0, zy2 = 0;
+      const lim = Math.max(maxIter, 200);
+      for (let i = 0; i < lim; i++) {
+        zy = 2 * zx * zy + im;
+        zx = zx2 - zy2 + re;
+        zx2 = zx * zx; zy2 = zy * zy;
+        if (zx2 + zy2 > 4) return { inSet: false, escAt: i + 1 };
+      }
+      return { inSet: true, escAt: null };
+    }
+
+    function updateReadout() {
+      const sign = cIm >= 0 ? '+' : '−';
+      document.getElementById('cVal').textContent =
+        cRe.toFixed(4) + ' ' + sign + ' ' + Math.abs(cIm).toFixed(4) + ' i';
+      const r = classify(cRe, cIm);
+      const el = document.getElementById('statusVal');
+      if (r.inSet) {
+        el.innerHTML = '<span class="conn">in the set →</span> the Julia set is one <b>connected</b> piece';
+      } else {
+        el.innerHTML = '<span class="dust">outside →</span> orbit of 0 escapes at step ' + r.escAt +
+          ', so the Julia set is <b>dust</b>';
+      }
+    }
+
+    function placeMarker() {
+      // Position the ring at c's pixel within the Mandelbrot pane (CSS coords).
+      const cw = mandel.clientWidth, ch = mandel.clientHeight;
+      const upp = mView.w / cw;
+      const x = (cRe - mView.cx) / upp + cw / 2;
+      const y = ch / 2 - (cIm - mView.cy) / upp;
+      const visible = x >= 0 && x <= cw && y >= 0 && y <= ch;
+      marker.style.display = visible ? 'block' : 'none';
+      marker.style.left = x + 'px';
+      marker.style.top = y + 'px';
+      marker.classList.toggle('pinned', pinned);
+    }
+
+    function setC(re, im) {
+      cRe = re; cIm = im;
+      refreshJulia();
+      updateReadout();
+      placeMarker();
+    }
+
+    // ---- Pointer interaction on the Mandelbrot pane ----
+    function pointerToComplex(e) {
+      const rect = mandel.getBoundingClientRect();
+      const cw = rect.width, ch = rect.height;
+      const upp = mView.w / cw;
+      const px = e.clientX - rect.left, py = e.clientY - rect.top;
+      return { re: mView.cx + (px - cw / 2) * upp, im: mView.cy - (py - ch / 2) * upp };
+    }
+
+    mandel.addEventListener('pointermove', (e) => {
+      if (pinned || sweeping) return;
+      const c = pointerToComplex(e);
+      setC(c.re, c.im);
+    });
+
+    mandel.addEventListener('pointerdown', (e) => {
+      if (sweeping) return;
+      const c = pointerToComplex(e);
+      cRe = c.re; cIm = c.im;
+      pinned = true;
+      pinBtn.classList.add('on');
+      setC(cRe, cIm);
+    });
+
+    // Scroll to zoom the map, keeping the point under the cursor fixed.
+    mandel.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const before = pointerToComplex(e);
+      const factor = e.deltaY < 0 ? 0.82 : 1 / 0.82;
+      mView.w = Math.min(6, Math.max(3e-4, mView.w * factor));
+      const after = pointerToComplex(e);
+      mView.cx += before.re - after.re;
+      mView.cy += before.im - after.im;
+      refreshMandel();
+      placeMarker();
+    }, { passive: false });
+
+    // ---- Controls ----
+    const palettesEl = document.getElementById('palettes');
+    Object.keys(PALETTES).forEach((key) => {
+      const b = document.createElement('button');
+      b.className = 'pal' + (key === palKey ? ' active' : '');
+      b.innerHTML = '<span class="sw" style="background:' + PALETTES[key].swatch + '"></span>' + PALETTES[key].name;
+      b.addEventListener('click', () => {
+        palKey = key;
+        [...palettesEl.children].forEach((c) => c.classList.remove('active'));
+        b.classList.add('active');
+        renderMandel('high');
+        renderJulia('high');
+      });
+      palettesEl.appendChild(b);
+    });
+
+    const detail = document.getElementById('detail');
+    const detailVal = document.getElementById('detailVal');
+    detail.addEventListener('input', () => {
+      maxIter = +detail.value;
+      detailVal.textContent = detail.value;
+      refreshMandel();
+      refreshJulia();
+      updateReadout();
+    });
+
+    const pinBtn = document.getElementById('pinBtn');
+    pinBtn.addEventListener('click', () => {
+      pinned = !pinned;
+      pinBtn.classList.toggle('on', pinned);
+      placeMarker();
+    });
+
+    const resetBtn = document.getElementById('resetBtn');
+    resetBtn.addEventListener('click', () => {
+      mView.cx = -0.6; mView.cy = 0; mView.w = 3.3;
+      renderMandel('high');
+      placeMarker();
+    });
+
+    // ---- Sweep: glide c along a slow loop so the Julia set morphs on its own ----
+    let sweeping = false, sweepT = 0, sweepRAF = null;
+    const sweepBtn = document.getElementById('sweepBtn');
+    function sweepFrame() {
+      if (!sweeping) return;
+      sweepT += 0.006;
+      // A gentle loop that skims the interesting coastline of the set.
+      const re = -0.4 + 0.62 * Math.cos(sweepT);
+      const im = 0.62 * Math.sin(sweepT * 1.13) * Math.cos(sweepT * 0.5);
+      cRe = re; cIm = im;
+      renderJulia('low');
+      updateReadout();
+      placeMarker();
+      sweepRAF = requestAnimationFrame(sweepFrame);
+    }
+    sweepBtn.addEventListener('click', () => {
+      sweeping = !sweeping;
+      sweepBtn.classList.toggle('on', sweeping);
+      if (sweeping) {
+        pinned = false; pinBtn.classList.remove('on');
+        sweepFrame();
+      } else {
+        cancelAnimationFrame(sweepRAF);
+        renderJulia('high');
+      }
+    });
+
+    // ---- Resize ----
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      renderMandel('low');
+      renderJulia('low');
+      placeMarker();
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        renderMandel('high');
+        renderJulia('high');
+        placeMarker();
+      }, 160);
+    });
+
+    // ---- Boot ----
+    renderMandel('high');
+    renderJulia('high');
+    updateReadout();
+    placeMarker();
+  })();
+</script>
+</body>
+</html>

@@ -2,9 +2,9 @@
   "meta": {
     "title": "AI-Infrastructure Basket",
     "subtitle": "An equal-weighted basket of 15 'picks & shovels' AI-infra stocks (no Nvidia), vs the S&P 500.",
-    "generated": "2026-07-10T05:09:04+00:00",
+    "generated": "2026-07-11T05:08:09+00:00",
     "inception": "2026-01-02",
-    "asOf": "2026-07-09",
+    "asOf": "2026-07-10",
     "note": "Total-return (dividend-adjusted) closes from Yahoo Finance. SK Hynix (000660.KS) converted KRW\u2192USD daily. Indices based to 100 at inception."
   },
   "dates": [
@@ -136,7 +136,8 @@
     "2026-07-06",
     "2026-07-07",
     "2026-07-08",
-    "2026-07-09"
+    "2026-07-09",
+    "2026-07-10"
   ],
   "lines": {
     "buyhold": [
@@ -268,7 +269,8 @@
       197.729,
       187.919,
       190.897,
-      197.544
+      197.509,
+      197.282
     ],
     "active": [
       100.0,
@@ -399,7 +401,8 @@
       197.718,
       189.719,
       193.4,
-      199.003
+      198.982,
+      198.755
     ],
     "sp500": [
       100.0,
@@ -530,23 +533,24 @@
       109.9,
       109.41,
       109.102,
-      109.99
+      109.99,
+      110.453
     ]
   },
   "stats": {
     "buyhold": {
-      "indexLast": 197.54,
-      "retPct": 97.54
+      "indexLast": 197.28,
+      "retPct": 97.28
     },
     "active": {
-      "indexLast": 199.0,
-      "retPct": 99.0
+      "indexLast": 198.75,
+      "retPct": 98.75
     },
     "sp500": {
-      "indexLast": 109.99,
-      "retPct": 9.99
+      "indexLast": 110.45,
+      "retPct": 10.45
     },
-    "activeCashWeight": 0.0527
+    "activeCashWeight": 0.055
   },
   "stocks": [
     {
@@ -554,150 +558,150 @@
       "name": "AMD",
       "layer": "Compute & chips",
       "currency": "USD",
-      "lastUSD": 546.72,
-      "ytdPct": 144.65,
-      "weightBuyhold": 0.0826,
-      "weightActive": 0.0607
+      "lastUSD": 557.89,
+      "ytdPct": 149.65,
+      "weightBuyhold": 0.0844,
+      "weightActive": 0.06
     },
     {
       "ticker": "AVGO",
       "name": "Broadcom",
       "layer": "Compute & chips",
       "currency": "USD",
-      "lastUSD": 401.11,
-      "ytdPct": 15.81,
-      "weightBuyhold": 0.0391,
-      "weightActive": 0.0907
+      "lastUSD": 399.97,
+      "ytdPct": 15.48,
+      "weightBuyhold": 0.039,
+      "weightActive": 0.095
     },
     {
       "ticker": "MRVL",
       "name": "Marvell",
       "layer": "Compute & chips",
       "currency": "USD",
-      "lastUSD": 243.27,
-      "ytdPct": 172.48,
-      "weightBuyhold": 0.092,
-      "weightActive": 0.057
+      "lastUSD": 235.81,
+      "ytdPct": 164.19,
+      "weightBuyhold": 0.0893,
+      "weightActive": 0.06
     },
     {
       "ticker": "TSM",
       "name": "TSMC",
       "layer": "Manufacturing & equipment",
       "currency": "USD",
-      "lastUSD": 436.96,
-      "ytdPct": 37.42,
-      "weightBuyhold": 0.0464,
-      "weightActive": 0.0675
+      "lastUSD": 434.11,
+      "ytdPct": 36.53,
+      "weightBuyhold": 0.0461,
+      "weightActive": 0.07
     },
     {
       "ticker": "ASML",
       "name": "ASML",
       "layer": "Manufacturing & equipment",
       "currency": "USD",
-      "lastUSD": 1804.25,
-      "ytdPct": 55.58,
-      "weightBuyhold": 0.0525,
-      "weightActive": 0.0635
+      "lastUSD": 1797.32,
+      "ytdPct": 54.98,
+      "weightBuyhold": 0.0524,
+      "weightActive": 0.065
     },
     {
       "ticker": "AMAT",
       "name": "Applied Materials",
       "layer": "Manufacturing & equipment",
       "currency": "USD",
-      "lastUSD": 588.66,
-      "ytdPct": 119.48,
-      "weightBuyhold": 0.0741,
-      "weightActive": 0.0515
+      "lastUSD": 602.5,
+      "ytdPct": 124.64,
+      "weightBuyhold": 0.0759,
+      "weightActive": 0.055
     },
     {
       "ticker": "MU",
       "name": "Micron",
       "layer": "Memory & storage",
       "currency": "USD",
-      "lastUSD": 991.64,
-      "ytdPct": 214.57,
-      "weightBuyhold": 0.1062,
-      "weightActive": 0.0731
+      "lastUSD": 979.3,
+      "ytdPct": 210.65,
+      "weightBuyhold": 0.105,
+      "weightActive": 0.075
     },
     {
       "ticker": "000660.KS",
       "name": "SK Hynix",
       "layer": "Memory & storage",
       "currency": "KRW",
-      "lastUSD": 1454.09,
-      "ytdPct": 210.69,
-      "weightBuyhold": 0.1049,
-      "weightActive": 0.0639
+      "lastUSD": 1447.63,
+      "ytdPct": 209.32,
+      "weightBuyhold": 0.1045,
+      "weightActive": 0.065
     },
     {
       "ticker": "STX",
       "name": "Seagate",
       "layer": "Memory & storage",
       "currency": "USD",
-      "lastUSD": 890.09,
-      "ytdPct": 210.31,
-      "weightBuyhold": 0.1047,
-      "weightActive": 0.052
+      "lastUSD": 910.34,
+      "ytdPct": 217.37,
+      "weightBuyhold": 0.1072,
+      "weightActive": 0.04
     },
     {
       "ticker": "ANET",
       "name": "Arista",
       "layer": "Networking & optics",
       "currency": "USD",
-      "lastUSD": 184.69,
-      "ytdPct": 38.24,
-      "weightBuyhold": 0.0467,
-      "weightActive": 0.0664
+      "lastUSD": 186.96,
+      "ytdPct": 39.94,
+      "weightBuyhold": 0.0473,
+      "weightActive": 0.06
     },
     {
       "ticker": "COHR",
       "name": "Coherent",
       "layer": "Networking & optics",
       "currency": "USD",
-      "lastUSD": 327.24,
-      "ytdPct": 68.39,
-      "weightBuyhold": 0.0568,
-      "weightActive": 0.0517
+      "lastUSD": 324.5,
+      "ytdPct": 66.98,
+      "weightBuyhold": 0.0564,
+      "weightActive": 0.055
     },
     {
       "ticker": "CRDO",
       "name": "Credo",
       "layer": "Networking & optics",
       "currency": "USD",
-      "lastUSD": 265.65,
-      "ytdPct": 85.48,
-      "weightBuyhold": 0.0626,
-      "weightActive": 0.0526
+      "lastUSD": 257.79,
+      "ytdPct": 80.0,
+      "weightBuyhold": 0.0608,
+      "weightActive": 0.05
     },
     {
       "ticker": "VRT",
       "name": "Vertiv",
       "layer": "Power, cooling & data centres",
       "currency": "USD",
-      "lastUSD": 323.92,
-      "ytdPct": 84.54,
-      "weightBuyhold": 0.0623,
-      "weightActive": 0.062
+      "lastUSD": 318.86,
+      "ytdPct": 81.65,
+      "weightBuyhold": 0.0614,
+      "weightActive": 0.06
     },
     {
       "ticker": "CEG",
       "name": "Constellation Energy",
       "layer": "Power, cooling & data centres",
       "currency": "USD",
-      "lastUSD": 250.74,
-      "ytdPct": -31.34,
-      "weightBuyhold": 0.0232,
-      "weightActive": 0.0753
+      "lastUSD": 251.38,
+      "ytdPct": -31.17,
+      "weightBuyhold": 0.0233,
+      "weightActive": 0.075
     },
     {
       "ticker": "EQIX",
       "name": "Equinix",
       "layer": "Power, cooling & data centres",
       "currency": "USD",
-      "lastUSD": 1034.87,
-      "ytdPct": 36.85,
-      "weightBuyhold": 0.0462,
-      "weightActive": 0.0594
+      "lastUSD": 1051.21,
+      "ytdPct": 39.01,
+      "weightBuyhold": 0.047,
+      "weightActive": 0.06
     }
   ],
   "decisions": [
@@ -784,6 +788,29 @@
         "MU": 0.075,
         "000660.KS": 0.065,
         "STX": 0.05,
+        "ANET": 0.06,
+        "COHR": 0.055,
+        "CRDO": 0.05,
+        "VRT": 0.06,
+        "CEG": 0.075,
+        "EQIX": 0.06
+      },
+      "cash": 0.055
+    },
+    {
+      "date": "2026-07-10",
+      "label": "Lean into Broadcom's Apple-through-2031 catalyst; hold the memory line steady",
+      "rationale": "The active book is now +99.0% vs the S&P's +10.0%. This week's cleanest new catalyst is Broadcom: on July 9 it extended its custom-silicon partnership with Apple through 2031 (~20% of AVGO revenue) and guided next-quarter AI-chip revenue to ~$16B, up >200% YoY, on hyperscaler design wins across Google, Meta and OpenAI, reaffirming its path to >$100B AI-semi revenue by 2027 \u2014 yet AVGO is still the cheapest name in the book at only +15.8% YTD. I'm lifting AVGO from 8.5% to 9.5% to press the single highest-conviction, lowest-multiple name. The memory/HBM shortage thesis is if anything stronger (SK Hynix scrapped long-term price caps, Samsung is pushing another ~20% Q3 DRAM hike, and Jefferies sees DRAM +40-50% in Q3 and +30-40% in Q4 with no relief before 2028), but MU (+214.6%), SK Hynix (+210.7%), STX (+210.3%) and MRVL (+172.5%) are already the four most stretched names in the book and still carry the June antitrust/price-fixing suit as headline risk \u2014 so I participate but don't chase: I hold MU/SK Hynix/MRVL at 7.5/6.5/6.0 and shave the most extended, lowest-quality memory name, Seagate, from 5.0% to 4.0% to fund the Broadcom add. CEG stays 7.5% as the contrarian value anchor \u2014 still the lone loser at -31.3%, but the nuclear-for-AI story is intact (Walmart + Microsoft PPAs, $11-12 EPS reaffirmed, ~1GW of uprates). Equipment (TSMC raising 2026 capex to $52-56B, ASML at record highs) and networking remain healthy but already-run, so I leave them put. All 15 names stay in; weights sum to 0.945 with ~5.5% cash.",
+      "weights": {
+        "AMD": 0.06,
+        "AVGO": 0.095,
+        "MRVL": 0.06,
+        "TSM": 0.07,
+        "ASML": 0.065,
+        "AMAT": 0.055,
+        "MU": 0.075,
+        "000660.KS": 0.065,
+        "STX": 0.04,
         "ANET": 0.06,
         "COHR": 0.055,
         "CRDO": 0.05,
