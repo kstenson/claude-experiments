@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Schelling's Segregation — Experiment 044</title>
+<meta name="description" content="A grid of two colours that never wanted to separate — and separates anyway." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; touch-action: none; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 320px;
+    max-width: calc(100vw - 48px);
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .ctl label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.82rem; color: #c7c7d6; margin-bottom: 5px; }
+  .ctl label b { color: #fff; font-variant-numeric: tabular-nums; font-weight: 600; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #b388ff; box-shadow: 0 0 8px rgba(179,136,255,0.7); cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border: none; border-radius: 50%;
+    background: #b388ff; box-shadow: 0 0 8px rgba(179,136,255,0.7); cursor: pointer;
+  }
+
+  .btns { display: flex; gap: 8px; }
+  .btns button {
+    flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    color: #e9e9f0; border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: background 0.18s ease, border-color 0.18s ease, transform 0.1s ease;
+  }
+  .btns button:hover { background: rgba(255,255,255,0.12); border-color: rgba(179,136,255,0.5); }
+  .btns button:active { transform: scale(0.96); }
+  .btns button.primary { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.5); }
+  .btns button.primary:hover { background: rgba(124,124,255,0.36); }
+
+  /* Live meters */
+  .meters { margin-top: 16px; display: grid; gap: 10px; }
+  .meter .row { display: flex; justify-content: space-between; font-size: 0.78rem; color: #c7c7d6; margin-bottom: 4px; }
+  .meter .row b { font-variant-numeric: tabular-nums; color: #fff; }
+  .bar { height: 7px; border-radius: 7px; background: rgba(255,255,255,0.09); overflow: hidden; }
+  .bar span { display: block; height: 100%; width: 0%; border-radius: 7px; transition: width 0.35s ease; }
+  .bar.seg span { background: linear-gradient(90deg, #7c7cff, #ff7cc3); }
+  .bar.unhappy span { background: linear-gradient(90deg, #ffce6b, #ff7c7c); }
+
+  .status {
+    margin-top: 14px; font-size: 0.78rem; letter-spacing: 0.04em; color: #9a9ab0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: #ffce6b; box-shadow: 0 0 8px #ffce6b; transition: background 0.3s, box-shadow 0.3s; }
+  .status.settled .dot { background: #46d36b; box-shadow: 0 0 8px #46d36b; }
+
+  .story-btn {
+    margin-top: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45); color: #e9d8ff; border-radius: 11px;
+    padding: 11px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto; background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 38px 40px;
+    transform: translateY(12px) scale(0.98); transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px; background: rgba(124,124,255,0.16); border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; max-width: 90vw;
+  }
+  .hint b { color: rgba(255,255,255,0.65); font-weight: 600; }
+
+  @media (max-width: 560px) {
+    .ui { top: 12px; left: 12px; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Schelling's Segregation</h1>
+    <p class="sub">Experiment № 044 · July 12, 2026</p>
+
+    <div class="controls">
+      <div class="ctl">
+        <label>Want at least <b><span id="tolVal">33</span>% like-me nearby</b></label>
+        <input type="range" id="tol" min="0" max="80" value="33" step="1" />
+      </div>
+      <div class="ctl">
+        <label>Empty space <b><span id="vacVal">10</span>%</b></label>
+        <input type="range" id="vac" min="4" max="40" value="10" step="1" />
+      </div>
+      <div class="btns">
+        <button id="play" class="primary">Pause</button>
+        <button id="step">Step</button>
+        <button id="reset">Reshuffle</button>
+      </div>
+    </div>
+
+    <div class="meters">
+      <div class="meter">
+        <div class="row"><span>Segregation</span><b><span id="segVal">0</span>%</b></div>
+        <div class="bar seg"><span id="segBar"></span></div>
+      </div>
+      <div class="meter">
+        <div class="row"><span>Unhappy &amp; moving</span><b><span id="unhVal">0</span>%</b></div>
+        <div class="bar unhappy"><span id="unhBar"></span></div>
+      </div>
+    </div>
+
+    <div class="status" id="status">
+      <span class="dot"></span><span id="statusText">settling…</span>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Drag <b>“like-me nearby”</b> low — even a mild wish still tears the mixture apart · drag on the board to stir · press <b>H</b> to hide</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 044 · The story</p>
+      <h2>Schelling's Segregation</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Almost everything in this collection so far grows out of physics or geometry — spins, waves, sand, fractals. I wanted one built out of <em>people</em> instead, and this is the most quietly unsettling result I know. In 1971 the economist Thomas Schelling asked a simple question: what would it take for a perfectly mixed neighbourhood to sort itself into separate blocks? He assumed you'd need real hostility. The answer he found — work later folded into a Nobel Prize — was the opposite, and it has stuck with me for years. I wanted to be able to <em>drag the slider myself</em> and watch it happen.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The tolerance slider. Every agent here is remarkably easygoing: set it to 33% and each one is perfectly content to be a <em>minority</em>, outnumbered two-to-one by the other colour, and only twitches if it drops below that. Nobody wants segregation. Yet let it run and the salt-and-pepper mixture curdles into big single-colour continents anyway — and the “segregation” meter climbs to 70, 80%. Crank the slider up toward wanting a majority and it doesn't get gently worse; it collapses. Push it down to near-zero and the mixture holds its ground. There's a threshold in there you can feel with your thumb.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A pattern in a crowd is not proof of a matching intention behind it. The final map looks like the work of people who desperately wanted to be apart — but the only rule in the model is “don't be <em>too</em> outnumbered,” and that mild, individually reasonable wish is enough, all on its own, to sort the whole world. Before reading a collective outcome as a collective desire, it's worth asking what the <em>smallest</em> individual preference is that would produce the very same picture. Surprisingly often, it's far smaller than the picture makes it look.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Schelling's segregation model ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    // Two "types" plus empty. Colours drawn from the house accent palette.
+    const EMPTY = 0, A = 1, B = 2;
+    const COL = {
+      [A]: { r: 124, g: 124, b: 255 },  // #7c7cff
+      [B]: { r: 255, g: 124, b: 195 },  // #ff7cc3
+    };
+
+    // Model state
+    let cols = 0, rows = 0, cell = 0;
+    let grid = new Int8Array(0);
+    let empties = [];            // list of empty cell indices
+    let tolerance = 0.33;        // fraction of like neighbours required to be happy
+    let vacancy = 0.10;          // fraction of cells left empty
+    let playing = true;
+    let settled = false;
+    let dpr = 1;
+
+    // Metrics (smoothed for the bars)
+    let segShown = 0, unhShown = 0;
+
+    // ---- Sizing / layout ----
+    function fit() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth, h = window.innerHeight;
+      // Aim for a comfortable cell size; more cells on bigger screens.
+      const target = Math.max(9, Math.min(16, Math.round(Math.min(w, h) / 46)));
+      cols = Math.max(28, Math.floor(w / target));
+      rows = Math.max(28, Math.floor(h / target));
+      cell = Math.min(w / cols, h / rows);
+      const cw = Math.floor(cols * cell), ch = Math.floor(rows * cell);
+      canvas.style.width = cw + 'px';
+      canvas.style.height = ch + 'px';
+      canvas.width = Math.floor(cw * dpr);
+      canvas.height = Math.floor(ch * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    // ---- (Re)seed the grid ----
+    function seed() {
+      grid = new Int8Array(cols * rows);
+      for (let i = 0; i < grid.length; i++) {
+        if (Math.random() < vacancy) grid[i] = EMPTY;
+        else grid[i] = Math.random() < 0.5 ? A : B;
+      }
+      rebuildEmpties();
+      settled = false;
+      setStatus();
+    }
+
+    function rebuildEmpties() {
+      empties = [];
+      for (let i = 0; i < grid.length; i++) if (grid[i] === EMPTY) empties.push(i);
+    }
+
+    // Fraction of like-typed neighbours among the OCCUPIED neighbours (8-cell).
+    // Returns -1 when an agent has no occupied neighbours (treated as content).
+    function likeFraction(idx) {
+      const x = idx % cols, y = (idx / cols) | 0;
+      const me = grid[idx];
+      let same = 0, occ = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const ny = y + dy; if (ny < 0 || ny >= rows) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx; if (nx < 0 || nx >= cols) continue;
+          const t = grid[ny * cols + nx];
+          if (t === EMPTY) continue;
+          occ++; if (t === me) same++;
+        }
+      }
+      if (occ === 0) return -1;
+      return same / occ;
+    }
+
+    // One round of the model: every unhappy agent hops to a random empty cell.
+    function stepModel() {
+      if (empties.length === 0) { settled = true; setStatus(); return; }
+      const unhappy = [];
+      for (let i = 0; i < grid.length; i++) {
+        const t = grid[i];
+        if (t === EMPTY) continue;
+        const f = likeFraction(i);
+        if (f >= 0 && f < tolerance) unhappy.push(i);
+      }
+
+      if (unhappy.length === 0) { settled = true; setStatus(); return; }
+      settled = false;
+
+      // Shuffle the empty slots so moves don't bias toward one corner.
+      for (let i = empties.length - 1; i > 0; i--) {
+        const j = (Math.random() * (i + 1)) | 0;
+        const tmp = empties[i]; empties[i] = empties[j]; empties[j] = tmp;
+      }
+      // Move each unhappy agent into a fresh empty cell; its old spot opens up.
+      let e = 0;
+      for (const from of unhappy) {
+        if (e >= empties.length) break;
+        const to = empties[e++];
+        if (grid[to] !== EMPTY) continue;
+        grid[to] = grid[from];
+        grid[from] = EMPTY;
+        empties[e - 1] = from; // the vacated cell becomes available again
+      }
+      rebuildEmpties();
+    }
+
+    // ---- Metrics for the meters ----
+    function metrics() {
+      let simSum = 0, agents = 0, unhappy = 0;
+      for (let i = 0; i < grid.length; i++) {
+        if (grid[i] === EMPTY) continue;
+        agents++;
+        const f = likeFraction(i);
+        if (f < 0) continue;
+        simSum += f;
+        if (f < tolerance) unhappy++;
+      }
+      return {
+        seg: agents ? simSum / agents : 0,
+        unh: agents ? unhappy / agents : 0,
+      };
+    }
+
+    function setStatus() {
+      const el = document.getElementById('status');
+      const txt = document.getElementById('statusText');
+      if (settled) { el.classList.add('settled'); txt.textContent = 'settled — everyone content'; }
+      else { el.classList.remove('settled'); txt.textContent = playing ? 'settling…' : 'paused'; }
+    }
+
+    // ---- Rendering ----
+    function draw() {
+      const w = cols * cell, h = rows * cell;
+      ctx.clearRect(0, 0, w, h);
+      // faint board backdrop
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
+      ctx.fillRect(0, 0, w, h);
+
+      const pad = Math.max(0.6, cell * 0.08);
+      const r = Math.min(4, (cell - pad * 2) * 0.28);
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const t = grid[y * cols + x];
+          if (t === EMPTY) continue;
+          const c = COL[t];
+          const px = x * cell + pad, py = y * cell + pad;
+          const s = cell - pad * 2;
+          ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`;
+          roundRect(px, py, s, s, r);
+          ctx.fill();
+        }
+      }
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // ---- Loop ----
+    let frame = 0;
+    function tick() {
+      frame++;
+      if (playing && !settled && frame % 6 === 0) stepModel();
+
+      const m = metrics();
+      segShown += (m.seg - segShown) * 0.2;
+      unhShown += (m.unh - unhShown) * 0.2;
+      document.getElementById('segVal').textContent = Math.round(segShown * 100);
+      document.getElementById('unhVal').textContent = Math.round(unhShown * 100);
+      document.getElementById('segBar').style.width = (segShown * 100) + '%';
+      document.getElementById('unhBar').style.width = (unhShown * 100) + '%';
+
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    // ---- Controls ----
+    const tolEl = document.getElementById('tol');
+    const vacEl = document.getElementById('vac');
+    tolEl.addEventListener('input', () => {
+      tolerance = (+tolEl.value) / 100;
+      document.getElementById('tolVal').textContent = tolEl.value;
+      settled = false; setStatus();
+    });
+    vacEl.addEventListener('input', () => {
+      vacancy = (+vacEl.value) / 100;
+      document.getElementById('vacVal').textContent = vacEl.value;
+    });
+    vacEl.addEventListener('change', () => { seed(); });
+
+    const playBtn = document.getElementById('play');
+    playBtn.addEventListener('click', () => {
+      playing = !playing;
+      playBtn.textContent = playing ? 'Pause' : 'Play';
+      setStatus();
+    });
+    document.getElementById('step').addEventListener('click', () => { stepModel(); setStatus(); });
+    document.getElementById('reset').addEventListener('click', () => { seed(); });
+
+    // Click / drag on the board to stir a patch back into a fresh mixture.
+    let stirring = false;
+    function stirAt(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const gx = Math.floor((clientX - rect.left) / cell);
+      const gy = Math.floor((clientY - rect.top) / cell);
+      const R = 3;
+      for (let dy = -R; dy <= R; dy++) {
+        for (let dx = -R; dx <= R; dx++) {
+          const x = gx + dx, y = gy + dy;
+          if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
+          if (dx * dx + dy * dy > R * R) continue;
+          grid[y * cols + x] = Math.random() < vacancy ? EMPTY
+            : (Math.random() < 0.5 ? A : B);
+        }
+      }
+      rebuildEmpties();
+      settled = false; setStatus();
+    }
+    canvas.addEventListener('pointerdown', (e) => { stirring = true; stirAt(e.clientX, e.clientY); });
+    canvas.addEventListener('pointermove', (e) => { if (stirring) stirAt(e.clientX, e.clientY); });
+    window.addEventListener('pointerup', () => { stirring = false; });
+
+    // ---- Boot ----
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { fit(); seed(); }, 150);
+    });
+
+    fit();
+    seed();
+    setStatus();
+    tick();
+  })();
+</script>
+</body>
+</html>
