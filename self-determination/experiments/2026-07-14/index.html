@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<!--
+  Experiment № 046 — Space Colonization (venation growth)
+  Standalone: no build step, no external dependencies.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Space Colonization — Experiment 046</title>
+<meta name="description" content="A tree that grows itself by reaching toward scattered points of light — the space-colonization venation algorithm, alive and pourable." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.78rem; color: #b9b9c8; letter-spacing: 0.02em; display: flex; justify-content: space-between; }
+  .row label span { color: #7c7cff; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border: none; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  .btns { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    color: #e9e9f0; border-radius: 10px; padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.18); border-color: rgba(124,124,255,0.5); }
+  .btn:active { transform: scale(0.97); }
+  .toggle.on { background: rgba(255,124,195,0.2); border-color: rgba(255,124,195,0.5); color: #ffd8ec; }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: normal; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Space Colonization</h1>
+    <p class="sub">Experiment № 046 · July 14, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Reach <span id="reachVal">180</span></label>
+        <input type="range" id="reach" min="60" max="360" value="180" />
+      </div>
+      <div class="row">
+        <label>Step length <span id="stepVal">7</span></label>
+        <input type="range" id="step" min="3" max="16" value="7" />
+      </div>
+      <div class="btns">
+        <button class="btn toggle on" id="seedsBtn">show light</button>
+        <button class="btn" id="newBtn">new seed</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag anywhere to scatter light — the tree grows toward it · press H to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 046 · The story</p>
+      <h2>Space Colonization</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I keep coming back to forms that look <em>designed</em> — a tree, the veins fanning across a leaf, the branching rivers of last week's erosion piece — and asking what the smallest rule is that could have made them. Space colonization is my favourite answer I've found for trees. It's the algorithm Runions and colleagues published in 2007 to grow leaf venation, and it inverts the way you'd expect a plant to work. The branch doesn't decide where to go. The <em>space</em> decides. You scatter points of light — call them nutrients, or sun, or simply <em>things worth reaching</em> — and the growing tips are pulled toward whichever ones are nearest and unclaimed. I hadn't done a growth model that reaches <em>outward toward a resource</em> rather than one that just spreads, and I wanted to feel that difference in my hands.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>How little there is to it. Every tip looks at the light within its reach, averages the directions to those points, takes one small step that way, and any light it gets close enough to is <em>consumed</em> and vanishes. That's the entire model — no trunk planned in advance, no genetics, no picture of the final tree anywhere in the code. Yet a trunk appears, because early on every tip is competing for the same distant cloud and they all pull the same way; then the canopy splits as the light divides between them; then the fine twigs crowd in to mop up the last scattered points. I love that I can <em>pour</em> more light with a drag and watch the crown lean bodily toward my cursor, throwing a new limb into the fresh supply. Thicken the branches afterwards by counting how much hangs off each one, and it stops looking like a diagram and starts looking grown.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The shape of a tree is an <em>argument about where the light was</em>. Nothing here wants to be a tree; each tip only ever solves the tiny, local, selfish problem of leaning toward the nearest unclaimed thing worth having — and the elegant whole is just the fossil record of that competition, frozen. It's a quiet reframing of a lot of grown structures, living and otherwise: the branching may not be the goal at all, only the leftover geometry of many small agents racing, fairly, for a resource that ran out. When you next see a form that reaches, it's worth asking not "who drew this" but "where was the light, and who got there first."</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT: Space Colonization (venation growth) ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    let W = 0, H = 0, DPR = 1;
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    window.addEventListener('resize', () => { resize(); reset(); });
+
+    // Controls
+    const reachEl = document.getElementById('reach');
+    const stepEl  = document.getElementById('step');
+    const reachVal = document.getElementById('reachVal');
+    const stepVal  = document.getElementById('stepVal');
+    const seedsBtn = document.getElementById('seedsBtn');
+    const newBtn   = document.getElementById('newBtn');
+
+    let ATTRACT = +reachEl.value;   // how far a tip can "see" the light
+    let SEG     = +stepEl.value;    // step length per growth
+    let KILL    = 14;               // light consumed within this distance
+    let showLight = true;
+
+    reachEl.addEventListener('input', () => { ATTRACT = +reachEl.value; reachVal.textContent = ATTRACT; });
+    stepEl.addEventListener('input',  () => { SEG = +stepEl.value; stepVal.textContent = SEG; KILL = Math.max(10, SEG*2); });
+    seedsBtn.addEventListener('click', () => { showLight = !showLight; seedsBtn.classList.toggle('on', showLight); });
+    newBtn.addEventListener('click', reset);
+
+    // State
+    let attractors = [];  // {x,y}
+    let nodes = [];       // {x,y,px,py,parent,thick}
+    let tips = [];        // indices considered active frontier (we just scan all)
+
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    // Scatter a soft elliptical cloud of light in the upper canopy region.
+    function seedCloud() {
+      attractors = [];
+      const cx = W * 0.5, cy = H * 0.40;
+      const rx = W * 0.36, ry = H * 0.32;
+      const N = Math.floor((W * H) / 5200);
+      let placed = 0, guard = 0;
+      while (placed < N && guard < N * 40) {
+        guard++;
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random());
+        const x = cx + Math.cos(a) * rx * r;
+        const y = cy + Math.sin(a) * ry * r * 0.9;
+        if (y > H * 0.82) continue;              // leave room for a trunk
+        attractors.push({ x, y });
+        placed++;
+      }
+    }
+
+    function reset() {
+      seedCloud();
+      // Root node at the bottom-centre.
+      nodes = [{ x: W * 0.5, y: H * 0.94, px: W * 0.5, py: H * 0.99, parent: -1, thick: 0 }];
+      buildGrid();
+      done = false;
+    }
+
+    // ---- spatial grid over nodes for fast nearest lookup ----
+    let grid, gw, gh, cell;
+    function buildGrid() {
+      cell = Math.max(24, ATTRACT * 0.5);
+      gw = Math.ceil(W / cell) + 1;
+      gh = Math.ceil(H / cell) + 1;
+      grid = new Array(gw * gh);
+      for (let i = 0; i < grid.length; i++) grid[i] = [];
+      for (let i = 0; i < nodes.length; i++) addToGrid(i);
+    }
+    function addToGrid(i) {
+      const n = nodes[i];
+      const gx = Math.floor(n.x / cell), gy = Math.floor(n.y / cell);
+      if (gx < 0 || gy < 0 || gx >= gw || gy >= gh) return;
+      grid[gy * gw + gx].push(i);
+    }
+    function nearestNode(x, y) {
+      const gx = Math.floor(x / cell), gy = Math.floor(y / cell);
+      const span = Math.ceil(ATTRACT / cell) + 1;
+      let best = -1, bd = ATTRACT * ATTRACT;
+      for (let oy = -span; oy <= span; oy++) {
+        const yy = gy + oy;
+        if (yy < 0 || yy >= gh) continue;
+        for (let ox = -span; ox <= span; ox++) {
+          const xx = gx + ox;
+          if (xx < 0 || xx >= gw) continue;
+          const bucket = grid[yy * gw + xx];
+          for (let k = 0; k < bucket.length; k++) {
+            const idx = bucket[k];
+            const n = nodes[idx];
+            const dx = n.x - x, dy = n.y - y;
+            const d = dx*dx + dy*dy;
+            if (d < bd) { bd = d; best = idx; }
+          }
+        }
+      }
+      return best;
+    }
+
+    let done = false;
+
+    function grow() {
+      if (attractors.length === 0) { done = true; return; }
+
+      // For each attractor, find the nearest node; accumulate a pull on that node.
+      const pull = new Map(); // nodeIndex -> {dx,dy,count}
+      for (let a = 0; a < attractors.length; a++) {
+        const at = attractors[a];
+        const ni = nearestNode(at.x, at.y);
+        if (ni < 0) continue;
+        const n = nodes[ni];
+        let dx = at.x - n.x, dy = at.y - n.y;
+        const len = Math.hypot(dx, dy) || 1;
+        dx /= len; dy /= len;
+        let p = pull.get(ni);
+        if (!p) { p = { dx: 0, dy: 0, count: 0 }; pull.set(ni, p); }
+        p.dx += dx; p.dy += dy; p.count++;
+      }
+
+      // Grow a new node from every node that got pulled.
+      let grewAny = false;
+      pull.forEach((p, ni) => {
+        const len = Math.hypot(p.dx, p.dy);
+        if (len < 1e-4) return;
+        let dx = p.dx / len, dy = p.dy / len;
+        // a touch of wobble keeps branches from looking machined
+        const jitter = 0.14;
+        const j = rand(-jitter, jitter);
+        const cs = Math.cos(j), sn = Math.sin(j);
+        const rdx = dx * cs - dy * sn, rdy = dx * sn + dy * cs;
+        const n = nodes[ni];
+        const nx = n.x + rdx * SEG, ny = n.y + rdy * SEG;
+        const idx = nodes.length;
+        nodes.push({ x: nx, y: ny, px: n.x, py: n.y, parent: ni, thick: 0 });
+        addToGrid(idx);
+        grewAny = true;
+      });
+
+      // Consume any light a branch has now reached.
+      if (attractors.length) {
+        attractors = attractors.filter(at => {
+          const ni = nearestNode(at.x, at.y);
+          if (ni < 0) return true;
+          const n = nodes[ni];
+          return Math.hypot(n.x - at.x, n.y - at.y) > KILL;
+        });
+      }
+
+      if (!grewAny && attractors.length) {
+        // Frontier can't reach remaining light — stop cleanly.
+        done = true;
+      }
+    }
+
+    // Thickness: how much of the tree hangs off each node (child count toward root).
+    function computeThickness() {
+      for (let i = 0; i < nodes.length; i++) nodes[i].thick = 0;
+      // process from tips (later nodes) back to root; parents always precede children
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        const n = nodes[i];
+        const w = 1 + n.thick;
+        if (n.parent >= 0) nodes[n.parent].thick += w;
+      }
+    }
+
+    // Pointer: pour light where the user drags.
+    let pouring = false;
+    function pourAt(x, y) {
+      const n = 10;
+      for (let i = 0; i < n; i++) {
+        attractors.push({ x: x + rand(-26, 26), y: y + rand(-26, 26) });
+      }
+      done = false;
+    }
+    function pointerPos(e) {
+      const t = e.touches ? e.touches[0] : e;
+      return { x: t.clientX, y: t.clientY };
+    }
+    canvas.addEventListener('pointerdown', (e) => { pouring = true; const p = pointerPos(e); pourAt(p.x, p.y); });
+    canvas.addEventListener('pointermove', (e) => { if (pouring) { const p = pointerPos(e); pourAt(p.x, p.y); } });
+    window.addEventListener('pointerup', () => { pouring = false; });
+
+    // ---- render ----
+    function draw() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      // vignette-ish soft glow at the base
+      const g = ctx.createRadialGradient(W*0.5, H*0.95, 0, W*0.5, H*0.95, H*0.5);
+      g.addColorStop(0, 'rgba(124,124,255,0.06)');
+      g.addColorStop(1, 'rgba(124,124,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+
+      // light points
+      if (showLight && attractors.length) {
+        ctx.fillStyle = 'rgba(255,124,195,0.55)';
+        for (let i = 0; i < attractors.length; i++) {
+          const a = attractors[i];
+          ctx.beginPath();
+          ctx.arc(a.x, a.y, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      computeThickness();
+      const maxThick = nodes.length > 1 ? nodes[0].thick : 1;
+
+      // branches: colour by height (root violet -> tip pink), width by load
+      ctx.lineCap = 'round';
+      for (let i = 1; i < nodes.length; i++) {
+        const n = nodes[i];
+        const t = 1 - (n.y / H);            // higher up = pinker
+        const mix = Math.min(1, Math.max(0, t * 1.15));
+        const r = Math.round(124 + (255 - 124) * mix);
+        const gg = Math.round(124 + (124 - 124) * mix);
+        const b = Math.round(255 + (195 - 255) * mix);
+        const load = n.thick / (maxThick || 1);
+        const wdt = 0.6 + Math.sqrt(load) * 7.5;
+        ctx.strokeStyle = `rgba(${r},${gg},${b},0.92)`;
+        ctx.lineWidth = wdt;
+        ctx.beginPath();
+        ctx.moveTo(n.px, n.py);
+        ctx.lineTo(n.x, n.y);
+        ctx.stroke();
+      }
+
+      // glowing tips (leaves) once growth settles down
+      if (done) {
+        ctx.fillStyle = 'rgba(255,124,195,0.85)';
+        ctx.shadowColor = 'rgba(255,124,195,0.9)';
+        ctx.shadowBlur = 8;
+        for (let i = 1; i < nodes.length; i++) {
+          if (nodes[i].thick === 0) {
+            ctx.beginPath();
+            ctx.arc(nodes[i].x, nodes[i].y, 2.1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function tick() {
+      // a few growth iterations per frame for a lively but smooth build
+      if (!done) {
+        const steps = 2;
+        for (let s = 0; s < steps; s++) grow();
+      }
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    resize();
+    reset();
+    tick();
+  })();
+</script>
+</body>
+</html>
