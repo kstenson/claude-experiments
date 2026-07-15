@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Space-Filling Curves — Experiment 047</title>
+<meta name="description" content="A single line, no thickness, that visits every point of a square — and quietly keeps neighbours near neighbours." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 14px; }
+
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #c7c7d6;
+    border-radius: 9px;
+    padding: 8px 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+  .seg button:hover { background: rgba(255,255,255,0.08); }
+  .seg button.on {
+    background: linear-gradient(120deg, rgba(124,124,255,0.32), rgba(255,124,195,0.32));
+    border-color: rgba(179,136,255,0.6);
+    color: #f2ecff;
+  }
+
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .readout {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px;
+    padding: 12px 14px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .readout .v.good { color: #8affc0; }
+  .readout .v.warn { color: #ff9bb6; }
+  .readout .full { grid-column: 1 / -1; }
+
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    .ui { left: 12px; right: 12px; top: 12px; max-width: none; padding: 16px 18px; }
+    h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Space-Filling Curves</h1>
+    <p class="sub">Experiment № 047 · July 15, 2026</p>
+
+    <div class="controls">
+      <div class="seg" id="typeSeg">
+        <button data-type="hilbert" class="on">Hilbert</button>
+        <button data-type="morton">Z-order</button>
+        <button data-type="snake">Snake</button>
+      </div>
+
+      <div class="row">
+        <label>Order <b id="orderVal">6</b></label>
+        <input type="range" id="order" min="2" max="7" step="1" value="6" />
+      </div>
+
+      <div class="row">
+        <label>Walker speed <b id="speedVal">1.0×</b></label>
+        <input type="range" id="speed" min="0" max="100" step="1" value="45" />
+      </div>
+
+      <div class="toggle on" id="walkToggle">
+        <span>Show the walker</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="readout">
+        <span class="k">Cells</span><span class="v" id="mCells">–</span>
+        <span class="k">Longest jump</span><span class="v" id="mStep">–</span>
+        <span class="k">Cluster span</span><span class="v" id="mSpan">–</span>
+        <span class="v full" id="mHover" style="color:#8f8fa6;font-weight:500">move over the curve…</span>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <p class="hint">Move the mouse over the curve · drag <b>Order</b> to fold it finer · press <b>H</b> to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 047 · The story</p>
+      <h2>Space-Filling Curves</h2>
+
+      <h3>Why I picked it</h3>
+      <p>For weeks this collection has been swimming in systems that <em>emerge</em> — flocks, crystals, chaos, things nobody drew. I wanted a change of key: a single, deliberate line, drawn on purpose, that nonetheless does something that sounds flatly impossible. In 1890 Giuseppe Peano, and a year later David Hilbert, described a curve with no thickness that passes through <em>every</em> point of a square — a one-dimensional thread that completely fills two-dimensional space. It broke people's intuition about what "dimension" even means, and it has haunted me since I first met it. This is my excuse to finally watch one fold itself into existence.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The colour trick. I paint the line as a rainbow, dark-red at the start and violet at the end, so hue reads off exactly how far along the one-dimensional thread you are. Under Hilbert, that rainbow stays in fat coherent <em>blobs</em> — every colour keeps to its own patch of the square. Switch to plain <em>Snake</em> scanning and the identical rainbow shatters into stripes: two dots a hair apart on screen can be a whole screen apart in the line. Same cells, same colours, wildly different neighbourhoods. And the little comet racing along the path never once teleports on Hilbert — every step lands on a touching cell — which is the whole miracle made visible.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Flattening many dimensions into one is something we do constantly — laying pixels into memory, sorting files, packing map coordinates into a database key, unrolling an image for a model. And <em>how</em> you flatten silently decides which things end up near which. Hilbert order keeps neighbours neighbours, so a GPU texture, a Google-S2 map cell, an R-tree index all quietly walk this exact curve to stay fast. The naive raster order tears close things apart. Whenever you turn something rich into a single list, you're choosing a curve — and that choice is never neutral.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Space-Filling Curves ----
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      type: 'hilbert',
+      order: 6,
+      speed: 0.45,      // 0..1 slider mapped
+      showWalker: true,
+    };
+
+    let dpr = 1;
+    let W = 0, H = 0;            // css pixels
+    let n = 0, len = 0;         // grid dimension, total cells
+    let pts = null;             // Int16Array pairs [x0,y0,x1,y1,...]
+    let base = null;            // offscreen canvas with the coloured curve
+    let baseCtx = null;
+    let cell = 0, offX = 0, offY = 0; // layout of grid within canvas
+    let head = 0;               // walker position (float index)
+    const HUE_SPAN = 315;       // degrees of rainbow used
+
+    // ---------- curve generators ----------
+    function buildPoints() {
+      n = 1 << state.order;
+      len = n * n;
+      pts = new Int16Array(len * 2);
+
+      if (state.type === 'hilbert') {
+        for (let d = 0; d < len; d++) {
+          let t = d, x = 0, y = 0;
+          for (let s = 1; s < n; s <<= 1) {
+            const rx = 1 & (t >> 1);
+            const ry = 1 & (t ^ rx);
+            if (ry === 0) {
+              if (rx === 1) { x = s - 1 - x; y = s - 1 - y; }
+              const tmp = x; x = y; y = tmp;
+            }
+            x += s * rx; y += s * ry; t >>= 2;
+          }
+          pts[d * 2] = x; pts[d * 2 + 1] = y;
+        }
+      } else if (state.type === 'morton') {
+        for (let d = 0; d < len; d++) {
+          let x = 0, y = 0;
+          for (let i = 0; i < state.order; i++) {
+            x |= ((d >> (2 * i)) & 1) << i;
+            y |= ((d >> (2 * i + 1)) & 1) << i;
+          }
+          pts[d * 2] = x; pts[d * 2 + 1] = y;
+        }
+      } else { // snake / boustrophedon
+        let d = 0;
+        for (let row = 0; row < n; row++) {
+          if (row % 2 === 0) {
+            for (let col = 0; col < n; col++) { pts[d * 2] = col; pts[d * 2 + 1] = row; d++; }
+          } else {
+            for (let col = n - 1; col >= 0; col--) { pts[d * 2] = col; pts[d * 2 + 1] = row; d++; }
+          }
+        }
+      }
+
+      computeMetrics();
+    }
+
+    // ---------- locality metrics ----------
+    // Two honest tests of "does 1-D order preserve 2-D closeness":
+    //  • Longest jump — the biggest step between consecutive cells on the path.
+    //    A good curve never teleports (=1). Z-order fails this: its Z's leap.
+    //  • Cluster span — how spread-out a run of n consecutive cells is. A good
+    //    curve keeps a short stretch inside a tight patch. Snake fails this: n
+    //    consecutive cells is one long thin row. Hilbert is the only one that
+    //    passes BOTH.
+    function computeMetrics() {
+      let maxStep = 0;
+      for (let d = 1; d < len; d++) {
+        const dx = Math.abs(pts[d * 2] - pts[(d - 1) * 2]);
+        const dy = Math.abs(pts[d * 2 + 1] - pts[(d - 1) * 2 + 1]);
+        const s = dx + dy;
+        if (s > maxStep) maxStep = s;
+      }
+      const W = n; // window: n consecutive cells
+      let spanSum = 0, wc = 0;
+      for (let start = 0; start + W <= len; start += W) {
+        let minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
+        for (let k = 0; k < W; k++) {
+          const x = pts[(start + k) * 2], y = pts[(start + k) * 2 + 1];
+          if (x < minx) minx = x; if (x > maxx) maxx = x;
+          if (y < miny) miny = y; if (y > maxy) maxy = y;
+        }
+        spanSum += ((maxx - minx) + (maxy - miny)) / 2; wc++;
+      }
+      const span = spanSum / Math.max(1, wc);
+
+      document.getElementById('mCells').textContent = len.toLocaleString();
+      const stepEl = document.getElementById('mStep');
+      const spanEl = document.getElementById('mSpan');
+      stepEl.textContent = maxStep <= 1 ? '1 cell ✓' : maxStep.toLocaleString() + ' cells';
+      spanEl.textContent = span.toFixed(1) + ' cells';
+      stepEl.className = 'v ' + (maxStep <= 1 ? 'good' : 'warn');
+      spanEl.className = 'v ' + (span < n * 0.3 ? 'good' : 'warn');
+    }
+
+    // ---------- layout + base render ----------
+    function layout() {
+      const rect = canvas.getBoundingClientRect();
+      W = rect.width; H = rect.height;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const pad = Math.min(W, H) < 520 ? 26 : 70;
+      const size = Math.min(W, H) - pad * 2;
+      cell = size / n;
+      offX = (W - size) / 2;
+      offY = (H - size) / 2;
+
+      renderBase();
+    }
+
+    function px(gx) { return offX + (gx + 0.5) * cell; }
+    function py(gy) { return offY + (gy + 0.5) * cell; }
+
+    function renderBase() {
+      base = document.createElement('canvas');
+      base.width = Math.round(W * dpr);
+      base.height = Math.round(H * dpr);
+      baseCtx = base.getContext('2d');
+      baseCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      baseCtx.lineCap = 'round';
+      baseCtx.lineJoin = 'round';
+      const lw = Math.max(1.1, cell * 0.5);
+      baseCtx.lineWidth = lw;
+
+      // faint frame
+      baseCtx.strokeStyle = 'rgba(255,255,255,0.05)';
+      baseCtx.lineWidth = 1;
+      baseCtx.strokeRect(offX, offY, n * cell, n * cell);
+
+      baseCtx.lineWidth = lw;
+      for (let d = 1; d < len; d++) {
+        const x0 = px(pts[(d - 1) * 2]), y0 = py(pts[(d - 1) * 2 + 1]);
+        const x1 = px(pts[d * 2]),       y1 = py(pts[d * 2 + 1]);
+        baseCtx.strokeStyle = 'hsl(' + ((d / len) * HUE_SPAN) + ',82%,60%)';
+        baseCtx.beginPath();
+        baseCtx.moveTo(x0, y0);
+        baseCtx.lineTo(x1, y1);
+        baseCtx.stroke();
+      }
+    }
+
+    // ---------- interaction ----------
+    let hoverIdx = -1;
+    function onMove(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const mx = clientX - rect.left, my = clientY - rect.top;
+      const gx = Math.floor((mx - offX) / cell);
+      const gy = Math.floor((my - offY) / cell);
+      if (gx < 0 || gy < 0 || gx >= n || gy >= n) { hoverIdx = -1; setHoverText(null); return; }
+      // find the 1-D index of this cell
+      let found = -1;
+      for (let d = 0; d < len; d++) { if (pts[d * 2] === gx && pts[d * 2 + 1] === gy) { found = d; break; } }
+      hoverIdx = found;
+      if (found >= 0) {
+        const t = found / (len - 1);
+        setHoverText('cell (' + gx + ',' + gy + ') · #' + found.toLocaleString() + ' of ' + len.toLocaleString() + ' · t=' + t.toFixed(3));
+      }
+    }
+    function setHoverText(s) {
+      const el = document.getElementById('mHover');
+      el.textContent = s || 'move over the curve…';
+    }
+    canvas.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+    canvas.addEventListener('mouseleave', () => { hoverIdx = -1; setHoverText(null); });
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches[0]) { onMove(e.touches[0].clientX, e.touches[0].clientY); }
+    }, { passive: true });
+
+    // ---------- animation ----------
+    function frame() {
+      ctx.clearRect(0, 0, W, H);
+      if (base) ctx.drawImage(base, 0, 0, W, H);
+
+      // hover marker
+      if (hoverIdx >= 0) {
+        const hx = px(pts[hoverIdx * 2]), hy = py(pts[hoverIdx * 2 + 1]);
+        ctx.beginPath();
+        ctx.arc(hx, hy, Math.max(6, cell * 0.9), 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // walker comet
+      if (state.showWalker && len > 1) {
+        const step = 0.5 + state.speed * (len * 0.010 + 6); // cells / frame
+        head += step;
+        if (head >= len - 1) head -= (len - 1);
+
+        const trail = Math.min(len - 1, Math.round(18 + state.speed * 90));
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        for (let k = 0; k < trail; k++) {
+          const d = Math.floor(head) - k;
+          if (d < 1) break;
+          const a = 1 - k / trail;
+          const x0 = px(pts[(d - 1) * 2]), y0 = py(pts[(d - 1) * 2 + 1]);
+          const x1 = px(pts[d * 2]),       y1 = py(pts[d * 2 + 1]);
+          ctx.strokeStyle = 'rgba(255,255,255,' + (a * a * 0.85) + ')';
+          ctx.lineWidth = Math.max(1.4, cell * 0.55) * (0.4 + a * 0.6);
+          ctx.beginPath();
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(x1, y1);
+          ctx.stroke();
+        }
+        // glowing head
+        const hd = Math.floor(head);
+        const hx = px(pts[hd * 2]), hy = py(pts[hd * 2 + 1]);
+        ctx.shadowColor = 'rgba(124,124,255,0.9)';
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(hx, hy, Math.max(2.5, cell * 0.55), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- controls ----------
+    document.getElementById('typeSeg').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      state.type = b.dataset.type;
+      [...document.querySelectorAll('#typeSeg button')].forEach((x) => x.classList.toggle('on', x === b));
+      head = 0;
+      buildPoints(); renderBase();
+    });
+
+    const orderEl = document.getElementById('order');
+    orderEl.addEventListener('input', () => {
+      state.order = +orderEl.value;
+      document.getElementById('orderVal').textContent = state.order;
+      head = 0;
+      buildPoints(); layout();
+    });
+
+    const speedEl = document.getElementById('speed');
+    function applySpeed() {
+      state.speed = +speedEl.value / 100;
+      document.getElementById('speedVal').textContent = (state.speed * 2).toFixed(1) + '×';
+    }
+    speedEl.addEventListener('input', applySpeed);
+    applySpeed();
+
+    const walkToggle = document.getElementById('walkToggle');
+    walkToggle.addEventListener('click', () => {
+      state.showWalker = !state.showWalker;
+      walkToggle.classList.toggle('on', state.showWalker);
+    });
+
+    window.addEventListener('resize', () => layout());
+
+    // ---------- go ----------
+    buildPoints();
+    layout();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

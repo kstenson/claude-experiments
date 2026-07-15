@@ -1,0 +1,165 @@
+{
+  "date": "2026-07-15",
+  "score": 39,
+  "label": "Heavy going",
+  "emoji": "🌧️",
+  "summary": "The world edges up a single point to 39 as the US-Iran war keeps grinding but the day's economic dread eases. US Central Command said it struck about 140 Iranian military targets in a fourth night of attacks after Iran's Revolutionary Guard hit the Cyprus-flagged container ship GFS Galaxy in the Strait of Hormuz, setting it ablaze and leaving one crew member missing; Iran claimed retaliatory strikes on Gulf bases and disabled tankers. Yet the sharpest market fear receded: President Trump abandoned his demand that ships pay a 20 percent toll to cross Hormuz, crude eased back from Monday's near-nine-percent spike with Brent around 84 dollars, and a cooler-than-expected June inflation reading of 3.5 percent lifted US stocks, the S&P 500 up 0.38 percent and the Nasdaq 0.9 percent. Diplomacy still flickers, with Qatar and Pakistan mediating. Elsewhere the ledger stayed heavy. Sudan's famine deepened as the WFP warned Hormuz-driven fertiliser and fuel shortages threaten a country where nearly 19.5 million face acute hunger; DR Congo's Bundibugyo-Ebola outbreak passed 700 deaths against roughly 1,950 cases; a Bangkok music-bar fire's toll rose to 30 with more than 70 injured; Gaza remained in humanitarian limbo despite the ceasefire; and Texas declared a disaster across 59 counties amid catastrophic flash-flood risk. Against the gloom, scientists bioprinted human kidney and liver tissue aboard the ISS for the first time, and the World Cup semifinals set England against Argentina, Kane versus Messi. The headline matches the rubric formula: an active-war Middle East and an African hunger crisis keep the day firmly in the 'Bad' band, a hair above yesterday on the market's relief.",
+  "dimensions": {
+    "conflict": 28,
+    "economy": 45,
+    "climate": 36,
+    "humanInterest": 35,
+    "techProgress": 63
+  },
+  "regions": {
+    "northAmerica": 42,
+    "southAmerica": 48,
+    "europe": 42,
+    "africa": 24,
+    "middleEast": 23,
+    "asia": 34,
+    "oceania": 48
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "US Central Command says it struck roughly 140 Iranian military targets in a fresh overnight round of attacks after Iran's Islamic Revolutionary Guard Corps hit the Cyprus-flagged container ship M/V GFS Galaxy transiting the Strait of Hormuz, sparking a fire aboard and leaving one crew member missing; Tehran claims retaliatory ballistic-missile strikes on Gulf bases including Jordan's Prince Hassan Air Base and says it disabled two tankers, as the collapsed ceasefire hardens into open conflict",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/7/14/iran-war-live-us-launches-more-attacks-trump-orders-blockade-in-hormuz",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "In a partial de-escalation, President Trump abandons his demand that cargo ships pay a 20 percent toll to transit the Strait of Hormuz, easing one of the war's sharpest threats to global trade even as US forces keep striking Iranian targets; Qatar and Pakistan continue shuttle mediation to revive talks between Washington and Tehran",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/07/14/us-iran-hormuz-strikes-oil-toll.html",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "US stocks recover as a softer-than-expected June inflation report shows consumer prices up 3.5 percent year on year, below the 3.8 percent economists expected: the S&P 500 closes up 0.38 percent at 7,543.59 and the tech-heavy Nasdaq gains 0.9 percent to 26,107.01, led by semiconductors, while crude eases off Monday's near-nine-percent spike after Trump drops the Hormuz toll demand",
+      "source": "Yahoo Finance",
+      "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-july-14-dow-sp-500-nasdaq-070833816.html",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Shipping through the Strait of Hormuz stays effectively throttled, with tanker crossings collapsing to a small fraction of pre-war levels and Iran moving sanctioned supertankers 'dark' with transponders off; Brent crude holds near 84 dollars a barrel after its biggest single-day jump in years, keeping energy costs and inflation risk elevated worldwide",
+      "source": "Bloomberg",
+      "url": "https://www.bloomberg.com/news/articles/2026-07-14/iran-sneaking-out-tankers-via-hormuz-as-trump-amps-up-threats",
+      "dimension": "economy",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "The death toll from a fire at the Rong Beer Na Ladprao music bar in northern Bangkok rises to 30 with more than 70 injured, 24 of them critically, in the Thai capital's deadliest blaze in 17 years; most victims died of smoke inhalation, many trapped in windowless bathrooms near a rear exit, and a performer described smoke from a circuit breaker before an explosion",
+      "source": "NPR",
+      "url": "https://www.npr.org/2026/07/14/g-s1-133425/death-toll-bangkok-fire",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "The UN World Food Programme warns Sudan's hunger emergency is deepening, with nearly 19.5 million people facing acute food insecurity, some five million at emergency or catastrophic levels and famine confirmed in El Fasher and Kadugli; renewed fighting in Darfur has closed the Tine border crossing, and Gulf-war fuel and fertiliser shortages tied to the Hormuz disruption now threaten the planting season, all against a 646-million-dollar WFP funding gap",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/7/14/sudan-faces-escalating-hunger-crisis-due-to-war-and-hormuz-disruption",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "The Democratic Republic of the Congo's Bundibugyo-virus Ebola outbreak, the third largest on record, passes 700 confirmed deaths against nearly 1,950 cases, with Ituri province the epicentre and spread confirmed to North and South Kivu; more than 750 patients are hospitalised in isolation and there is still no approved vaccine or treatment for this strain, with imported cases already reported in Uganda, Germany and France",
+      "source": "ECDC",
+      "url": "https://www.ecdc.europa.eu/en/ebola-outbreak-democratic-republic-congo-and-uganda",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Texas Governor Greg Abbott issues a disaster declaration for 59 counties as forecasters warn of a rare high risk of 'catastrophic' flash flooding over already-inundated central Texas west of San Antonio, with roads impassable and a bridge submerged; the deluge lands amid a punishing summer of extreme heat and wildfires stretching across the US, Europe and the Mediterranean",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/07/13/weather/texas-flooding-rain-threat-july-climate",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Nine months into the US-brokered ceasefire, UN briefers tell the Security Council that Gazans remain trapped in a 'humanitarian nightmare' despite measurable gains in aid, food prices and hospital capacity, with roughly a thousand Palestinians killed in continued Israeli strikes since the truce began and the plan's disarmament and withdrawal phases still unimplemented",
+      "source": "UN Meetings Coverage",
+      "url": "https://press.un.org/en/2026/sc16390.doc.htm",
+      "dimension": "humanInterest",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "In a first for space medicine, California-based Auxilium Biotechnologies bioprints human kidney and liver tissue aboard the International Space Station using its AMP-1 orbital bioprinter and designs from Wake Forest's regenerative-medicine institute, a step toward manufacturing complex tissues and medical products in microgravity",
+      "source": "Space.com",
+      "url": "https://www.space.com/technology/space-medicine-breakthrough-kidney-and-liver-tissue-bioprinted-off-earth-for-1st-time-ever",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "The World Cup semifinals pit England against defending champions Argentina in Atlanta, renewing a storied rivalry and setting up Harry Kane and Jude Bellingham against Lionel Messi, who has extended his record World Cup goal tally to 21; the winner joins the finalist from France's meeting with Spain, a last four drawn entirely from the world's top-ranked nations",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/sports/2026/7/14/fifa-world-cup-key-players-to-watch-as-england-and-argentina-clash-in-semifinal",
+      "dimension": "humanInterest"
+    },
+    {
+      "direction": "up",
+      "headline": "The week's positive ledger runs from public health to the environment: Oxford's Sir Adrian Hill wins the European Inventor Award for the R21/Matrix-M malaria vaccine now protecting children across Africa, an experimental CAR-T therapy clears glioblastoma in preclinical models, and reporting highlights Europe's cleaner air and Costa Rica's forest recovery as long-running policy successes",
+      "source": "Positive News",
+      "url": "https://www.positive.news/society/good-news-stories-from-week-28-of-2026/",
+      "dimension": "techProgress"
+    }
+  ],
+  "sources_consulted": [
+    "Reuters",
+    "Associated Press",
+    "AFP",
+    "BBC",
+    "CNN",
+    "NPR",
+    "NBC News",
+    "CBS News",
+    "CBC",
+    "Al Jazeera",
+    "Axios",
+    "Britannica",
+    "Wikipedia (2026 Iran war / 2026 Strait of Hormuz crisis / 2026 Iran war ceasefire / 2026 Ebola epidemic / El Fasher massacre)",
+    "CNBC",
+    "Yahoo Finance",
+    "TheStreet",
+    "Bloomberg",
+    "Forbes",
+    "Trading Economics",
+    "OilPrice.com",
+    "UN News",
+    "UN Meetings Coverage (Security Council)",
+    "Security Council Report",
+    "ECDC",
+    "CDC",
+    "WHO",
+    "Doctors Without Borders",
+    "UNICEF",
+    "IPC (Integrated Food Security Phase Classification)",
+    "Amnesty International",
+    "TIME",
+    "Critical Threats (ISW)",
+    "Ukrinform",
+    "South China Morning Post",
+    "International Crisis Group",
+    "CSIS",
+    "Space.com",
+    "ScienceDaily",
+    "Olympics.com",
+    "FIFA",
+    "Fox Sports",
+    "Positive News",
+    "Good News Network",
+    "Smiley Movement",
+    "Global Good News"
+  ]
+}
