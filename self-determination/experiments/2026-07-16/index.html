@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logistic Map — Experiment 048</title>
+<meta name="description" content="One line of arithmetic — x → r·x·(1−x) — and hidden inside it, the whole road into chaos, drawn live." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  #bif { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+
+  /* ---- Floating control panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 300px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 10px; }
+  .btn {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #d8d8e6;
+    border-radius: 10px;
+    padding: 9px 13px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+    font-family: inherit;
+  }
+  .btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(124,124,255,0.4); }
+  .btn.on { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.6); color: #cfcfff; }
+  .btn .tag { font-size: 0.72rem; color: #9a9ab0; letter-spacing: 0.04em; }
+  .btn.on .tag { color: #b9b9ff; }
+
+  .story-btn {
+    margin-top: 14px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Readout + cobweb panel (bottom-right) ---- */
+  .panel {
+    position: fixed;
+    z-index: 10;
+    right: 22px;
+    bottom: 22px;
+    width: 268px;
+    background: rgba(10, 10, 18, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 14px 16px 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden ~ .panel { opacity: 0; transform: translateY(10px); pointer-events: none; }
+  .panel .plabel { font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: #ff7cc3; margin-bottom: 8px; }
+  #cobweb { width: 100%; height: 236px; display: block; border-radius: 10px; background: #0b0b14; border: 1px solid rgba(255,255,255,0.07); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-top: 12px; }
+  .stat .k { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8a8aa0; }
+  .stat .v { font-size: 1.02rem; font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .stat.full { grid-column: 1 / -1; }
+  .v-r { color: #ffd27c; }
+  .v-period { color: #7cffb0; }
+  .v-lyap { color: #7c7cff; }
+  .v-lyap.chaos { color: #ff7cc3; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.42); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; max-width: 90vw;
+  }
+
+  @media (max-width: 640px) {
+    .panel { width: 194px; right: 12px; bottom: 12px; padding: 10px 12px 12px; }
+    #cobweb { height: 168px; }
+    .ui { max-width: 250px; left: 12px; top: 12px; padding: 15px 16px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="bif"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Logistic Map</h1>
+    <p class="sub">Experiment № 048 · July 16, 2026</p>
+
+    <div class="controls">
+      <button class="btn" id="zoomBtn"><span>Box-zoom</span><span class="tag" id="zoomTag">off</span></button>
+      <button class="btn" id="sweepBtn"><span>Sweep <em>r</em></span><span class="tag" id="sweepTag">off</span></button>
+      <button class="btn" id="resetBtn"><span>Reset view</span><span class="tag">⤾</span></button>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="panel" id="panel">
+    <p class="plabel">Cobweb · the orbit up the parabola</p>
+    <canvas id="cobweb"></canvas>
+    <div class="stats">
+      <div class="stat"><div class="k">growth r</div><div class="v v-r" id="rOut">3.5000</div></div>
+      <div class="stat"><div class="k">period</div><div class="v v-period" id="perOut">—</div></div>
+      <div class="stat full"><div class="k">Lyapunov λ</div><div class="v v-lyap" id="lyapOut">0.000</div></div>
+    </div>
+  </div>
+
+  <p class="hint" id="hint">drag across to scrub <b>r</b> · turn on box-zoom to dive into a fork · double-click to reset · press H to hide panels</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 048 · The story</p>
+      <h2>Logistic Map</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I've spent most of this collection building systems that <em>grow</em> — flocks, crystals, slime, erosion — where richness pours out of many parts talking to their neighbours. This one goes the opposite way. It has no parts. It is a single line of arithmetic, <em>x → r·x·(1−x)</em>: a toy population that breeds in proportion to how many there are, and starves in proportion to how crowded it gets. I wanted the archive to hold the most famous demonstration in all of dynamics that <em>simple</em> and <em>simply-behaved</em> are different words — a rule you can iterate by hand that nonetheless contains an exact, infinite road into chaos. And I wanted its portrait, the bifurcation diagram, drawn live, point by point, rather than pasted in as a picture.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The fork. Turn <em>r</em> up slowly and the population settles on one value, then loses its nerve and flickers between two, then four, then eight, sixteen — the splits arriving faster and faster, each about 4.669 times sooner than the last (that ratio is Feigenbaum's constant, and it governs dripping taps and heart arrhythmias too) — until they pile into a wall of chaos around r ≈ 3.5699. Then the real shock: clean <em>windows</em> of order snap open <em>inside</em> the chaos, a sudden band of period-3 out of pure noise, and each window is a shrunken copy of the whole tree. The cobweb panel shows the mechanism bare — the orbit staircasing up the parabola, bouncing tidily between two rungs in the calm and scattering in the storm — while the Lyapunov number dips negative where it's stable and climbs positive where it isn't.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The entire route to chaos is already written into a parabola. Nothing is <em>added</em> at the moment things get complicated — the same five-character rule that quietly parks on one value is the one that explodes into noise; only the dial <em>r</em> moved. Complexity here isn't built, it's <em>uncovered</em> by turning a knob. And the cascade closes on chaos at the same ratio whether the thing doubling is a population, an electronic circuit or a dripping faucet — which means the road to chaos has a shape of its own, independent of whatever happens to be travelling it.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ================= LOGISTIC MAP =================
+  (() => {
+    const bif = document.getElementById('bif');
+    const bctx = bif.getContext('2d');
+    const cob = document.getElementById('cobweb');
+    const cctx = cob.getContext('2d');
+
+    const rOut = document.getElementById('rOut');
+    const perOut = document.getElementById('perOut');
+    const lyapOut = document.getElementById('lyapOut');
+
+    // Full (default) view of the diagram
+    const FULL = { rMin: 2.4, rMax: 4.0, xMin: 0, xMax: 1 };
+    let view = { ...FULL };
+    let r = 3.5;               // currently selected growth rate
+    let dpr = 1;               // device pixel ratio (capped)
+    let W = 0, H = 0;          // backing-store size of #bif
+
+    // Offscreen bitmap holding the rendered diagram (recomputed only on zoom/resize)
+    const off = document.createElement('canvas');
+    const offctx = off.getContext('2d');
+
+    let zoomMode = false;
+    let sweeping = false;
+    let sweepDir = 1;
+
+    // -------- rendering the bifurcation diagram --------
+    function computeBifurcation() {
+      const cw = Math.max(2, Math.round(W));
+      const ch = Math.max(2, Math.round(H));
+      off.width = cw; off.height = ch;
+
+      const dens = new Float32Array(cw * ch);
+      const { rMin, rMax, xMin, xMax } = view;
+      const warm = 700, plot = 320;
+      const invXR = 1 / (xMax - xMin);
+
+      for (let px = 0; px < cw; px++) {
+        const rr = rMin + (rMax - rMin) * (px + 0.5) / cw;
+        let x = 0.5;
+        for (let i = 0; i < warm; i++) x = rr * x * (1 - x);
+        for (let i = 0; i < plot; i++) {
+          x = rr * x * (1 - x);
+          if (x < xMin || x > xMax) continue;
+          const fy = (1 - (x - xMin) * invXR) * ch;
+          const py = fy | 0;
+          if (py < 0 || py >= ch) continue;
+          dens[py * cw + px] += 1;
+        }
+      }
+
+      // Normalise (log) and colour with the house palette.
+      let max = 0;
+      for (let i = 0; i < dens.length; i++) if (dens[i] > max) max = dens[i];
+      const norm = 1 / Math.log(1 + max);
+
+      const img = offctx.createImageData(cw, ch);
+      const d = img.data;
+      for (let i = 0; i < dens.length; i++) {
+        const c = dens[i];
+        const j = i * 4;
+        if (c === 0) { d[j] = 5; d[j+1] = 5; d[j+2] = 10; d[j+3] = 255; continue; }
+        const v = Math.log(1 + c) * norm;           // 0..1
+        const col = ramp(v);
+        d[j] = col[0]; d[j+1] = col[1]; d[j+2] = col[2]; d[j+3] = 255;
+      }
+      offctx.putImageData(img, 0, 0);
+    }
+
+    // Colour ramp: void → indigo → accent purple → pink → near white
+    function ramp(t) {
+      const stops = [
+        [0.00, [10, 10, 22]],
+        [0.18, [46, 32, 104]],
+        [0.42, [124, 124, 255]],
+        [0.72, [255, 124, 195]],
+        [1.00, [255, 244, 250]],
+      ];
+      for (let i = 1; i < stops.length; i++) {
+        if (t <= stops[i][0]) {
+          const a = stops[i-1], b = stops[i];
+          const f = (t - a[0]) / (b[0] - a[0]);
+          return [
+            (a[1][0] + (b[1][0]-a[1][0])*f) | 0,
+            (a[1][1] + (b[1][1]-a[1][1])*f) | 0,
+            (a[1][2] + (b[1][2]-a[1][2])*f) | 0,
+          ];
+        }
+      }
+      return stops[stops.length-1][1];
+    }
+
+    // Key landmarks along r (only shown at full view)
+    const MARKERS = [
+      { r: 3.0,    label: 'period 2' },
+      { r: 3.4495, label: '4' },
+      { r: 3.5441, label: '8' },
+      { r: 3.5699, label: 'chaos onset' },
+      { r: 3.8284, label: 'period-3 window' },
+    ];
+
+    function isFullView() {
+      return Math.abs(view.rMin - FULL.rMin) < 1e-9 && Math.abs(view.rMax - FULL.rMax) < 1e-9 &&
+             Math.abs(view.xMin - FULL.xMin) < 1e-9 && Math.abs(view.xMax - FULL.xMax) < 1e-9;
+    }
+
+    // -------- overlay: the diagram + moving r line + labels --------
+    let selRect = null; // {x0,y0,x1,y1} in CSS px while dragging a zoom box
+    function drawOverlay() {
+      const cw = bif.clientWidth, ch = bif.clientHeight;
+      bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      bctx.clearRect(0, 0, cw, ch);
+      bctx.drawImage(off, 0, 0, cw, ch);
+
+      const { rMin, rMax } = view;
+      // landmark ticks
+      if (isFullView()) {
+        bctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+        bctx.textAlign = 'center';
+        for (const m of MARKERS) {
+          const mx = (m.r - rMin) / (rMax - rMin) * cw;
+          bctx.strokeStyle = 'rgba(255,255,255,0.14)';
+          bctx.setLineDash([3, 5]);
+          bctx.beginPath(); bctx.moveTo(mx, 0); bctx.lineTo(mx, ch); bctx.stroke();
+          bctx.setLineDash([]);
+          bctx.fillStyle = 'rgba(233,233,240,0.62)';
+          bctx.fillText(m.label, mx, ch - 26);
+          bctx.fillStyle = 'rgba(233,233,240,0.4)';
+          bctx.fillText('r=' + (+m.r.toFixed(4)), mx, 16);
+        }
+      }
+
+      // current-r indicator
+      if (r >= rMin && r <= rMax) {
+        const lx = (r - rMin) / (rMax - rMin) * cw;
+        bctx.strokeStyle = 'rgba(255,210,124,0.9)';
+        bctx.lineWidth = 1.5;
+        bctx.beginPath(); bctx.moveTo(lx, 0); bctx.lineTo(lx, ch); bctx.stroke();
+        // top triangle handle
+        bctx.fillStyle = 'rgba(255,210,124,0.95)';
+        bctx.beginPath();
+        bctx.moveTo(lx, 12); bctx.lineTo(lx - 6, 0); bctx.lineTo(lx + 6, 0); bctx.closePath();
+        bctx.fill();
+      }
+
+      // axis captions
+      bctx.fillStyle = 'rgba(255,255,255,0.34)';
+      bctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+      bctx.textAlign = 'left';
+      bctx.fillText('growth rate  r  →  ' + rMin.toFixed(4) + ' … ' + rMax.toFixed(4), 14, ch - 12);
+      bctx.save();
+      bctx.translate(16, ch / 2); bctx.rotate(-Math.PI/2); bctx.textAlign = 'center';
+      bctx.fillText('population  x', 0, 0);
+      bctx.restore();
+
+      // zoom selection box
+      if (selRect) {
+        const x = Math.min(selRect.x0, selRect.x1), y = Math.min(selRect.y0, selRect.y1);
+        const w = Math.abs(selRect.x1 - selRect.x0), h = Math.abs(selRect.y1 - selRect.y0);
+        bctx.strokeStyle = 'rgba(124,124,255,0.9)';
+        bctx.fillStyle = 'rgba(124,124,255,0.15)';
+        bctx.lineWidth = 1;
+        bctx.fillRect(x, y, w, h);
+        bctx.strokeRect(x, y, w, h);
+      }
+    }
+
+    // -------- analysis for the readout --------
+    function analyze(rr) {
+      // Lyapunov exponent
+      let x = 0.5;
+      for (let i = 0; i < 1200; i++) x = rr * x * (1 - x);
+      let sum = 0; const N = 5000;
+      for (let i = 0; i < N; i++) {
+        const der = Math.abs(rr * (1 - 2 * x));
+        sum += Math.log(der < 1e-12 ? 1e-12 : der);
+        x = rr * x * (1 - x);
+      }
+      const lyap = sum / N;
+
+      // Period detection (settle, then look for return within 1..16)
+      for (let i = 0; i < 2000; i++) x = rr * x * (1 - x);
+      const vals = [];
+      for (let i = 0; i < 40; i++) { vals.push(x); x = rr * x * (1 - x); }
+      let period = null;
+      const eps = 8e-5;
+      for (let p = 1; p <= 16; p++) {
+        if (Math.abs(vals[0] - vals[p]) < eps && Math.abs(vals[p] - vals[2*p]) < eps) { period = p; break; }
+      }
+      return { lyap, period };
+    }
+
+    function updateReadout() {
+      rOut.textContent = r.toFixed(4);
+      const { lyap, period } = analyze(r);
+      const chaotic = lyap > 0.0015;
+      if (period && !chaotic) perOut.textContent = period === 1 ? 'fixed' : '×' + period;
+      else perOut.textContent = 'chaos';
+      lyapOut.textContent = (lyap >= 0 ? '+' : '') + lyap.toFixed(3);
+      lyapOut.classList.toggle('chaos', chaotic);
+    }
+
+    // -------- cobweb plot --------
+    let orbit = [];        // settled orbit values for current r
+    let walkIdx = 0;       // animated position along the orbit
+    function recomputeCobweb() {
+      let x = 0.5;
+      for (let i = 0; i < 900; i++) x = r * x * (1 - x);
+      orbit = [];
+      for (let i = 0; i < 260; i++) { orbit.push(x); x = r * x * (1 - x); }
+      walkIdx = 0;
+    }
+
+    function drawCobweb() {
+      const cw = cob.clientWidth, ch = cob.clientHeight;
+      cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cctx.clearRect(0, 0, cw, ch);
+      const pad = 10;
+      const X = v => pad + v * (cw - 2 * pad);
+      const Y = v => (ch - pad) - v * (ch - 2 * pad);
+
+      // frame + diagonal
+      cctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      cctx.lineWidth = 1;
+      cctx.strokeRect(pad, pad, cw - 2*pad, ch - 2*pad);
+      cctx.beginPath(); cctx.moveTo(X(0), Y(0)); cctx.lineTo(X(1), Y(1)); cctx.stroke();
+
+      // parabola f(x) = r x (1-x)
+      cctx.strokeStyle = 'rgba(124,124,255,0.85)';
+      cctx.lineWidth = 1.6;
+      cctx.beginPath();
+      for (let i = 0; i <= 80; i++) {
+        const xv = i / 80, yv = r * xv * (1 - xv);
+        const px = X(xv), py = Y(Math.min(1, yv));
+        i === 0 ? cctx.moveTo(px, py) : cctx.lineTo(px, py);
+      }
+      cctx.stroke();
+
+      if (orbit.length < 3) return;
+
+      // faint full cobweb staircase
+      cctx.strokeStyle = 'rgba(255,124,195,0.28)';
+      cctx.lineWidth = 1;
+      cctx.beginPath();
+      let xv = orbit[0];
+      cctx.moveTo(X(xv), Y(xv));
+      for (let i = 1; i < orbit.length; i++) {
+        const nx = orbit[i];
+        cctx.lineTo(X(xv), Y(nx));   // vertical up to the curve
+        cctx.lineTo(X(nx), Y(nx));   // horizontal across to the diagonal
+        xv = nx;
+      }
+      cctx.stroke();
+
+      // bright animated segment + glowing dot
+      const i = walkIdx | 0;
+      const a = orbit[i % orbit.length];
+      const b = orbit[(i + 1) % orbit.length];
+      cctx.strokeStyle = 'rgba(255,210,124,0.95)';
+      cctx.lineWidth = 1.8;
+      cctx.beginPath();
+      cctx.moveTo(X(a), Y(a));
+      cctx.lineTo(X(a), Y(b));
+      cctx.lineTo(X(b), Y(b));
+      cctx.stroke();
+
+      cctx.fillStyle = '#fff3fa';
+      cctx.shadowColor = 'rgba(255,124,195,0.9)';
+      cctx.shadowBlur = 8;
+      cctx.beginPath(); cctx.arc(X(b), Y(b), 3.2, 0, Math.PI*2); cctx.fill();
+      cctx.shadowBlur = 0;
+    }
+
+    // -------- r selection + zoom interaction --------
+    function pxToR(clientX) {
+      const rect = bif.getBoundingClientRect();
+      const f = (clientX - rect.left) / rect.width;
+      return view.rMin + f * (view.rMax - view.rMin);
+    }
+    function setR(newR, redrawCob = true) {
+      r = Math.min(view.rMax, Math.max(view.rMin, newR));
+      if (redrawCob) recomputeCobweb();
+      updateReadout();
+    }
+
+    let dragging = false, dragStart = null, movedFar = false;
+    bif.addEventListener('pointerdown', (e) => {
+      bif.setPointerCapture(e.pointerId);
+      dragging = true; movedFar = false;
+      const rect = bif.getBoundingClientRect();
+      dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      if (!zoomMode) { sweeping = false; syncButtons(); setR(pxToR(e.clientX)); }
+    });
+    bif.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const rect = bif.getBoundingClientRect();
+      const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+      if (Math.abs(cx - dragStart.x) + Math.abs(cy - dragStart.y) > 4) movedFar = true;
+      if (zoomMode) {
+        selRect = { x0: dragStart.x, y0: dragStart.y, x1: cx, y1: cy };
+      } else {
+        setR(pxToR(e.clientX));
+      }
+    });
+    bif.addEventListener('pointerup', (e) => {
+      dragging = false;
+      if (zoomMode && selRect && movedFar) applyZoom(selRect);
+      else if (zoomMode && !movedFar) setR(pxToR(e.clientX));
+      selRect = null;
+    });
+    bif.addEventListener('pointercancel', () => { dragging = false; selRect = null; });
+
+    function applyZoom(sr) {
+      const cw = bif.clientWidth, ch = bif.clientHeight;
+      let x0 = Math.min(sr.x0, sr.x1) / cw, x1 = Math.max(sr.x0, sr.x1) / cw;
+      let y0 = Math.min(sr.y0, sr.y1) / ch, y1 = Math.max(sr.y0, sr.y1) / ch;
+      if (x1 - x0 < 0.01 || y1 - y0 < 0.01) return;
+      const { rMin, rMax, xMin, xMax } = view;
+      const nrMin = rMin + x0 * (rMax - rMin);
+      const nrMax = rMin + x1 * (rMax - rMin);
+      // y is inverted: top of box = larger x value
+      const nxMax = xMax - y0 * (xMax - xMin);
+      const nxMin = xMax - y1 * (xMax - xMin);
+      view = { rMin: nrMin, rMax: nrMax, xMin: nxMin, xMax: nxMax };
+      computeBifurcation();
+      setR(Math.min(view.rMax, Math.max(view.rMin, r)));
+    }
+
+    bif.addEventListener('dblclick', () => resetView());
+    function resetView() {
+      view = { ...FULL };
+      computeBifurcation();
+      setR(Math.min(view.rMax, Math.max(view.rMin, r)));
+    }
+
+    // -------- controls --------
+    const zoomBtn = document.getElementById('zoomBtn');
+    const sweepBtn = document.getElementById('sweepBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    function syncButtons() {
+      zoomBtn.classList.toggle('on', zoomMode);
+      document.getElementById('zoomTag').textContent = zoomMode ? 'on' : 'off';
+      sweepBtn.classList.toggle('on', sweeping);
+      document.getElementById('sweepTag').textContent = sweeping ? 'on' : 'off';
+      bif.style.cursor = zoomMode ? 'zoom-in' : 'crosshair';
+    }
+    zoomBtn.addEventListener('click', () => { zoomMode = !zoomMode; if (zoomMode) sweeping = false; syncButtons(); });
+    sweepBtn.addEventListener('click', () => { sweeping = !sweeping; if (sweeping) zoomMode = false; syncButtons(); });
+    resetBtn.addEventListener('click', resetView);
+
+    // -------- resize --------
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cw = bif.clientWidth, ch = bif.clientHeight;
+      bif.width = Math.round(cw * dpr); bif.height = Math.round(ch * dpr);
+      W = bif.width; H = bif.height;
+      const ccw = cob.clientWidth, cch = cob.clientHeight;
+      cob.width = Math.round(ccw * dpr); cob.height = Math.round(cch * dpr);
+      computeBifurcation();
+    }
+    window.addEventListener('resize', () => { clearTimeout(resize._t); resize._t = setTimeout(resize, 120); });
+
+    // -------- main loop --------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+
+      if (sweeping) {
+        let nr = r + sweepDir * 0.06 * dt * (view.rMax - view.rMin);
+        if (nr >= view.rMax) { nr = view.rMax; sweepDir = -1; }
+        if (nr <= view.rMin) { nr = view.rMin; sweepDir = 1; }
+        setR(nr);
+      }
+
+      // advance the cobweb walker
+      walkIdx += dt * 14;
+      if (walkIdx > 100000) walkIdx = 0;
+
+      drawOverlay();
+      drawCobweb();
+      requestAnimationFrame(frame);
+    }
+
+    // -------- boot --------
+    resize();
+    setR(3.5);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
