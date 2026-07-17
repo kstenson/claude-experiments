@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Substrate — Experiment 049</title>
+<meta name="description" content="Jared Tarbell's crack-propagation algorithm: lines that grow until they collide, spawn perpendicular children, and shade the city they carve with watercolor sand." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage: where the experiment lives ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+  /* ---- Floating panel (title + controls + story button) ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .control label {
+    display: flex; justify-content: space-between;
+    font-size: 0.78rem; color: #9a9ab0; letter-spacing: 0.04em; margin-bottom: 5px;
+  }
+  .control label output { color: #cfcfff; font-variant-numeric: tabular-nums; }
+  .control input[type="range"] {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(124,124,255,0.55), rgba(255,124,195,0.55));
+    outline: none;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    .ui { left: 12px; top: 12px; right: 12px; max-width: none; padding: 16px 18px; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Substrate</h1>
+    <p class="sub">Experiment № 049 · July 17, 2026</p>
+
+    <div class="controls">
+      <div class="control">
+        <label>crack budget <output id="densityOut">64</output></label>
+        <input type="range" id="density" min="8" max="200" step="1" value="64" />
+      </div>
+      <div class="control">
+        <label>wander <output id="wanderOut">0.0</output></label>
+        <input type="range" id="wander" min="0" max="12" step="0.5" value="0" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="restart">fresh slab</button>
+        <button class="btn pink" id="lines">lines only</button>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">click anywhere to seed a crack · press h to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 049 · The story</p>
+      <h2>Substrate</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Substrate is a piece of generative-art folklore. Jared Tarbell wrote it in 2003 — a couple hundred lines of Processing — and it has been quietly imitated ever since, because almost no other algorithm gets so much city out of so little code. The rule is brutally small: a crack travels in a straight line until it runs into another crack, and the moment it dies it appoints successors that set off at right angles from somewhere on the existing network. After forty-eight experiments of fields, flocks, fractals and physics, I wanted the collection to include the one where the drawing is made entirely of <em>endings</em> — every wall in the final image exists because some line, somewhere, was stopped.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The sand painters. The cracks alone would give you an austere wireframe, but Tarbell's trick was to have each crack drag a watercolor brush sideways as it moves — a spray of translucent grains reaching from the crack's tip across the open region beside it, stopping where the neighbourhood ends. So the algorithm doesn't just partition the plane, it <em>shades its own map</em>, and regions deepen in colour the longer a crack skates along their edge. I also love the moment, a minute or so in, when the picture flips from looking like scratches on glass to looking like an aerial photograph of a town that has always existed. Nudge the wander slider and the districts go medieval — streets bowing into crescents. Click anywhere and you get to be the first fault line in a fresh quarter.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Every boundary here is a collision that got remembered. No line in the finished image was planned as a wall; each one is just the full stop at the end of some other line's journey, and the elegant blocks and avenues are the residue of thousands of small terminations. Real cities grow this way too — a street runs until it meets an older street, and the meeting becomes structure. It's a gentler way to think about constraint in general: the things that stop you don't only end a path, they become the geometry that everything after you gets to build along.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- SUBSTRATE ----
+  // Jared Tarbell's crack-propagation algorithm (2003), reimplemented from the
+  // published description. Cracks travel in straight(ish) lines across a shared
+  // grid that remembers the angle of every crack that has passed through each
+  // cell. When a crack hits a cell claimed by a differently-angled crack (or
+  // the edge), it dies and new cracks start perpendicular to random points on
+  // the existing network. A "sand painter" shades the open region beside each
+  // crack with translucent grains, watercolouring the map as it is carved.
+  (() => {
+    const stage = document.getElementById('stage');
+    const canvas = document.createElement('canvas');
+    stage.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    const EMPTY = 10001;          // sentinel: cell not yet crossed by a crack
+    const STEP = 0.42;            // distance a crack advances per substep
+    let W = 0, H = 0, dpr = 1;
+    let cgrid = null;             // Int16-ish angle map, degrees; EMPTY = free
+    let cracks = [];
+    let maxCracks = 64;
+    let wanderDeg = 0;            // max curvature (degrees per step) for new cracks
+    let paintSand = true;
+
+    // House palette, sand-toned: indigos, pinks, parchment and teal.
+    const PALETTE = [
+      [124, 124, 255], [255, 124, 195], [179, 136, 255],
+      [235, 224, 200], [120, 200, 220], [255, 176, 133],
+      [200, 210, 255], [255, 210, 230],
+    ];
+
+    const rnd = (a, b) => a + Math.random() * (b - a);
+
+    function SandPainter() {
+      this.c = PALETTE[(Math.random() * PALETTE.length) | 0];
+      this.g = rnd(0.01, 0.1);
+    }
+    SandPainter.prototype.render = function (x, y, ox, oy) {
+      // Modulate gain, then lay 64 grains along the sweep with easing that
+      // bunches them near the far edge — Tarbell's original recipe.
+      this.g += rnd(-0.05, 0.05);
+      if (this.g < 0) this.g = 0;
+      if (this.g > 1) this.g = 1;
+      const grains = 64;
+      const w = this.g / (grains - 1);
+      const [r, g, b] = this.c;
+      for (let i = 0; i < grains; i++) {
+        const a = 0.1 - i / (grains * 10);
+        if (a <= 0) break;
+        const s = Math.sin(Math.sin(i * w));
+        const px = ox + (x - ox) * s;
+        const py = oy + (y - oy) * s;
+        ctx.fillStyle = `rgba(${r},${g},${b},${a * 0.42})`;
+        ctx.fillRect(px, py, 1, 1);
+      }
+    };
+
+    function Crack() { this.sp = new SandPainter(); this.findStart(); }
+    Crack.prototype.findStart = function () {
+      // Pick a random cell already claimed by a crack and branch off it at 90°.
+      let px = -1, py = -1, found = false;
+      for (let tries = 0; tries < 1000 && !found; tries++) {
+        px = (Math.random() * W) | 0;
+        py = (Math.random() * H) | 0;
+        if (cgrid[py * W + px] < EMPTY) found = true;
+      }
+      if (!found) {
+        // Nothing to branch from within the probe budget (large, young slab):
+        // open a brand-new fault line at a random spot and claim its cell.
+        px = (Math.random() * W) | 0;
+        py = (Math.random() * H) | 0;
+        const t0 = rnd(0, 360);
+        cgrid[py * W + px] = Math.round(t0);
+        this.startCrack(px, py, t0);
+        return;
+      }
+      const a = cgrid[py * W + px];
+      const t = Math.random() < 0.5 ? a - 90 + rnd(-2, 2.1) : a + 90 + rnd(-2, 2.1);
+      this.startCrack(px, py, t);
+    };
+    Crack.prototype.startCrack = function (x, y, t) {
+      this.x = x; this.y = y;
+      this.t = ((t % 360) + 360) % 360;
+      const rad = t * Math.PI / 180;
+      this.x += 0.61 * Math.cos(rad);
+      this.y += 0.61 * Math.sin(rad);
+      this.curve = wanderDeg > 0 ? rnd(-wanderDeg, wanderDeg) : 0;
+    };
+    Crack.prototype.move = function () {
+      this.t = ((this.t + this.curve) % 360 + 360) % 360;
+      const rad = this.t * Math.PI / 180;
+      this.x += STEP * Math.cos(rad);
+      this.y += STEP * Math.sin(rad);
+
+      // draw the crack line itself: pale point with positional jitter
+      const z = 0.33;
+      ctx.fillStyle = 'rgba(233,233,240,0.82)';
+      ctx.fillRect(this.x + rnd(-z, z), this.y + rnd(-z, z), 0.9, 0.9);
+
+      if (paintSand) this.regionColor();
+
+      const cx = (this.x + rnd(-z, z)) | 0;
+      const cy = (this.y + rnd(-z, z)) | 0;
+      if (cx < 0 || cx >= W || cy < 0 || cy >= H) {
+        this.die();                       // ran off the slab
+        return;
+      }
+      const cell = cgrid[cy * W + cx];
+      if (cell > 10000 || Math.abs(cell - this.t) < 5) {
+        cgrid[cy * W + cx] = Math.round(this.t);   // claim open ground
+      } else {
+        this.die();                       // hit another crack
+      }
+    };
+    Crack.prototype.die = function () {
+      this.findStart();                   // this crack respawns elsewhere…
+      if (cracks.length < maxCracks) cracks.push(new Crack());  // …and recruits
+    };
+    Crack.prototype.regionColor = function () {
+      // Scan perpendicular-left from the tip until the open region ends,
+      // then sand-paint the sweep from the tip to that boundary.
+      let rx = this.x, ry = this.y, open = true;
+      const rad = (this.t - 90) * Math.PI / 180;   // to the crack's left
+      const dx = 0.81 * Math.cos(rad);
+      const dy = 0.81 * Math.sin(rad);
+      while (open) {
+        rx += dx; ry += dy;
+        const cx = rx | 0, cy = ry | 0;
+        if (cx < 0 || cx >= W || cy < 0 || cy >= H) open = false;
+        else if (cgrid[cy * W + cx] <= 10000) open = false;
+      }
+      this.sp.render(rx, ry, this.x, this.y);
+    };
+
+    function seedCrackAt(x, y) {
+      const cx = x | 0, cy = y | 0;
+      if (cx < 0 || cx >= W || cy < 0 || cy >= H) return;
+      const t = rnd(0, 360);
+      cgrid[cy * W + cx] = Math.round(t);
+      const c = new Crack();
+      c.startCrack(cx, cy, t);
+      if (cracks.length >= maxCracks) cracks.shift();
+      cracks.push(c);
+    }
+
+    function reset() {
+      W = Math.max(2, stage.clientWidth | 0);
+      H = Math.max(2, stage.clientHeight | 0);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      cgrid = new Int16Array(W * H).fill(EMPTY);
+      cracks = [];
+      // sow a few random fault seeds, then let three cracks loose
+      const seeds = 16;
+      for (let i = 0; i < seeds; i++) {
+        const p = (Math.random() * W * H) | 0;
+        cgrid[p] = (Math.random() * 360) | 0;
+      }
+      for (let i = 0; i < 3; i++) cracks.push(new Crack());
+    }
+
+    // ---- controls ----
+    const densityEl = document.getElementById('density');
+    const wanderEl = document.getElementById('wander');
+    const densityOut = document.getElementById('densityOut');
+    const wanderOut = document.getElementById('wanderOut');
+    densityEl.addEventListener('input', () => {
+      maxCracks = +densityEl.value;
+      densityOut.textContent = maxCracks;
+      while (cracks.length > maxCracks) cracks.pop();
+    });
+    wanderEl.addEventListener('input', () => {
+      wanderDeg = +wanderEl.value / 10;   // degrees of curvature per step
+      wanderOut.textContent = (+wanderEl.value / 10).toFixed(1);
+    });
+    document.getElementById('restart').addEventListener('click', reset);
+    const linesBtn = document.getElementById('lines');
+    linesBtn.addEventListener('click', () => {
+      paintSand = !paintSand;
+      linesBtn.textContent = paintSand ? 'lines only' : 'paint sand';
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+      const r = canvas.getBoundingClientRect();
+      seedCrackAt(e.clientX - r.left, e.clientY - r.top);
+    });
+
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(reset, 250);
+    });
+
+    function frame() {
+      // several substeps per frame so the slab develops at a pleasing pace
+      const sub = 5;
+      for (let s = 0; s < sub; s++) {
+        for (let i = cracks.length - 1; i >= 0; i--) cracks[i].move();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    reset();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
