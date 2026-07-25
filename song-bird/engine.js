@@ -408,8 +408,27 @@ async function loadDefaultSamples() {
   if (loaded === 0) console.error("NO sample packs loaded — only oscillators will play");
 }
 
+// The @strudel/web bundle loads with `defer` so a slow CDN can never block the
+// page from rendering. If play is pressed before it has arrived, wait here.
+function waitForStrudelScript() {
+  return new Promise((resolve, reject) => {
+    if (typeof initStrudel === "function") return resolve();
+    const started = Date.now();
+    const poll = setInterval(() => {
+      if (typeof initStrudel === "function") {
+        clearInterval(poll);
+        resolve();
+      } else if (Date.now() - started > 20000) {
+        clearInterval(poll);
+        reject(new Error("The audio engine couldn't be loaded — check your connection and press play again."));
+      }
+    }, 100);
+  });
+}
+
 async function ensureStrudel() {
   if (strudelReady) return;
+  await waitForStrudelScript();
   // Plain init first — this is what registers the Strudel globals (stack, note,
   // s, …) that the pattern eval depends on. Only then enrich with samples.
   await initStrudel();
@@ -468,6 +487,12 @@ async function togglePlay() {
       btn.classList.add("playing");
       btn.querySelector(".play-icon").textContent = "❚❚";
       btn.querySelector(".play-label").textContent = "Pause";
+    } catch (e) {
+      const info = $("sample-info");
+      if (info) {
+        info.textContent = String((e && e.message) || e);
+        info.hidden = false;
+      }
     } finally {
       starting = false;
     }

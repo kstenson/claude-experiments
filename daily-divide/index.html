@@ -5,6 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Daily Divide</title>
   <meta name="description" content="One contested political issue a day, scored on the facts. A left–right meter that adjudicates checkable claims and reasoning quality — and sets values disagreements aside." />
+  <script>
+    /* Stylesheet retry: if a CSS file fails to load on the first visit (flaky
+       connection, CDN hiccup), fetch it again with a cache-buster instead of
+       leaving the page unstyled until the user reloads. Must run BEFORE the
+       <link> tags so the capture-phase error listener never misses a failure. */
+    (function () {
+      var MAX_RETRIES = 2;
+      function failed(link) {
+        if (!link.sheet) return true;
+        try { return link.sheet.cssRules.length === 0; } catch (e) { return false; }
+      }
+      function retry(link) {
+        var n = +(link.getAttribute("data-css-retry") || 0) + 1;
+        if (n > MAX_RETRIES) return;
+        var fresh = link.cloneNode();
+        fresh.setAttribute("data-css-retry", n);
+        fresh.href = link.href.split("?")[0] + "?retry=" + n + "&t=" + Date.now();
+        link.replaceWith(fresh);
+      }
+      // Resource error events don't bubble, but they can be captured at the
+      // window, so one listener covers every stylesheet — retries included.
+      window.addEventListener("error", function (e) {
+        var t = e.target;
+        if (t && t.tagName === "LINK" && t.rel === "stylesheet") retry(t);
+      }, true);
+      // Belt and braces: after load, re-fetch any sheet that has no rules
+      // (a failed load can leave an empty sheet behind without an error event).
+      window.addEventListener("load", function () {
+        var links = document.querySelectorAll('link[rel="stylesheet"]');
+        for (var i = 0; i < links.length; i++) {
+          if (failed(links[i])) retry(links[i]);
+        }
+      });
+    })();
+  </script>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="../shared/history-nav.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
