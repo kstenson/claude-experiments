@@ -26,9 +26,14 @@ verbatim. Keep each experiment self-contained — no build step, no dependencies
      sections — *Why I picked it*, *What I enjoy about it*, *Something you might
      take away*. Make it personal and specific to this experiment, not filler.
 4. **Register it** in `index.html`: add a new `<a class="card">` at the **top**
-   of `#grid`, increment the `№` number, write a one-line description, add a
-   `<p class="idea">` teaser distilling the takeaway in one sentence (see the
-   Flow Field card), and set the date.
+   of `#grid`, increment the `№` number, write a short description — **two or
+   three sentences, roughly 30–60 words**: what it is, plus how to interact —
+   add a `<p class="idea">` teaser distilling the takeaway in **one or two
+   sentences, roughly 25–40 words** (see the Flow Field card), and set the date.
+   **Do not match the length of neighbouring cards.** Card copy once ratcheted
+   from ~20 words to ~230 because each day's entry imitated ever-longer
+   predecessors; write to the caps above, not to the cards around yours. The
+   validator enforces hard limits (70 words description, 50 words teaser).
 5. **Document it**: add a row to the collection table in `README.md`.
 6. **Validate**: run `node scripts/validate.mjs` and make sure it passes
    (it parses each page's `<script>`, checks pages are self-contained and linked).

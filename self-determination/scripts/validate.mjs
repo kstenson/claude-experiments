@@ -61,6 +61,26 @@ for (const day of days) {
     fail(`${day}: not linked from index.html gallery grid`);
   }
 
+  // 5. Gallery card copy must stay concise. Left unchecked, card text ratchets
+  // longer every day (each entry imitates its ever-longer predecessors) — it
+  // once grew from ~20 words to ~230 before being cut back. Hard caps here.
+  const DESC_WORD_CAP = 70;
+  const IDEA_WORD_CAP = 50;
+  const card = indexHtml.match(
+    new RegExp(`<a class="card" href="experiments/${day}/index\\.html">([\\s\\S]*?)</a>`)
+  );
+  if (card) {
+    const words = (s) => s.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+    const desc = card[1].match(/<p>([\s\S]*?)<\/p>/);
+    const idea = card[1].match(/<p class="idea">([\s\S]*?)<\/p>/);
+    if (desc && words(desc[1]) > DESC_WORD_CAP) {
+      fail(`${day}: gallery description is ${words(desc[1])} words (cap ${DESC_WORD_CAP}) — two or three sentences, ~30–60 words`);
+    }
+    if (idea && words(idea[1]) > IDEA_WORD_CAP) {
+      fail(`${day}: gallery idea teaser is ${words(idea[1])} words (cap ${IDEA_WORD_CAP}) — one or two sentences, ~25–40 words`);
+    }
+  }
+
   if (errors === before) console.log('  ✓ ok');
 }
 
