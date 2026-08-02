@@ -185,8 +185,17 @@
     <p class="section-label">The Collection</p>
     <!-- EXPERIMENT_GRID_START -->
     <div class="grid" id="grid">
+      <a class="card" href="experiments/2026-08-02/index.html">
+        <span class="num">№ 058</span>
+        <span class="arrow">↗</span>
+        <h2>Shannon's Machine</h2>
+        <p>The first thing in this collection made of <em>words</em> — and the crudest possible ancestor of a language model. In 1948 Claude Shannon showed that English has statistical structure by flipping open a book at random, finding the last two letters he'd written, and copying down whatever came next. No computer, just counting. This does the same thing live: pick a source, choose how many letters or words of memory the machine is allowed, and watch it climb from <em>XFOML</em>-grade static through English-<em>shaped</em> nonsense into fluent clauses. A histogram shows the candidates it's choosing between, and the surprise meter reads how many bits the next symbol cost — Shannon's redundancy of English, measured in front of you. Then the text turns pink, because pink means it has stopped composing and started quoting.</p>
+        <p class="idea">Nothing in here understands a word — no grammar, no dictionary, no notion that a sentence should end — yet at order five it produces plausible syntax in the right register, because the register was in the arithmetic all along. That cuts both ways. Fluency is cheap, and sounding right is not evidence of being right. It is also genuinely startling how much of what we hear as competence turns out to be recoverable from nothing but counting what tends to follow what. And the dial that buys the fluency is the same one that buys the plagiarism.</p>
+        <span class="date">August 2, 2026</span>
+      </a>
+
       <a class="card" href="experiments/2026-08-01/index.html">
-        <span class="num">№ 050</span>
+        <span class="num">№ 057</span>
         <span class="arrow">↗</span>
         <h2>Self-Organizing Map</h2>
         <p>The first piece in this collection that <em>learns</em> — and the oldest neural network you can watch with your eyes instead of reading off a loss curve. Teuvo Kohonen published it in 1982, and its trick is that the weights <em>are</em> coordinates: every neuron is literally a dot on the screen, wired into a lattice of neighbours. Training is three lines. Show it one random point from a cloud of data; find the single neuron nearest that point; drag that winner toward it — and drag its lattice neighbours along too, by a hair, because they're wired to it. Shrink the pull and the neighbourhood a little each time, and repeat. It always begins as a tangled ball in the middle of the screen, thrashes for a second, then <em>opens</em> like a paper flower dropped in water and drapes itself over the shape. The mesh is dyed so the weave reads at a glance — cool threads one way, warm the other — and once it has untangled it never crosses itself again, because neighbours in the lattice have to stay neighbours on the screen. Give it a <em>Ring</em> and watch the honest failure: the sheet can stretch but never tear, so it strands a whole band of neurons across the empty hole. Switch the topology to <em>Chain</em> and the same rule becomes a travelling-salesman thread. Drag anywhere to pour fresh data and the map leans bodily out of shape to go and cover it.</p>
@@ -194,6 +203,62 @@
         <span class="date">August 1, 2026</span>
       </a>
 
+      <a class="card" href="experiments/2026-07-26/index.html">
+        <span class="num">№ 056</span>
+        <span class="arrow">↗</span>
+        <h2>Plucked from Noise</h2>
+        <p>The whole instrument is about twelve lines. Fill a short buffer with random numbers, read it out on a loop, and each time you read a sample write back the average of it and its neighbour — that's Karplus–Strong, published in 1983, and it sounds unmistakably like a plucked string. No oscillator, no envelope, no sample of a real guitar hiding anywhere: the waveform in the delay-line panel is the literal contents of that buffer, the same numbers going to the speaker. Watch the first half-second — visibly jagged garbage that organises itself into a smooth repeating shape within a few dozen trips around the loop, because averaging neighbours is the crudest low-pass filter there is and a real string does exactly that. The flaw is left showing too: the buffer has to be a whole number of samples, so the pitch quantises, and the readout tells you how many cents sour you are up at the twelfth fret.</p>
+        <p class="idea">The pluck isn't where the note comes from. A burst of noise already contains every frequency at once — the loop doesn't create the pitch, it only decides which parts of the noise are allowed to keep coming back. Everything that isn't a whole-number multiple of "once around the buffer" cancels itself out within a few trips, and what's left is a harmonic series. It's a useful way to look at things that seem to have a strong character: often nothing produced that character on purpose. Something noisy went through something forgetful, over and over, and what survived was the shape.</p>
+        <span class="date">July 26, 2026</span>
+      </a>
+      <a class="card" href="experiments/2026-07-23/index.html">
+        <span class="num">№ 055</span>
+        <span class="arrow">↗</span>
+        <h2>Pass It On</h2>
+        <p>Every rounding routine ever written quietly throws the remainder away. Error diffusion writes it down and hands it to the neighbours who haven't been decided yet — that's the whole of Floyd–Steinberg, and the four magic numbers 7, 3, 5, 1 are just who owes what. The reason to build it live is the error field ahead of the scan line: a haze of pink and indigo the algorithm is walking into, made entirely of its own past mistakes. Compare the kernels and they have personalities — plain threshold collapses a smooth ramp into two flat slabs, Bayer keeps its crosshatch composure and never stops looking like wallpaper, Atkinson deliberately drops a quarter of the debt on the floor, which is technically wrong and looks gorgeous. Best of all, flip raster to serpentine: reversing every other row makes the faint diagonal worms crawling through the midtones dissolve.</p>
+        <p class="idea">Watch the two error numbers move in opposite directions. Per pixel, a dithered image is terrible — far worse than plain thresholding. Blur both by 5×5 first and the error collapses to almost nothing. That's the trade: dithering gives up being right about any single pixel in exchange for being right about every small <em>neighbourhood</em>, and your eye, which is a blur filter, does the reconstruction for free. It's a good pattern to keep outside of graphics. When you can't be accurate at full resolution, don't round and forget — round, and carry the remainder forward to whoever hasn't committed yet.</p>
+        <span class="date">July 23, 2026</span>
+      </a>
+      <a class="card" href="experiments/2026-07-22/index.html">
+        <span class="num">№ 054</span>
+        <span class="arrow">↗</span>
+        <h2>Quincunx</h2>
+        <p>Francis Galton built the original out of glass and lead shot in the 1870s because he needed a way to <em>show</em> people a theorem rather than prove it at them. There is no Gaussian sampler anywhere in this page: every bead makes one independent coin flip per peg and the animation follows the exact path those flips chose, so the bell you see is the sum, not a picture of a sum — with the exact binomial and the Gaussian limit drawn on top to keep it honest. Watch the order in which the shape arrives. The middle is basically done after a few hundred beads while the outer bins are still empty; flip to log-y and the tails keep filling for minutes, each decade costing roughly ten times more beads. Push the bias to 0.7 and the whole pile slides right and narrows, yet stays stubbornly bell-shaped.</p>
+        <p class="idea">The central limit theorem does not promise that things are normal. It promises something narrower: that a sum of many small, <em>independent</em> effects with finite variance converges to a bell — and every clause is load-bearing. The board only satisfies them because it was built to, with pegs that can't talk to each other and no single bounce able to move a bead more than one slot. Incomes and city sizes multiply rather than add; market moves cluster rather than staying independent. Break a clause and the bell goes with it, which is exactly where the ruin lives.</p>
+        <span class="date">July 22, 2026</span>
+      </a>
+      <a class="card" href="experiments/2026-07-21/index.html">
+        <span class="num">№ 053</span>
+        <span class="arrow">↗</span>
+        <h2>Diamond–Square</h2>
+        <p>The algorithm that gave computers mountains. Fournier, Fussell and Carpenter published it in 1982, and midpoint displacement had already flown a camera through fractal peaks in <em>Vol Libre</em> — the two-minute film that got Loren Carpenter hired at Lucasfilm and led straight to the Genesis planet. Four corners become five points, then nine, then a coastline, and it's one of the very few fractals you can watch <em>decide</em>: step through the passes and by level two the whole map already has a shape it never afterwards abandons, everything later just detail negotiating with the first three random numbers. One exponent runs the world from shattered alpine chaos to rolling farmland out of identical code and an identical seed. Then hit <em>creases</em> for the flaw — the square step averages only the four axis neighbours, so the grid leaks into the terrain as faint north–south scars, measured and reported as an honest percentage that is never zero.</p>
+        <p class="idea">Self-similarity isn't a picture, it's a budget. The same rule runs at every scale, and all that changes between the first pass and the ninth is how much randomness is allowed to matter — the first random number decides where a continent goes, the millionth adjusts a pebble. Which means the coarse decisions are effectively permanent no matter how much detail you pile on afterwards, and the shape of the tool you used stays legible in the result long after the result looks natural.</p>
+        <span class="date">July 21, 2026</span>
+      </a>
+      <a class="card" href="experiments/2026-07-20/index.html">
+        <span class="num">№ 052</span>
+        <span class="arrow">↗</span>
+        <h2>Vortex Street</h2>
+        <p>A fluid that never writes down Navier–Stokes at all. Lattice-Boltzmann tracks nine numbers per cell — the density of imaginary particles drifting along nine fixed directions — and does two absurdly simple things forever: relax each cell part-way toward a local equilibrium, then slide every number one cell along its own arrow. That's the entire solver, and real viscosity falls out of a single relaxation time. Drag the obstacle through the stream: at low Reynolds number the wake is a pair of patient, perfectly symmetric standing eddies, and then you push the inflow up and the symmetry simply cannot hold — one eddy grows greedier, pinches off, the other answers, and the von Kármán vortex street peels away in strict alternation like a metronome nobody wound. Nothing in the code says "alternate", and the shedding period in the corner is genuinely measured from a probe downstream.</p>
+        <p class="idea">Complicated behaviour usually isn't made of complicated rules — it's simple rules plus a threshold. Nothing about the vortex street is written into the lattice; it is what happens when inertia finally outruns viscosity's ability to smooth things over. Slide the viscosity down and you can watch the exact instant a system stops being able to hold its own symmetry together. Traffic waves, flags snapping in wind, markets: the useful question is rarely what the rules are, but how near the threshold you're sitting.</p>
+        <span class="date">July 20, 2026</span>
+      </a>
+      <a class="card" href="experiments/2026-07-19/index.html">
+        <span class="num">№ 051</span>
+        <span class="arrow">↗</span>
+        <h2>Ariadne</h2>
+        <p>One lattice, two opposite walks. A recursive backtracker carves a perfect maze out of solid stone — wander into the rock, knock through to any neighbour you haven't seen, and when you're boxed in don't panic, reel yourself back along the thread you've been paying out until you find a wall you can still open. That thread is a stack, but Theseus had one too. Then A* has to undo the maze on the same grid, flooding the corridors to excavate the one shortest path — and in a perfect maze there is exactly one, so every closed cell is a corridor it had to rule out first. Watch the head slam into a dead end and rattle backwards through twenty cells in a single frame; that's a stack unwinding, made visible. Drag the heuristic to 0 and A* collapses into Dijkstra, flooding evenly in every direction; push it to 1 and the same flood visibly leans toward the goal.</p>
+        <p class="idea">A* is just Dijkstra plus a guess about how far you still have to go, and the only thing that guess has to be is <em>honest</em> — never claiming the remaining distance is longer than it could really be. Stay honest and you get the shortest path guaranteed while doing a fraction of the digging, which is the closest thing to a free lunch I know of in algorithms. Push the slider past 1 and you're overstating what's ahead: faster still, but you've quietly given up the guarantee.</p>
+        <span class="date">July 19, 2026</span>
+      </a>
+      <a class="card" href="experiments/2026-07-18/index.html">
+        <span class="num">№ 050</span>
+        <span class="arrow">↗</span>
+        <h2>Basins</h2>
+        <p>Newton's method is plumbing — the root-finder your calculator quietly runs — and it only became a picture because someone asked an innocent bookkeeping question: if I start <em>here</em>, which root do I end up at? Arthur Cayley asked exactly that in 1879, solved the quadratic in an afternoon (the plane splits along a straight line), took one look at the cubic, wrote that it "appears to present considerable difficulty", and stopped. He was right to stop: the three territories interlock along a boundary with no smooth piece anywhere. The page doesn't get told where the roots are — it finds them itself, then colours each pixel by whichever one it surrendered to. Hover to trace a single orbit: out in open water it's three confident hops, a pixel away on the frill the same algorithm skitters for forty steps before making up its mind. Try z³ − 2z + 2 for the black lagoons where it locks into a cycle and never converges at all.</p>
+        <p class="idea">Zoom into any point on the boundary and you will never find a stretch where just two colours meet — every boundary point touches all the basins at once, a property named after a set of Japanese lakes that all share one shoreline. That is the real reason the edge is fractal: with three or more equal claimants there is no way to draw a fair frontier between two of them without the third turning up as well, at every scale. The tangle isn't decoration; it's what "no majority anywhere" has to look like when you're forced to draw it.</p>
+        <span class="date">July 18, 2026</span>
+      </a>
       <a class="card" href="experiments/2026-07-17/index.html">
         <span class="num">№ 049</span>
         <span class="arrow">↗</span>

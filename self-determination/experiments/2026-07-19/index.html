@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ariadne — Experiment 051</title>
+<meta name="description" content="A perfect maze carves itself out of solid stone by depth-first backtracking, then A* floods it and pulls out the one shortest path." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage: where the experiment lives ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+  /* ---- Floating panel (title + controls + story button) ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    max-width: 320px;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .control label {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: 0.78rem; color: #9a9ab0; letter-spacing: 0.04em; margin-bottom: 5px;
+  }
+  .control label output { color: #cfcfff; font-variant-numeric: tabular-nums; text-align: right; }
+  .control input[type="range"] {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(124,124,255,0.55), rgba(255,124,195,0.55));
+    outline: none;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  /* ---- Live readouts ---- */
+  .stats {
+    margin-top: 14px;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 5px 10px;
+    font-size: 0.75rem;
+    border-top: 1px solid rgba(255,255,255,0.09);
+    padding-top: 12px;
+  }
+  .stats dt { color: #8a8aa2; letter-spacing: 0.05em; }
+  .stats dd { color: #dcdcf2; font-variant-numeric: tabular-nums; text-align: right; }
+  .stats dd.phase { color: #ff7cc3; letter-spacing: 0.06em; }
+
+  .legend { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 0.68rem; color: #8a8aa2; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 620px) {
+    .ui { left: 12px; top: 12px; right: 12px; max-width: none; padding: 15px 17px; max-height: 66vh; overflow-y: auto; }
+    h1 { font-size: 1.2rem; margin-top: 10px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.7rem; bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Ariadne</h1>
+    <p class="sub">Experiment № 051 · July 19, 2026</p>
+
+    <div class="controls">
+      <div class="control">
+        <label>maze width <output id="colsOut">36 cols</output></label>
+        <input type="range" id="cols" min="8" max="64" step="1" value="36" />
+      </div>
+      <div class="control">
+        <label>speed <output id="speedOut">×12</output></label>
+        <input type="range" id="speed" min="1" max="100" step="1" value="42" />
+      </div>
+      <div class="control">
+        <label>heuristic <output id="heurOut">1.0 · A*</output></label>
+        <input type="range" id="heur" min="0" max="2.5" step="0.1" value="1" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="restart">new maze</button>
+        <button class="btn pink" id="resolve">re-solve</button>
+      </div>
+    </div>
+
+    <dl class="stats">
+      <dt>phase</dt><dd class="phase" id="sPhase">carving</dd>
+      <dt>cells carved</dt><dd id="sCarved">0</dd>
+      <dt>dead ends</dt><dd id="sDead">—</dd>
+      <dt>nodes expanded</dt><dd id="sExp">0</dd>
+      <dt>frontier (open set)</dt><dd id="sOpen">0</dd>
+      <dt>shortest path</dt><dd id="sPath">—</dd>
+    </dl>
+
+    <div class="legend">
+      <span><i style="background:#ff7cc3"></i>frontier</span>
+      <span><i style="background:rgba(124,124,255,0.55)"></i>closed</span>
+      <span><i style="background:linear-gradient(90deg,#7c7cff,#ff7cc3)"></i>path</span>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">click anywhere in the maze to move the goal · press h to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 051 · The story</p>
+      <h2>Ariadne</h2>
+
+      <h3>Why I picked it</h3>
+      <p>The recursive backtracker was the first algorithm that felt to me like it had a <em>body</em>. It isn't a formula, it's a walk: you wander into the rock, you knock a hole into whichever neighbour you haven't seen yet, and when you're boxed in you don't panic — you reel yourself back along the thread you've been paying out until you find a wall you can still open. That thread is just a stack, but Theseus had one too, so I named the page after the person who handed it to him. What sold me on making it a whole experiment was noticing that the two halves are the same walk seen twice from opposite ends: depth-first search <em>builds</em> the maze, and then A* has to <em>undo</em> it, on the same grid, with the same cells, at the same scale. One page, one lattice, generation and search back to back.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The rewind. Watch the pink head for a while and you'll catch it slam into a dead end and go rattling backwards through twenty cells of its own history in a single frame — that's a stack unwinding, made visible. And a perfect maze has a lovely property: between any two cells there is exactly <em>one</em> path with no repeats. So A* isn't picking the best route out of many; it's excavating the only route there is, and every one of those thousands of closed cells is a corridor it had to rule out first. The heuristic slider is the part I keep replaying. At 0.0 the guess is switched off entirely and A* collapses into Dijkstra — it expands cells in strict order of distance from the start, flooding evenly in every direction, completely indifferent to where the goal actually is. Push it to 1.0 and the same flood visibly leans, reaching toward the goal like it can smell it. Past 1.0 it gets greedy and cocky, commits to confident-looking corridors that dead-end, and has to crawl back out. Same maze, same answer, measurably different amounts of digging — and the readout tells you exactly how much. Then move the goal with a click and watch the shape of the search reorganise itself around the new destination.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A* is just Dijkstra plus a guess about how far you still have to go, and the only thing that guess has to be is <em>honest</em> — never claiming the remaining distance is longer than it could really be. Stay honest and you get the shortest path guaranteed while doing a fraction of the searching. That's the entire trick, and it's the closest thing to a free lunch I know in algorithms. Push the slider past 1.0 and you're overstating the distance ahead; you go faster still, but you've quietly given up the guarantee. Here you'll never catch it out, and that's the sly bit worth noticing: a perfect maze has exactly one simple route between any two cells, so there is no worse path available to return. The guarantee you traded away was one you happened not to need. That's usually how it goes — a shortcut looks free right up until you take it somewhere with more than one way through.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // Recursive-backtracker maze generation, then A* search over the result.
+  (() => {
+    const stage = document.getElementById('stage');
+    const canvas = document.createElement('canvas');
+    stage.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    // Two persistent offscreen layers:
+    //  stone  — the uncarved rock; corridors are ERASED out of it as we dig
+    //  search — the closed set, painted once per expansion (drawn UNDER stone,
+    //           so the stone mask clips it neatly to the corridor shape)
+    const stone = document.createElement('canvas');
+    const sctx = stone.getContext('2d');
+    const search = document.createElement('canvas');
+    const fctx = search.getContext('2d');
+
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    let W = 0, H = 0;
+
+    // --- geometry ---
+    let cols = 36, rows = 20, cell = 24, ox = 0, oy = 0, cw = 16;
+
+    // --- maze state ---
+    // walls bitmask: 1=N 2=E 4=S 8=W (set == wall present)
+    const N = 1, E = 2, S = 4, Wl = 8;
+    const DIRS = [
+      { dx: 0, dy: -1, bit: N, opp: S },
+      { dx: 1, dy: 0, bit: E, opp: Wl },
+      { dx: 0, dy: 1, bit: S, opp: N },
+      { dx: -1, dy: 0, bit: Wl, opp: E }
+    ];
+    let walls, seen, stack, total, carved, deadEnds, startIdx, goalIdx;
+
+    // --- search state ---
+    let gScore, cameFrom, closed, open, expanded, path, pathReveal, maxG;
+
+    let phase = 'carving';   // carving | pause | solving | reveal | done
+    let pauseLeft = 0;
+    let tick = 0;
+
+    // --- controls ---
+    const el = (id) => document.getElementById(id);
+    const colsIn = el('cols'), speedIn = el('speed'), heurIn = el('heur');
+    const colsOut = el('colsOut'), speedOut = el('speedOut'), heurOut = el('heurOut');
+    const sPhase = el('sPhase'), sCarved = el('sCarved'), sDead = el('sDead');
+    const sExp = el('sExp'), sOpen = el('sOpen'), sPath = el('sPath');
+
+    const speedSteps = () => Math.max(1, Math.round(Math.pow(1.062, +speedIn.value)));
+    const weight = () => +heurIn.value;
+
+    function heurLabel() {
+      const w = weight();
+      if (w === 0) return '0.0 · Dijkstra';
+      if (w < 0.95) return w.toFixed(1) + ' · timid';
+      if (w < 1.05) return '1.0 · A*';
+      return w.toFixed(1) + ' · greedy';
+    }
+
+    // --- tiny binary heap on f, tie-broken toward deeper g ---
+    function heapLess(a, b) { return a.f !== b.f ? a.f < b.f : a.g > b.g; }
+    function heapPush(a, node) {
+      a.push(node);
+      let i = a.length - 1;
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        if (!heapLess(a[i], a[p])) break;
+        const t = a[p]; a[p] = a[i]; a[i] = t; i = p;
+      }
+    }
+    function heapPop(a) {
+      const top = a[0], last = a.pop();
+      if (a.length) {
+        a[0] = last;
+        let i = 0;
+        for (;;) {
+          const l = 2 * i + 1, r = l + 1;
+          let m = i;
+          if (l < a.length && heapLess(a[l], a[m])) m = l;
+          if (r < a.length && heapLess(a[r], a[m])) m = r;
+          if (m === i) break;
+          const t = a[m]; a[m] = a[i]; a[i] = t; i = m;
+        }
+      }
+      return top;
+    }
+
+    // --- helpers ---
+    function rrect(c, x, y, w, h, r) {
+      const rad = Math.min(r, w / 2, h / 2);
+      c.beginPath();
+      if (c.roundRect) { c.roundRect(x, y, w, h, rad); return; }
+      c.moveTo(x + rad, y);
+      c.arcTo(x + w, y, x + w, y + h, rad);
+      c.arcTo(x + w, y + h, x, y + h, rad);
+      c.arcTo(x, y + h, x, y, rad);
+      c.arcTo(x, y, x + w, y, rad);
+      c.closePath();
+    }
+    const cx = (i) => ox + ((i % cols) + 0.5) * cell;
+    const cy = (i) => oy + (Math.floor(i / cols) + 0.5) * cell;
+
+    function sizeLayer(c, cc) {
+      c.width = Math.round(W * DPR);
+      c.height = Math.round(H * DPR);
+      cc.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    function layout() {
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.round(W * DPR);
+      canvas.height = Math.round(H * DPR);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      sizeLayer(stone, sctx);
+      sizeLayer(search, fctx);
+
+      const pad = Math.max(16, Math.min(56, Math.min(W, H) * 0.055));
+      cols = Math.max(6, Math.min(+colsIn.value, Math.floor((W - 2 * pad) / 7)));
+      cell = (W - 2 * pad) / cols;
+      rows = Math.max(5, Math.floor((H - 2 * pad) / cell));
+      cw = cell * 0.66;
+      ox = (W - cols * cell) / 2;
+      oy = (H - rows * cell) / 2;
+    }
+
+    // Paint the uncarved rock: a soft slab with a faint lattice and grain.
+    function buildStone() {
+      sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      sctx.globalCompositeOperation = 'source-over';
+      sctx.clearRect(0, 0, W, H);
+      const x0 = ox, y0 = oy, w = cols * cell, h = rows * cell;
+      const g = sctx.createLinearGradient(x0, y0, x0 + w, y0 + h);
+      g.addColorStop(0, '#1b1b30');
+      g.addColorStop(0.5, '#15152a');
+      g.addColorStop(1, '#191926');
+      sctx.fillStyle = g;
+      rrect(sctx, x0, y0, w, h, Math.min(18, cell));
+      sctx.fill();
+      // grain
+      sctx.fillStyle = 'rgba(255,255,255,0.035)';
+      for (let k = 0; k < 1400; k++) {
+        sctx.fillRect(x0 + Math.random() * w, y0 + Math.random() * h, 1, 1);
+      }
+      // faint lattice so you can read the grid before it's carved
+      sctx.strokeStyle = 'rgba(124,124,255,0.075)';
+      sctx.lineWidth = 1;
+      sctx.beginPath();
+      for (let c = 1; c < cols; c++) { sctx.moveTo(x0 + c * cell, y0); sctx.lineTo(x0 + c * cell, y0 + h); }
+      for (let r = 1; r < rows; r++) { sctx.moveTo(x0, y0 + r * cell); sctx.lineTo(x0 + w, y0 + r * cell); }
+      sctx.stroke();
+      sctx.strokeStyle = 'rgba(124,124,255,0.22)';
+      sctx.lineWidth = 1.5;
+      rrect(sctx, x0 + 0.5, y0 + 0.5, w - 1, h - 1, Math.min(18, cell));
+      sctx.stroke();
+    }
+
+    function eraseCell(i) {
+      sctx.globalCompositeOperation = 'destination-out';
+      sctx.fillStyle = '#000';
+      rrect(sctx, cx(i) - cw / 2, cy(i) - cw / 2, cw, cw, cw * 0.34);
+      sctx.fill();
+      sctx.globalCompositeOperation = 'source-over';
+    }
+    function eraseLink(a, b) {
+      const ax = cx(a), ay = cy(a), bx = cx(b), by = cy(b);
+      const x = Math.min(ax, bx) - cw / 2, y = Math.min(ay, by) - cw / 2;
+      const w = Math.abs(bx - ax) + cw, h = Math.abs(by - ay) + cw;
+      sctx.globalCompositeOperation = 'destination-out';
+      sctx.fillStyle = '#000';
+      rrect(sctx, x, y, w, h, cw * 0.34);
+      sctx.fill();
+      sctx.globalCompositeOperation = 'source-over';
+    }
+
+    // ---- maze generation: recursive backtracker (iterative, one step at a time)
+    function newMaze() {
+      layout();
+      total = cols * rows;
+      walls = new Uint8Array(total).fill(15);
+      seen = new Uint8Array(total);
+      startIdx = 0;
+      goalIdx = total - 1;
+      stack = [startIdx];
+      seen[startIdx] = 1;
+      carved = 1;
+      deadEnds = 0;
+      buildStone();
+      fctx.clearRect(0, 0, W, H);
+      eraseCell(startIdx);
+      resetSearch();
+      phase = 'carving';
+      pauseLeft = 0;
+    }
+
+    const nbuf = new Int32Array(4);
+    function carveStep() {
+      if (!stack.length) return false;
+      const cur = stack[stack.length - 1];
+      const c = cur % cols, r = (cur / cols) | 0;
+      let n = 0;
+      for (let d = 0; d < 4; d++) {
+        const nc = c + DIRS[d].dx, nr = r + DIRS[d].dy;
+        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+        const ni = nr * cols + nc;
+        if (seen[ni]) continue;
+        nbuf[n++] = d;
+      }
+      if (n === 0) { stack.pop(); return stack.length > 0; }
+      const d = nbuf[(Math.random() * n) | 0];
+      const ni = (r + DIRS[d].dy) * cols + (c + DIRS[d].dx);
+      walls[cur] &= ~DIRS[d].bit;
+      walls[ni] &= ~DIRS[d].opp;
+      seen[ni] = 1;
+      carved++;
+      eraseCell(ni);
+      eraseLink(cur, ni);
+      stack.push(ni);
+      return true;
+    }
+
+    function countDeadEnds() {
+      let n = 0;
+      for (let i = 0; i < total; i++) {
+        let w = walls[i], bits = 0;
+        while (w) { bits += w & 1; w >>= 1; }
+        if (bits === 3) n++;
+      }
+      deadEnds = n;
+    }
+
+    // ---- A* ----
+    function h(i, j) {
+      return Math.abs((i % cols) - (j % cols)) + Math.abs(((i / cols) | 0) - ((j / cols) | 0));
+    }
+    function resetSearch() {
+      gScore = new Float32Array(total).fill(Infinity);
+      cameFrom = new Int32Array(total).fill(-1);
+      closed = new Uint8Array(total);
+      open = [];
+      expanded = 0;
+      path = null;
+      pathReveal = 0;
+      maxG = 1;
+      fctx.clearRect(0, 0, W, H);
+    }
+    function beginSolve() {
+      resetSearch();
+      gScore[startIdx] = 0;
+      heapPush(open, { i: startIdx, g: 0, f: weight() * h(startIdx, goalIdx) });
+      phase = 'solving';
+    }
+
+    function paintClosed(i, g) {
+      const t = Math.min(1, g / maxG);
+      const rr = Math.round(96 + 110 * t), gg = Math.round(96 + 20 * t), bb = Math.round(230 - 45 * t);
+      fctx.fillStyle = 'rgba(' + rr + ',' + gg + ',' + bb + ',' + (0.30 + 0.24 * t).toFixed(3) + ')';
+      fctx.fillRect(cx(i) - cell / 2, cy(i) - cell / 2, cell + 0.6, cell + 0.6);
+    }
+
+    function solveStep() {
+      if (!open.length) { phase = 'done'; return false; }
+      const node = heapPop(open);
+      if (closed[node.i]) return true;
+      closed[node.i] = 1;
+      expanded++;
+      if (node.g > maxG) maxG = node.g;
+      paintClosed(node.i, node.g);
+      if (node.i === goalIdx) {
+        path = [];
+        let p = goalIdx;
+        while (p !== -1) { path.push(p); p = cameFrom[p]; }
+        path.reverse();
+        pathReveal = 0;
+        phase = 'reveal';
+        return false;
+      }
+      const w = weight();
+      for (let d = 0; d < 4; d++) {
+        if (walls[node.i] & DIRS[d].bit) continue;      // wall in the way
+        const nc = (node.i % cols) + DIRS[d].dx, nr = ((node.i / cols) | 0) + DIRS[d].dy;
+        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+        const ni = nr * cols + nc;
+        if (closed[ni]) continue;
+        const ng = node.g + 1;
+        if (ng < gScore[ni]) {
+          gScore[ni] = ng;
+          cameFrom[ni] = node.i;
+          heapPush(open, { i: ni, g: ng, f: ng + w * h(ni, goalIdx) });
+        }
+      }
+      return true;
+    }
+
+    // ---- drawing ----
+    function drawMarker(i, color, pulse) {
+      const x = cx(i), y = cy(i), r = cw * 0.30;
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 16 + 8 * pulse;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, r * (0.85 + 0.18 * pulse), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. closed set (under the rock, so it's clipped to the corridors)
+      ctx.drawImage(search, 0, 0, W, H);
+
+      // 2. live frontier — also under the rock
+      if (phase === 'solving' || phase === 'reveal' || phase === 'done') {
+        const s = cell * 0.9;
+        ctx.fillStyle = 'rgba(255,124,195,0.62)';
+        for (let k = 0; k < open.length; k++) {
+          const i = open[k].i;
+          if (closed[i]) continue;
+          ctx.fillRect(cx(i) - s / 2, cy(i) - s / 2, s, s);
+        }
+      }
+
+      // 3. the digging thread — the stack, fading back into history
+      if (phase === 'carving' || phase === 'pause') {
+        const tail = Math.min(stack.length, 140);
+        const s = cell * 0.62;
+        for (let k = 0; k < tail; k++) {
+          const i = stack[stack.length - 1 - k];
+          const a = 0.42 * (1 - k / tail);
+          ctx.fillStyle = 'rgba(255,124,195,' + a.toFixed(3) + ')';
+          ctx.fillRect(cx(i) - s / 2, cy(i) - s / 2, s, s);
+        }
+      }
+
+      // 4. the rock itself
+      ctx.drawImage(stone, 0, 0, W, H);
+
+      // 5. the head of the dig, on top of everything
+      if (phase === 'carving' && stack.length) {
+        drawMarker(stack[stack.length - 1], '#ff7cc3', 0.5 + 0.5 * Math.sin(tick * 0.25));
+      }
+
+      // 6. the thread pulled out of the maze
+      if (path && path.length > 1) {
+        const shown = Math.max(2, Math.min(path.length, Math.floor(pathReveal)));
+        const grad = ctx.createLinearGradient(cx(path[0]), cy(path[0]), cx(path[path.length - 1]), cy(path[path.length - 1]));
+        grad.addColorStop(0, '#7c7cff');
+        grad.addColorStop(1, '#ff7cc3');
+        ctx.save();
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.shadowColor = 'rgba(180,140,255,0.85)';
+        ctx.shadowBlur = Math.max(6, cell * 0.5);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = Math.max(1.6, cw * 0.42);
+        ctx.beginPath();
+        ctx.moveTo(cx(path[0]), cy(path[0]));
+        for (let k = 1; k < shown; k++) ctx.lineTo(cx(path[k]), cy(path[k]));
+        ctx.stroke();
+        ctx.restore();
+        // a light travelling the finished route
+        if (phase === 'done') {
+          const p = (tick * 0.35) % path.length;
+          const i0 = path[Math.floor(p)], i1 = path[Math.min(path.length - 1, Math.floor(p) + 1)];
+          const f = p - Math.floor(p);
+          const lx = cx(i0) + (cx(i1) - cx(i0)) * f, ly = cy(i0) + (cy(i1) - cy(i0)) * f;
+          ctx.save();
+          ctx.shadowColor = '#ffffff';
+          ctx.shadowBlur = 18;
+          ctx.fillStyle = 'rgba(255,255,255,0.9)';
+          ctx.beginPath();
+          ctx.arc(lx, ly, Math.max(1.4, cw * 0.16), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // 7. endpoints
+      drawMarker(startIdx, '#7c7cff', 0.3);
+      drawMarker(goalIdx, '#ff7cc3', 0.5 + 0.5 * Math.sin(tick * 0.12));
+    }
+
+    function updateStats() {
+      const names = { carving: 'carving', pause: 'carved', solving: 'searching', reveal: 'found it', done: 'done' };
+      sPhase.textContent = names[phase] || phase;
+      sCarved.textContent = carved + ' / ' + total;
+      sDead.textContent = deadEnds ? deadEnds + ' (' + Math.round(100 * deadEnds / total) + '%)' : '—';
+      sExp.textContent = expanded + (expanded ? '  ·  ' + Math.round(100 * expanded / total) + '%' : '');
+      let live = 0;
+      for (let k = 0; k < open.length; k++) if (!closed[open[k].i]) live++;
+      sOpen.textContent = live;
+      sPath.textContent = path ? (path.length - 1) + ' steps' : (phase === 'done' ? 'unreachable' : '—');
+    }
+
+    // ---- main loop ----
+    function frame() {
+      tick++;
+      const steps = speedSteps();
+      if (phase === 'carving') {
+        for (let k = 0; k < steps; k++) {
+          if (!carveStep()) {
+            countDeadEnds();
+            phase = 'pause';
+            pauseLeft = 26;
+            break;
+          }
+        }
+      } else if (phase === 'pause') {
+        if (--pauseLeft <= 0) beginSolve();
+      } else if (phase === 'solving') {
+        for (let k = 0; k < steps; k++) if (!solveStep()) break;
+      } else if (phase === 'reveal') {
+        pathReveal += Math.max(1, steps * 0.6);
+        if (pathReveal >= path.length) { pathReveal = path.length; phase = 'done'; }
+      }
+      render();
+      updateStats();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- interaction ----
+    function cellAt(px, py) {
+      const c = Math.floor((px - ox) / cell), r = Math.floor((py - oy) / cell);
+      if (c < 0 || r < 0 || c >= cols || r >= rows) return -1;
+      return r * cols + c;
+    }
+    canvas.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const i = cellAt(e.clientX - rect.left, e.clientY - rect.top);
+      if (i < 0 || i === startIdx) return;
+      goalIdx = i;
+      if (phase === 'solving' || phase === 'reveal' || phase === 'done') beginSolve();
+    });
+
+    colsIn.addEventListener('input', () => { colsOut.textContent = colsIn.value + ' cols'; newMaze(); });
+    speedIn.addEventListener('input', () => { speedOut.textContent = '×' + speedSteps(); });
+    heurIn.addEventListener('input', () => {
+      heurOut.textContent = heurLabel();
+      if (phase === 'solving' || phase === 'reveal' || phase === 'done') beginSolve();
+    });
+    el('restart').addEventListener('click', newMaze);
+    el('resolve').addEventListener('click', () => { if (phase !== 'carving' && phase !== 'pause') beginSolve(); });
+
+    let rt;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(newMaze, 220); });
+
+    colsOut.textContent = colsIn.value + ' cols';
+    speedOut.textContent = '×' + speedSteps();
+    heurOut.textContent = heurLabel();
+    newMaze();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

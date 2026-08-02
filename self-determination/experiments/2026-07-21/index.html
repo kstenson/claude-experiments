@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Diamond–Square — Experiment 053</title>
+<meta name="description" content="The 1982 midpoint-displacement algorithm building a fractal heightfield one subdivision at a time, then shaded as terrain — with its axis-aligned creasing artifact measured and made visible." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage: where the experiment lives ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+  .stage canvas.dragging { cursor: grabbing; }
+
+  /* ---- Floating panel (title + controls + story button) ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 316px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    scrollbar-width: thin;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .control label {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: 0.78rem; color: #9a9ab0; letter-spacing: 0.04em; margin-bottom: 5px;
+  }
+  .control label output { color: #cfcfff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .control input[type="range"] {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(124,124,255,0.55), rgba(255,124,195,0.55));
+    outline: none;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.38; cursor: default; }
+  .btn.on { background: linear-gradient(120deg, rgba(124,124,255,0.42), rgba(255,124,195,0.34)); color: #fff; border-color: rgba(179,136,255,0.7); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    margin-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 10px;
+    display: grid; grid-template-columns: auto 1fr; gap: 3px 10px;
+    font-size: 0.72rem; line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout dt { color: #7a7a90; letter-spacing: 0.05em; }
+  .readout dd { color: #cfcfff; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .readout dd.warm { color: #ff7cc3; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+    font-family: inherit;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+
+  @media (max-width: 720px) {
+    .ui { left: 12px; top: 12px; right: 12px; width: auto; max-width: none; padding: 16px 18px; max-height: calc(100vh - 24px); }
+    .story-card { padding: 28px 24px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Diamond–Square</h1>
+    <p class="sub">Experiment № 053 · July 21, 2026</p>
+
+    <div class="controls">
+      <div class="control">
+        <label>roughness H <output id="roughOut">0.85</output></label>
+        <input type="range" id="rough" min="0.15" max="1.50" step="0.01" value="0.85" />
+      </div>
+      <div class="control">
+        <label>final grid <output id="levelOut">257 × 257</output></label>
+        <input type="range" id="level" min="5" max="9" step="1" value="8" />
+      </div>
+      <div class="control">
+        <label>sea level <output id="seaOut">34%</output></label>
+        <input type="range" id="sea" min="0" max="90" step="1" value="34" />
+      </div>
+      <div class="control">
+        <label>sun azimuth <output id="sunOut">315°</output></label>
+        <input type="range" id="sun" min="0" max="359" step="1" value="315" />
+      </div>
+      <div class="control">
+        <label>pass speed <output id="speedOut">6</output></label>
+        <input type="range" id="speed" min="1" max="10" step="1" value="6" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="stepBtn">step ▸</button>
+        <button class="btn on" id="playBtn">pause</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="replayBtn">replay</button>
+        <button class="btn pink" id="seedBtn">new seed</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="wireBtn">wireframe</button>
+        <button class="btn pink" id="creaseBtn">creases</button>
+      </div>
+
+      <dl class="readout">
+        <dt>pass</dt><dd id="rPass">—</dd>
+        <dt>grid</dt><dd id="rGrid">—</dd>
+        <dt>placed</dt><dd id="rPlaced">—</dd>
+        <dt>elevation</dt><dd id="rElev">—</dd>
+        <dt>persistence</dt><dd id="rPers">—</dd>
+        <dt>axis bias</dt><dd class="warm" id="rBias">—</dd>
+        <dt>seed</dt><dd id="rSeed">—</dd>
+      </dl>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag the map to move the sun · space steps one pass · h hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 053 · The story</p>
+      <h2>Diamond–Square</h2>
+
+      <h3>Why I picked it</h3>
+      <p>This is the algorithm that gave computers mountains. Fournier, Fussell and Carpenter published it in 1982, and Loren Carpenter had already used midpoint displacement to fly a camera through fractal peaks in <em>Vol Libre</em> — the two-minute film that got him hired at Lucasfilm and led straight to the Genesis planet in <em>Star Trek II</em>. Every terrain generator I have ever poked at is downstream of it. But the reason it is here rather than in a footnote is that it is one of the very few fractals you can watch <em>decide</em>. Most of them arrive; this one is built, in passes, and each pass is small enough to follow. So I made the subdivision the subject: step through it and you see four corners become five points, then nine, then a coastline. The picture is the algorithm's own progress bar.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment at level two, when the whole map is one center point and four edge midpoints, and it already has a <em>shape</em> that it never afterwards abandons. Everything from then on is detail negotiating with a decision made in the first three random numbers. And I love that the entire character of the world hangs on one exponent: the amplitude of the noise shrinks by 2<sup>−H</sup> at every subdivision, so H near 0.2 gives you shattered alpine chaos and H near 1.4 gives you rolling farmland, from identical code and an identical seed. Then there is the flaw, which I have wired to a button. The square step averages only the four <em>axis</em> neighbours, so the grid quietly leaks into the terrain as faint creases running north–south and east–west, plus a scar along the diagonals of the very first square. Hit <em>creases</em> and the page highlights the cells whose curvature is more axis-aligned than an isotropic surface of the same H would give, and reports the average as a single honest percentage. It is never zero. That is not a bug in my implementation — it is the price of the method, and better generators (value noise, Perlin, simplex) mostly exist because people got tired of looking at it.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Self-similarity is not a picture, it is a budget. The same rule runs at every scale, and all that changes between the first pass and the ninth is how much randomness is allowed to matter — the first random number decides where a continent goes, the millionth adjusts a pebble. Which means the coarse decisions are effectively permanent no matter how much detail you pile on afterwards, and the shape of the tool you used stays legible in the result long after the result looks natural. Both of those, I think, apply well outside terrain.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- DIAMOND–SQUARE ----
+  // Midpoint displacement on a (2^L + 1) square lattice (Fournier, Fussell &
+  // Carpenter, 1982). Each level does two passes:
+  //   diamond — every square's centre = mean of its 4 corners + noise
+  //   square  — every remaining edge midpoint = mean of its 4 axis neighbours + noise
+  // and the noise amplitude is multiplied by 2^-H after each level, so the
+  // roughness exponent H alone decides how jagged the finished surface is.
+  // Points are placed a few at a time so the subdivision is watchable; the
+  // display always renders at the lattice spacing currently being filled in.
+  (() => {
+    const stage = document.getElementById('stage');
+    const canvas = document.createElement('canvas');
+    stage.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    const oc = document.createElement('canvas');
+    const octx = oc.getContext('2d');
+    let img = null;
+
+    let VW = 0, VH = 0, dpr = 1;
+
+    // ---- model ----
+    const AMP0 = 0.9;          // corner-scale displacement, in raw units
+    const METRES = 1000;       // raw units -> metres, for the readout only
+    let L = 8, N = 257;
+    let hf = null, view = null;   // heightfield, and what the renderer shows
+    let phases = [], pi = 0, ptr = 0;
+    let spacing = 0, started = false, complete = false, dwell = 0;
+    let minH = 0, maxH = 1;
+    let rough = 0.85, seed = 48213, rng = null;
+    let seaT = 0.34, sunAz = 315, sunAlt = 40;
+    let playing = true, speed = 6;
+    let wire = false, creases = false;
+    let recent = [];
+    let axisBias = 0;
+    let cur = new Float32Array(4);
+
+    // deterministic PRNG so a seed always rebuilds the same world
+    function makeRng(s) {
+      let a = (s >>> 0) || 1;
+      return () => {
+        a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function diamondPts(st, half) {
+      const out = [];
+      for (let y = half; y < N; y += st) for (let x = half; x < N; x += st) out.push(y * N + x);
+      return Int32Array.from(out);
+    }
+    // the points left over after the diamond pass: those with (x/half + y/half) odd
+    function squarePts(half) {
+      const out = [];
+      for (let y = 0; y < N; y += half) {
+        const odd = ((y / half) & 1) === 1;
+        for (let x = odd ? 0 : half; x < N; x += half * 2) out.push(y * N + x);
+      }
+      return Int32Array.from(out);
+    }
+
+    function diamondAvg(i, half, src) {
+      const x = i % N, y = (i / N) | 0;
+      return (src[(y - half) * N + (x - half)] + src[(y - half) * N + (x + half)] +
+              src[(y + half) * N + (x - half)] + src[(y + half) * N + (x + half)]) * 0.25;
+    }
+    function squareAvg(i, half, src) {
+      const x = i % N, y = (i / N) | 0;
+      let s = 0, n = 0;
+      if (x - half >= 0) { s += src[y * N + x - half]; n++; }
+      if (x + half < N)  { s += src[y * N + x + half]; n++; }
+      if (y - half >= 0) { s += src[(y - half) * N + x]; n++; }
+      if (y + half < N)  { s += src[(y + half) * N + x]; n++; }
+      return s / n;
+    }
+
+    function build() {
+      N = (1 << L) + 1;
+      hf = new Float32Array(N * N);
+      view = new Float32Array(N * N);
+      if (cur.length < N * N) cur = new Float32Array(N * N);
+      rng = makeRng(seed);
+
+      minH = Infinity; maxH = -Infinity;
+      for (const i of [0, N - 1, (N - 1) * N, N * N - 1]) {
+        const v = (rng() * 2 - 1) * 0.28;
+        hf[i] = v; view[i] = v;
+        if (v < minH) minH = v;
+        if (v > maxH) maxH = v;
+      }
+
+      phases = [];
+      let st = N - 1, amp = AMP0;
+      const per = Math.pow(2, -rough);
+      while (st > 1) {
+        const half = st >> 1;
+        phases.push({ kind: 'diamond', st, half, amp, pts: diamondPts(st, half) });
+        phases.push({ kind: 'square', st, half, amp, pts: squarePts(half) });
+        amp *= per;
+        st = half;
+      }
+      pi = 0; ptr = 0; recent = [];
+      spacing = N - 1;           // only the four corners exist yet
+      started = false; complete = false;
+      dwell = 16;                // hold on the corners for a beat
+    }
+
+    // Give the level about to be filled a provisional, noise-free interpolation
+    // so the renderer can show it before the algorithm crinkles it.
+    function prepPhase() {
+      if (pi >= phases.length) { complete = true; spacing = 1; return; }
+      const p = phases[pi];
+      spacing = p.half;
+      ptr = 0;
+      if (p.kind === 'diamond') {
+        const c = p.pts;
+        for (let k = 0; k < c.length; k++) view[c[k]] = diamondAvg(c[k], p.half, view);
+        const sq = phases[pi + 1].pts;
+        for (let k = 0; k < sq.length; k++) view[sq[k]] = squareAvg(sq[k], p.half, view);
+      } else {
+        const sq = p.pts;
+        for (let k = 0; k < sq.length; k++) view[sq[k]] = squareAvg(sq[k], p.half, view);
+      }
+    }
+
+    function ensureStarted() {
+      if (!started) { started = true; prepPhase(); }
+    }
+
+    function placeOne(p) {
+      const i = p.pts[ptr++];
+      let v = p.kind === 'diamond' ? diamondAvg(i, p.half, hf) : squareAvg(i, p.half, hf);
+      v += (rng() * 2 - 1) * p.amp;
+      hf[i] = v; view[i] = v;
+      if (v < minH) minH = v;
+      if (v > maxH) maxH = v;
+      recent.push(i);
+      if (recent.length > 900) recent = recent.slice(-420);
+    }
+
+    // place up to `budget` points; returns true if a pass just finished
+    function advance(budget) {
+      while (budget > 0 && !complete) {
+        const p = phases[pi];
+        const take = Math.min(budget, p.pts.length - ptr);
+        for (let k = 0; k < take; k++) placeOne(p);
+        budget -= take;
+        if (ptr >= p.pts.length) { pi++; prepPhase(); return true; }
+      }
+      return false;
+    }
+
+    function stepPhase() {
+      if (complete) return;
+      ensureStarted();
+      advance(phases[pi].pts.length - ptr);
+      dwell = 0;
+      render(); updateReadout();
+    }
+
+    function runAll() {
+      ensureStarted();
+      let guard = 0;
+      while (!complete && guard++ < 4096) advance(1e9);
+    }
+
+    // ---- colour ramps ----
+    const LAND = [
+      [0.00, 226, 210, 168], [0.07, 108, 142,  90], [0.28, 132, 144,  82],
+      [0.50, 142, 118,  88], [0.71, 126, 118, 134], [0.88, 176, 170, 196],
+      [1.00, 242, 240, 252],
+    ];
+    const WATER = [
+      [0.00, 122, 194, 198], [0.28,  52, 112, 172], [0.68,  24,  46, 112], [1.00, 8, 10, 40],
+    ];
+    const WIRE_HI = [
+      [0.00, 74, 86, 190], [0.42, 124, 124, 255], [0.76, 255, 124, 195], [1.00, 255, 246, 255],
+    ];
+    const WIRE_LO = [[0.00, 74, 148, 172], [1.00, 26, 40, 96]];
+    const out3 = [0, 0, 0];
+    function ramp(stops, t) {
+      if (t <= 0) { out3[0] = stops[0][1]; out3[1] = stops[0][2]; out3[2] = stops[0][3]; return out3; }
+      const last = stops.length - 1;
+      if (t >= 1) { out3[0] = stops[last][1]; out3[1] = stops[last][2]; out3[2] = stops[last][3]; return out3; }
+      for (let k = 1; k <= last; k++) {
+        if (t <= stops[k][0]) {
+          const a = stops[k - 1], b = stops[k];
+          const f = (t - a[0]) / (b[0] - a[0]);
+          out3[0] = a[1] + (b[1] - a[1]) * f;
+          out3[1] = a[2] + (b[2] - a[2]) * f;
+          out3[2] = a[3] + (b[3] - a[3]) * f;
+          return out3;
+        }
+      }
+      out3[0] = stops[last][1]; out3[1] = stops[last][2]; out3[2] = stops[last][3];
+      return out3;
+    }
+
+    function mapRect() {
+      const pad = Math.max(14, Math.min(VW, VH) * 0.04);
+      const size = Math.max(40, Math.min(VW - pad * 2, VH - pad * 2));
+      let mx = (VW - size) / 2;
+      const my = (VH - size) / 2;
+      if (VW > 980) mx = Math.min(VW - size - pad, mx + 130);   // clear the panel
+      return { size, mx, my };
+    }
+
+    function roundPath(x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    // gather the lattice currently being displayed into a compact R x R block
+    function gather() {
+      const R = ((N - 1) / spacing) + 1;
+      for (let j = 0; j < R; j++) {
+        const off = j * spacing * N;
+        for (let i = 0; i < R; i++) cur[j * R + i] = view[off + i * spacing];
+      }
+      return R;
+    }
+
+    function renderShaded(rect) {
+      const R = gather();
+      if (oc.width !== R || oc.height !== R) { oc.width = R; oc.height = R; img = octx.createImageData(R, R); }
+      const d = img.data;
+
+      // Normalise the gradient by its RMS so the hillshade stays legible at
+      // every level — relief is exaggerated on purpose, it is not to scale.
+      let acc = 0, cnt = 0;
+      const stp = R > 120 ? 3 : 1;
+      for (let j = 1; j < R - 1; j += stp) for (let i = 1; i < R - 1; i += stp) {
+        const k = j * R + i;
+        const gx = (cur[k + 1] - cur[k - 1]) * 0.5, gy = (cur[k + R] - cur[k - R]) * 0.5;
+        acc += gx * gx + gy * gy; cnt++;
+      }
+      const rmsG = cnt ? Math.sqrt(acc / cnt) : 0;
+      const gk = rmsG > 1e-9 ? 1.25 / rmsG : 0;
+
+      const az = sunAz * Math.PI / 180, al = sunAlt * Math.PI / 180;
+      const sx = Math.cos(al) * Math.sin(az), sy = -Math.cos(al) * Math.cos(az), sz = Math.sin(al);
+      const sea = minH + seaT * (maxH - minH);
+      const invLand = 1 / Math.max(1e-6, maxH - sea);
+      const invSea = 1 / Math.max(1e-6, sea - minH);
+      // second differences across the diagonals span sqrt(2) more ground, and
+      // for an fBm of exponent H they scale as distance^H — so divide by 2^(H/2)
+      // before comparing them with the axis-aligned ones.
+      const dnorm = Math.pow(2, rough / 2);
+      let bAcc = 0, bCnt = 0;
+
+      let o = 0;
+      for (let j = 0; j < R; j++) {
+        const j0 = j > 0 ? j - 1 : j, j1 = j < R - 1 ? j + 1 : j;
+        for (let i = 0; i < R; i++, o += 4) {
+          const k = j * R + i, v = cur[k];
+          const i0 = i > 0 ? i - 1 : i, i1 = i < R - 1 ? i + 1 : i;
+          const gx = i1 === i0 ? 0 : (cur[j * R + i1] - cur[j * R + i0]) / (i1 - i0);
+          const gy = j1 === j0 ? 0 : (cur[j1 * R + i] - cur[j0 * R + i]) / (j1 - j0);
+
+          const under = v < sea;
+          const damp = under ? 0.3 : 1;      // water only shows the seabed faintly
+          const nx = -gx * gk * damp, ny = -gy * gk * damp;
+          const inv = 1 / Math.sqrt(nx * nx + ny * ny + 1);
+          let shade = (nx * sx + ny * sy + sz) * inv;
+          if (shade < 0) shade = 0;
+
+          const col = under ? ramp(WATER, (sea - v) * invSea) : ramp(LAND, (v - sea) * invLand);
+          const lit = 0.30 + 0.86 * shade;
+          const fog = lit < 1 ? 1 - lit : 0;
+          let r = col[0] * lit + 30 * fog;
+          let g = col[1] * lit + 28 * fog;
+          let b = col[2] * lit + 72 * fog;
+
+          if (R > 4 && i > 0 && i < R - 1 && j > 0 && j < R - 1) {
+            const ax = Math.abs(cur[k - 1] + cur[k + 1] - 2 * v) + Math.abs(cur[k - R] + cur[k + R] - 2 * v);
+            const dg = (Math.abs(cur[k - R - 1] + cur[k + R + 1] - 2 * v) +
+                        Math.abs(cur[k - R + 1] + cur[k + R - 1] - 2 * v)) / dnorm;
+            const an = (ax - dg) / (ax + dg + 1e-9);
+            bAcc += an; bCnt++;
+            if (creases && an > 0) {
+              const m = Math.min(0.82, an * 1.5);
+              r = r * (1 - m) + 255 * m; g = g * (1 - m) + 124 * m; b = b * (1 - m) + 195 * m;
+            }
+          }
+
+          d[o] = r > 255 ? 255 : r;
+          d[o + 1] = g > 255 ? 255 : g;
+          d[o + 2] = b > 255 ? 255 : b;
+          d[o + 3] = 255;
+        }
+      }
+      axisBias = bCnt ? bAcc / bCnt : 0;
+
+      octx.putImageData(img, 0, 0);
+      ctx.save();
+      roundPath(rect.mx, rect.my, rect.size, rect.size, 18);
+      ctx.clip();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(oc, rect.mx, rect.my, rect.size, rect.size);
+      ctx.restore();
+    }
+
+    function renderWire(rect) {
+      const R0 = gather();
+      // keep the drawn lattice legible: never more than 128 divisions
+      let stride = 1;
+      while ((R0 - 1) / stride > 128) stride *= 2;
+      const R = ((R0 - 1) / stride) + 1;
+      const cell = rect.size / (R - 1 || 1);
+      const sea = minH + seaT * (maxH - minH);
+      const span = Math.max(1e-6, maxH - minH);
+
+      const BUCKETS = 9;
+      const paths = [];
+      for (let b = 0; b < BUCKETS * 2; b++) paths.push(new Path2D());
+      const at = (i, j) => cur[(j * stride) * R0 + i * stride];
+      const px = (i) => rect.mx + i * cell;
+      const py = (j) => rect.my + j * cell;
+      const bucketOf = (v) => {
+        if (v < sea) return Math.min(BUCKETS - 1, Math.max(0, Math.floor((sea - v) / Math.max(1e-6, sea - minH) * BUCKETS))) + BUCKETS;
+        return Math.min(BUCKETS - 1, Math.max(0, Math.floor((v - minH) / span * BUCKETS)));
+      };
+      for (let j = 0; j < R; j++) for (let i = 0; i < R; i++) {
+        if (i < R - 1) {
+          const b = bucketOf((at(i, j) + at(i + 1, j)) * 0.5);
+          paths[b].moveTo(px(i), py(j)); paths[b].lineTo(px(i + 1), py(j));
+        }
+        if (j < R - 1) {
+          const b = bucketOf((at(i, j) + at(i, j + 1)) * 0.5);
+          paths[b].moveTo(px(i), py(j)); paths[b].lineTo(px(i), py(j + 1));
+        }
+      }
+
+      ctx.save();
+      roundPath(rect.mx, rect.my, rect.size, rect.size, 18);
+      ctx.clip();
+      ctx.lineWidth = Math.max(0.5, Math.min(1.5, cell * 0.14));
+      for (let b = 0; b < BUCKETS * 2; b++) {
+        const lo = b >= BUCKETS;
+        const t = ((b % BUCKETS) + 0.5) / BUCKETS;
+        const c = ramp(lo ? WIRE_LO : WIRE_HI, t);
+        ctx.strokeStyle = 'rgba(' + (c[0] | 0) + ',' + (c[1] | 0) + ',' + (c[2] | 0) + ',' + (lo ? 0.55 : 0.85) + ')';
+        ctx.stroke(paths[b]);
+      }
+
+      // the points this pass has just placed, freshest brightest
+      const unit = rect.size / (N - 1);
+      const dot = Math.max(1.6, Math.min(5, unit * 0.5));
+      for (let n = 0; n < recent.length; n++) {
+        const i = recent[n], x = i % N, y = (i / N) | 0;
+        const a = 0.12 + 0.88 * (n / recent.length);
+        ctx.fillStyle = 'rgba(255,124,195,' + a.toFixed(3) + ')';
+        ctx.fillRect(rect.mx + x * unit - dot / 2, rect.my + y * unit - dot / 2, dot, dot);
+      }
+
+      // the stencil of the most recent point: what it averaged to get its height
+      if (!complete && started && ptr > 0) {
+        const p = phases[pi];
+        if (p.half * unit >= 6) {
+          const i = p.pts[ptr - 1], x = i % N, y = (i / N) | 0;
+          const cxp = rect.mx + x * unit, cyp = rect.my + y * unit;
+          const arms = p.kind === 'diamond'
+            ? [[-p.half, -p.half], [p.half, -p.half], [-p.half, p.half], [p.half, p.half]]
+            : [[-p.half, 0], [p.half, 0], [0, -p.half], [0, p.half]];
+          ctx.strokeStyle = 'rgba(255,214,110,0.9)';
+          ctx.lineWidth = 1.3;
+          ctx.beginPath();
+          for (const [ax, ay] of arms) {
+            const nx2 = x + ax, ny2 = y + ay;
+            if (nx2 < 0 || ny2 < 0 || nx2 >= N || ny2 >= N) continue;
+            ctx.moveTo(cxp, cyp);
+            ctx.lineTo(rect.mx + nx2 * unit, rect.my + ny2 * unit);
+          }
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cxp, cyp, Math.max(3, unit * 0.4), 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,214,110,0.95)';
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawCompass(rect) {
+      if (rect.size < 220) return;
+      const cx = rect.mx + rect.size - 44, cy = rect.my + rect.size - 44, rr = 24;
+      ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(10,10,18,0.55)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.lineWidth = 1; ctx.stroke();
+      const t = Math.max(0, Math.min(1, (90 - sunAlt) / 90));
+      const dist = rr * 0.78 * t;
+      const a = sunAz * Math.PI / 180;
+      const sxp = cx + Math.sin(a) * dist, syp = cy - Math.cos(a) * dist;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(sxp, syp);
+      ctx.strokeStyle = 'rgba(255,124,195,0.55)'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(sxp, syp, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffd66e'; ctx.fill();
+    }
+
+    function render() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, VW, VH);
+      const rect = mapRect();
+      if (wire) renderWire(rect); else renderShaded(rect);
+      roundPath(rect.mx, rect.my, rect.size, rect.size, 18);
+      ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      drawCompass(rect);
+    }
+
+    // ---- readout ----
+    const el = (id) => document.getElementById(id);
+    function updateReadout() {
+      const levels = L;
+      if (!started) {
+        el('rPass').textContent = 'corners';
+        el('rPlaced').textContent = '4 seeds';
+      } else if (complete) {
+        el('rPass').textContent = 'complete';
+        el('rPlaced').textContent = (N * N).toLocaleString() + ' pts';
+      } else {
+        const p = phases[pi];
+        el('rPass').textContent = (((pi >> 1) + 1) + '/' + levels + ' · ' + p.kind);
+        el('rPlaced').textContent = ptr + ' / ' + p.pts.length;
+      }
+      const R = ((N - 1) / spacing) + 1;
+      el('rGrid').textContent = R + ' × ' + R;
+      el('rElev').textContent = Math.round(minH * METRES) + ' … ' + Math.round(maxH * METRES) + ' m';
+      el('rPers').textContent = '2^-H = ' + Math.pow(2, -rough).toFixed(3);
+      el('rBias').textContent = (axisBias >= 0 ? '+' : '') + (axisBias * 100).toFixed(1) + '%';
+      el('rSeed').textContent = String(seed);
+      el('playBtn').textContent = complete ? 'done' : (playing ? 'pause' : 'animate');
+      el('playBtn').classList.toggle('on', playing && !complete);
+      el('playBtn').disabled = complete;
+      el('stepBtn').disabled = complete;
+    }
+
+    // ---- controls ----
+    const roughEl = el('rough'), levelEl = el('level'), seaEl = el('sea'),
+          sunEl = el('sun'), speedEl = el('speed');
+
+    // Once you have watched a build, parameter tweaks resolve instantly so you
+    // can compare worlds; before that they restart the animation.
+    function rebuild(instant) {
+      build();
+      if (instant) { runAll(); playing = false; }
+      render(); updateReadout();
+    }
+
+    roughEl.addEventListener('input', () => {
+      rough = +roughEl.value;
+      el('roughOut').textContent = rough.toFixed(2);
+      rebuild(complete);
+    });
+    levelEl.addEventListener('input', () => {
+      L = +levelEl.value;
+      el('levelOut').textContent = ((1 << L) + 1) + ' × ' + ((1 << L) + 1);
+      rebuild(complete);
+    });
+    seaEl.addEventListener('input', () => {
+      seaT = +seaEl.value / 100;
+      el('seaOut').textContent = seaEl.value + '%';
+      render(); updateReadout();
+    });
+    sunEl.addEventListener('input', () => {
+      sunAz = +sunEl.value;
+      el('sunOut').textContent = sunAz + '°';
+      render();
+    });
+    speedEl.addEventListener('input', () => {
+      speed = +speedEl.value;
+      el('speedOut').textContent = String(speed);
+    });
+
+    el('stepBtn').addEventListener('click', () => { playing = false; stepPhase(); updateReadout(); });
+    el('playBtn').addEventListener('click', () => { playing = !playing; updateReadout(); });
+    el('replayBtn').addEventListener('click', () => { build(); playing = true; render(); updateReadout(); });
+    el('seedBtn').addEventListener('click', () => {
+      seed = (Math.random() * 100000) | 0;
+      build(); playing = true; render(); updateReadout();
+    });
+    const wireBtn = el('wireBtn'), creaseBtn = el('creaseBtn');
+    wireBtn.addEventListener('click', () => {
+      wire = !wire;
+      wireBtn.textContent = wire ? 'shaded' : 'wireframe';
+      wireBtn.classList.toggle('on', wire);
+      creaseBtn.disabled = wire;
+      render();
+    });
+    creaseBtn.addEventListener('click', () => {
+      creases = !creases;
+      creaseBtn.classList.toggle('on', creases);
+      render();
+    });
+
+    // ---- move the sun by dragging the map ----
+    let dragging = false;
+    function sunFrom(ev) {
+      const r = canvas.getBoundingClientRect();
+      const rect = mapRect();
+      const x = ev.clientX - r.left - (rect.mx + rect.size / 2);
+      const y = ev.clientY - r.top - (rect.my + rect.size / 2);
+      sunAz = ((Math.atan2(x, -y) * 180 / Math.PI) + 360) % 360;
+      const rr = Math.min(1, Math.hypot(x, y) / (rect.size * 0.5));
+      sunAlt = 72 - rr * 58;
+      sunEl.value = String(Math.round(sunAz));
+      el('sunOut').textContent = Math.round(sunAz) + '°';
+      render();
+    }
+    canvas.addEventListener('pointerdown', (e) => {
+      dragging = true; canvas.classList.add('dragging');
+      canvas.setPointerCapture(e.pointerId);
+      sunFrom(e);
+    });
+    canvas.addEventListener('pointermove', (e) => { if (dragging) sunFrom(e); });
+    const endDrag = () => { dragging = false; canvas.classList.remove('dragging'); };
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === ' ') { e.preventDefault(); playing = false; stepPhase(); updateReadout(); }
+      if (e.key.toLowerCase() === 'a') { playing = !playing; updateReadout(); }
+    });
+
+    function resize() {
+      VW = Math.max(2, stage.clientWidth | 0);
+      VH = Math.max(2, stage.clientHeight | 0);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(VW * dpr);
+      canvas.height = Math.round(VH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      render();
+    }
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resize, 120);
+    });
+
+    function frame() {
+      if (playing && !complete) {
+        if (dwell > 0) dwell--;
+        else {
+          ensureStarted();
+          if (!complete) {
+            const p = phases[pi];
+            const frames = Math.max(3, Math.round(44 - speed * 4));
+            const chunk = Math.max(1, Math.ceil(p.pts.length / frames));
+            if (advance(chunk)) dwell = Math.max(2, 14 - speed);
+          }
+        }
+        render();
+        updateReadout();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    build();
+    resize();
+    updateReadout();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pass It On — Experiment 055</title>
+<meta name="description" content="Error-diffusion dithering, made visible: watch each pixel's rounding mistake get handed to the neighbours that haven't been decided yet." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; touch-action: none; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .stage.painting canvas { cursor: crosshair; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 304px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: rgba(10, 10, 18, 0.66);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .ui::-webkit-scrollbar { width: 6px; }
+  .ui::-webkit-scrollbar-thumb { background: rgba(124,124,255,0.35); border-radius: 3px; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 11px; }
+  .control label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 0.78rem; color: #9a9ab0; letter-spacing: 0.04em; margin-bottom: 5px;
+  }
+  .control label output { color: #cfcfff; font-variant-numeric: tabular-nums; }
+  .control input[type="range"] {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(124,124,255,0.55), rgba(255,124,195,0.55));
+    outline: none;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control select {
+    width: 100%;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #e9e9f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.84rem;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+  }
+  .control select:disabled { opacity: 0.4; cursor: default; }
+  .control select option { background: #13131d; color: #e9e9f0; }
+
+  .btn-row, .seg { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.76rem; cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.on { background: linear-gradient(120deg, rgba(124,124,255,0.42), rgba(255,124,195,0.34)); color: #fff; border-color: rgba(179,136,255,0.7); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.wide { width: 100%; }
+
+  .note { font-size: 0.68rem; line-height: 1.5; color: #6f6f8c; letter-spacing: 0.01em; }
+  .note b { color: #ff7cc3; font-weight: 600; }
+  .note i { color: #7c7cff; font-style: normal; font-weight: 600; }
+
+  .readout {
+    margin-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 10px;
+    display: grid; grid-template-columns: auto 1fr; gap: 3px 10px;
+    font-size: 0.72rem; line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout dt { color: #7a7a90; letter-spacing: 0.05em; }
+  .readout dd { color: #cfcfff; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .readout dd.warm { color: #ff7cc3; }
+
+  /* The story button */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+    font-family: inherit;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+
+  @media (max-width: 720px) {
+    .ui { left: 12px; top: 12px; right: 12px; width: auto; max-width: none; padding: 16px 18px; max-height: calc(100vh - 24px); }
+    .story-card { padding: 28px 24px; }
+    .hint { bottom: 12px; font-size: 0.7rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="view"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Pass It On</h1>
+    <p class="sub">Experiment № 055 · July 23, 2026</p>
+
+    <div class="controls">
+      <div class="control">
+        <label>source image</label>
+        <select id="srcSel">
+          <option value="ramp" selected>diagonal grey ramp</option>
+          <option value="sphere">shaded sphere</option>
+          <option value="clouds">soft noise field</option>
+          <option value="zone">zone plate (torture test)</option>
+          <option value="blobs">soft blob study</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label>kernel</label>
+        <select id="kernSel">
+          <option value="threshold">plain threshold (no error)</option>
+          <option value="bayer">ordered Bayer 8×8</option>
+          <option value="fs" selected>Floyd–Steinberg</option>
+          <option value="sierralite">Sierra Lite</option>
+          <option value="sierra">Sierra (3-row)</option>
+          <option value="atkinson">Atkinson</option>
+          <option value="jjn">Jarvis–Judice–Ninke</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label>palette <output id="lvlOut">2 levels · 1-bit</output></label>
+        <input type="range" id="lvl" min="2" max="8" step="1" value="2" />
+      </div>
+
+      <div class="control">
+        <label>dot size (zoom) <output id="cellOut">3 px</output></label>
+        <input type="range" id="cell" min="2" max="14" step="1" value="3" />
+      </div>
+
+      <div class="control">
+        <label>scan speed <output id="spdOut">5 rows/frame</output></label>
+        <input type="range" id="spd" min="1" max="120" step="1" value="5" />
+      </div>
+
+      <div class="seg" id="orderSeg">
+        <button class="btn" data-serp="0">raster</button>
+        <button class="btn on" data-serp="1">serpentine</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn on" id="animBtn">animate: on</button>
+        <button class="btn on pink" id="errBtn">error field: on</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="paintBtn">✎ paint: off</button>
+        <button class="btn" id="brushBtn">brush: lighten</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="replayBtn">↻ replay scan</button>
+        <button class="btn" id="clearBtn">clear paint</button>
+      </div>
+
+      <button class="btn wide" id="cmpBtn">⊞ compare six kernels</button>
+
+      <p class="note" id="note">Ahead of the scan line, colour is owed error: <b>pink</b> = this pixel is due to be brightened, <i>indigo</i> = due to be darkened.</p>
+
+      <dl class="readout">
+        <dt>grid</dt><dd id="rGrid">—</dd>
+        <dt>scan</dt><dd id="rScan">—</dd>
+        <dt>per-pixel MAE</dt><dd id="rMae">—</dd>
+        <dt>local MAE (5×5)</dt><dd class="warm" id="rLmae">—</dd>
+        <dt>ink coverage</dt><dd id="rInk">—</dd>
+        <dt>source darkness</dt><dd id="rSrc">—</dd>
+      </dl>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">hover to magnify · <b>P</b> paint · <b>S</b> scan order · <b>C</b> compare · <b>H</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 055 · The story</p>
+      <h2>Pass It On</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I kept looking at the soft gradients in these pages and noticing the banding — the moment a smooth ramp gives up and becomes stripes. The old fix is dithering, and error diffusion is my favourite version of it because it is so unusually honest. Every other rounding routine I write quietly throws the remainder away. Floyd–Steinberg writes the remainder down and hands it to the neighbours who haven't been decided yet. I wanted to actually watch that debt travel rather than just read the four magic numbers 7, 3, 5, 1 off a diagram again.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The error field ahead of the scan line, which is the whole point of building this: a haze of pink and indigo that the algorithm is walking into, made entirely of its own past mistakes. And the comparisons. Plain threshold collapses the ramp into two flat slabs. Bayer keeps its crosshatch composure and never quite stops looking like wallpaper. Atkinson deliberately drops a quarter of the error on the floor, which is technically wrong and looks gorgeous — airier whites, the classic early-Mac texture. Jarvis smears the debt over twelve neighbours and comes out silky. Best of all is the raster/serpentine toggle: in strict left-to-right order the error always drifts the same way and you get faint diagonal worms crawling through the midtones, and flipping to serpentine — just reversing every other row — makes them dissolve. One line of code, visible with your eyes.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Watch the two error numbers move in opposite directions. Per-pixel, a dithered image is <em>terrible</em> — mean absolute error near 60 out of 255, far worse than plain thresholding at some settings. Blur both images by 5×5 first and the error collapses to almost nothing. That's the trade: dithering gives up being right about any single pixel in exchange for being right about every small neighbourhood, and your eye — which is a blur filter — does the reconstruction for free. It's a good pattern to keep around outside of graphics. When you can't be accurate at full resolution, don't round and forget; round, and carry the remainder forward to whoever hasn't committed yet.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  (() => {
+    const stage = document.getElementById('stage');
+    const cv = document.getElementById('view');
+    const ctx = cv.getContext('2d', { alpha: false });
+
+    const $ = (id) => document.getElementById(id);
+    const clamp01 = (v) => v < 0 ? 0 : (v > 1 ? 1 : v);
+
+    // ---------------------------------------------------------------- kernels
+    const KERNELS = {
+      threshold:  { label: 'threshold',        type: 'none' },
+      bayer:      { label: 'Bayer 8×8',        type: 'ordered' },
+      fs:         { label: 'Floyd–Steinberg',  type: 'diffuse', div: 16,
+                    taps: [[1,0,7],[-1,1,3],[0,1,5],[1,1,1]] },
+      sierralite: { label: 'Sierra Lite',      type: 'diffuse', div: 4,
+                    taps: [[1,0,2],[-1,1,1],[0,1,1]] },
+      sierra:     { label: 'Sierra',           type: 'diffuse', div: 32,
+                    taps: [[1,0,5],[2,0,3],[-2,1,2],[-1,1,4],[0,1,5],[1,1,4],[2,1,2],[-1,2,2],[0,2,3],[1,2,2]] },
+      atkinson:   { label: 'Atkinson',         type: 'diffuse', div: 8,
+                    taps: [[1,0,1],[2,0,1],[-1,1,1],[0,1,1],[1,1,1],[0,2,1]] },
+      jjn:        { label: 'Jarvis–J–N',       type: 'diffuse', div: 48,
+                    taps: [[1,0,7],[2,0,5],[-2,1,3],[-1,1,5],[0,1,7],[1,1,5],[2,1,3],[-2,2,1],[-1,2,3],[0,2,5],[1,2,3],[2,2,1]] }
+    };
+    const COMPARE = ['threshold', 'bayer', 'fs', 'atkinson', 'sierra', 'jjn'];
+
+    // Bayer 8×8 ordered matrix, built by recursive doubling.
+    const BAYER = (() => {
+      let m = [[0]];
+      while (m.length < 8) {
+        const n = m.length, o = [];
+        for (let y = 0; y < n * 2; y++) o.push(new Array(n * 2).fill(0));
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+          const v = m[y][x] * 4;
+          o[y][x] = v; o[y][x + n] = v + 2; o[y + n][x] = v + 3; o[y + n][x + n] = v + 1;
+        }
+        m = o;
+      }
+      const f = new Float32Array(64);
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) f[y * 8 + x] = (m[y][x] + 0.5) / 64;
+      return f;
+    })();
+
+    // ---------------------------------------------------------------- state
+    const S = {
+      src: 'ramp', kern: 'fs', levels: 2, cell: 3, speed: 5,
+      serp: true, anim: true, showErr: true, compare: false,
+      paint: false, lighten: true
+    };
+    const strokes = [];
+
+    let dpr = 1, gw = 0, gh = 0, cellPx = 3;
+    let source = null, job = null, met = null;
+    let buf = null, bufCtx = null, img = null;
+    let tiles = [];
+    let dirty = true, needsRender = true;
+    const loupe = { on: false, u: 0.5, v: 0.5, px: 0, py: 0 };
+
+    // ---------------------------------------------------------------- noise
+    function hash2(x, y) {
+      let n = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263);
+      n = Math.imul(n ^ (n >>> 13), 1274126177);
+      return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
+    }
+    function vnoise(x, y) {
+      const xi = Math.floor(x), yi = Math.floor(y);
+      const xf = x - xi, yf = y - yi;
+      const sx = xf * xf * (3 - 2 * xf), sy = yf * yf * (3 - 2 * yf);
+      const a = hash2(xi, yi), b = hash2(xi + 1, yi);
+      const c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+      return (a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy;
+    }
+    function fbm(x, y) {
+      let amp = 0.5, f = 1, s = 0, norm = 0;
+      for (let o = 0; o < 5; o++) { s += amp * vnoise(x * f, y * f); norm += amp; amp *= 0.5; f *= 2.03; }
+      return s / norm;
+    }
+
+    // ---------------------------------------------------------------- source
+    function field(name, u, v, a) {
+      const cx = (u - 0.5) * 2 * a, cy = (v - 0.5) * 2;
+      if (name === 'ramp') {
+        return clamp01(0.52 * u + 0.48 * (1 - v));
+      }
+      if (name === 'sphere') {
+        const R = 0.78, r2 = cx * cx + cy * cy;
+        if (r2 < R * R) {
+          const z = Math.sqrt(R * R - r2);
+          const nx = cx / R, ny = cy / R, nz = z / R;
+          const lx = -0.44, ly = -0.62, lz = 0.65;
+          const diff = Math.max(0, nx * lx + ny * ly + nz * lz);
+          const hx = lx, hy = ly, hz = lz + 1;
+          const hl = Math.sqrt(hx * hx + hy * hy + hz * hz);
+          const sp = Math.pow(Math.max(0, (nx * hx + ny * hy + nz * hz) / hl), 46);
+          const rim = Math.pow(1 - nz, 3) * 0.14;
+          return clamp01(0.045 + 0.80 * Math.pow(diff, 0.9) + 0.8 * sp + rim);
+        }
+        let bg = 0.30 * (1 - v) + 0.02;
+        const sx = cx / 1.05, sy = (cy - 0.9) / 0.17;
+        bg *= 1 - 0.7 * Math.exp(-(sx * sx + sy * sy) * 2.0);
+        return clamp01(bg);
+      }
+      if (name === 'clouds') {
+        return clamp01((fbm(u * 3.4 * a + 11.3, v * 3.4 + 4.7) - 0.5) * 2.05 + 0.5);
+      }
+      if (name === 'zone') {
+        const r2 = cx * cx + cy * cy;
+        const w = 0.5 + 0.5 * Math.cos(r2 * 27);
+        return clamp01(0.5 + (w - 0.5) * (0.22 + 0.78 * Math.exp(-r2 * 0.42)));
+      }
+      // blobs
+      const pts = [[-0.42,-0.30,0.58],[0.34,-0.10,0.64],[0.02,0.44,0.72],[-0.62,0.38,0.42],[0.62,0.50,0.38]];
+      let s = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const dx = cx - pts[i][0], dy = cy - pts[i][1], rr = pts[i][2];
+        s += Math.exp(-(dx * dx + dy * dy) / (rr * rr * 0.62));
+      }
+      s = s * 0.62;
+      return clamp01(s * s * (3 - 2 * Math.min(1, s)) * 0.55 + 0.02);
+    }
+
+    function buildSource(w, h, name) {
+      const a = w / h;
+      const arr = new Float32Array(w * h);
+      for (let y = 0; y < h; y++) {
+        const v = (y + 0.5) / h;
+        for (let x = 0; x < w; x++) arr[y * w + x] = field(name, (x + 0.5) / w, v, a);
+      }
+      // user paint, stored in normalised image space so it survives every rebuild
+      for (let s = 0; s < strokes.length; s++) {
+        const st = strokes[s];
+        const ru = st.r / a;
+        const x0 = Math.max(0, Math.floor((st.u - ru) * w)), x1 = Math.min(w - 1, Math.ceil((st.u + ru) * w));
+        const y0 = Math.max(0, Math.floor((st.v - st.r) * h)), y1 = Math.min(h - 1, Math.ceil((st.v + st.r) * h));
+        for (let y = y0; y <= y1; y++) {
+          const dv = (y + 0.5) / h - st.v;
+          for (let x = x0; x <= x1; x++) {
+            const du = ((x + 0.5) / w - st.u) * a;
+            const d2 = (du * du + dv * dv) / (st.r * st.r);
+            if (d2 > 1) continue;
+            const fall = Math.exp(-d2 * 2.6) - 0.074;
+            arr[y * w + x] = clamp01(arr[y * w + x] + st.a * fall);
+          }
+        }
+      }
+      return arr;
+    }
+
+    // ---------------------------------------------------------------- dither
+    function quant(v, L) {
+      let k = Math.round(v * (L - 1));
+      if (k < 0) k = 0; else if (k > L - 1) k = L - 1;
+      return k / (L - 1);
+    }
+
+    function makeJob(src, w, h, kernId, L, serp) {
+      return { src, w, h, k: KERNELS[kernId], L, serp,
+               out: new Float32Array(w * h), err: new Float32Array(w * h), row: 0 };
+    }
+
+    function processRow(j, y) {
+      const { src, out, err, w, h, L, k } = j;
+      const dir = (j.serp && (y & 1)) ? -1 : 1;
+      const diffuse = k.type === 'diffuse';
+      const taps = k.taps, div = k.div;
+      for (let n = 0; n < w; n++) {
+        const x = dir === 1 ? n : w - 1 - n;
+        const i = y * w + x;
+        let old = src[i];
+        if (k.type === 'ordered') old += (BAYER[(y & 7) * 8 + (x & 7)] - 0.5) / (L - 1);
+        else if (diffuse) old += err[i];
+        const q = quant(old, L);
+        out[i] = q;
+        if (!diffuse) continue;
+        const e = old - q;
+        if (e === 0) continue;
+        for (let t = 0; t < taps.length; t++) {
+          const nx = x + taps[t][0] * dir, ny = y + taps[t][1];
+          if (nx < 0 || nx >= w || ny >= h) continue;
+          err[ny * w + nx] += e * taps[t][2] / div;
+        }
+      }
+    }
+
+    function stepJob(j, rows) {
+      for (let n = 0; n < rows && j.row < j.h; n++) processRow(j, j.row++);
+      return j.row >= j.h;
+    }
+
+    // ---------------------------------------------------------------- metrics
+    function boxBlur(a, w, h, r) {
+      const t = new Float32Array(w * h), o = new Float32Array(w * h);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          let s = 0, c = 0;
+          for (let k = -r; k <= r; k++) {
+            const xx = x + k; if (xx < 0 || xx >= w) continue;
+            s += a[y * w + xx]; c++;
+          }
+          t[y * w + x] = s / c;
+        }
+      }
+      for (let x = 0; x < w; x++) {
+        for (let y = 0; y < h; y++) {
+          let s = 0, c = 0;
+          for (let k = -r; k <= r; k++) {
+            const yy = y + k; if (yy < 0 || yy >= h) continue;
+            s += t[yy * w + x]; c++;
+          }
+          o[y * w + x] = s / c;
+        }
+      }
+      return o;
+    }
+
+    function metrics(j) {
+      const { src, out, w, h } = j, N = w * h;
+      let mae = 0, ink = 0, sink = 0;
+      for (let i = 0; i < N; i++) {
+        mae += Math.abs(out[i] - src[i]);
+        ink += out[i]; sink += src[i];
+      }
+      const bo = boxBlur(out, w, h, 2), bs = boxBlur(src, w, h, 2);
+      let lmae = 0;
+      for (let i = 0; i < N; i++) lmae += Math.abs(bo[i] - bs[i]);
+      return {
+        mae: (mae / N) * 255,
+        lmae: (lmae / N) * 255,
+        ink: (1 - ink / N) * 100,
+        sink: (1 - sink / N) * 100
+      };
+    }
+
+    // ---------------------------------------------------------------- pixels
+    const D0 = [7, 7, 13], D1 = [242, 240, 255];
+    const PINK = [255, 124, 195], IND = [124, 124, 255];
+
+    function fillDone(data, out, N) {
+      for (let i = 0; i < N; i++) {
+        const q = out[i], p = i << 2;
+        data[p]     = D0[0] + (D1[0] - D0[0]) * q;
+        data[p + 1] = D0[1] + (D1[1] - D0[1]) * q;
+        data[p + 2] = D0[2] + (D1[2] - D0[2]) * q;
+        data[p + 3] = 255;
+      }
+    }
+
+    function paintBuffer() {
+      if (!job) return;
+      const d = img.data, out = job.out, err = job.err, src = job.src;
+      const head = job.row, live = job.row < gh;
+      for (let y = 0; y < gh; y++) {
+        const done = y < head;
+        const isHead = live && y === head;
+        for (let x = 0; x < gw; x++) {
+          const i = y * gw + x, p = i << 2;
+          let r, g, b;
+          if (done) {
+            const q = out[i];
+            r = D0[0] + (D1[0] - D0[0]) * q;
+            g = D0[1] + (D1[1] - D0[1]) * q;
+            b = D0[2] + (D1[2] - D0[2]) * q;
+          } else {
+            const s = src[i] * 0.30;
+            r = D0[0] + (D1[0] - D0[0]) * s;
+            g = D0[1] + (D1[1] - D0[1]) * s;
+            b = D0[2] + (D1[2] - D0[2]) * s;
+            if (S.showErr) {
+              const e = err[i];
+              if (e !== 0) {
+                const t = Math.min(1, Math.pow(Math.abs(e) * 2.2, 0.7));
+                const c = e > 0 ? PINK : IND;
+                r += (c[0] - r) * t; g += (c[1] - g) * t; b += (c[2] - b) * t;
+              }
+            }
+            if (isHead) { r += (255 - r) * 0.6; g += (255 - g) * 0.6; b += (255 - b) * 0.6; }
+          }
+          d[p] = r; d[p + 1] = g; d[p + 2] = b; d[p + 3] = 255;
+        }
+      }
+      bufCtx.putImageData(img, 0, 0);
+    }
+
+    // ---------------------------------------------------------------- layout
+    function rr(c, x, y, w, h, r) {
+      c.beginPath();
+      c.moveTo(x + r, y);
+      c.arcTo(x + w, y, x + w, y + h, r);
+      c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r);
+      c.arcTo(x, y, x + w, y, r);
+      c.closePath();
+    }
+
+    function resize() {
+      const rect = stage.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.max(2, Math.round(rect.width * dpr));
+      cv.height = Math.max(2, Math.round(rect.height * dpr));
+      cellPx = S.cell;
+      gw = Math.max(32, Math.floor(rect.width / cellPx));
+      gh = Math.max(32, Math.floor(rect.height / cellPx));
+      // keep the work bounded on very large displays
+      while (gw * gh > 420000) { gw = Math.floor(gw * 0.9); gh = Math.floor(gh * 0.9); }
+      buf = document.createElement('canvas');
+      buf.width = gw; buf.height = gh;
+      bufCtx = buf.getContext('2d');
+      img = bufCtx.createImageData(gw, gh);
+      rebuild();
+    }
+
+    // ---------------------------------------------------------------- rebuild
+    function rebuild() {
+      if (S.compare) { buildCompare(); needsRender = true; return; }
+      source = buildSource(gw, gh, S.src);
+      job = makeJob(source, gw, gh, S.kern, S.levels, S.serp);
+      met = null;
+      if (!S.anim) { stepJob(job, gh); met = metrics(job); }
+      dirty = true; needsRender = true;
+      readout();
+    }
+
+    function buildCompare() {
+      const pad = Math.round(10 * dpr);
+      const wide = cv.width / cv.height > 1.15;
+      const cols = wide ? 3 : 2, rows = Math.ceil(COMPARE.length / cols);
+      const left = (window.innerWidth > 900) ? Math.round(348 * dpr) : pad;
+      const lh = Math.round(24 * dpr);
+      const availW = cv.width - left - pad * cols;
+      const tw = Math.floor(availW / cols);
+      const th = Math.floor((cv.height - pad * (rows + 1)) / rows);
+      tiles = [];
+      const cellDev = Math.max(2, cellPx) * dpr;
+      for (let n = 0; n < COMPARE.length; n++) {
+        const c = n % cols, r = Math.floor(n / cols);
+        const x = left + c * (tw + pad), y = pad + r * (th + pad);
+        const ih = th - lh;
+        const w = Math.max(28, Math.floor(tw / cellDev));
+        const h = Math.max(20, Math.floor(ih / cellDev));
+        const s = buildSource(w, h, S.src);
+        const j = makeJob(s, w, h, COMPARE[n], S.levels, S.serp);
+        stepJob(j, h);
+        const m = metrics(j);
+        const oc = document.createElement('canvas');
+        oc.width = w; oc.height = h;
+        const octx = oc.getContext('2d');
+        const id = octx.createImageData(w, h);
+        fillDone(id.data, j.out, w * h);
+        octx.putImageData(id, 0, 0);
+        tiles.push({ x, y, tw, th, ih, lh, cv: oc, name: KERNELS[COMPARE[n]].label, m });
+      }
+      readout();
+    }
+
+    // ---------------------------------------------------------------- render
+    function render() {
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      if (S.compare) { renderCompare(); return; }
+      if (!job) return;
+      ctx.drawImage(buf, 0, 0, gw, gh, 0, 0, cv.width, cv.height);
+      if (loupe.on && !S.paint) drawLoupe();
+    }
+
+    function renderCompare() {
+      const f = Math.round(12 * dpr);
+      for (let i = 0; i < tiles.length; i++) {
+        const t = tiles[i];
+        ctx.save();
+        rr(ctx, t.x, t.y, t.tw, t.th, 12 * dpr);
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        rr(ctx, t.x, t.y + t.lh, t.tw, t.ih, 10 * dpr);
+        ctx.clip();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(t.cv, 0, 0, t.cv.width, t.cv.height, t.x, t.y + t.lh, t.tw, t.ih);
+        ctx.restore();
+
+        ctx.save();
+        rr(ctx, t.x + 0.5, t.y + 0.5, t.tw - 1, t.th - 1, 12 * dpr);
+        ctx.strokeStyle = 'rgba(124,124,255,0.32)';
+        ctx.lineWidth = Math.max(1, dpr);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.font = '600 ' + f + 'px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#cfcfff';
+        ctx.fillText(t.name, t.x + 10 * dpr, t.y + t.lh * 0.52);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#ff7cc3';
+        ctx.fillText('local ' + t.m.lmae.toFixed(1) + ' · ink ' + t.m.ink.toFixed(1) + '%',
+                     t.x + t.tw - 10 * dpr, t.y + t.lh * 0.52);
+        ctx.textAlign = 'left';
+      }
+    }
+
+    function drawLoupe() {
+      const mag = 5.5;
+      const size = Math.round(Math.min(160, Math.min(window.innerWidth, window.innerHeight) * 0.32) * dpr);
+      const cellDev = cv.width / gw;
+      const nx = Math.max(4, size / (cellDev * mag));
+      const ny = nx * (size / size);
+      let sx = loupe.u * gw - nx / 2, sy = loupe.v * gh - ny / 2;
+      sx = Math.max(0, Math.min(gw - nx, sx));
+      sy = Math.max(0, Math.min(gh - ny, sy));
+      let dx = loupe.px * dpr + 28 * dpr, dy = loupe.py * dpr + 28 * dpr;
+      if (dx + size > cv.width - 8 * dpr) dx = loupe.px * dpr - size - 28 * dpr;
+      if (dy + size > cv.height - 8 * dpr) dy = loupe.py * dpr - size - 28 * dpr;
+      dx = Math.max(8 * dpr, dx); dy = Math.max(8 * dpr, dy);
+
+      ctx.save();
+      rr(ctx, dx, dy, size, size, 14 * dpr);
+      ctx.clip();
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(dx, dy, size, size);
+      ctx.drawImage(buf, sx, sy, nx, ny, dx, dy, size, size);
+      ctx.restore();
+
+      ctx.save();
+      rr(ctx, dx + 0.5, dy + 0.5, size - 1, size - 1, 14 * dpr);
+      ctx.strokeStyle = 'rgba(179,136,255,0.7)';
+      ctx.lineWidth = Math.max(1.2, 1.2 * dpr);
+      ctx.stroke();
+      ctx.restore();
+
+      // little frame around the magnified region
+      const rx = (sx / gw) * cv.width, ry = (sy / gh) * cv.height;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,124,195,0.6)';
+      ctx.lineWidth = Math.max(1, dpr);
+      ctx.strokeRect(rx, ry, (nx / gw) * cv.width, (ny / gh) * cv.height);
+      ctx.restore();
+    }
+
+    // ---------------------------------------------------------------- readout
+    const rGrid = $('rGrid'), rScan = $('rScan'), rMae = $('rMae'),
+          rLmae = $('rLmae'), rInk = $('rInk'), rSrc = $('rSrc');
+
+    function readout() {
+      if (S.compare) {
+        rGrid.textContent = '6 tiles · same source';
+        rScan.textContent = 'instant';
+        rMae.textContent = '—';
+        rLmae.textContent = 'per tile ↗';
+        rInk.textContent = 'per tile ↗';
+        rSrc.textContent = tiles.length ? tiles[0].m.sink.toFixed(1) + '%' : '—';
+        return;
+      }
+      if (!job) return;
+      rGrid.textContent = gw + '×' + gh;
+      rScan.textContent = Math.round((job.row / gh) * 100) + '%';
+      if (met) {
+        rMae.textContent = met.mae.toFixed(1);
+        rLmae.textContent = met.lmae.toFixed(1);
+        rInk.textContent = met.ink.toFixed(1) + '%';
+        rSrc.textContent = met.sink.toFixed(1) + '%';
+      } else {
+        rMae.textContent = '…'; rLmae.textContent = '…';
+        rInk.textContent = '…'; rSrc.textContent = '…';
+      }
+    }
+
+    // ---------------------------------------------------------------- loop
+    let last = 0;
+    function tick(t) {
+      requestAnimationFrame(tick);
+      if (!S.compare && job && job.row < gh) {
+        if (S.anim) {
+          const done = stepJob(job, S.speed);
+          dirty = true;
+          if (done) { met = metrics(job); }
+        } else {
+          stepJob(job, gh); met = metrics(job); dirty = true;
+        }
+        readout();
+      }
+      if (dirty) { paintBuffer(); dirty = false; needsRender = true; }
+      if (needsRender || loupe.on) { render(); needsRender = false; }
+      last = t;
+    }
+
+    // ---------------------------------------------------------------- input
+    function pos(e) {
+      const r = stage.getBoundingClientRect();
+      return { u: (e.clientX - r.left) / r.width, v: (e.clientY - r.top) / r.height,
+               px: e.clientX - r.left, py: e.clientY - r.top };
+    }
+
+    function addStroke(p) {
+      const r = 0.045;
+      const lastS = strokes[strokes.length - 1];
+      if (lastS && Math.hypot(lastS.u - p.u, lastS.v - p.v) < r * 0.16 && lastS.a === (S.lighten ? 0.42 : -0.42)) return;
+      strokes.push({ u: p.u, v: p.v, r, a: S.lighten ? 0.42 : -0.42 });
+      if (strokes.length > 900) strokes.shift();
+      rebuild();
+    }
+
+    let down = false;
+    stage.addEventListener('pointerdown', (e) => {
+      down = true;
+      const p = pos(e);
+      if (S.paint && !S.compare) { stage.setPointerCapture(e.pointerId); addStroke(p); }
+      else { loupe.on = !S.compare; loupe.u = p.u; loupe.v = p.v; loupe.px = p.px; loupe.py = p.py; needsRender = true; }
+    });
+    stage.addEventListener('pointermove', (e) => {
+      const p = pos(e);
+      if (S.paint && !S.compare) { if (down) addStroke(p); return; }
+      if (S.compare) return;
+      if (e.pointerType === 'mouse' || down) {
+        loupe.on = true; loupe.u = p.u; loupe.v = p.v; loupe.px = p.px; loupe.py = p.py;
+        needsRender = true;
+      }
+    });
+    const endPointer = () => { down = false; needsRender = true; };
+    stage.addEventListener('pointerup', endPointer);
+    stage.addEventListener('pointercancel', endPointer);
+    stage.addEventListener('pointerleave', () => { down = false; loupe.on = false; needsRender = true; });
+
+    // ---------------------------------------------------------------- controls
+    const lvlOut = $('lvlOut'), cellOut = $('cellOut'), spdOut = $('spdOut');
+    const kernSel = $('kernSel'), note = $('note');
+
+    function levelLabel(L) {
+      if (L === 2) return '2 levels · 1-bit';
+      return L + ' levels';
+    }
+    function syncNote() {
+      if (S.compare) {
+        note.innerHTML = 'Same source, same palette, six different answers. <b>local</b> is mean absolute error after a 5×5 blur — what your eye roughly sees.';
+      } else if (KERNELS[S.kern].type !== 'diffuse') {
+        note.innerHTML = 'This kernel carries <b>no error at all</b> — nothing to diffuse, so the field ahead of the scan line stays empty.';
+      } else {
+        note.innerHTML = 'Ahead of the scan line, colour is owed error: <b>pink</b> = this pixel is due to be brightened, <i>indigo</i> = due to be darkened.';
+      }
+    }
+
+    $('srcSel').addEventListener('change', (e) => { S.src = e.target.value; rebuild(); });
+    kernSel.addEventListener('change', (e) => { S.kern = e.target.value; syncNote(); rebuild(); });
+    $('lvl').addEventListener('input', (e) => {
+      S.levels = +e.target.value; lvlOut.textContent = levelLabel(S.levels); rebuild();
+    });
+    $('cell').addEventListener('input', (e) => {
+      S.cell = +e.target.value; cellOut.textContent = S.cell + ' px'; resize();
+    });
+    $('spd').addEventListener('input', (e) => {
+      S.speed = +e.target.value; spdOut.textContent = S.speed + ' rows/frame';
+    });
+
+    document.querySelectorAll('#orderSeg .btn').forEach((b) => {
+      b.addEventListener('click', () => {
+        S.serp = b.dataset.serp === '1';
+        document.querySelectorAll('#orderSeg .btn').forEach((o) => o.classList.toggle('on', o === b));
+        rebuild();
+      });
+    });
+
+    const animBtn = $('animBtn'), errBtn = $('errBtn'), paintBtn = $('paintBtn'),
+          brushBtn = $('brushBtn'), cmpBtn = $('cmpBtn');
+
+    function setAnim(v) {
+      S.anim = v;
+      animBtn.textContent = 'animate: ' + (v ? 'on' : 'off');
+      animBtn.classList.toggle('on', v);
+    }
+    function setErr(v) {
+      S.showErr = v;
+      errBtn.textContent = 'error field: ' + (v ? 'on' : 'off');
+      errBtn.classList.toggle('on', v);
+      dirty = true;
+    }
+    function setPaint(v) {
+      S.paint = v && !S.compare;
+      paintBtn.textContent = '✎ paint: ' + (S.paint ? 'on' : 'off');
+      paintBtn.classList.toggle('on', S.paint);
+      stage.classList.toggle('painting', S.paint);
+      if (S.paint) { loupe.on = false; needsRender = true; }
+    }
+    function setCompare(v) {
+      S.compare = v;
+      cmpBtn.classList.toggle('on', v);
+      cmpBtn.textContent = v ? '⊞ back to one kernel' : '⊞ compare six kernels';
+      kernSel.disabled = v;
+      if (v) setPaint(false);
+      loupe.on = false;
+      syncNote();
+      rebuild();
+    }
+
+    animBtn.addEventListener('click', () => { setAnim(!S.anim); if (S.anim) rebuild(); });
+    errBtn.addEventListener('click', () => setErr(!S.showErr));
+    paintBtn.addEventListener('click', () => setPaint(!S.paint));
+    brushBtn.addEventListener('click', () => {
+      S.lighten = !S.lighten;
+      brushBtn.textContent = 'brush: ' + (S.lighten ? 'lighten' : 'darken');
+      brushBtn.classList.toggle('pink', !S.lighten);
+    });
+    cmpBtn.addEventListener('click', () => setCompare(!S.compare));
+    $('replayBtn').addEventListener('click', () => rebuild());
+    $('clearBtn').addEventListener('click', () => { strokes.length = 0; rebuild(); });
+
+    window.addEventListener('keydown', (e) => {
+      if (story.classList.contains('open')) return;
+      const k = e.key.toLowerCase();
+      if (k === 's') {
+        S.serp = !S.serp;
+        document.querySelectorAll('#orderSeg .btn').forEach((o) => o.classList.toggle('on', (o.dataset.serp === '1') === S.serp));
+        rebuild();
+      } else if (k === 'p') setPaint(!S.paint);
+      else if (k === 'e') setErr(!S.showErr);
+      else if (k === 'c') setCompare(!S.compare);
+      else if (k === 'r') rebuild();
+    });
+
+    let rt = 0;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 160); });
+
+    // ---------------------------------------------------------------- go
+    lvlOut.textContent = levelLabel(S.levels);
+    cellOut.textContent = S.cell + ' px';
+    spdOut.textContent = S.speed + ' rows/frame';
+    syncNote();
+    resize();
+    requestAnimationFrame(tick);
+  })();
+</script>
+</body>
+</html>

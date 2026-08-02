@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quincunx — Experiment 054</title>
+<meta name="description" content="A Galton board where every peg is a real coin flip: beads pile into a bell curve while the exact binomial and the Gaussian limit are drawn on top — then bias the pegs and watch what breaks." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage: where the experiment lives ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+  /* ---- Floating panel (title + controls + story button) ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 300px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .control label {
+    display: flex; justify-content: space-between;
+    font-size: 0.78rem; color: #9a9ab0; letter-spacing: 0.04em; margin-bottom: 5px;
+  }
+  .control label output { color: #cfcfff; font-variant-numeric: tabular-nums; }
+  .control input[type="range"] {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(124,124,255,0.55), rgba(255,124,195,0.55));
+    outline: none;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.toggle { opacity: 0.45; }
+  .btn.toggle.on { opacity: 1; background: rgba(124,124,255,0.3); }
+  .fine { font-size: 0.7rem; color: #74748c; line-height: 1.5; letter-spacing: 0.02em; }
+
+  /* ---- Readouts panel ---- */
+  .stats {
+    position: fixed; z-index: 10;
+    right: 24px; top: 24px;
+    width: 272px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .stats.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .stats h2 { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: #7c7cff; font-weight: 600; margin-bottom: 12px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 0.78rem; padding: 3px 0; }
+  .row span { color: #9a9ab0; }
+  .row b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row b.dim { color: #8f8fa8; font-weight: 500; }
+  .sep { height: 1px; background: rgba(255,255,255,0.09); margin: 10px 0; }
+  .key { display: flex; align-items: center; gap: 8px; font-size: 0.74rem; color: #9a9ab0; padding: 2px 0; }
+  .swatch { width: 16px; height: 3px; border-radius: 2px; flex: none; }
+  .note { margin-top: 12px; font-size: 0.68rem; line-height: 1.55; color: #6f6f88; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.76rem; color: rgba(255,255,255,0.36); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+  }
+
+  @media (max-width: 900px) {
+    .ui { left: 12px; top: 12px; right: 12px; width: auto; max-height: 43vh; padding: 15px 16px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 4px; }
+    .sub { margin-bottom: 12px; }
+    .stats {
+      right: 12px; left: 12px; top: auto; bottom: 34px; width: auto;
+      max-height: 33vh; padding: 13px 15px;
+    }
+    .stats .grid2 { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Quincunx</h1>
+    <p class="sub">Experiment № 054 · July 22, 2026</p>
+
+    <div class="controls">
+      <div class="control">
+        <label>rows of pegs (n) <output id="rowsOut">14</output></label>
+        <input type="range" id="rows" min="3" max="30" step="1" value="14" />
+      </div>
+      <div class="control">
+        <label>peg bias — P(right) <output id="biasOut">0.500</output></label>
+        <input type="range" id="bias" min="5" max="95" step="1" value="50" />
+      </div>
+      <div class="control">
+        <label>drop rate <output id="rateOut">16 / s</output></label>
+        <input type="range" id="rate" min="0" max="100" step="1" value="48" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="dropOne">drop one</button>
+        <button class="btn pink" id="reset">reset</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn toggle on" id="tBinom">binomial</button>
+        <button class="btn toggle on" id="tGauss">gaussian</button>
+        <button class="btn toggle" id="tLog">log y</button>
+      </div>
+      <p class="fine">Every peg is a real Bernoulli(p) draw — nothing is drawn from a normal distribution anywhere in this page. Changing n or p clears the counts.</p>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="stats" id="stats">
+    <h2>readouts</h2>
+    <div class="grid2">
+      <div>
+        <div class="row"><span>beads landed</span><b id="sN">0</b></div>
+        <div class="row"><span>in flight</span><b id="sFly" class="dim">0</b></div>
+        <div class="sep"></div>
+        <div class="row"><span>sample mean</span><b id="sMean">—</b></div>
+        <div class="row"><span>np</span><b id="sMeanT" class="dim">7.000</b></div>
+        <div class="row"><span>sample sd</span><b id="sSd">—</b></div>
+        <div class="row"><span>√(npq)</span><b id="sSdT" class="dim">1.871</b></div>
+      </div>
+      <div>
+        <div class="sep"></div>
+        <div class="row"><span>χ² vs binomial</span><b id="sChi">—</b></div>
+        <div class="row"><span>df</span><b id="sDf" class="dim">—</b></div>
+        <div class="row"><span>p-value</span><b id="sP" class="dim">—</b></div>
+        <div class="row"><span>max |ô − exact|</span><b id="sDev">—</b></div>
+        <div class="sep"></div>
+        <div class="key"><span class="swatch" style="background:#ff7cc3"></span>exact binomial × N</div>
+        <div class="key"><span class="swatch" style="background:#7c7cff"></span>Gaussian N(np, npq)</div>
+      </div>
+    </div>
+    <p class="note">χ² pools the tails so every cell expects ≥ 5, and p is recomputed every frame — a low value that flickers past as beads fall is not evidence of anything. An honest test looks once, at a sample size fixed in advance.</p>
+  </div>
+
+  <p class="hint">click the board to drop one bead · space drops one · h hides the panels</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 054 · The story</p>
+      <h2>Quincunx</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Francis Galton built the original of this thing out of glass and shot in the 1870s and called it the quincunx, because he needed a way to <em>show</em> people a theorem rather than prove it at them. That's the part I wanted. The central limit theorem is the most quoted result in statistics and also the most misquoted — people hear "everything is normal" when what it actually says is far narrower and far more interesting. A Galton board is the one place you can watch the claim assemble itself in real time out of parts you can see are dumb: a peg has no memory, no plan, and no idea where the pile is. So I made a rule for this build — no cheating. There is no Gaussian sampler in this page. Each bead makes n independent Bernoulli(p) draws, one per peg, and the animation follows the exact path those draws chose. The bell you see is the sum, not a picture of the sum.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The order in which the shape arrives. The middle is basically done after a few hundred beads while the outer bins are still empty — flip on the log-y view and you can watch the tails fill in for minutes afterward, each decade costing roughly a power of ten more beads. Convergence is real but it is <em>slow</em>, and it is slowest exactly where people most want to trust it. I also love what the bias slider does: push p to 0.7 and the whole pile slides right and narrows, yet stays stubbornly bell-shaped. The location moved, the shape didn't. And then there's the χ² readout twitching around its degrees of freedom, occasionally dipping to an alarming p-value and climbing back out, which is a nice cheap lesson in why you shouldn't watch a test run.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The CLT does not promise that things are normal. It promises something specific: that a <em>sum of many small, independent effects with finite variance</em> converges to a bell. Every clause is load-bearing, and the board only satisfies them because I forced it to — the pegs can't talk to each other and no single bounce can move a bead more than one slot. Break any clause and the bell goes with it. Incomes and city sizes multiply rather than add, so they come out lognormal or power-law with tails a Gaussian would call impossible. Market moves cluster, so the effects aren't independent and the fat tails are where the ruin lives. Even here, the bell describes the <em>pile</em> and says nothing about the next bead — which is going wherever it goes. When someone reaches for a normal distribution, the question worth asking isn't "is the data bell-shaped", it's "what are the small independent things being added up, and are they really independent, and are they really small".</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') {
+      document.getElementById('ui').classList.toggle('hidden');
+      document.getElementById('stats').classList.toggle('hidden');
+    }
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- QUINCUNX: a Galton board with honest statistics ----
+  // Each bead performs n independent Bernoulli(p) trials — one coin flip per peg
+  // row — and the animation traces the exact lattice path those flips produced.
+  // The histogram is therefore a genuine sample from Binomial(n, p); the overlays
+  // are the exact pmf and its Gaussian limit, computed independently.
+  (() => {
+    const stage = document.getElementById('stage');
+    const canvas = document.createElement('canvas');
+    stage.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    const ui = document.getElementById('ui');
+    const statsEl = document.getElementById('stats');
+
+    const INDIGO = [124, 124, 255];
+    const PINK = [255, 124, 195];
+    const MAX_FLIGHT = 520;      // beads animated at once; the rest are counted instantly
+    const SEG_SPEED = 7.5;       // peg rows traversed per second
+
+    let W = 0, H = 0, dpr = 1;
+    let n = 14, p = 0.5, rate = 16;
+    let showBinom = true, showGauss = true, logY = false;
+
+    // sample state
+    let counts = new Int32Array(n + 1);
+    let total = 0, sumK = 0, sumK2 = 0;
+    let beads = [];
+    let splashes = [];
+    let pegFlash = new Float32Array((n * (n + 1)) / 2);
+    let dropAcc = 0;
+    let yMax = 1;
+
+    // theory
+    let pmf = new Float64Array(n + 1);
+
+    // geometry (recomputed in layout())
+    let bx0 = 0, bx1 = 0, by0 = 0, by1 = 0;
+    let cx = 0, spacing = 20, pegTop = 0, rowGap = 16, floorY = 0, histTop = 0, histH = 0;
+
+    const mix = (a, b, t) => [
+      Math.round(a[0] + (b[0] - a[0]) * t),
+      Math.round(a[1] + (b[1] - a[1]) * t),
+      Math.round(a[2] + (b[2] - a[2]) * t),
+    ];
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+    // ---------- exact binomial ----------
+    let logFact = [0];
+    function ensureFact(m) {
+      for (let i = logFact.length; i <= m; i++) logFact[i] = logFact[i - 1] + Math.log(i);
+    }
+    function computePmf() {
+      ensureFact(n);
+      pmf = new Float64Array(n + 1);
+      const lp = Math.log(p), lq = Math.log(1 - p);
+      for (let k = 0; k <= n; k++) {
+        pmf[k] = Math.exp(logFact[n] - logFact[k] - logFact[n - k] + k * lp + (n - k) * lq);
+      }
+    }
+
+    // ---------- regularized incomplete gamma (for the chi-square p-value) ----------
+    function gammln(x) {
+      const c = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+                 -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+      let y = x, tmp = x + 5.5;
+      tmp -= (x + 0.5) * Math.log(tmp);
+      let ser = 1.000000000190015;
+      for (let j = 0; j < 6; j++) { y += 1; ser += c[j] / y; }
+      return -tmp + Math.log(2.5066282746310005 * ser / x);
+    }
+    function gser(a, x) {
+      let ap = a, sum = 1 / a, del = sum;
+      for (let i = 0; i < 400; i++) {
+        ap += 1; del *= x / ap; sum += del;
+        if (Math.abs(del) < Math.abs(sum) * 1e-13) break;
+      }
+      return sum * Math.exp(-x + a * Math.log(x) - gammln(a));
+    }
+    function gcf(a, x) {
+      const FPMIN = 1e-300, EPS = 1e-13;
+      let b = x + 1 - a, c = 1 / FPMIN, d = 1 / b, h = d;
+      for (let i = 1; i <= 400; i++) {
+        const an = -i * (i - a);
+        b += 2;
+        d = an * d + b; if (Math.abs(d) < FPMIN) d = FPMIN;
+        c = b + an / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+        d = 1 / d;
+        const del = d * c; h *= del;
+        if (Math.abs(del - 1) < EPS) break;
+      }
+      return Math.exp(-x + a * Math.log(x) - gammln(a)) * h;
+    }
+    function gammq(a, x) {
+      if (x <= 0 || a <= 0) return 1;
+      return x < a + 1 ? 1 - gser(a, x) : gcf(a, x);
+    }
+
+    // ---------- sampling ----------
+    function resetCounts() {
+      counts = new Int32Array(n + 1);
+      total = 0; sumK = 0; sumK2 = 0;
+      beads = []; splashes = [];
+      pegFlash = new Float32Array((n * (n + 1)) / 2);
+      yMax = 1;
+      computePmf();
+    }
+
+    function land(k) {
+      counts[k]++; total++; sumK += k; sumK2 += k * k;
+    }
+
+    function spawn(animate) {
+      // n independent Bernoulli(p) trials — the whole statistical content of the page
+      const d = new Uint8Array(n);
+      const ix = new Int16Array(n + 1);
+      let k = 0;
+      for (let j = 0; j < n; j++) {
+        const b = Math.random() < p ? 1 : 0;
+        d[j] = b; k += b; ix[j + 1] = k;
+      }
+      if (animate && beads.length < MAX_FLIGHT) {
+        beads.push({ ix: ix, k: k, seg: 0, t: 0, hue: Math.random() });
+      } else {
+        land(k);
+        splashes.push({ x: binX(k), y: floorY - barPx(counts[k]), t: 0 });
+      }
+    }
+
+    // ---------- geometry ----------
+    const pegX = (r, i) => cx + (i - r / 2) * spacing;
+    const pegY = (r) => pegTop + r * rowGap;
+    const binX = (k) => cx + (k - n / 2) * spacing;
+    const pegIndex = (r, i) => (r * (r + 1)) / 2 + i;
+
+    function layout() {
+      W = Math.max(2, stage.clientWidth | 0);
+      H = Math.max(2, stage.clientHeight | 0);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const uiR = ui.getBoundingClientRect();
+      const stR = statsEl.getBoundingClientRect();
+      if (W >= 900) {
+        bx0 = uiR.right + 26; bx1 = stR.left - 26; by0 = 26; by1 = H - 36;
+      } else {
+        bx0 = 12; bx1 = W - 12; by0 = uiR.bottom + 10; by1 = stR.top - 10;
+      }
+      if (bx1 - bx0 < 140) { bx0 = 12; bx1 = W - 12; }
+      if (by1 - by0 < 140) { by0 = 12; by1 = H - 12; }
+
+      const bw = bx1 - bx0, bh = by1 - by0;
+      cx = (bx0 + bx1) / 2;
+      spacing = Math.min(bw / (n + 2), 54);
+      floorY = by1 - 16;
+      histH = Math.max(56, Math.min(bh * 0.38, bh - 80));
+      histTop = floorY - histH;
+      const pegAreaH = histTop - by0 - 34;
+      rowGap = Math.max(5, Math.min(pegAreaH / n, spacing * 1.05));
+      pegTop = by0 + 22 + Math.max(0, (pegAreaH - rowGap * n) / 2);
+    }
+
+    // ---------- scaling ----------
+    function barPx(v) {
+      if (v <= 0) return 0;
+      if (logY) {
+        const d = Math.log10(1 + yMax);
+        return d > 0 ? (Math.log10(1 + v) / d) * histH : 0;
+      }
+      return (v / yMax) * histH;
+    }
+
+    // ---------- drawing ----------
+    function drawPegs() {
+      // hopper
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      const hy = pegTop - Math.min(20, rowGap * 1.2);
+      ctx.moveTo(cx - spacing * 0.9, hy - 10);
+      ctx.lineTo(cx - spacing * 0.16, hy);
+      ctx.moveTo(cx + spacing * 0.9, hy - 10);
+      ctx.lineTo(cx + spacing * 0.16, hy);
+      ctx.stroke();
+
+      const lean = (p - 0.5) * 2;               // -1 .. 1
+      const tint = mix(INDIGO, PINK, Math.abs(lean));
+      const rad = Math.max(1.4, Math.min(3.1, spacing * 0.09));
+      for (let r = 0; r < n; r++) {
+        for (let i = 0; i <= r; i++) {
+          const f = pegFlash[pegIndex(r, i)];
+          const x = pegX(r, i), y = pegY(r);
+          ctx.beginPath();
+          ctx.arc(x, y, rad + f * 1.7, 0, Math.PI * 2);
+          ctx.fillStyle = rgba(tint, 0.3 + f * 0.65);
+          ctx.fill();
+          if (Math.abs(lean) > 0.03 && spacing > 12) {
+            // a small tick showing which way the peg is loaded
+            ctx.strokeStyle = rgba(PINK, 0.14 + Math.abs(lean) * 0.3);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + lean * spacing * 0.3, y - rowGap * 0.22);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function drawHistogram() {
+      const bw = spacing * 0.8;
+      // gridlines
+      ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const lines = [];
+      if (logY) {
+        for (let d = 0; d <= 6; d++) {
+          const v = Math.pow(10, d);
+          if (v > yMax * 1.05) break;
+          lines.push(v);
+        }
+      } else {
+        const step = niceStep(yMax / 4);
+        for (let v = step; v <= yMax * 1.001; v += step) lines.push(v);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.lineWidth = 1;
+      for (const v of lines) {
+        const y = floorY - barPx(v);
+        ctx.beginPath();
+        ctx.moveTo(bx0, y); ctx.lineTo(bx1, y);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillText(fmtCount(v), bx0 + 2, y - 6);
+      }
+
+      // bars
+      for (let k = 0; k <= n; k++) {
+        const h = barPx(counts[k]);
+        const x = binX(k) - bw / 2;
+        const col = mix(INDIGO, PINK, n > 0 ? k / n : 0.5);
+        if (h > 0.4) {
+          const g = ctx.createLinearGradient(0, floorY - h, 0, floorY);
+          g.addColorStop(0, rgba(col, 0.92));
+          g.addColorStop(1, rgba(col, 0.34));
+          ctx.fillStyle = g;
+          roundTop(x, floorY - h, bw, h, Math.min(4, bw / 2));
+          ctx.fill();
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.06)';
+          ctx.fillRect(x, floorY - 1, bw, 1);
+        }
+      }
+
+      // baseline
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(bx0, floorY + 0.5); ctx.lineTo(bx1, floorY + 0.5);
+      ctx.stroke();
+
+      // bin labels
+      const every = Math.max(1, Math.ceil((n + 1) / Math.max(2, Math.floor((bx1 - bx0) / 34))));
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      for (let k = 0; k <= n; k += every) ctx.fillText(String(k), binX(k), floorY + 4);
+    }
+
+    function drawOverlays() {
+      if (total === 0 && !showBinom && !showGauss) return;
+      const N = Math.max(total, 1);
+      const scaleN = total > 0 ? total : 0;
+
+      if (showGauss && scaleN > 0) {
+        // Gaussian limit N(np, npq), drawn in bin units so it is directly
+        // comparable to the counts. This is the CLT approximation, not a fit
+        // to the sample — the sample's own mean/sd are in the readouts.
+        const mu = n * p, sd = Math.sqrt(n * p * (1 - p));
+        ctx.strokeStyle = rgba(INDIGO, 0.95);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        const xa = binX(-0.6), xb = binX(n + 0.6);
+        for (let x = xa; x <= xb; x += 1.5) {
+          const kk = (x - cx) / spacing + n / 2;
+          const z = (kk - mu) / sd;
+          const v = scaleN * Math.exp(-0.5 * z * z) / (sd * Math.sqrt(2 * Math.PI));
+          const y = floorY - barPx(v);
+          if (y > floorY - 0.5) { started = false; continue; }
+          if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      if (showBinom && scaleN > 0) {
+        // exact binomial expectation per bin: N · C(n,k) p^k q^(n−k)
+        ctx.strokeStyle = rgba(PINK, 0.95);
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        for (let k = 0; k <= n; k++) {
+          const y = floorY - barPx(scaleN * pmf[k]);
+          const x = binX(k);
+          if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        for (let k = 0; k <= n; k++) {
+          const y = floorY - barPx(scaleN * pmf[k]);
+          ctx.beginPath();
+          ctx.arc(binX(k), y, 2.4, 0, Math.PI * 2);
+          ctx.fillStyle = rgba(PINK, 0.95);
+          ctx.fill();
+        }
+      }
+
+      // mean markers
+      if (total > 1) {
+        const sm = sumK / total;
+        ctx.strokeStyle = rgba(PINK, 0.5);
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(binX(sm), histTop - 6); ctx.lineTo(binX(sm), floorY);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = rgba(INDIGO, 0.42);
+      ctx.setLineDash([3, 4]);
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(binX(n * p), histTop - 12); ctx.lineTo(binX(n * p), floorY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (N) {
+        ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = rgba(INDIGO, 0.6);
+        ctx.fillText('np', binX(n * p), histTop - 14);
+      }
+    }
+
+    function drawBeads() {
+      for (const b of beads) {
+        const pt = beadPos(b);
+        const col = mix(INDIGO, PINK, b.hue);
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, Math.max(1.8, Math.min(4, spacing * 0.13)), 0, Math.PI * 2);
+        ctx.fillStyle = rgba(col, 0.95);
+        ctx.fill();
+      }
+    }
+
+    function drawSplashes() {
+      for (const s of splashes) {
+        const a = 1 - s.t / 0.45;
+        if (a <= 0) continue;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 3 + (1 - a) * 12, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(233,233,240,${a * 0.35})`;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    }
+
+    function roundTop(x, y, w, h, r) {
+      r = Math.max(0, Math.min(r, h));
+      ctx.beginPath();
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h);
+      ctx.closePath();
+    }
+
+    function niceStep(v) {
+      if (!(v > 0)) return 1;
+      const e = Math.pow(10, Math.floor(Math.log10(v)));
+      const m = v / e;
+      return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * e;
+    }
+    function fmtCount(v) {
+      if (v >= 1e6) return (v / 1e6).toFixed(v % 1e6 === 0 ? 0 : 1) + 'M';
+      if (v >= 1e3) return (v / 1e3).toFixed(v % 1e3 === 0 ? 0 : 1) + 'k';
+      return String(Math.round(v));
+    }
+
+    // ---------- bead motion ----------
+    function segEnds(b, seg) {
+      // seg 0: hopper → peg(0,0); seg j: peg(j−1) → peg(j); seg n: last peg → bin
+      let x0, y0, x1, y1;
+      if (seg === 0) {
+        x0 = cx; y0 = pegTop - Math.min(20, rowGap * 1.2);
+        x1 = pegX(0, 0); y1 = pegY(0);
+      } else if (seg < n) {
+        x0 = pegX(seg - 1, b.ix[seg - 1]); y0 = pegY(seg - 1);
+        x1 = pegX(seg, b.ix[seg]); y1 = pegY(seg);
+      } else {
+        x0 = pegX(n - 1, b.ix[n - 1]); y0 = pegY(n - 1);
+        x1 = binX(b.k); y1 = floorY - barPx(counts[b.k]) - 3;
+      }
+      return [x0, y0, x1, y1];
+    }
+    function beadPos(b) {
+      const e = segEnds(b, b.seg);
+      const t = b.t;
+      const ex = t * t * (3 - 2 * t);        // smoothstep sideways
+      const ey = t * t;                       // gravity-ish downward
+      return { x: e[0] + (e[2] - e[0]) * ex, y: e[1] + (e[3] - e[1]) * ey };
+    }
+
+    // ---------- simulation step ----------
+    function update(dt) {
+      // release beads
+      if (rate > 0) {
+        dropAcc += dt * rate;
+        let budget = 400;
+        while (dropAcc >= 1 && budget-- > 0) { dropAcc -= 1; spawn(true); }
+        if (dropAcc >= 1) {
+          // extremely high rate: count the overflow exactly, without animating
+          const extra = Math.floor(dropAcc);
+          dropAcc -= extra;
+          for (let i = 0; i < extra && i < 4000; i++) spawn(false);
+        }
+      }
+
+      // peg flash decay
+      const decay = Math.exp(-dt * 5);
+      for (let i = 0; i < pegFlash.length; i++) pegFlash[i] *= decay;
+
+      // advance beads
+      const step = dt * SEG_SPEED;
+      for (let i = beads.length - 1; i >= 0; i--) {
+        const b = beads[i];
+        b.t += step;
+        let guard = 0;
+        while (b.t >= 1 && guard++ < 40) {
+          b.t -= 1;
+          b.seg++;
+          if (b.seg <= n - 1) {
+            pegFlash[pegIndex(b.seg, b.ix[b.seg])] = 1;
+          } else if (b.seg > n) {
+            land(b.k);
+            splashes.push({ x: binX(b.k), y: floorY - barPx(counts[b.k]), t: 0 });
+            beads.splice(i, 1);
+            break;
+          }
+        }
+      }
+      if (beads.length > MAX_FLIGHT) beads.splice(0, beads.length - MAX_FLIGHT);
+
+      // splashes
+      for (let i = splashes.length - 1; i >= 0; i--) {
+        splashes[i].t += dt;
+        if (splashes[i].t > 0.45) splashes.splice(i, 1);
+      }
+      if (splashes.length > 120) splashes.splice(0, splashes.length - 120);
+
+      // y-axis target: whichever is taller, the tallest bar or the theory curve
+      let target = 1;
+      for (let k = 0; k <= n; k++) if (counts[k] > target) target = counts[k];
+      const peakE = total * pmf[Math.round(n * p)];
+      if (peakE > target) target = peakE;
+      target *= 1.08;
+      if (target > yMax) yMax = target;
+      else yMax += (target - yMax) * Math.min(1, dt * 2.2);
+      if (yMax < 1) yMax = 1;
+    }
+
+    // ---------- readouts ----------
+    const el = (id) => document.getElementById(id);
+    const outN = el('sN'), outFly = el('sFly'), outMean = el('sMean'), outMeanT = el('sMeanT');
+    const outSd = el('sSd'), outSdT = el('sSdT'), outChi = el('sChi'), outDf = el('sDf');
+    const outP = el('sP'), outDev = el('sDev');
+
+    function chiSquare() {
+      if (total < 10) return null;
+      // pool bins from the outside in until every cell expects at least 5
+      const groups = [];
+      let o = 0, e = 0;
+      for (let k = 0; k <= n; k++) {
+        o += counts[k]; e += total * pmf[k];
+        if (e >= 5) { groups.push([o, e]); o = 0; e = 0; }
+      }
+      if (e > 0) {
+        if (!groups.length) return null;
+        groups[groups.length - 1][0] += o;
+        groups[groups.length - 1][1] += e;
+      }
+      if (groups.length < 2) return null;
+      let chi = 0;
+      for (const g of groups) { const d = g[0] - g[1]; chi += (d * d) / g[1]; }
+      return { chi: chi, df: groups.length - 1 };
+    }
+
+    let statTick = 0;
+    function updateReadouts(dt) {
+      statTick += dt;
+      if (statTick < 0.12) return;
+      statTick = 0;
+
+      outN.textContent = total.toLocaleString();
+      outFly.textContent = beads.length.toLocaleString();
+      outMeanT.textContent = (n * p).toFixed(3);
+      outSdT.textContent = Math.sqrt(n * p * (1 - p)).toFixed(3);
+
+      if (total > 0) {
+        const m = sumK / total;
+        outMean.textContent = m.toFixed(3);
+        if (total > 1) {
+          const varSample = Math.max(0, (sumK2 - total * m * m) / (total - 1));
+          outSd.textContent = Math.sqrt(varSample).toFixed(3);
+        } else outSd.textContent = '—';
+      } else {
+        outMean.textContent = '—'; outSd.textContent = '—';
+      }
+
+      const cs = chiSquare();
+      if (cs) {
+        outChi.textContent = cs.chi.toFixed(2);
+        outDf.textContent = String(cs.df);
+        const pv = gammq(cs.df / 2, cs.chi / 2);
+        outP.textContent = pv < 0.001 ? '<0.001' : pv.toFixed(3);
+      } else {
+        outChi.textContent = '—'; outDf.textContent = '—'; outP.textContent = '—';
+      }
+
+      if (total > 0) {
+        let dev = 0;
+        for (let k = 0; k <= n; k++) {
+          const d = Math.abs(counts[k] / total - pmf[k]);
+          if (d > dev) dev = d;
+        }
+        outDev.textContent = dev.toFixed(4);
+      } else outDev.textContent = '—';
+    }
+
+    // ---------- controls ----------
+    const rowsEl = el('rows'), biasEl = el('bias'), rateEl = el('rate');
+    const rowsOut = el('rowsOut'), biasOut = el('biasOut'), rateOut = el('rateOut');
+
+    function rateFromSlider(v) {
+      if (v <= 0) return 0;
+      return Math.max(1, Math.round(0.6 * Math.pow(2, v / 11)));
+    }
+
+    rowsEl.addEventListener('input', () => {
+      n = +rowsEl.value;
+      rowsOut.textContent = n;
+      resetCounts();
+      layout();
+    });
+    biasEl.addEventListener('input', () => {
+      p = +biasEl.value / 100;
+      biasOut.textContent = p.toFixed(3);
+      resetCounts();
+    });
+    rateEl.addEventListener('input', () => {
+      rate = rateFromSlider(+rateEl.value);
+      rateOut.textContent = rate === 0 ? 'paused' : rate + ' / s';
+    });
+    el('dropOne').addEventListener('click', () => spawn(true));
+    el('reset').addEventListener('click', () => { resetCounts(); layout(); });
+
+    function toggle(id, get, set) {
+      const b = el(id);
+      b.addEventListener('click', () => { set(!get()); b.classList.toggle('on', get()); });
+    }
+    toggle('tBinom', () => showBinom, (v) => { showBinom = v; });
+    toggle('tGauss', () => showGauss, (v) => { showGauss = v; });
+    toggle('tLog', () => logY, (v) => { logY = v; });
+
+    canvas.addEventListener('pointerdown', () => spawn(true));
+    window.addEventListener('keydown', (e) => {
+      if (e.key === ' ') { e.preventDefault(); spawn(true); }
+    });
+    window.addEventListener('resize', layout);
+
+    // ---------- boot ----------
+    rate = rateFromSlider(+rateEl.value);
+    rateOut.textContent = rate + ' / s';
+    resetCounts();
+    layout();
+    // measuring the panels can shift once fonts settle
+    setTimeout(layout, 120);
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      update(dt);
+      ctx.clearRect(0, 0, W, H);
+      drawPegs();
+      drawHistogram();
+      drawOverlays();
+      drawSplashes();
+      drawBeads();
+      updateReadouts(dt);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
