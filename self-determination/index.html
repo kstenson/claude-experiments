@@ -185,6 +185,15 @@
     <p class="section-label">The Collection</p>
     <!-- EXPERIMENT_GRID_START -->
     <div class="grid" id="grid">
+      <a class="card" href="experiments/2026-08-03/index.html">
+        <span class="num">№ 059</span>
+        <span class="arrow">↗</span>
+        <h2>Best Guess</h2>
+        <p>Nothing here has ever had to <em>guess</em> before. A target flies across the screen; a sensor reports where it is fifteen times a second and is wrong by thirty-odd pixels every single time; and a Kalman filter — Rudolf Kálmán, 1960, and flying on board Apollo by 1966 — has to commit to one answer anyway. It does it in a single line: <em>new belief = old belief + gain × (what I saw − what I expected)</em>, where the gain isn't a setting anyone chose but a number the filter recomputes every step from how uncertain it currently is against how noisy the sensor is. The violet ellipse <em>is</em> that uncertainty, drawn to scale — the 95% region straight out of the covariance matrix — so you can watch it breathe: tight while readings keep landing, swelling as the target crosses the drifting dead zone and the filter coasts on momentum alone through territory it cannot see, then snapping shut in one frame when the signal comes back. Drag the target and fly it yourself to feel the lag in your hand; wind <em>assumed agility</em> down and the filter turns into a beautiful, hopeless sceptic, smooth as glass and cutting every corner you actually turned.</p>
+        <p class="idea">The Kalman gain is a number between 0 and 1 answering a question that isn't really about spacecraft: how far should this new piece of evidence actually move me? The answer is never a personality trait, it's a ratio — how confident am I right now, against how noisy is this source. Moving 5% when you're sure and the source is sloppy isn't stubbornness, it's arithmetic; moving 90% after a spell of flying blind isn't fickleness. What the filter does that we mostly don't is keep the first half of that ratio explicit and up to date, and let <em>that</em> decide — rather than the loudest recent measurement. The smooth violet line isn't the filter being certain where the target is. It's the filter being certain about how much it doesn't know.</p>
+        <span class="date">August 3, 2026</span>
+      </a>
+
       <a class="card" href="experiments/2026-08-02/index.html">
         <span class="num">№ 058</span>
         <span class="arrow">↗</span>
