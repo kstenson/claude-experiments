@@ -17,7 +17,8 @@ Steps:
    - Decide new target weights across the 15 names: stay diversified across the five layers,
      tilt with conviction, optionally raise cash; weights must sum to ≤ 1.0 (never lever up).
    - **Append** one entry to `rebalances` in `ai-infra-basket/data/strategy.json`:
-     `{ "date", "label", "rationale", "weights" }`. The rationale is one short paragraph
+     `{ "date", "label", "rationale", "weights" }`. The rationale is one short paragraph —
+     **≤ 80 words, validator-enforced**; don't take length cues from recent entries —
      grounded ONLY in what was knowable as of that date (no look-ahead). NEVER edit past
      entries — the ledger is immutable. Never fabricate a figure.
 

@@ -56,8 +56,10 @@ This is the judgement step. **Only on Fridays**, before running `update.py`:
      remainder is cash.
    - Make a *reasoned* call you can defend in one short paragraph — not noise-trading.
 4. **Append** one object to the `rebalances` array in `data/strategy.json` with:
-   `date` (the Friday), a short `label`, a one-paragraph `rationale` grounded in
-   information available *as of that date* (no look-ahead), and the `weights` map.
+   `date` (the Friday), a short `label`, a one-paragraph `rationale` — **≤ 80 words**,
+   enforced by the validator; don't match the length of recent entries, which ratcheted
+   from ~15 to ~500 words — grounded in information available *as of that date*
+   (no look-ahead), and the `weights` map.
    **Never edit or delete past rebalances** — the ledger is an immutable record of calls.
 5. Run `update.py`, then `validate.mjs`, then commit & push.
 

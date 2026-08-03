@@ -8,9 +8,14 @@ Steps:
    (wire services, major internationals, regional/non-Western outlets, and at least one
    positive-news source) and across all seven regions and five dimensions.
 3. Score the headline, the five dimensions, and the seven regions per `SCORING.md`.
-4. Write `data/<today>.json` matching the schema of the most recent file in `data/`, with
-   8–12 real, cited drivers (working URLs only — never fabricate).
-5. Add today's date to the front of `days` in `data/manifest.json` and set `updated`.
-6. Commit (`Daily mood: <date> (score NN)`) and push to `main` (Pages publishes from `main`).
+4. Write `data/<today>.json` matching the **schema** — not the prose length — of the most
+   recent file in `data/`, with 8–12 real, cited drivers (working URLs only — never
+   fabricate). Word budgets (validator-enforced): `summary` ≤ 150 words; each driver
+   `headline` ≤ 20 words (an actual headline, not a paragraph); whole file ≤ 800 words.
+   Do not take length cues from recent files — the earliest days in `data/` are the style
+   benchmark.
+5. Run `node world-mode-score/validate.mjs` and fix any failure before committing.
+6. Add today's date to the front of `days` in `data/manifest.json` and set `updated`.
+7. Commit (`Daily mood: <date> (score NN)`) and push to `main` (Pages publishes from `main`).
 
 Do not edit past data files. Do not touch index.html / app.js / style.css.

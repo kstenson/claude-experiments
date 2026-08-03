@@ -43,6 +43,41 @@ for (const [i, e] of (data.entries||[]).entries()) {
 }
 if (headlines !== 1) errors.push(`exactly one entry must have "headline": true (found ${headlines})`);
 
+// Word budgets on the NEWEST entry only (the archive is immutable and unchecked).
+// These exist because entry copy ratchets longer if each day imitates ever-longer
+// predecessors (entries grew ~150 → ~2,100 words before being capped).
+const words = (s) => String(s).trim().split(/\s+/).filter(Boolean).length;
+const totalWords = (v) =>
+  typeof v === 'string' ? words(v)
+  : Array.isArray(v) ? v.reduce((n, x) => n + totalWords(x), 0)
+  : v && typeof v === 'object' ? Object.values(v).reduce((n, x) => n + totalWords(x), 0)
+  : 0;
+const CAPS_EFFECTIVE = '2026-08-04'; // caps bind from this date; older entries unchecked
+const newest = (data.entries || []).reduce(
+  (a, b) => (!a || (b.date || '') > (a.date || '') ? b : a), null);
+if (newest && (newest.date || '') >= CAPS_EFFECTIVE) {
+  const at = `newest entry (${newest.id || newest.date})`;
+  const CAPS = { explanation: 160, confidence: 30, discussionNote: 55 };
+  for (const [field, cap] of Object.entries(CAPS)) {
+    if (typeof newest[field] === 'string' && words(newest[field]) > cap) {
+      errors.push(`${at}: ${field} is ${words(newest[field])} words (cap ${cap})`);
+    }
+  }
+  for (const [i, b] of (Array.isArray(newest.evidence) ? newest.evidence : []).entries()) {
+    if (words(b) > 30) errors.push(`${at}: evidence[${i}] is ${words(b)} words (cap 30)`);
+  }
+  if (Array.isArray(newest.evidence) && newest.evidence.length > 8) {
+    errors.push(`${at}: ${newest.evidence.length} evidence bullets (cap 8)`);
+  }
+  for (const [i, s] of (Array.isArray(newest.sources) ? newest.sources : []).entries()) {
+    if (s?.title && words(s.title) > 15) {
+      errors.push(`${at}: sources[${i}].title is ${words(s.title)} words (cap 15) — a title, not an annotation`);
+    }
+  }
+  const total = totalWords(newest);
+  if (total > 550) errors.push(`${at}: totals ${total} words (cap 550)`);
+}
+
 if (errors.length) {
   console.error('❌ Validation failed:\n - ' + errors.join('\n - '));
   process.exit(1);

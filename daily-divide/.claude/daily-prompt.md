@@ -39,12 +39,18 @@ Steps:
    sourced campaigns/instances, takeaway) where the issue isn't a one-off; 3–5
    `notAdjudicable` value questions; one `biasWatch` paragraph with a concrete "tell"; a
    short `verificationNote` on how claims were checked.
-7. Write `daily-divide/data/<today>.json` matching the schema of the most recent file in
-   `daily-divide/data/`. Never fabricate a claim, source, or URL.
-8. Add today's date to the front of `days` in `daily-divide/data/manifest.json` and set
+7. Write `daily-divide/data/<today>.json` matching the **schema** — not the prose length —
+   of the most recent file in `daily-divide/data/`. Never fabricate a claim, source, or URL.
+   Word budgets (validator-enforced): `topic` ≤ 25 · `summary` ≤ 250 · `verdict` ≤ 120 ·
+   per fact: `claim` ≤ 50, `explanation` ≤ 80, `evidence` ≤ 80 · `verificationNote` ≤ 150 ·
+   `biasWatch` ≤ 150 · `sources_consulted` ≤ 40 names, no annotations · whole file ≤ 4,500
+   words. Depth comes from verification quality, not word count; do not take length cues
+   from recent files — the earliest days are the style benchmark.
+8. Run `node daily-divide/validate.mjs` and fix any failure before committing.
+9. Add today's date to the front of `days` in `daily-divide/data/manifest.json` and set
    `updated`.
-9. Commit (`Daily Divide: <date> — <topic> (needle NN)`) and push to `main` (Pages publishes
-   from `main`).
+10. Commit (`Daily Divide: <date> — <topic> (needle NN)`) and push to `main` (Pages
+    publishes from `main`).
 
 Do not edit past data files. Do not touch index.html / app.js / style.css.
 Most honest days land in the modest middle of the meter — a drift to one pole over time, or

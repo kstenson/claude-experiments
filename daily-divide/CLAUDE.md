@@ -44,10 +44,19 @@ most-argued political issue and produce that file.**
    - 3–5 `notAdjudicable` value questions;
    - one `biasWatch` paragraph with a concrete "tell";
    - a short `verificationNote` describing how the day's claims were checked.
-7. **Write** `data/YYYY-MM-DD.json` following the schema of the most recent file in `data/`.
-8. **Update** `data/manifest.json`: add today's date to the **front** of `days`, set
+7. **Write** `data/YYYY-MM-DD.json` following the **schema** of the most recent file in
+   `data/` — the schema only, **not its prose length**. **Word budgets** (enforced by the
+   validator): `topic` ≤ 25 · `summary` ≤ 250 · `verdict` ≤ 120 · per fact: `claim` ≤ 50,
+   `explanation` ≤ 80, `evidence` ≤ 80 · `verificationNote` ≤ 150 · `biasWatch` ≤ 150 ·
+   `sources_consulted` ≤ 40 entries, names only, no annotations · whole file ≤ 4,500 words.
+   Depth comes from verification quality and citations, not word count. Do **not** use
+   recent files as a length reference — daily copy has ratcheted from ~3,000 to ~15,500
+   words per file this way; the earliest days in `data/` are the style benchmark.
+8. **Validate**: run `node daily-divide/validate.mjs` — it checks the newest day's required
+   fields and enforces the word budgets. Fix any failure before committing.
+9. **Update** `data/manifest.json`: add today's date to the **front** of `days`, set
    `updated` to today.
-9. **Commit and push** to `main` with a message like
+10. **Commit and push** to `main` with a message like
    `Daily Divide: YYYY-MM-DD — <topic> (needle NN)`. The push redeploys GitHub Pages.
 
 ## Rules

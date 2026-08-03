@@ -36,6 +36,15 @@ if (!Array.isArray(strat.rebalances) || !strat.rebalances.length) {
     if (sum > 1.0001) errors.push(`${at}: weights sum to ${sum.toFixed(4)} (>1; would lever up)`);
     if (sum < 0.5) errors.push(`${at}: weights sum to only ${sum.toFixed(4)} (>50% cash — intended?)`);
   }
+  // Rationale word cap on the NEWEST rebalance only (history stays as written).
+  // Rationales ratcheted ~15 → ~500 words when each week imitated the last.
+  const capsEffective = '2026-08-04'; // caps bind from this date; older log entries unchecked
+  const newest = strat.rebalances.reduce(
+    (a, b) => (!a || (b.date || '') > (a.date || '') ? b : a), null);
+  if (newest?.rationale && (newest.date || '') >= capsEffective) {
+    const n = String(newest.rationale).trim().split(/\s+/).filter(Boolean).length;
+    if (n > 120) errors.push(`newest rebalance (${newest.date}): rationale is ${n} words (cap 120; budget ≤80 — one short paragraph)`);
+  }
 }
 
 // --- series.json: generated output (present once update.py has run) ---

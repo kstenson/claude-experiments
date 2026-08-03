@@ -30,7 +30,13 @@ factual claim (a number, a comparison, a cause-and-effect), not pure opinion.
 - Fill every field: `id` (today's date), `date`, `topic`, `claim` (exact quote if possible),
   `speaker`, `party`, `role`, `discussionScore`, `discussionNote`, `score`, `verdict`,
   `explanation`, `evidence` (bullets), `confidence`, `sources` (title + url).
-- Validate the JSON parses.
+- **Keep it terse** — word budgets, enforced by the validator: `explanation` ≤ 150 ·
+  each `evidence` bullet ≤ 30 (3–8 bullets) · `confidence` ≤ 30 (a rating plus one clause,
+  not an essay) · `discussionNote` ≤ 50 · each source `title` ≤ 15 (a title, not an
+  annotation) · whole entry ≤ 550 words. Do **not** match the length of recent entries —
+  entry copy has ratcheted from ~150 to ~2,100 words this way; the earliest entries are the
+  style benchmark. Rigour lives in the sources, not the word count.
+- Run `node factcheck-league/validate.mjs` and fix any failure before committing.
 
 **Step 5 — Update `meta.lastUpdated`** to today's date.
 

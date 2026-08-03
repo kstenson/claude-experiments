@@ -34,7 +34,11 @@ GitHub Pages redeploys automatically. Every past day stays browsable from the
    repeating them. Do not default to dorian.
 4. **Write lyrics** in that style — 2 verses + a chorus is the house format,
    grounded in what the page actually showed that day. Keep it human, not a
-   news summary set to rhyme.
+   news summary set to rhyme. **Budgets:** lyrics ≤ 120 words total;
+   `mood.summary` ≤ 50 words; `style.genre` is a short label (≤ 8 words), not
+   a liner-note essay. Don't match the length of recent songs — song files
+   have ratcheted from ~240 to ~700 words this way; the earliest songs in
+   `songs/` are the style benchmark.
 5. **Compose a Strudel pattern.** Build a `stack()` of layers using Strudel's
    API (see pattern guide below). Use samples from the internet — the engine
    loads them on demand. The pattern must be a single JS expression that

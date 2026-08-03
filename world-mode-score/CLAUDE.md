@@ -15,11 +15,19 @@ the daily schedule, is to research the day's world news and produce that file.**
 3. **Score** the day strictly against `SCORING.md` — the headline score, the five
    dimensions, and the seven regions. Consistency with the rubric matters more than
    matching yesterday.
-4. **Write** `data/YYYY-MM-DD.json` following the schema of the most recent existing file in
-   `data/`. Include 8–12 `drivers`, each with a real, working source URL. Never fabricate.
-5. **Update** `data/manifest.json`: add today's date to the **front** of the `days` array
+4. **Write** `data/YYYY-MM-DD.json` following the **schema** of the most recent existing file
+   in `data/` — the schema only, **not its prose length**. Include 8–12 `drivers`, each with
+   a real, working source URL. Never fabricate. **Word budgets** (enforced by the validator):
+   - `summary`: ≤ 150 words;
+   - each driver `headline`: an actual headline, ≤ 20 words — not a paragraph;
+   - the whole file: ≤ 800 words of text.
+   Do **not** use recent files as a length reference — daily copy has ratcheted from ~450 to
+   ~1,800 words per file this way. The earliest days in `data/` are the style benchmark.
+5. **Validate**: run `node world-mode-score/validate.mjs` — it checks the newest day's
+   required fields and enforces the word budgets. Fix any failure before committing.
+6. **Update** `data/manifest.json`: add today's date to the **front** of the `days` array
    and set `updated` to today.
-6. **Commit and push** to `main` with a message like
+7. **Commit and push** to `main` with a message like
    `Daily mood: YYYY-MM-DD (score NN)`. GitHub Pages serves from `main`, so the push
    publishes the day.
 
