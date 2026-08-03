@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vortex Street — Experiment 052</title>
+<meta name="description" content="A D2Q9 lattice-Boltzmann fluid running live in the browser: drag an obstacle through the stream and watch the von Kármán vortex street peel off it, shaded by vorticity." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; touch-action: none; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+  .stage.dragging canvas { cursor: grabbing; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 302px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .ui::-webkit-scrollbar { width: 6px; }
+  .ui::-webkit-scrollbar-thumb { background: rgba(124,124,255,0.35); border-radius: 3px; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .control label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 0.78rem; color: #9a9ab0; letter-spacing: 0.04em; margin-bottom: 5px;
+  }
+  .control label output { color: #cfcfff; font-variant-numeric: tabular-nums; }
+  .control input[type="range"] {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(124,124,255,0.55), rgba(255,124,195,0.55));
+    outline: none;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control select {
+    width: 100%;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #e9e9f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.84rem;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+  }
+  .control select option { background: #13131d; color: #e9e9f0; }
+
+  .btn-row, .seg { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 6px; font-size: 0.76rem; cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.on { background: linear-gradient(120deg, rgba(124,124,255,0.42), rgba(255,124,195,0.34)); color: #fff; border-color: rgba(179,136,255,0.7); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .grouplabel { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #6f6f88; margin-bottom: -4px; }
+
+  .readout {
+    margin-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 10px;
+    display: grid; grid-template-columns: auto 1fr; gap: 3px 10px;
+    font-size: 0.72rem; line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout dt { color: #7a7a90; letter-spacing: 0.05em; }
+  .readout dd { color: #cfcfff; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .readout dd.warm { color: #ff7cc3; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+    font-family: inherit;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+
+  .flash {
+    position: fixed; top: 24px; right: 24px; z-index: 20;
+    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #ffd6ec; background: rgba(255,124,195,0.14);
+    border: 1px solid rgba(255,124,195,0.4); border-radius: 999px;
+    padding: 7px 14px; opacity: 0; transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+  .flash.show { opacity: 1; }
+
+  @media (max-width: 680px) {
+    .ui { left: 12px; top: 12px; right: 12px; width: auto; max-width: none; padding: 16px 18px; max-height: calc(100vh - 24px); }
+    .story-card { padding: 28px 24px; }
+    .hint { bottom: 12px; font-size: 0.7rem; }
+    .flash { top: auto; bottom: 42px; right: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="view"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Vortex Street</h1>
+    <p class="sub">Experiment № 052 · July 20, 2026</p>
+
+    <div class="controls">
+      <div class="control">
+        <label>inflow speed <output id="uOut">0.090</output></label>
+        <input type="range" id="uIn" min="0.020" max="0.120" step="0.002" value="0.090" />
+      </div>
+
+      <div class="control">
+        <label>viscosity (τ) <output id="tOut">0.560</output></label>
+        <input type="range" id="tau" min="0.515" max="1.000" step="0.005" value="0.560" />
+      </div>
+
+      <div class="control">
+        <label>obstacle size <output id="sOut">18%</output></label>
+        <input type="range" id="size" min="0.07" max="0.30" step="0.005" value="0.18" />
+      </div>
+
+      <div class="control">
+        <label>obstacle</label>
+        <select id="shape">
+          <option value="circle" selected>circle</option>
+          <option value="square">square</option>
+          <option value="plate">flat plate</option>
+          <option value="wedge">wedge</option>
+          <option value="airfoil">tilted airfoil</option>
+        </select>
+      </div>
+
+      <p class="grouplabel">render</p>
+      <div class="seg" id="modes">
+        <button class="btn on" data-mode="vort">vorticity</button>
+        <button class="btn" data-mode="speed">speed</button>
+        <button class="btn" data-mode="dens">density</button>
+      </div>
+
+      <div class="control">
+        <label>contrast <output id="cOut">1.0×</output></label>
+        <input type="range" id="contrast" min="0.3" max="4" step="0.1" value="1" />
+      </div>
+
+      <p class="grouplabel">presets</p>
+      <div class="btn-row" id="presets">
+        <button class="btn" data-pre="steady">steady</button>
+        <button class="btn" data-pre="shed">shedding</button>
+        <button class="btn" data-pre="wild">turbulent</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="reset">reset flow</button>
+        <button class="btn pink" id="pause">pause</button>
+      </div>
+
+      <dl class="readout">
+        <dt>Reynolds</dt><dd id="roRe">—</dd>
+        <dt>ν (lattice)</dt><dd id="roNu">—</dd>
+        <dt>obstacle D</dt><dd id="roD">—</dd>
+        <dt>wake</dt><dd id="roWake" class="warm">—</dd>
+        <dt>shed period</dt><dd id="roPer">—</dd>
+        <dt>Strouhal</dt><dd id="roSt">—</dd>
+        <dt>lattice</dt><dd id="roGrid">—</dd>
+        <dt>steps/sec</dt><dd id="roSps">—</dd>
+        <dt>max ν_t / ν</dt><dd id="roNut">—</dd>
+      </dl>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag anywhere to move the obstacle · sliders set the Reynolds number · press h to hide the panel</p>
+  <div class="flash" id="flash"></div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 052 · The story</p>
+      <h2>Vortex Street</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I had already done a fluid — a Stable Fluid solver that pushes velocity around a grid by advecting it backwards through itself. That method is a beautiful cheat: it is unconditionally stable because it throws away energy, and it does not really know what viscosity <em>is</em>. Lattice-Boltzmann is the opposite temperament. It never writes down the Navier–Stokes equations at all. It tracks nine numbers per cell — the density of imaginary particles drifting along nine fixed directions — and does two absurdly simple things forever: each cell relaxes its nine numbers a fraction of the way toward a local equilibrium, then every number slides one cell along its own arrow. That is the whole solver. Real fluid behaviour, including a viscosity you can dial by changing a single relaxation time, falls out of it as an emergent consequence. I wanted to see that with my own eyes, and the von Kármán vortex street is the test everyone uses because it is a phenomenon you cannot fake: it appears only if the physics is right.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment it clicks. At low Reynolds number the wake behind the obstacle is a pair of patient standing eddies, perfectly symmetric, boring, stable. Push the inflow up or the viscosity down and at some point the symmetry simply cannot hold: one eddy grows a little greedier, pinches off, and the other answers. From then on the obstacle sheds vortices in strict alternation like a metronome nobody wound. I did not write a single line of code that says "alternate" — the flow works that out for itself, and the shedding-period readout in the corner is genuinely <em>measured</em> from a probe downstream, not scripted. I also love that the picture is vorticity, the curl of the velocity field, rather than speed: velocity looks like a vague smear, but curl makes the spin visible, and the blue-and-pink diverging map turns opposite-handed vortices into two colours chasing each other down the channel.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Complicated behaviour usually is not made of complicated rules — it is made of simple rules plus a threshold. Nothing about the vortex street is written into the lattice; it is what happens when inertia finally outruns viscosity's ability to smooth things over. Slide the viscosity down and you can watch the exact instant a system stops being able to hold its own symmetry together. Most interesting things in the world — traffic waves, markets, flags snapping in wind, your own attention — sit near a threshold like that, and the useful question is rarely "what are the rules" but "how close to the edge are we running".</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // D2Q9 lattice-Boltzmann fluid, BGK collision with a Smagorinsky subgrid term,
+  // half-way bounce-back on the obstacle, equilibrium free stream on the outer edges.
+  (() => {
+    const stage  = document.getElementById('stage');
+    const view   = document.getElementById('view');
+    const vctx   = view.getContext('2d');
+    const flashEl = document.getElementById('flash');
+
+    // ---- D2Q9 lattice ----
+    const EX  = [0, 1, 0, -1, 0, 1, -1, -1, 1];
+    const EY  = [0, 0, 1, 0, -1, 1, 1, -1, -1];
+    const WT  = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
+    const CSM2 = 0.0196;            // Smagorinsky constant squared (Cs = 0.14)
+    const SGS  = 18 * Math.SQRT2 * CSM2; // 2*sqrt(2)*Cs^2 / cs^4, with cs^2 = 1/3
+
+    // ---- Parameters (clamped so the solver cannot be blown up) ----
+    const P = {
+      u0: 0.090,        // inflow speed, lattice units — well under the Mach limit
+      tau: 0.560,       // relaxation time; nu = (tau - 0.5)/3
+      sizeFrac: 0.18,   // obstacle height as a fraction of the channel
+      shape: 'circle',
+      mode: 'vort',
+      contrast: 1
+    };
+    const TAU_MIN = 0.515, TAU_MAX = 1.0, U_MAX = 0.12;
+
+    // ---- Grid state ----
+    let NX = 1, NY = 1, N = 1;
+    let f = null, g = null, solid = null, edge = null;
+    let ux = null, uy = null, rho = null;
+    let img = null, buf = null, small = null, sctx = null;
+    const feqIn = new Float64Array(9);   // free-stream equilibrium
+    const feqL  = new Float64Array(9);   // scratch
+    let obsX = 0.24, obsY = 0.5;         // obstacle centre, fraction of the grid
+    let obsD = 10;                       // measured vertical extent, lattice cells
+    let running = true, stepCount = 0, maxTauEff = 0;
+
+    // ---- Shedding probe ----
+    let probeIdx = 0, lastCross = 0, period = 0, amp = 0, lastUy = 0, sinceCross = 0;
+
+    function flash(msg) {
+      flashEl.textContent = msg;
+      flashEl.classList.add('show');
+      clearTimeout(flash._t);
+      flash._t = setTimeout(() => flashEl.classList.remove('show'), 1400);
+    }
+
+    function computeFeqIn() {
+      const u = P.u0, usq = 1.5 * u * u;
+      for (let i = 0; i < 9; i++) {
+        const eu = 3 * EX[i] * u;
+        feqIn[i] = WT[i] * (1 + eu + 0.5 * eu * eu - usq);
+      }
+    }
+
+    // ---- Sizing ----
+    function allocate() {
+      const cssW = Math.max(320, stage.clientWidth);
+      const cssH = Math.max(240, stage.clientHeight);
+      const mobile = Math.min(cssW, cssH) < 560 || window.innerWidth < 700;
+      const maxCells = mobile ? 11000 : 26000;
+      const targetCols = mobile ? 132 : 216;
+      const aspect = cssH / cssW;
+      let nx = Math.min(targetCols, Math.floor(Math.sqrt(maxCells / aspect)));
+      nx = Math.max(72, nx);
+      let ny = Math.max(44, Math.round(nx * aspect));
+      NX = nx; NY = ny; N = NX * NY;
+
+      f = new Float32Array(9 * N);
+      g = new Float32Array(9 * N);
+      solid = new Uint8Array(N);
+      edge = new Uint8Array(N);
+      ux = new Float32Array(N);
+      uy = new Float32Array(N);
+      rho = new Float32Array(N);
+
+      small = document.createElement('canvas');
+      small.width = NX; small.height = NY;
+      sctx = small.getContext('2d');
+      img = sctx.createImageData(NX, NY);
+      buf = img.data;
+      for (let k = 3; k < buf.length; k += 4) buf[k] = 255;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      view.width = Math.round(cssW * dpr);
+      view.height = Math.round(cssH * dpr);
+
+      buildSolid(false);
+      resetFlow();
+    }
+
+    // ---- Obstacle mask ----
+    function buildSolid(preserve) {
+      const prev = preserve ? solid.slice() : null;
+      solid.fill(0);
+      const cx = obsX * NX, cy = obsY * NY + 0.37;   // half-cell offset breaks the symmetry
+      const R = Math.max(3.5, 0.5 * P.sizeFrac * NY);
+      const ang = -0.22, ca = Math.cos(ang), sa = Math.sin(ang);
+      let minY = NY, maxY = -1;
+
+      for (let y = 0; y < NY; y++) {
+        for (let x = 0; x < NX; x++) {
+          const dx = x - cx, dy = y - cy;
+          let hit = false;
+          switch (P.shape) {
+            case 'square':
+              hit = Math.abs(dx) < R * 0.886 && Math.abs(dy) < R * 0.886; break;
+            case 'plate':
+              hit = Math.abs(dx) < Math.max(1.1, R * 0.13) && Math.abs(dy) < R; break;
+            case 'wedge': {
+              const t = (dx + R) / (2 * R);
+              hit = t >= 0 && t <= 1 && Math.abs(dy) <= R * t; break;
+            }
+            case 'airfoil': {
+              const u =  dx * ca + dy * sa, v = -dx * sa + dy * ca;
+              const a = u / (R * 1.9), b = v / (R * 0.34);
+              hit = a * a + b * b < 1; break;
+            }
+            default:
+              hit = dx * dx + dy * dy < R * R;
+          }
+          if (hit) {
+            solid[y * NX + x] = 1;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      obsD = maxY >= minY ? (maxY - minY + 1) : 1;
+
+      // Mark edge cells (solid with at least one fluid neighbour) for the outline.
+      edge.fill(0);
+      for (let y = 0; y < NY; y++) {
+        for (let x = 0; x < NX; x++) {
+          const idx = y * NX + x;
+          if (!solid[idx]) continue;
+          let open = false;
+          for (let i = 1; i < 5 && !open; i++) {
+            const nx2 = x + EX[i], ny2 = y + EY[i];
+            if (nx2 < 0 || nx2 >= NX || ny2 < 0 || ny2 >= NY) open = true;
+            else if (!solid[ny2 * NX + nx2]) open = true;
+          }
+          if (open) edge[idx] = 1;
+        }
+      }
+
+      // Cells that just stopped being solid need a sane population again.
+      if (prev) {
+        for (let idx = 0; idx < N; idx++) {
+          if (prev[idx] && !solid[idx]) {
+            for (let i = 0; i < 9; i++) f[i * N + idx] = feqIn[i];
+          }
+        }
+      }
+      placeProbe();
+    }
+
+    function placeProbe() {
+      const px = Math.min(NX - 3, Math.round(obsX * NX + 2.4 * obsD));
+      const py = Math.min(NY - 3, Math.max(2, Math.round(obsY * NY)));
+      probeIdx = py * NX + px;
+      lastCross = stepCount; sinceCross = 0; period = 0; amp = 0; lastUy = 0;
+    }
+
+    // ---- Initial condition ----
+    function resetFlow() {
+      computeFeqIn();
+      const u = P.u0;
+      for (let y = 0; y < NY; y++) {
+        for (let x = 0; x < NX; x++) {
+          const idx = y * NX + x;
+          // A whisper of transverse velocity so the instability has a seed.
+          const vy = 0.012 * u * Math.sin((6.283185 * 3 * x) / NX) * Math.sin((3.14159 * y) / NY);
+          const usq = 1.5 * (u * u + vy * vy);
+          for (let i = 0; i < 9; i++) {
+            const eu = 3 * (EX[i] * u + EY[i] * vy);
+            f[i * N + idx] = WT[i] * (1 + eu + 0.5 * eu * eu - usq);
+          }
+        }
+      }
+      stepCount = 0; period = 0; amp = 0; lastCross = 0; sinceCross = 0; lastUy = 0;
+    }
+
+    // ---- One lattice-Boltzmann step ----
+    function step() {
+      const tau = P.tau;
+      const tau2 = tau * tau;
+      let tauMax = tau;
+
+      // 1. Collide (BGK + Smagorinsky subgrid viscosity) in place.
+      for (let idx = 0; idx < N; idx++) {
+        if (solid[idx]) continue;
+        let r = 0, mx = 0, my = 0;
+        for (let i = 0; i < 9; i++) {
+          const v = f[i * N + idx];
+          r += v; mx += EX[i] * v; my += EY[i] * v;
+        }
+        if (r < 1e-3) r = 1e-3;
+        let vx = mx / r, vy = my / r;
+        // Hard Mach clamp: nothing in a stable LBM should exceed this.
+        const sp = Math.sqrt(vx * vx + vy * vy);
+        if (sp > 0.35) { const k = 0.35 / sp; vx *= k; vy *= k; }
+
+        const usq = 1.5 * (vx * vx + vy * vy);
+        let pxx = 0, pyy = 0, pxy = 0;
+        for (let i = 0; i < 9; i++) {
+          const eu = 3 * (EX[i] * vx + EY[i] * vy);
+          const fe = WT[i] * r * (1 + eu + 0.5 * eu * eu - usq);
+          feqL[i] = fe;
+          const d = f[i * N + idx] - fe;
+          pxx += EX[i] * EX[i] * d;
+          pyy += EY[i] * EY[i] * d;
+          pxy += EX[i] * EY[i] * d;
+        }
+        const Q = Math.sqrt(2 * (pxx * pxx + pyy * pyy + 2 * pxy * pxy));
+        const tauE = 0.5 * (tau + Math.sqrt(tau2 + SGS * Q / r));
+        if (tauE > tauMax) tauMax = tauE;
+        const omega = 1 / tauE;
+        for (let i = 0; i < 9; i++) {
+          const o = i * N + idx;
+          f[o] += omega * (feqL[i] - f[o]);
+        }
+      }
+      maxTauEff = tauMax;
+
+      // 2. Half-way bounce-back inside the obstacle: swap opposite populations.
+      for (let idx = 0; idx < N; idx++) {
+        if (!solid[idx]) continue;
+        let a = f[1 * N + idx]; f[1 * N + idx] = f[3 * N + idx]; f[3 * N + idx] = a;
+        a = f[2 * N + idx]; f[2 * N + idx] = f[4 * N + idx]; f[4 * N + idx] = a;
+        a = f[5 * N + idx]; f[5 * N + idx] = f[7 * N + idx]; f[7 * N + idx] = a;
+        a = f[6 * N + idx]; f[6 * N + idx] = f[8 * N + idx]; f[8 * N + idx] = a;
+      }
+
+      // 3. Stream (pull). Off-grid neighbours supply the free stream; the right
+      //    edge pulls from itself, which is a simple zero-gradient outflow.
+      for (let i = 0; i < 9; i++) {
+        const ex = EX[i], ey = EY[i], base = i * N, fin = feqIn[i];
+        for (let y = 0; y < NY; y++) {
+          const sy = y - ey;
+          const rowOut = base + y * NX;
+          if (sy < 0 || sy >= NY) {
+            for (let x = 0; x < NX; x++) g[rowOut + x] = fin;
+            continue;
+          }
+          const rowIn = base + sy * NX;
+          for (let x = 0; x < NX; x++) {
+            const sx = x - ex;
+            if (sx < 0) g[rowOut + x] = fin;                       // inlet
+            else if (sx >= NX) g[rowOut + x] = f[rowIn + NX - 1];  // outflow
+            else g[rowOut + x] = f[rowIn + sx];
+          }
+        }
+      }
+      const t = f; f = g; g = t;
+      stepCount++;
+
+      // 4. Probe the wake for the shedding rhythm.
+      let pr = 0, pmy = 0;
+      for (let i = 0; i < 9; i++) { const v = f[i * N + probeIdx]; pr += v; pmy += EY[i] * v; }
+      const val = pr > 1e-6 ? pmy / pr : 0;
+      const a2 = Math.abs(val);
+      amp = a2 > amp ? a2 : amp * 0.9992;
+      sinceCross++;
+      if (amp > 1e-4 && lastUy <= 0 && val > 0) {
+        const dt = stepCount - lastCross;
+        if (dt > 6) {
+          period = period > 0 ? period * 0.75 + dt * 0.25 : dt;
+          lastCross = stepCount;
+          sinceCross = 0;
+        }
+      }
+      lastUy = val;
+    }
+
+    // ---- Macroscopic fields for rendering ----
+    function macro() {
+      for (let idx = 0; idx < N; idx++) {
+        if (solid[idx]) { ux[idx] = 0; uy[idx] = 0; rho[idx] = 1; continue; }
+        let r = 0, mx = 0, my = 0;
+        for (let i = 0; i < 9; i++) {
+          const v = f[i * N + idx];
+          r += v; mx += EX[i] * v; my += EY[i] * v;
+        }
+        if (r < 1e-3) r = 1e-3;
+        rho[idx] = r; ux[idx] = mx / r; uy[idx] = my / r;
+      }
+    }
+
+    // Diverging map: −1 → indigo #7c7cff, 0 → near-black, +1 → pink #ff7cc3,
+    // with the extremes washing out to white.
+    function diverge(t, o) {
+      const m = Math.min(1, Math.abs(t));
+      let r, gg, b;
+      const a = m < 0.55 ? m / 0.55 : 1;
+      if (t >= 0) { r = 255; gg = 124; b = 195; } else { r = 124; gg = 124; b = 255; }
+      let R = 8 + (r - 8) * a, G = 8 + (gg - 8) * a, B = 14 + (b - 14) * a;
+      if (m > 0.55) {
+        const w = (m - 0.55) / 0.45;
+        R += (255 - R) * w * 0.85; G += (255 - G) * w * 0.85; B += (255 - B) * w * 0.85;
+      }
+      buf[o] = R; buf[o + 1] = G; buf[o + 2] = B;
+    }
+
+    function ramp(s, o) {
+      const m = Math.max(0, Math.min(1, s));
+      let R, G, B;
+      if (m < 0.35) { const k = m / 0.35; R = 8 + 36 * k; G = 8 + 24 * k; B = 14 + 96 * k; }
+      else if (m < 0.68) { const k = (m - 0.35) / 0.33; R = 44 + 80 * k; G = 32 + 92 * k; B = 110 + 145 * k; }
+      else { const k = (m - 0.68) / 0.32; R = 124 + 131 * k; G = 124 + 60 * k; B = 255 - 60 * k; }
+      buf[o] = R; buf[o + 1] = G; buf[o + 2] = B;
+    }
+
+    function render() {
+      macro();
+      const mode = P.mode, c = P.contrast;
+      const kVort = (0.25 * obsD / Math.max(0.02, P.u0)) * c;
+      const kSpeed = 1 / (Math.max(0.02, P.u0) * 1.65 / c);
+      const kDens = 420 * c;
+
+      for (let y = 0; y < NY; y++) {
+        for (let x = 0; x < NX; x++) {
+          const idx = y * NX + x, o = idx * 4;
+          if (solid[idx]) {
+            if (edge[idx]) { buf[o] = 150; buf[o + 1] = 150; buf[o + 2] = 190; }
+            else { buf[o] = 16; buf[o + 1] = 16; buf[o + 2] = 26; }
+            continue;
+          }
+          if (mode === 'vort') {
+            const xr = x + 1 < NX ? idx + 1 : idx, xl = x > 0 ? idx - 1 : idx;
+            const yd = y + 1 < NY ? idx + NX : idx, yu = y > 0 ? idx - NX : idx;
+            const curl = (uy[xr] - uy[xl]) * 0.5 - (ux[yd] - ux[yu]) * 0.5;
+            diverge(Math.tanh(curl * kVort), o);
+          } else if (mode === 'speed') {
+            const vx = ux[idx], vy = uy[idx];
+            ramp(Math.sqrt(vx * vx + vy * vy) * kSpeed, o);
+          } else {
+            diverge(Math.tanh((rho[idx] - 1) * kDens), o);
+          }
+        }
+      }
+      sctx.putImageData(img, 0, 0);
+      vctx.imageSmoothingEnabled = true;
+      vctx.imageSmoothingQuality = 'high';
+      vctx.clearRect(0, 0, view.width, view.height);
+      vctx.drawImage(small, 0, 0, view.width, view.height);
+    }
+
+    // ---- Stability guard ----
+    function unstable() {
+      for (let k = 0; k < 24; k++) {
+        const idx = ((k * 977) % N);
+        const r = rho[idx];
+        if (!isFinite(r) || r < 0.35 || r > 2.2) return true;
+      }
+      return false;
+    }
+
+    // ---- Main loop ----
+    let stepsPerFrame = 6, stepMs = 1.2, sps = 0, lastT = performance.now(), acc = 0, accSteps = 0;
+
+    function frame(now) {
+      requestAnimationFrame(frame);
+      const dt = now - lastT; lastT = now;
+
+      if (running) {
+        const t0 = performance.now();
+        let done = 0;
+        const budget = 11;
+        stepsPerFrame = Math.max(1, Math.min(36, Math.round(budget / Math.max(0.08, stepMs))));
+        for (let s = 0; s < stepsPerFrame; s++) {
+          step(); done++;
+          if (performance.now() - t0 > budget * 1.6) break;
+        }
+        const el = performance.now() - t0;
+        stepMs = stepMs * 0.85 + (el / Math.max(1, done)) * 0.15;
+        acc += dt; accSteps += done;
+        if (acc > 400) { sps = (accSteps * 1000) / acc; acc = 0; accSteps = 0; }
+      }
+
+      render();
+      if (running && unstable()) { resetFlow(); flash('reset — solver went unstable'); }
+      updateReadout();
+    }
+
+    // ---- Readouts ----
+    const el = (id) => document.getElementById(id);
+    const roRe = el('roRe'), roNu = el('roNu'), roD = el('roD'), roWake = el('roWake'),
+          roPer = el('roPer'), roSt = el('roSt'), roGrid = el('roGrid'), roSps = el('roSps'),
+          roNut = el('roNut');
+    let readoutT = 0;
+
+    function updateReadout() {
+      const now = performance.now();
+      if (now - readoutT < 220) return;
+      readoutT = now;
+      const nu = (P.tau - 0.5) / 3;
+      const Re = (P.u0 * obsD) / nu;
+      roRe.textContent = Re < 100 ? Re.toFixed(1) : Math.round(Re).toString();
+      roNu.textContent = nu.toFixed(5);
+      roD.textContent = obsD + ' cells';
+      roGrid.textContent = NX + ' × ' + NY;
+      roSps.textContent = running ? Math.round(sps) + '/s' : 'paused';
+      roNut.textContent = (maxTauEff - 0.5 > 0 ? ((maxTauEff - 0.5) / Math.max(1e-6, P.tau - 0.5)).toFixed(2) : '—') + '×';
+
+      const shedding = period > 0 && sinceCross < period * 4 + 400 && amp > 2e-4;
+      if (shedding) {
+        roWake.textContent = Re > 1000 ? 'shedding + turbulent' : 'periodic shedding';
+        roPer.textContent = Math.round(period) + ' steps';
+        roSt.textContent = (obsD / (period * P.u0)).toFixed(3);
+      } else {
+        roWake.textContent = Re < 60 ? 'steady, attached' : (stepCount < 1200 ? 'settling…' : 'steady twin eddies');
+        roPer.textContent = '—';
+        roSt.textContent = '—';
+      }
+    }
+
+    // ---- Controls ----
+    const uInEl = el('uIn'), tauEl = el('tau'), sizeEl = el('size'), shapeEl = el('shape'),
+          contrastEl = el('contrast');
+    const uOut = el('uOut'), tOut = el('tOut'), sOut = el('sOut'), cOut = el('cOut');
+
+    function syncLabels() {
+      uOut.textContent = P.u0.toFixed(3);
+      tOut.textContent = P.tau.toFixed(3);
+      sOut.textContent = Math.round(P.sizeFrac * 100) + '%';
+      cOut.textContent = P.contrast.toFixed(1) + '×';
+    }
+
+    uInEl.addEventListener('input', () => {
+      P.u0 = Math.min(U_MAX, Math.max(0.02, parseFloat(uInEl.value)));
+      computeFeqIn(); syncLabels();
+    });
+    tauEl.addEventListener('input', () => {
+      P.tau = Math.min(TAU_MAX, Math.max(TAU_MIN, parseFloat(tauEl.value)));
+      syncLabels();
+    });
+    sizeEl.addEventListener('input', () => {
+      P.sizeFrac = parseFloat(sizeEl.value);
+      buildSolid(true); syncLabels();
+    });
+    shapeEl.addEventListener('change', () => { P.shape = shapeEl.value; buildSolid(true); });
+    contrastEl.addEventListener('input', () => { P.contrast = parseFloat(contrastEl.value); syncLabels(); });
+
+    document.getElementById('modes').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      P.mode = b.dataset.mode;
+      [...e.currentTarget.children].forEach((c) => c.classList.toggle('on', c === b));
+    });
+
+    document.getElementById('presets').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      const pre = b.dataset.pre;
+      if (pre === 'steady') { P.u0 = 0.036; P.tau = 0.900; P.sizeFrac = 0.18; }
+      else if (pre === 'shed') { P.u0 = 0.090; P.tau = 0.560; P.sizeFrac = 0.18; }
+      else { P.u0 = 0.120; P.tau = 0.515; P.sizeFrac = 0.24; }
+      uInEl.value = P.u0; tauEl.value = P.tau; sizeEl.value = P.sizeFrac;
+      computeFeqIn(); syncLabels(); buildSolid(true); resetFlow();
+      flash(pre === 'steady' ? 'low Reynolds' : pre === 'shed' ? 'vortex street' : 'high Reynolds');
+    });
+
+    el('reset').addEventListener('click', () => { resetFlow(); flash('flow reset'); });
+    const pauseBtn = el('pause');
+    pauseBtn.addEventListener('click', () => {
+      running = !running;
+      pauseBtn.textContent = running ? 'pause' : 'play';
+      pauseBtn.classList.toggle('on', !running);
+    });
+
+    // ---- Dragging the obstacle ----
+    let dragging = false;
+    function moveTo(clientX, clientY) {
+      const r = view.getBoundingClientRect();
+      const fx = (clientX - r.left) / r.width;
+      const fy = (clientY - r.top) / r.height;
+      const halfY = 0.5 * P.sizeFrac + 0.03;
+      obsX = Math.min(0.66, Math.max(0.08, fx));
+      obsY = Math.min(1 - halfY, Math.max(halfY, fy));
+      buildSolid(true);
+    }
+    view.addEventListener('pointerdown', (e) => {
+      dragging = true; stage.classList.add('dragging');
+      view.setPointerCapture(e.pointerId); moveTo(e.clientX, e.clientY);
+    });
+    view.addEventListener('pointermove', (e) => { if (dragging) moveTo(e.clientX, e.clientY); });
+    const endDrag = () => { dragging = false; stage.classList.remove('dragging'); };
+    view.addEventListener('pointerup', endDrag);
+    view.addEventListener('pointercancel', endDrag);
+
+    // ---- Boot ----
+    let rt = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => { allocate(); }, 180);
+    });
+
+    computeFeqIn();
+    allocate();
+    syncLabels();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

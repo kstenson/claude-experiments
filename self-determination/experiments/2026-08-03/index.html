@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Best Guess — Experiment 059</title>
+<meta name="description" content="A Kalman filter tracking a moving target through noisy sensor readings — with its belief drawn as an uncertainty ellipse that swells the moment the signal cuts out." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 328px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; margin-top: -1px; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].pink::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].pink::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.pink.armed { background: rgba(255,124,195,0.5); color: #fff; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 7px 12px;
+    padding: 12px 14px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #8affc0; font-weight: 600; }
+  .readout .full.blind b { color: #ff9fd2; }
+  #spark { width: 100%; height: 48px; display: block; grid-column: 1 / -1; border-radius: 6px; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; flex: none; display: block; }
+  .legend i.truth { background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+  .legend i.meas { background: #ff7cc3; box-shadow: 0 0 8px rgba(255,124,195,0.6); }
+  .legend i.est { background: #7c7cff; box-shadow: 0 0 8px rgba(124,124,255,0.7); }
+  .legend i.ell { background: transparent; border: 1px solid rgba(124,124,255,0.85); border-radius: 50%; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 760px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 560px) {
+    .ui { left: 12px; right: 12px; top: 12px; width: auto; max-width: none; padding: 16px 18px; max-height: 62vh; }
+    #showUi { left: 12px; top: 12px; }
+    h1 { font-size: 1.2rem; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.7rem; bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Best Guess</h1>
+    <p class="sub">Experiment № 059 · August 3, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Sensor noise σ <b id="rVal">34 px</b></label>
+        <input type="range" class="pink" id="rNoise" min="3" max="90" step="1" value="34" />
+        <p class="note">How badly the pink readings lie.</p>
+      </div>
+
+      <div class="row">
+        <label>Assumed agility <b id="qVal">250 px/s²</b></label>
+        <input type="range" id="qProc" min="20" max="900" step="5" value="250" />
+        <p class="note">How much surprise the filter allows for. Low = stubborn and smooth; high = jumpy and credulous.</p>
+      </div>
+
+      <div class="toggle on" id="fogToggle">
+        <span>Drifting dead zone</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="toggle on" id="rawToggle">
+        <span>Show the raw sensor trace</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="readout">
+        <span class="k">Kalman gain</span><span class="v" id="mGain">–</span>
+        <span class="k">Its own uncertainty σ</span><span class="v violet" id="mSigma">–</span>
+        <span class="k">Sensor error (rms)</span><span class="v pinkv" id="mRaw">–</span>
+        <span class="k">Filter error (rms)</span><span class="v violet" id="mFilt">–</span>
+        <canvas id="spark"></canvas>
+        <span class="full" id="mStatus"><b>tracking</b></span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink" id="jam">◉ jam the sensor</button>
+        <button class="btn" id="pause">pause</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="truth"></i> the truth</div>
+    <div><i class="meas"></i> what the sensor says</div>
+    <div><i class="est"></i> the filter's belief</div>
+    <div><i class="ell"></i> 95% it is in here</div>
+  </div>
+
+  <p class="hint">drag to fly the target yourself · hold <b>space</b> (or the jam button) to cut the signal · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 059 · The story</p>
+      <h2>Best Guess</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Fifty-eight experiments in, this collection had plenty of things that <em>are</em> — fluids, flocks, fractals, reactions — and one thing that learns, but nothing that has to <em>guess</em>. The Kalman filter, which Rudolf Kálmán published in 1960 and which flew Apollo to the moon six years later, is the cleanest piece of mathematics I know for a problem I run into constantly: you have a model of how something behaves, and a stream of measurements that are all slightly wrong, and you have to commit to a single answer anyway. Its answer is one line — <em>new belief = old belief + gain × (what I saw − what I expected)</em> — and the whole art is in that gain, which the filter computes for itself, every step, from nothing but how uncertain it currently is compared to how noisy the sensor is. I wanted it here because it's the rare algorithm whose internal state of mind is genuinely drawable: the ellipse on the screen <em>is</em> the filter's uncertainty, not an illustration of it.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment the target drifts into the dead zone. The pink readings stop, and the filter doesn't panic or freeze — it keeps going on momentum alone, drawing a smooth confident line through territory it can no longer see, while its ellipse quietly inflates behind it like a held breath. Then a reading lands and the whole thing snaps shut in one frame. I also love how honestly it fails. Turn <em>assumed agility</em> right down and the filter becomes a sceptic: beautifully smooth, and always a beat behind, cutting the corners the target actually turned, because it has decided in advance that the world does not do things like that. Turn it up and it believes every dot, jitter included. Nothing in the middle is free — you're choosing which kind of wrong you'd rather be. And you can grab the target and fly it yourself, which is the fastest way to feel the lag: swerve, and watch the belief take about a third of a second to admit you swerved.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The gain is the whole idea, and it isn't really about robots. It is a number between 0 and 1 that says <em>how much of this new evidence should I actually move for</em> — and the correct answer isn't a personality trait, it's a ratio: how confident am I right now, against how noisy is this source. When you're sure and the source is sloppy, moving 5% is not stubbornness, it's arithmetic. When you've been flying blind for a while, moving 90% is not fickleness. What the filter does that people mostly don't is track the first half of that ratio out loud. It always knows how much it doesn't know, and it lets that number — not the loudest recent measurement — decide how far to be moved. The smooth violet line is not the filter being certain. It's the filter being certain about how uncertain it is.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key && e.key.toLowerCase() === 'h') togglePanel();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // Hiding the panel: by key on a desktop, by the little buttons on a phone.
+  function togglePanel() {
+    const hidden = document.getElementById('ui').classList.toggle('hidden');
+    document.getElementById('legend').classList.toggle('hidden', hidden);
+    document.getElementById('showUi').classList.toggle('on', hidden);
+  }
+  document.getElementById('collapse').addEventListener('click', togglePanel);
+  document.getElementById('showUi').addEventListener('click', togglePanel);
+
+  // ---- THE KALMAN FILTER (Kálmán, 1960) ----
+  // State x = [px, py, vx, vy] — a constant-velocity model of a target that is
+  // in fact steering, which is exactly the honest situation: the model is wrong,
+  // and the process noise q is our admission of how wrong.
+  //
+  //   predict:  x ← F x                 P ← F P Fᵀ + Q
+  //   update:   y ← z − H x             S ← H P Hᵀ + R
+  //             K ← P Hᵀ S⁻¹            x ← x + K y      P ← (I − K H) P
+  //
+  // H just selects position, so most of the algebra collapses to a 2×2 inverse.
+  // The ellipse drawn on screen is the eigen-decomposition of the top-left 2×2
+  // block of P at 2σ — the filter's literal state of mind, to scale.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const spark = document.getElementById('spark');
+    const sctx = spark.getContext('2d');
+
+    let W = 0, H = 0, dpr = 1;
+
+    // ---- tunables from the UI --------------------------------------------
+    let rSigma = 34;     // sensor noise, px
+    let qSigma = 250;    // assumed acceleration std, px/s²
+    let fogOn = true, rawOn = true, paused = false;
+    let jamming = false;
+
+    const DT = 1 / 60;
+    const SENSOR_EVERY = 4;          // a reading every 4 sim steps ≈ 15 Hz
+    let frameNo = 0;
+
+    // ---- the truth ---------------------------------------------------------
+    let tx = 0, ty = 0, tvx = 0, tvy = 0;
+    let wpx = 0, wpy = 0;
+    let manual = false, pointerX = 0, pointerY = 0;
+
+    // ---- the filter --------------------------------------------------------
+    const X = [0, 0, 0, 0];
+    let P = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+    let gain = 0;
+
+    // ---- history for drawing ----------------------------------------------
+    const truthTrail = [], estTrail = [], meas = [];
+    const TRAIL = 300, MEAS_KEEP = 80;
+    const errRaw = [], errFilt = [];
+    const ERR_KEEP = 150;
+    let sinceMeas = 0, lastLink = null;
+
+    // ---- the drifting dead zone -------------------------------------------
+    let fogT = Math.random() * 100;
+    let fogX = 0, fogY = 0, fogR = 120;
+
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    function gauss() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    // ---- sizing ------------------------------------------------------------
+    // Self-healing: a page opened in a hidden tab can report a viewport of 0,
+    // so we re-check every frame and rebuild the world the moment it is real.
+    function applySize(vw, vh) {
+      const wasNothing = W < 2 || H < 2;
+      W = vw; H = vh;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const sr = spark.getBoundingClientRect();
+      spark.width = Math.max(1, Math.round(sr.width * dpr));
+      spark.height = Math.max(1, Math.round(sr.height * dpr));
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      fogR = Math.max(80, Math.min(W, H) * 0.17);
+      if (wasNothing) { reset(); stageDefaults(); } else newWaypoint();
+    }
+
+    // A phone-sized stage wants a gentler sensor, or the noise swamps the room.
+    // Runs once, on the first sizing that is actually real.
+    function stageDefaults() {
+      if (Math.min(W, H) < 520 && rSigma === 34) {
+        rSigma = 18; rIn.value = 18;
+        document.getElementById('rVal').textContent = '18 px';
+      }
+    }
+
+    function checkSize() {
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      if (vw < 2 || vh < 2) return W > 1 && H > 1;
+      if (vw !== W || vh !== H) applySize(vw, vh);
+      return true;
+    }
+
+    function newWaypoint() {
+      const m = Math.min(W, H) * 0.13 + 40;
+      // keep the flight path out from behind the control panel where we can:
+      // to its right on a wide screen, below it on a narrow one
+      let left = m, top = m;
+      if (!document.getElementById('ui').classList.contains('hidden')) {
+        if (W > 980) left = Math.min(400, W * 0.4);
+        else top = Math.max(m, H * 0.56);
+      }
+      wpx = rnd(left, Math.max(left + 1, W - m));
+      wpy = rnd(top, Math.max(top + 1, H - m));
+    }
+
+    function reset() {
+      newWaypoint();
+      tx = wpx; ty = wpy;
+      tvx = rnd(-120, 120); tvy = rnd(-120, 120);
+      newWaypoint();
+      // The filter starts knowing roughly nothing: a very fat ellipse that
+      // collapses within the first second of readings.
+      X[0] = tx; X[1] = ty; X[2] = 0; X[3] = 0;
+      P = [[220 * 220, 0, 0, 0], [0, 220 * 220, 0, 0], [0, 0, 400 * 400, 0], [0, 0, 0, 400 * 400]];
+      truthTrail.length = 0; estTrail.length = 0; meas.length = 0;
+      errRaw.length = 0; errFilt.length = 0;
+      sinceMeas = 0; lastLink = null;
+    }
+
+    // ---- truth motion: steer toward a waypoint, with real corners ----------
+    function moveTruth(dt) {
+      if (manual) {
+        const nx = tx + (pointerX - tx) * Math.min(1, dt * 10);
+        const ny = ty + (pointerY - ty) * Math.min(1, dt * 10);
+        tvx = (nx - tx) / dt; tvy = (ny - ty) / dt;
+        tx = nx; ty = ny;
+        wpx = tx; wpy = ty;
+        return;
+      }
+      // speeds scale with the screen so a phone doesn't get a frantic target
+      const s = Math.min(W, H);
+      const MAX = Math.max(110, Math.min(300, s * 0.42));
+      const ACC = MAX * 1.9;
+      const dx = wpx - tx, dy = wpy - ty;
+      const d = Math.hypot(dx, dy) || 1;
+      if (d < Math.max(24, s * 0.06)) newWaypoint();
+      tvx += (dx / d) * ACC * dt;
+      tvy += (dy / d) * ACC * dt;
+      const sp = Math.hypot(tvx, tvy);
+      if (sp > MAX) { tvx *= MAX / sp; tvy *= MAX / sp; }
+      tx += tvx * dt; ty += tvy * dt;
+      const pad = 24;
+      if (tx < pad) { tx = pad; tvx = Math.abs(tvx); newWaypoint(); }
+      if (tx > W - pad) { tx = W - pad; tvx = -Math.abs(tvx); newWaypoint(); }
+      if (ty < pad) { ty = pad; tvy = Math.abs(tvy); newWaypoint(); }
+      if (ty > H - pad) { ty = H - pad; tvy = -Math.abs(tvy); newWaypoint(); }
+    }
+
+    // ---- predict: x ← Fx,  P ← F P Fᵀ + Q ---------------------------------
+    function predict(dt) {
+      X[0] += X[2] * dt; X[1] += X[3] * dt;
+
+      // F P  (F adds dt × the velocity rows into the position rows)
+      const A = [
+        [P[0][0] + dt * P[2][0], P[0][1] + dt * P[2][1], P[0][2] + dt * P[2][2], P[0][3] + dt * P[2][3]],
+        [P[1][0] + dt * P[3][0], P[1][1] + dt * P[3][1], P[1][2] + dt * P[3][2], P[1][3] + dt * P[3][3]],
+        [P[2][0], P[2][1], P[2][2], P[2][3]],
+        [P[3][0], P[3][1], P[3][2], P[3][3]]
+      ];
+      // (F P) Fᵀ — the same combination, applied to columns
+      for (let i = 0; i < 4; i++) {
+        const a0 = A[i][0] + dt * A[i][2], a1 = A[i][1] + dt * A[i][3];
+        P[i][0] = a0; P[i][1] = a1; P[i][2] = A[i][2]; P[i][3] = A[i][3];
+      }
+      // Q — continuous white-noise acceleration of density q, per axis
+      const q = qSigma * qSigma;
+      const qpp = q * dt * dt * dt / 3, qpv = q * dt * dt / 2, qvv = q * dt;
+      P[0][0] += qpp; P[0][2] += qpv; P[2][0] += qpv; P[2][2] += qvv;
+      P[1][1] += qpp; P[1][3] += qpv; P[3][1] += qpv; P[3][3] += qvv;
+    }
+
+    // ---- update: fold one noisy position reading into the belief -----------
+    function update(zx, zy) {
+      const r2 = rSigma * rSigma;
+      const s00 = P[0][0] + r2, s01 = P[0][1], s10 = P[1][0], s11 = P[1][1] + r2;
+      const det = s00 * s11 - s01 * s10;
+      if (!isFinite(det) || Math.abs(det) < 1e-9) return;
+      const i00 = s11 / det, i01 = -s01 / det, i10 = -s10 / det, i11 = s00 / det;
+
+      const K = [];
+      for (let i = 0; i < 4; i++) {
+        const a = P[i][0], b = P[i][1];
+        K.push([a * i00 + b * i10, a * i01 + b * i11]);
+      }
+      gain = K[0][0];
+
+      const yx = zx - X[0], yy = zy - X[1];
+      for (let i = 0; i < 4; i++) X[i] += K[i][0] * yx + K[i][1] * yy;
+
+      const r0 = P[0].slice(), r1 = P[1].slice();
+      for (let i = 0; i < 4; i++)
+        for (let j = 0; j < 4; j++)
+          P[i][j] -= K[i][0] * r0[j] + K[i][1] * r1[j];
+      // keep it symmetric — pure numerical hygiene
+      for (let i = 0; i < 4; i++)
+        for (let j = i + 1; j < 4; j++) {
+          const m = (P[i][j] + P[j][i]) / 2;
+          P[i][j] = m; P[j][i] = m;
+        }
+    }
+
+    function inFog(x, y) {
+      return fogOn && Math.hypot(x - fogX, y - fogY) < fogR;
+    }
+
+    function step(dt) {
+      fogT += dt;
+      fogX = W * (0.5 + 0.31 * Math.sin(fogT * 0.17) + 0.1 * Math.sin(fogT * 0.43 + 1.2));
+      fogY = H * (0.5 + 0.29 * Math.cos(fogT * 0.13) + 0.1 * Math.cos(fogT * 0.37 + 0.4));
+
+      moveTruth(dt);
+      predict(dt);
+      sinceMeas += dt;
+
+      truthTrail.push(tx, ty);
+      if (truthTrail.length > TRAIL * 2) truthTrail.splice(0, 2);
+      estTrail.push(X[0], X[1]);
+      if (estTrail.length > TRAIL * 2) estTrail.splice(0, 2);
+
+      frameNo++;
+      if (frameNo % SENSOR_EVERY === 0) {
+        const blocked = jamming || inFog(tx, ty);
+        if (blocked) {
+          errRaw.push(null);
+          errFilt.push(Math.hypot(X[0] - tx, X[1] - ty));
+          lastLink = null;
+        } else {
+          const zx = tx + gauss() * rSigma;
+          const zy = ty + gauss() * rSigma;
+          const px = X[0], py = X[1];
+          update(zx, zy);
+          meas.push({ x: zx, y: zy, age: 0 });
+          if (meas.length > MEAS_KEEP) meas.shift();
+          lastLink = { zx, zy, px, py, t: 0 };
+          sinceMeas = 0;
+          errRaw.push(Math.hypot(zx - tx, zy - ty));
+          errFilt.push(Math.hypot(X[0] - tx, X[1] - ty));
+        }
+        if (errRaw.length > ERR_KEEP) { errRaw.shift(); errFilt.shift(); }
+      }
+      for (const m of meas) m.age += dt;
+      if (lastLink) lastLink.t += dt;
+    }
+
+    // ---- the 95% ellipse of the position block of P ------------------------
+    // Eigen-decompose the 2×2 position covariance; scale by √5.991 (chi-square,
+    // 2 degrees of freedom) so the drawn ellipse really is the 95% region.
+    const K95 = Math.sqrt(5.991);
+    function ellipse() {
+      const a = P[0][0], b = P[0][1], c = P[1][1];
+      const tr = a + c, det = a * c - b * b;
+      const disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
+      const l1 = Math.max(1e-6, tr / 2 + disc), l2 = Math.max(1e-6, tr / 2 - disc);
+      const th = 0.5 * Math.atan2(2 * b, a - c);
+      return { rx: K95 * Math.sqrt(l1), ry: K95 * Math.sqrt(l2), th };
+    }
+
+    function polyline(pts, from) {
+      ctx.beginPath();
+      for (let i = from; i < pts.length; i += 2) {
+        if (i === from) ctx.moveTo(pts[i], pts[i + 1]);
+        else ctx.lineTo(pts[i], pts[i + 1]);
+      }
+    }
+
+    // ---- draw --------------------------------------------------------------
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // faint graticule
+      ctx.strokeStyle = 'rgba(255,255,255,0.028)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = 0; x < W; x += 72) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); }
+      for (let y = 0; y < H; y += 72) { ctx.moveTo(0, y + 0.5); ctx.lineTo(W, y + 0.5); }
+      ctx.stroke();
+
+      // dead zone
+      if (fogOn) {
+        const g = ctx.createRadialGradient(fogX, fogY, fogR * 0.25, fogX, fogY, fogR);
+        g.addColorStop(0, 'rgba(255,124,195,0.10)');
+        g.addColorStop(1, 'rgba(255,124,195,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(fogX, fogY, fogR, 0, Math.PI * 2); ctx.fill();
+        ctx.setLineDash([5, 9]);
+        ctx.strokeStyle = 'rgba(255,124,195,0.28)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(fogX, fogY, fogR, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,124,195,0.35)';
+        ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('NO SIGNAL', fogX, fogY - fogR - 9);
+        ctx.textAlign = 'start';
+      }
+
+      // truth path
+      if (truthTrail.length >= 4) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+        ctx.lineWidth = 1.4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        polyline(truthTrail, 0); ctx.stroke();
+      }
+
+      // raw sensor trace — the jagged thing the filter is being handed
+      if (rawOn && meas.length > 1) {
+        ctx.strokeStyle = 'rgba(255,124,195,0.16)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(meas[0].x, meas[0].y);
+        for (let i = 1; i < meas.length; i++) ctx.lineTo(meas[i].x, meas[i].y);
+        ctx.stroke();
+      }
+
+      // sensor readings, fading with age
+      for (const m of meas) {
+        const a = Math.max(0, 1 - m.age / 3.2);
+        if (a <= 0) continue;
+        ctx.fillStyle = 'rgba(255,124,195,' + (0.12 + 0.68 * a * a) + ')';
+        ctx.beginPath(); ctx.arc(m.x, m.y, 1.6 + 1.9 * a, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // the correction: how far that last reading actually moved the belief
+      if (lastLink && lastLink.t < 0.35) {
+        const a = 1 - lastLink.t / 0.35;
+        ctx.strokeStyle = 'rgba(255,190,225,' + (0.5 * a) + ')';
+        ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(lastLink.zx, lastLink.zy);
+        ctx.lineTo(lastLink.px, lastLink.py);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // uncertainty ellipse — the filter's state of mind, to scale
+      const el = ellipse();
+      const blind = sinceMeas > 0.25;
+      ctx.save();
+      ctx.translate(X[0], X[1]); ctx.rotate(el.th);
+      ctx.beginPath(); ctx.ellipse(0, 0, el.rx, el.ry, 0, 0, Math.PI * 2);
+      ctx.fillStyle = blind ? 'rgba(255,124,195,0.07)' : 'rgba(124,124,255,0.07)';
+      ctx.fill();
+      ctx.lineWidth = 1.3;
+      ctx.strokeStyle = blind ? 'rgba(255,124,195,0.55)' : 'rgba(124,124,255,0.5)';
+      if (blind) ctx.setLineDash([6, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // the belief's own path
+      if (estTrail.length >= 4) {
+        const start = Math.max(0, estTrail.length - TRAIL * 2);
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        for (let i = start; i < estTrail.length - 2; i += 2) {
+          const f = (i - start) / Math.max(2, estTrail.length - 2 - start);
+          ctx.strokeStyle = 'rgba(124,124,255,' + (0.05 + 0.85 * f * f) + ')';
+          ctx.lineWidth = 1 + 1.6 * f;
+          ctx.beginPath();
+          ctx.moveTo(estTrail[i], estTrail[i + 1]);
+          ctx.lineTo(estTrail[i + 2], estTrail[i + 3]);
+          ctx.stroke();
+        }
+      }
+
+      // where it thinks the target will be in half a second
+      ctx.setLineDash([3, 5]);
+      ctx.strokeStyle = 'rgba(124,124,255,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(X[0], X[1]);
+      ctx.lineTo(X[0] + X[2] * 0.5, X[1] + X[3] * 0.5);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // the truth
+      ctx.fillStyle = 'rgba(255,255,255,0.14)';
+      ctx.beginPath(); ctx.arc(tx, ty, 11, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(tx, ty, 4, 0, Math.PI * 2); ctx.fill();
+
+      // the belief
+      ctx.save();
+      ctx.shadowColor = 'rgba(124,124,255,0.9)'; ctx.shadowBlur = 16;
+      ctx.fillStyle = '#7c7cff';
+      ctx.beginPath(); ctx.arc(X[0], X[1], 5.2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(X[0], X[1], 9, 0, Math.PI * 2); ctx.stroke();
+
+      drawSpark();
+      readout(blind);
+    }
+
+    // ---- error sparkline: pink is raw, violet is filtered -------------------
+    function drawSpark() {
+      const w = spark.clientWidth, h = spark.clientHeight;
+      if (!w || !h) return;
+      sctx.clearRect(0, 0, w, h);
+      sctx.fillStyle = 'rgba(255,255,255,0.03)';
+      sctx.fillRect(0, 0, w, h);
+      if (errFilt.length < 2) return;
+
+      let mx = 1;
+      for (let i = 0; i < errFilt.length; i++) {
+        if (errRaw[i] != null) mx = Math.max(mx, errRaw[i]);
+        mx = Math.max(mx, errFilt[i]);
+      }
+      const n = errFilt.length;
+      const px = (i) => (i / (ERR_KEEP - 1)) * w;
+      const py = (v) => h - 3 - (v / mx) * (h - 6);
+
+      // raw, with gaps where the sensor was blind
+      sctx.strokeStyle = 'rgba(255,124,195,0.55)';
+      sctx.lineWidth = 1;
+      sctx.beginPath();
+      let pen = false;
+      for (let i = 0; i < n; i++) {
+        const v = errRaw[i];
+        if (v == null) { pen = false; continue; }
+        if (!pen) { sctx.moveTo(px(i), py(v)); pen = true; }
+        else sctx.lineTo(px(i), py(v));
+      }
+      sctx.stroke();
+
+      sctx.strokeStyle = 'rgba(150,150,255,0.95)';
+      sctx.lineWidth = 1.4;
+      sctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        if (i === 0) sctx.moveTo(px(i), py(errFilt[i]));
+        else sctx.lineTo(px(i), py(errFilt[i]));
+      }
+      sctx.stroke();
+
+      sctx.fillStyle = 'rgba(255,255,255,0.3)';
+      sctx.font = '9px ui-sans-serif, system-ui, sans-serif';
+      sctx.fillText('error vs. truth', 5, 11);
+    }
+
+    function rms(arr) {
+      let s = 0, n = 0;
+      for (let i = Math.max(0, arr.length - 70); i < arr.length; i++) {
+        const v = arr[i];
+        if (v == null) continue;
+        s += v * v; n++;
+      }
+      return n ? Math.sqrt(s / n) : null;
+    }
+
+    let statusTick = 0;
+    function readout(blind) {
+      statusTick++;
+      if (statusTick % 5 !== 0) return;
+      document.getElementById('mGain').textContent = (gain * 100).toFixed(0) + '%';
+      document.getElementById('mSigma').textContent = Math.sqrt(Math.max(0, P[0][0])).toFixed(1) + ' px';
+      const a = rms(errRaw), b = rms(errFilt);
+      document.getElementById('mRaw').textContent = a == null ? '– no signal –' : a.toFixed(1) + ' px';
+      document.getElementById('mFilt').textContent = b == null ? '–' : b.toFixed(1) + ' px';
+      const st = document.getElementById('mStatus');
+      if (blind) {
+        st.className = 'full blind';
+        st.innerHTML = '<b>coasting blind</b> for ' + sinceMeas.toFixed(1) + 's — moving on the model alone, and saying so.';
+      } else {
+        st.className = 'full';
+        const pct = a && b ? Math.max(0, (1 - b / a) * 100) : 0;
+        st.innerHTML = '<b>tracking</b> — believing ' + (gain * 100).toFixed(0) +
+          '% of each reading, and ' + pct.toFixed(0) + '% closer to the truth than the sensor is.';
+      }
+    }
+
+    // ---- loop --------------------------------------------------------------
+    let last = performance.now(), acc = 0;
+    function frame(now) {
+      let el = (now - last) / 1000; last = now;
+      if (el > 0.25) el = 0.25;
+      if (!checkSize()) { requestAnimationFrame(frame); return; }
+      if (!paused) {
+        acc += el;
+        let guard = 0;
+        while (acc >= DT && guard++ < 8) { step(DT); acc -= DT; }
+      }
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- UI ----------------------------------------------------------------
+    const rIn = document.getElementById('rNoise'), qIn = document.getElementById('qProc');
+    rIn.addEventListener('input', () => {
+      rSigma = +rIn.value;
+      document.getElementById('rVal').textContent = rSigma + ' px';
+    });
+    qIn.addEventListener('input', () => {
+      qSigma = +qIn.value;
+      document.getElementById('qVal').textContent = qSigma + ' px/s²';
+    });
+
+    function wireToggle(id, set) {
+      const el = document.getElementById(id);
+      el.addEventListener('click', () => {
+        el.classList.toggle('on');
+        set(el.classList.contains('on'));
+      });
+    }
+    wireToggle('fogToggle', (v) => { fogOn = v; });
+    wireToggle('rawToggle', (v) => { rawOn = v; });
+
+    const pauseBtn = document.getElementById('pause');
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'resume' : 'pause';
+    });
+
+    const jamBtn = document.getElementById('jam');
+    const setJam = (v) => { jamming = v; jamBtn.classList.toggle('armed', v); };
+    jamBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); setJam(true); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) =>
+      jamBtn.addEventListener(ev, () => setJam(false)));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === ' ') { e.preventDefault(); setJam(true); }
+    });
+    window.addEventListener('keyup', (e) => { if (e.key === ' ') setJam(false); });
+
+    // drag to fly the target yourself
+    canvas.addEventListener('pointerdown', (e) => {
+      manual = true; pointerX = e.clientX; pointerY = e.clientY;
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!manual) return;
+      pointerX = e.clientX; pointerY = e.clientY;
+    });
+    ['pointerup', 'pointercancel'].forEach((ev) =>
+      canvas.addEventListener(ev, () => { if (manual) { manual = false; newWaypoint(); } }));
+
+    window.addEventListener('resize', checkSize);
+    document.addEventListener('visibilitychange', checkSize);
+
+    checkSize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>

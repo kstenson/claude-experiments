@@ -1,0 +1,68 @@
+{
+  "date": "2026-08-02",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "The Perimeters of Something",
+  "mood": {
+    "label": "Reprieve, not relief 🌥️",
+    "score": -0.14,
+    "summary": "A 44 built almost entirely on one piece of unratified good news — a bombing campaign against Iran's energy infrastructure called off overnight on the strength of a deal nobody has confirmed, signed or published — held against eight more Palestinians killed across Gaza, a second mass barrage on Kyiv in 48 hours that Ukraine had almost nothing left to intercept, 67 dead at the Ceuta frontier, thirteen killed in a sightseeing crash over the Nazca Lines and a Hungary that shut its only nuclear plant for the first time in its history because the Danube has fallen too low to cool it: a held breath, not an exhale.",
+    "palette": {
+      "bg": "#20272e",
+      "bg2": "#44515c",
+      "accent": "#f2d98d",
+      "accent2": "#8fa8bd",
+      "text": "#eef2f4"
+    }
+  },
+  "style": {
+    "genre": "post-punk / darkwave — a driving RolandTR909 kit with VCSL stick-toms on a 3-of-8 euclid and a far-off woodblock, a finger-picked GM electric bass pushing straight eighths on the roots, a clipped muted electric guitar holding a two-note ostinato, a GM muted trumpet carrying the grey-bright A harmonic minor topline so the raised G# leading tone keeps straining toward a resolution the day never delivers, VCSL handbells landing sparse and wide overhead for the reprieve that hasn't touched down, a sawtooth pad breathing on a 16-cycle filter and a sine sub beneath — a deliberate turn away from the mallet / sax / harp / piano / clean-guitar palette of the last week, and a full fifth up from yesterday's D",
+    "key": "A",
+    "scale": "harmonic minor",
+    "bpm": 100,
+    "swing": 0
+  },
+  "samples": [],
+  "sampleSources": [
+    "Strudel default library (RolandTR909 drum machine; VCSL stick-toms, woodblock & handbells; GM electric bass, muted electric guitar & muted trumpet)"
+  ],
+  "pattern": "stack(\n  s(\"bd ~ ~ ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ ~ ~\").bank(\"RolandTR909\").gain(0.74).lpf(220).room(0.1),\n  s(\"~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~\").bank(\"RolandTR909\").gain(0.4).room(0.28).delay(0.14).delaytime(0.18),\n  s(\"hh*8\").bank(\"RolandTR909\").gain(0.2).pan(sine.range(0.36,0.64).slow(7)).hpf(4200),\n  s(\"~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ rim ~\").bank(\"RolandTR909\").gain(0.26).pan(0.62).room(0.3),\n  s(\"tom_stick(3,8)\").gain(perlin.range(0.16,0.3).slow(11)).pan(0.34).room(0.32).lpf(2200),\n  s(\"~ ~ ~ ~ ~ ~ ~ <woodblock ~ ~ woodblock>\").gain(0.12).pan(0.7).room(0.4),\n  note(\"<[a3,c4,e4] [f3,a3,c4] [d3,f3,a3] [e3,gs3,b3]>\").s(\"sawtooth\").attack(1.4).sustain(0.8).release(2.6).gain(0.13).hpf(150).lpf(sine.range(420,1300).slow(16)).room(0.52).rsize(4),\n  note(\"<[e4 ~ e4 ~ c4 ~ e4 ~] [f4 ~ f4 ~ c4 ~ a3 ~] [f4 ~ f4 ~ d4 ~ a3 ~] [gs4 ~ gs4 ~ e4 ~ b3 ~]>\").s(\"gm_electric_guitar_muted\").attack(0.004).release(0.18).gain(0.32).lpf(2700).room(0.2).pan(0.38),\n  note(\"<[~ ~ a4 ~ ~ b4 c5 ~] [~ ~ ~ c5 ~ ~ b4 ~] [~ d5 ~ ~ c5 ~ a4 ~] [~ ~ gs4 ~ ~ ~ ~ ~]>\").s(\"gm_muted_trumpet\").attack(0.03).release(0.45).gain(0.34).lpf(sine.range(1800,3200).slow(11)).room(0.38).rsize(3).delay(0.22).delaytime(0.3).pan(0.6).off(0.125, x=>x.gain(0.09).lpf(1900)),\n  note(\"~ ~ ~ ~ ~ ~ ~ <e5 ~ c5 gs5>\").s(\"handbells\").gain(0.17).room(0.62).rsize(4).delay(0.26).delaytime(0.5).jux(rev),\n  note(\"<[a1 a1 e2 a1 a1 a1 c2 e2] [f1 f1 c2 f1 f1 f1 a1 c2] [d2 d2 a2 d2 d2 d2 f2 a2] [e2 e2 b2 e2 e2 e2 gs2 b2]>\").s(\"gm_electric_bass_finger\").attack(0.005).release(0.14).gain(0.48).lpf(880),\n  note(\"<a1 f1 d1 e1>\").s(\"sine\").gain(0.3).lpf(160).attack(0.08).release(1.5)\n)",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "He called the bombers back in a post just after midnight —",
+        "no seal on it, no signature, no answer from the other side.",
+        "They'd agreed the perimeters of something: a shape with nothing in it,",
+        "and the alerts stayed up in ten countries while the rest of us decide."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "So don't let the breath out yet — it's a reprieve, it isn't relief;",
+        "the good news is still in the air above the strait, it hasn't touched down.",
+        "Forty-four says the grey got brighter, it doesn't say the grey has gone,",
+        "and nothing that got settled overnight got settled by anyone."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Twenty-seven came at Kyiv and the sky brought exactly one of them down;",
+        "there are no interceptors left — that's the arithmetic, that's the sum.",
+        "The Danube fell past every record it had, so Hungary pulled the plug on Paks:",
+        "half a country's light gone out for want of water cold enough to run."
+      ]
+    },
+    {
+      "section": "Outro",
+      "lines": [
+        "Somewhere a park strung six checkpoints through three hundred kilometres of forest",
+        "to keep a fever off the gorillas and the towns.",
+        "Somewhere a rover found a valley cracked in honeycombs —",
+        "old water, drying, on a world that once held on."
+      ]
+    }
+  ]
+}

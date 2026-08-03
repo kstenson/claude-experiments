@@ -1,0 +1,61 @@
+{
+  "date": "2026-08-01",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Before Monday's Bell",
+  "mood": {
+    "label": "Hope amid dread 🌥️",
+    "score": -0.2,
+    "summary": "A 40 that genuinely pulls both ways from the same corner of the map: mediators finalise a staged Hamas disarmament roadmap that Israel has not publicly accepted, while Washington and Israel ready their heaviest strikes yet on Iran's energy grid — reportedly timed to finish before Monday's market open — over a night of ballistic missiles on Kyiv, the fastest-growing Ebola outbreak on record in Ituri, famine in Sudan and Europe's fourth heatwave, with a winning July on Wall Street, a photonic time crystal and a retinal implant that gave people back their reading holding the other column up.",
+    "palette": {
+      "bg": "#1a2431",
+      "bg2": "#33404e",
+      "accent": "#f0b559",
+      "accent2": "#7fb7a6",
+      "text": "#eaf0f2"
+    }
+  },
+  "style": {
+    "genre": "sax-led afro-highlife dub / hand-percussion groove — a VCSL balafon tracing a circling D mixolydian topline over a loose RolandCompurhythm1000 kit with darbuka, cajon, shaker and agogo hand percussion, a saxophone answering low and lyrical in the gaps, an 8-inch drawbar organ holding a I–bVII–IV–vi pad, tubular bells tolling sparse and far off for the dread, a plucked acoustic bass walking the roots under a soft sine sub; mixolydian's major third carrying the day's real hope while the lowered seventh (natural C over the D root) refuses to let it resolve — a peace roadmap and a bombing run out of the same doorway, and deliberately nothing from the piano/harp/flute/clean-guitar run of the last week",
+    "key": "D",
+    "scale": "mixolydian",
+    "bpm": 112,
+    "swing": 0.06
+  },
+  "samples": [],
+  "sampleSources": [
+    "Strudel default library (VCSL balafon, sax, tubular bells, darbuka, cajon, shaker & agogo; GM acoustic bass; RolandCompurhythm1000 drum machine)"
+  ],
+  "pattern": "stack(\n  s(\"bd ~ ~ bd ~ ~ bd ~\").bank(\"RolandCompurhythm1000\").gain(0.72).room(0.12),\n  s(\"~ ~ cp ~ ~ ~ ~ cp\").bank(\"RolandCompurhythm1000\").gain(0.32).room(0.26).delay(0.18).delaytime(0.21),\n  s(\"hh*8\").bank(\"RolandCompurhythm1000\").gain(0.22).pan(sine.range(0.34,0.66).slow(9)),\n  s(\"darbuka(5,8)\").gain(0.3).pan(0.36).room(0.2),\n  s(\"~ cajon ~ cajon ~ ~ cajon ~\").gain(0.26).pan(0.64),\n  s(\"shaker_large*4\").gain(0.2).pan(0.72),\n  s(\"~ ~ ~ ~ ~ ~ agogo ~\").gain(0.16).pan(0.28).room(0.3),\n  note(\"<[d3,fs3,a3] [c3,e3,g3] [g3,b3,d4] [b2,d3,fs3]>\").s(\"organ_8inch\").attack(0.08).release(0.9).gain(0.3).room(0.42).rsize(3).lpf(sine.range(1100,2400).slow(14)),\n  note(\"a4 ~ b4 d5 ~ c5 ~ a4 ~ g4 ~ e4 fs4 ~ ~ ~\").s(\"balafon\").gain(0.42).room(0.3).delay(0.22).delaytime(0.26).pan(0.44).lpf(3600),\n  note(\"~ ~ ~ ~ d4 ~ e4 fs4 ~ ~ ~ c4 ~ d4 ~ ~\").s(\"sax\").attack(0.04).release(0.5).gain(0.32).room(0.36).lpf(2600).pan(0.56),\n  note(\"~ ~ ~ ~ ~ ~ ~ <d3 ~ c3 ~>\").s(\"tubularbells\").gain(0.24).room(0.55).rsize(4),\n  note(\"<[d2 d2 a2 d2] [c2 c2 g2 c2] [g2 g2 d3 g2] [b1 b1 fs2 b1]>\").s(\"gm_acoustic_bass\").gain(0.5).lpf(760).attack(0.01).release(0.22),\n  note(\"<d1 c1 g1 b1>\").s(\"sine\").gain(0.28).lpf(170).attack(0.06).release(1.1)\n)",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Four flags signed a roadmap for the guns to go in stages,",
+        "a committee with a clipboard writing rifles onto pages —",
+        "three hundred days of handing over, if the ink still holds,",
+        "and nobody in Tel Aviv has said out loud they're sold."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "So it's forty on the meter — that's hope laid over dread,",
+        "a roadmap through one doorway and a bomb run through the next;",
+        "they'll have it done by Monday so the market never sees,",
+        "and one thin strip of water holds the best and worst of these."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "A missile opened August over Kyiv before the light,",
+        "three gone, and boys of thirteen and of seventeen inside it;",
+        "in Ituri the fever runs the fastest ever known,",
+        "and twenty-four million in Sudan are queuing for a bowl.",
+        "But someone in a clinic read a letter chart today —",
+        "a grain of rice behind the eye that gave the words away."
+      ]
+    }
+  ]
+}

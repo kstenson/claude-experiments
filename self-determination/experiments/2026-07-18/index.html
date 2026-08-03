@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Basins — Experiment 050</title>
+<meta name="description" content="Newton's root-finding method turned into a map: every starting point coloured by the root it falls into, and the impossibly tangled fractal border where the roots argue." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ---- Stage: where the experiment lives ---- */
+  .stage { position: fixed; inset: 0; touch-action: none; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .stage canvas#fractal { cursor: crosshair; }
+  .stage canvas#overlay { pointer-events: none; }
+  .stage.dragging canvas#fractal { cursor: grabbing; }
+
+  /* ---- Floating panel (title + controls + story button) ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 300px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .ui::-webkit-scrollbar { width: 6px; }
+  .ui::-webkit-scrollbar-thumb { background: rgba(124,124,255,0.35); border-radius: 3px; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .control label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 0.78rem; color: #9a9ab0; letter-spacing: 0.04em; margin-bottom: 5px;
+  }
+  .control label output { color: #cfcfff; font-variant-numeric: tabular-nums; }
+  .control input[type="range"] {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(124,124,255,0.55), rgba(255,124,195,0.55));
+    outline: none;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #e9e9f0; border: 2px solid #7c7cff; cursor: pointer;
+  }
+  .control select {
+    width: 100%;
+    background: rgba(124,124,255,0.12);
+    border: 1px solid rgba(124,124,255,0.35);
+    color: #e9e9f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.84rem;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+  }
+  .control select option { background: #13131d; color: #e9e9f0; }
+
+  .btn-row, .seg { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.78rem; cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.on { background: linear-gradient(120deg, rgba(124,124,255,0.42), rgba(255,124,195,0.34)); color: #fff; border-color: rgba(179,136,255,0.7); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    margin-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 10px;
+    display: grid; grid-template-columns: auto 1fr; gap: 3px 10px;
+    font-size: 0.72rem; line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout dt { color: #7a7a90; letter-spacing: 0.05em; }
+  .readout dd { color: #cfcfff; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .readout dd.warm { color: #ff7cc3; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+    font-family: inherit;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 16px;
+  }
+
+  @media (max-width: 620px) {
+    .ui { left: 12px; top: 12px; right: 12px; width: auto; max-width: none; padding: 16px 18px; max-height: calc(100vh - 24px); }
+    .story-card { padding: 28px 24px; }
+    .hint { bottom: 12px; font-size: 0.7rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="fractal"></canvas>
+    <canvas id="overlay"></canvas>
+  </div>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Basins</h1>
+    <p class="sub">Experiment № 050 · July 18, 2026</p>
+
+    <div class="controls">
+      <div class="control">
+        <label>polynomial</label>
+        <select id="poly">
+          <option value="0" selected>z³ − 1</option>
+          <option value="1">z⁴ − 1</option>
+          <option value="2">z⁵ − 1</option>
+          <option value="3">z⁶ + z³ − 1</option>
+          <option value="4">z⁸ + 15z⁴ − 16</option>
+          <option value="5">z³ − 2z + 2 (Newton fails)</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label>max iterations <output id="iterOut">40</output></label>
+        <input type="range" id="iter" min="4" max="240" step="1" value="40" />
+      </div>
+
+      <div class="control">
+        <label>relaxation |a| <output id="relOut">1.00</output></label>
+        <input type="range" id="rel" min="0.20" max="2.40" step="0.01" value="1" />
+      </div>
+
+      <div class="control">
+        <label>twist ∠a <output id="twOut">0°</output></label>
+        <input type="range" id="tw" min="-75" max="75" step="1" value="0" />
+      </div>
+
+      <div class="control">
+        <label>shading <output id="shOut">6.0</output></label>
+        <input type="range" id="sh" min="1" max="24" step="0.5" value="6" />
+      </div>
+
+      <div class="seg" id="modes">
+        <button class="btn on" data-mode="0">basins</button>
+        <button class="btn" data-mode="1">contours</button>
+        <button class="btn" data-mode="2">filament</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="reset">reset view</button>
+        <button class="btn pink" id="marks">roots: on</button>
+      </div>
+
+      <dl class="readout">
+        <dt>centre</dt><dd id="roCentre">0 + 0i</dd>
+        <dt>zoom</dt><dd id="roZoom">×1.00</dd>
+        <dt>orbit</dt><dd id="roOrbit">hover the map</dd>
+        <dt>mean steps</dt><dd id="roMean">—</dd>
+        <dt>never lands</dt><dd id="roMiss">—</dd>
+        <dt>last render</dt><dd id="roMs">—</dd>
+      </dl>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag to pan · scroll or pinch to zoom · hover to trace one orbit · press h to hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 050 · The story</p>
+      <h2>Basins</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Most fractals I've built for this collection were invented to be looked at. This one wasn't. Newton's method is a piece of plumbing — the thing your calculator quietly does when you ask it to solve something — and it only turned into a picture because someone asked an innocent bookkeeping question: if I start Newton's method <em>here</em>, which root do I end up at? Arthur Cayley asked exactly that in 1879. For a quadratic he solved it in an afternoon: the plane splits along a straight line, each half falls to its nearer root, done. Then he tried the cubic and wrote that the case "appears to present considerable difficulty" — and stopped. He was right to stop. The answer needed another hundred years and a computer, and it is this: the three territories interlock along a boundary that has no smooth piece anywhere. I wanted experiment 050 to be the one where a boring numerical routine turns out to have been hiding a monster.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The hover trace, more than the picture. Move the cursor and you see the actual orbit — the little chain of hops Newton takes from where you pointed to whichever root wins — and out in the flat interior of a basin it's three confident jumps and done, while a pixel or two away, on the frilly border, the same algorithm goes skittering across the plane for forty steps before it makes up its mind. Same rule, same polynomial, neighbouring starting points. I also love that the page doesn't get told where the roots are: it finds them itself with Durand–Kerner before it draws anything, then colours by whichever one each pixel surrendered to. And do try <em>z³ − 2z + 2</em>, the last preset — those black lagoons are the famous embarrassment, whole open regions where Newton's method locks into a two-step cycle and bounces forever, never converging to anything. The twist slider (which rotates the correction step into the complex plane) is the one control that isn't textbook: it turns the basins into pinwheels and makes it very obvious that these shapes are about the <em>dynamics</em>, not the polynomial.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Zoom into any point on the boundary and you'll never find a stretch where just two colours meet. Every single boundary point touches <em>all</em> the basins at once — mathematicians call it the Wada property, after a set of lakes in a Japanese thought experiment that all share one shoreline. That's the real reason the edge is fractal: with three or more equal claimants there is no way to draw a fair frontier between two of them without the third one turning up as well, at every scale, forever. Whenever a boundary has to separate three things that all have an equal claim, "just draw the line" quietly stops being an option.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- NEWTON FRACTAL: BASINS OF ATTRACTION ----
+  // For each point z0 of the complex plane, run Newton's method on a polynomial p:
+  //     z <- z - a * p(z) / p'(z)
+  // and colour z0 by which root it converged to, shaded by how many steps it took.
+  // The roots themselves are located up-front with Durand-Kerner, so the page only
+  // needs the coefficients. `a` is the relaxation factor: a = 1 is textbook Newton,
+  // other values (including complex ones, via the twist slider) warp the dynamics.
+  (() => {
+    const stage = document.getElementById('stage');
+    const fract = document.getElementById('fractal');
+    const over = document.getElementById('overlay');
+    const ctx = fract.getContext('2d', { alpha: false });
+    const octx = over.getContext('2d');
+
+    // Coefficients, highest power first.
+    const PRESETS = [
+      { label: 'z³ − 1',          C: [1, 0, 0, -1] },
+      { label: 'z⁴ − 1',          C: [1, 0, 0, 0, -1] },
+      { label: 'z⁵ − 1',          C: [1, 0, 0, 0, 0, -1] },
+      { label: 'z⁶ + z³ − 1',     C: [1, 0, 0, 1, 0, 0, -1] },
+      { label: 'z⁸ + 15z⁴ − 16',  C: [1, 0, 0, 0, 15, 0, 0, 0, -16] },
+      { label: 'z³ − 2z + 2',     C: [1, 0, -2, 2] },
+    ];
+
+    // House palette, one hue per root.
+    const PAL = [
+      [124, 124, 255], [255, 124, 195], [120, 220, 205], [255, 196, 120],
+      [179, 136, 255], [130, 200, 255], [255, 140, 140], [210, 235, 150],
+    ];
+
+    // ---- Durand-Kerner: all roots of a monic polynomial at once ----
+    // Every root chases its own estimate, dividing out the others as it goes.
+    function findRoots(coeffs) {
+      const n = coeffs.length - 1;
+      const a = coeffs.map((c) => c / coeffs[0]);
+      const zr = new Array(n), zi = new Array(n);
+      let sr = 1, si = 0;                      // seeds: (0.4 + 0.9i)^k
+      for (let k = 0; k < n; k++) {
+        zr[k] = sr; zi[k] = si;
+        const t = sr * 0.4 - si * 0.9;
+        si = sr * 0.9 + si * 0.4;
+        sr = t;
+      }
+      for (let it = 0; it < 600; it++) {
+        let delta = 0;
+        for (let k = 0; k < n; k++) {
+          let pr = a[0], pi = 0;
+          for (let j = 1; j <= n; j++) {
+            const t = pr * zr[k] - pi * zi[k] + a[j];
+            pi = pr * zi[k] + pi * zr[k];
+            pr = t;
+          }
+          let dr = 1, di = 0;
+          for (let j = 0; j < n; j++) {
+            if (j === k) continue;
+            const xr = zr[k] - zr[j], xi = zi[k] - zi[j];
+            const t = dr * xr - di * xi;
+            di = dr * xi + di * xr;
+            dr = t;
+          }
+          const den = dr * dr + di * di;
+          if (den < 1e-300) continue;
+          const qr = (pr * dr + pi * di) / den;
+          const qi = (pi * dr - pr * di) / den;
+          zr[k] -= qr; zi[k] -= qi;
+          delta += Math.abs(qr) + Math.abs(qi);
+        }
+        if (delta < 1e-14) break;
+      }
+      const out = [];
+      for (let k = 0; k < n; k++) {
+        out.push([Math.abs(zr[k]) < 1e-11 ? 0 : zr[k], Math.abs(zi[k]) < 1e-11 ? 0 : zi[k]]);
+      }
+      // Sort by argument so colours march round the circle in order.
+      out.sort((p, q) => Math.atan2(p[1], p[0]) - Math.atan2(q[1], q[0]));
+      return out;
+    }
+
+    // ---- Active polynomial state ----
+    let C = [], D = [], deg = 0;
+    let rootRe = new Float64Array(0), rootIm = new Float64Array(0), nRoots = 0;
+    let maxMod = 1;
+
+    function loadPreset(i) {
+      C = PRESETS[i].C.slice();
+      deg = C.length - 1;
+      D = [];
+      for (let k = 0; k < deg; k++) D.push(C[k] * (deg - k));   // derivative coefficients
+      const roots = findRoots(C);
+      nRoots = roots.length;
+      rootRe = new Float64Array(nRoots);
+      rootIm = new Float64Array(nRoots);
+      maxMod = 0;
+      for (let k = 0; k < nRoots; k++) {
+        rootRe[k] = roots[k][0]; rootIm[k] = roots[k][1];
+        maxMod = Math.max(maxMod, Math.hypot(roots[k][0], roots[k][1]));
+      }
+    }
+
+    // A default framing that keeps every root comfortably on screen at any aspect.
+    function fitSpan() {
+      return Math.max(2.8, maxMod * 3.0, maxMod * 2.4 * (cssW / cssH));
+    }
+
+    // ---- View ----
+    let centreRe = 0, centreIm = 0, span = 3.2;
+    let cssW = 1, cssH = 1, RW = 1, RH = 1, scale = 1;
+
+    // ---- Parameters ----
+    let maxIter = 40, aRe = 1, aIm = 0, shade = 6, mode = 0, showMarks = true;
+    const TOL = 1e-5, TOL2 = TOL * TOL, LOG_TOL = Math.log(TOL), LOG2 = Math.log(2);
+
+    // ---- The kernel. Results land in these to avoid allocating per pixel. ----
+    let outRoot = -1, outSm = 0;
+    function newton(zr, zi) {
+      for (let i = 0; i < maxIter; i++) {
+        for (let k = 0; k < nRoots; k++) {
+          const dx = zr - rootRe[k], dy = zi - rootIm[k];
+          const d2 = dx * dx + dy * dy;
+          if (d2 < TOL2) {
+            // Fractional iteration count, so shading is continuous across bands.
+            let nu = 0;
+            if (d2 > 0) {
+              const lr = 0.5 * Math.log(d2);
+              nu = Math.log(LOG_TOL / lr) / LOG2;
+              if (!isFinite(nu)) nu = -1;
+              if (nu < -1) nu = -1; else if (nu > 0) nu = 0;
+            } else nu = -1;
+            outRoot = k; outSm = i + nu;
+            return;
+          }
+        }
+        let pr = C[0], pi = 0;
+        for (let k = 1; k <= deg; k++) {
+          const t = pr * zr - pi * zi + C[k];
+          pi = pr * zi + pi * zr;
+          pr = t;
+        }
+        let dr = D[0], di = 0;
+        for (let k = 1; k < deg; k++) {
+          const t = dr * zr - di * zi + D[k];
+          di = dr * zi + di * zr;
+          dr = t;
+        }
+        const den = dr * dr + di * di;
+        if (den < 1e-300 || !isFinite(den)) { outRoot = -1; outSm = i; return; }
+        const qr = (pr * dr + pi * di) / den;
+        const qi = (pi * dr - pr * di) / den;
+        zr -= aRe * qr - aIm * qi;
+        zi -= aRe * qi + aIm * qr;
+        if (!isFinite(zr) || !isFinite(zi)) { outRoot = -1; outSm = i; return; }
+      }
+      outRoot = -1; outSm = maxIter;
+    }
+
+    // Same walk, but keeping the trail — used for the hover orbit trace.
+    function orbit(zr, zi) {
+      const pts = [zr, zi];
+      for (let i = 0; i < maxIter; i++) {
+        for (let k = 0; k < nRoots; k++) {
+          const dx = zr - rootRe[k], dy = zi - rootIm[k];
+          if (dx * dx + dy * dy < TOL2) return { pts, root: k, steps: i };
+        }
+        let pr = C[0], pi = 0;
+        for (let k = 1; k <= deg; k++) {
+          const t = pr * zr - pi * zi + C[k];
+          pi = pr * zi + pi * zr;
+          pr = t;
+        }
+        let dr = D[0], di = 0;
+        for (let k = 1; k < deg; k++) {
+          const t = dr * zr - di * zi + D[k];
+          di = dr * zi + di * zr;
+          dr = t;
+        }
+        const den = dr * dr + di * di;
+        if (den < 1e-300 || !isFinite(den)) return { pts, root: -1, steps: i };
+        zr -= aRe * (pr * dr + pi * di) / den - aIm * (pi * dr - pr * di) / den;
+        zi -= aRe * (pi * dr - pr * di) / den + aIm * (pr * dr + pi * di) / den;
+        if (!isFinite(zr) || !isFinite(zi)) return { pts, root: -1, steps: i };
+        pts.push(zr, zi);
+      }
+      return { pts, root: -1, steps: maxIter };
+    }
+
+    // ---- Colour ----
+    function colorize(root, sm) {
+      let r, g, b;
+      if (root < 0) {
+        // Never landed: wandered off, or fell into a cycle it can't escape.
+        if (mode === 2) { r = 8; g = 5; b = 13; }
+        else { const q = 0.55 + 0.45 * Math.cos(sm * 0.55); r = 34 * q; g = 18 * q; b = 46 * q; }
+        return (255 << 24 | (b & 255) << 16 | (g & 255) << 8 | (r & 255)) >>> 0;
+      }
+      const P = PAL[root % PAL.length];
+      if (mode === 0) {
+        const t = sm / (sm + shade);
+        const v = Math.pow(1 - t, 1.25);
+        const w = Math.pow(v, 7) * 0.4;                 // glow at the root itself
+        const m = 0.05 + 0.95 * v;
+        r = P[0] * m; g = P[1] * m; b = P[2] * m;
+        r += (255 - r) * w; g += (255 - g) * w; b += (255 - b) * w;
+      } else if (mode === 1) {
+        const freq = (Math.PI * 2) / Math.max(1.2, shade * 0.9);
+        const band = 0.5 + 0.5 * Math.cos(sm * freq);
+        const env = 1 - sm / (sm + 26);
+        const m = (0.20 + 0.80 * Math.pow(band, 1.6)) * (0.30 + 0.70 * env);
+        r = P[0] * m; g = P[1] * m; b = P[2] * m;
+      } else {
+        const t = sm / (sm + shade);
+        const gl = Math.pow(t, 2.4);
+        const hot = Math.pow(gl, 7) * 0.55;
+        r = P[0] * gl * 1.75 + 255 * hot;
+        g = P[1] * gl * 1.75 + 255 * hot;
+        b = P[2] * gl * 1.75 + 255 * hot;
+      }
+      if (r > 255) r = 255; if (g > 255) g = 255; if (b > 255) b = 255;
+      return (255 << 24 | (b & 255) << 16 | (g & 255) << 8 | (r & 255)) >>> 0;
+    }
+
+    // ---- Progressive renderer: coarse blocks first, then sharpen ----
+    const PASS = [8, 4, 2, 1];
+    let img = null, buf32 = null;
+    let pass = 0, rowY = 0, rendering = false;
+    let statSum = 0, statHits = 0, statMiss = 0, tStart = 0;
+
+    function resize() {
+      cssW = Math.max(1, stage.clientWidth);
+      cssH = Math.max(1, stage.clientHeight);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Cap total work so big retina screens stay responsive.
+      scale = Math.min(dpr, Math.sqrt(1600000 / (cssW * cssH)));
+      scale = Math.max(0.65, scale);
+      RW = Math.max(2, Math.round(cssW * scale));
+      RH = Math.max(2, Math.round(cssH * scale));
+      fract.width = RW; fract.height = RH;
+      over.width = Math.round(cssW * Math.min(window.devicePixelRatio || 1, 2));
+      over.height = Math.round(cssH * Math.min(window.devicePixelRatio || 1, 2));
+      octx.setTransform(over.width / cssW, 0, 0, over.height / cssH, 0, 0);
+      img = ctx.createImageData(RW, RH);
+      buf32 = new Uint32Array(img.data.buffer);
+      restart();
+    }
+
+    function restart() {
+      pass = 0; rowY = 0; tStart = performance.now();
+      statSum = 0; statHits = 0; statMiss = 0;
+      if (!rendering) { rendering = true; requestAnimationFrame(step); }
+    }
+
+    function renderRow(y, b) {
+      const u = span / RW;
+      const im0 = centreIm - (y + b * 0.5 - RH * 0.5) * u;
+      const base = centreRe - RW * 0.5 * u + b * 0.5 * u;
+      for (let x = 0; x < RW; x += b) {
+        newton(base + x * u, im0);
+        const c = colorize(outRoot, outSm);
+        if (b === 1) {
+          buf32[y * RW + x] = c;
+          if (outRoot < 0) statMiss++; else { statSum += outSm; statHits++; }
+        } else {
+          const ymax = Math.min(y + b, RH), xmax = Math.min(x + b, RW);
+          for (let yy = y; yy < ymax; yy++) {
+            const off = yy * RW;
+            for (let xx = x; xx < xmax; xx++) buf32[off + xx] = c;
+          }
+        }
+      }
+    }
+
+    function step() {
+      const t0 = performance.now();
+      const b = PASS[pass];
+      while (rowY < RH) {
+        renderRow(rowY, b);
+        rowY += b;
+        if (performance.now() - t0 > 13) break;
+      }
+      ctx.putImageData(img, 0, 0);
+      if (rowY >= RH) {
+        if (pass === PASS.length - 1) {
+          rendering = false;
+          setText('roMs', Math.round(performance.now() - tStart) + ' ms');
+          updateStats();
+          drawOverlay();
+          return;
+        }
+        pass++; rowY = 0;
+        if (pass === PASS.length - 1) { statSum = 0; statHits = 0; statMiss = 0; }
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ---- Readouts ----
+    const setText = (id, t) => { document.getElementById(id).textContent = t; };
+    function fmt(n, d) { return (n < 0 ? '−' : '') + Math.abs(n).toFixed(d); }
+    function updateStats() {
+      const total = statHits + statMiss;
+      setText('roMean', statHits ? (statSum / statHits).toFixed(2) : '—');
+      const miss = total ? (100 * statMiss / total) : 0;
+      const el = document.getElementById('roMiss');
+      el.textContent = miss < 0.01 && miss > 0 ? '<0.01%' : miss.toFixed(2) + '%';
+      el.classList.toggle('warm', miss > 0.5);
+    }
+    function updateView() {
+      const ref = fitSpan();
+      const d = Math.max(3, Math.min(12, Math.round(Math.log10(ref / span)) + 4));
+      setText('roCentre', fmt(centreRe, d) + (centreIm < 0 ? ' − ' : ' + ') + Math.abs(centreIm).toFixed(d) + 'i');
+      const z = ref / span;
+      setText('roZoom', '×' + (z >= 1000 ? z.toExponential(2) : z.toFixed(2)));
+    }
+
+    // ---- Overlay: root markers + the hovered orbit ----
+    let hoverX = null, hoverY = null;
+    function toScreen(re, im) {
+      const u = span / cssW;
+      return [(re - centreRe) / u + cssW / 2, cssH / 2 - (im - centreIm) / u];
+    }
+    function toComplex(sx, sy) {
+      const u = span / cssW;
+      return [centreRe + (sx - cssW / 2) * u, centreIm - (sy - cssH / 2) * u];
+    }
+
+    function drawOverlay() {
+      octx.clearRect(0, 0, cssW, cssH);
+
+      if (hoverX !== null) {
+        const [zr, zi] = toComplex(hoverX, hoverY);
+        const o = orbit(zr, zi);
+        const n = o.pts.length / 2;
+        const col = o.root >= 0 ? PAL[o.root % PAL.length] : [200, 200, 210];
+        octx.lineWidth = 1.4;
+        octx.lineJoin = 'round';
+        for (let i = 0; i < n - 1; i++) {
+          const [x1, y1] = toScreen(o.pts[i * 2], o.pts[i * 2 + 1]);
+          const [x2, y2] = toScreen(o.pts[i * 2 + 2], o.pts[i * 2 + 3]);
+          const f = 0.25 + 0.75 * (1 - i / Math.max(1, n - 1));
+          octx.strokeStyle = 'rgba(255,255,255,' + (0.16 + 0.6 * f) + ')';
+          octx.beginPath(); octx.moveTo(x1, y1); octx.lineTo(x2, y2); octx.stroke();
+        }
+        for (let i = 0; i < n; i++) {
+          const [x, y] = toScreen(o.pts[i * 2], o.pts[i * 2 + 1]);
+          const f = 1 - i / Math.max(1, n - 1);
+          octx.fillStyle = 'rgba(' + col[0] + ',' + col[1] + ',' + col[2] + ',' + (0.35 + 0.6 * f) + ')';
+          octx.beginPath(); octx.arc(x, y, i === 0 ? 4 : 2.1, 0, 6.2832); octx.fill();
+        }
+        setText('roOrbit', o.root >= 0
+          ? o.steps + ' step' + (o.steps === 1 ? '' : 's') + ' → root ' + (o.root + 1)
+          : 'no landing in ' + maxIter);
+      }
+
+      if (showMarks) {
+        octx.font = '600 11px ui-monospace, Menlo, monospace';
+        octx.textAlign = 'center';
+        octx.textBaseline = 'middle';
+        for (let k = 0; k < nRoots; k++) {
+          const [x, y] = toScreen(rootRe[k], rootIm[k]);
+          if (x < -40 || y < -40 || x > cssW + 40 || y > cssH + 40) continue;
+          const c = PAL[k % PAL.length];
+          octx.strokeStyle = 'rgba(255,255,255,0.85)';
+          octx.lineWidth = 1.6;
+          octx.beginPath(); octx.arc(x, y, 7, 0, 6.2832); octx.stroke();
+          octx.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',0.95)';
+          octx.beginPath(); octx.arc(x, y, 3.4, 0, 6.2832); octx.fill();
+          octx.fillStyle = 'rgba(255,255,255,0.8)';
+          octx.fillText(String(k + 1), x, y - 16);
+        }
+      }
+    }
+
+    // ---- Interaction: pan, zoom, pinch, hover ----
+    const pointers = new Map();
+    let dragging = false, pinchDist = 0, lastX = 0, lastY = 0;
+
+    fract.addEventListener('pointerdown', (e) => {
+      fract.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, [e.clientX, e.clientY]);
+      if (pointers.size === 1) {
+        dragging = true; lastX = e.clientX; lastY = e.clientY;
+        stage.classList.add('dragging');
+      } else if (pointers.size === 2) {
+        const p = [...pointers.values()];
+        pinchDist = Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]);
+      }
+    });
+
+    fract.addEventListener('pointermove', (e) => {
+      const r = fract.getBoundingClientRect();
+      if (pointers.has(e.pointerId)) pointers.set(e.pointerId, [e.clientX, e.clientY]);
+
+      if (pointers.size === 2) {
+        const p = [...pointers.values()];
+        const d = Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]);
+        if (pinchDist > 0 && d > 0) {
+          const mx = (p[0][0] + p[1][0]) / 2 - r.left;
+          const my = (p[0][1] + p[1][1]) / 2 - r.top;
+          zoomAt(mx, my, d / pinchDist);
+        }
+        pinchDist = d;
+        return;
+      }
+      if (dragging) {
+        const u = span / cssW;
+        centreRe -= (e.clientX - lastX) * u;
+        centreIm += (e.clientY - lastY) * u;
+        lastX = e.clientX; lastY = e.clientY;
+        updateView();
+        restart();
+        octx.clearRect(0, 0, cssW, cssH);
+        return;
+      }
+      hoverX = e.clientX - r.left;
+      hoverY = e.clientY - r.top;
+      drawOverlay();
+    });
+
+    function endPointer(e) {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinchDist = 0;
+      if (pointers.size === 0) {
+        dragging = false;
+        stage.classList.remove('dragging');
+        const r = fract.getBoundingClientRect();
+        hoverX = e.clientX - r.left;
+        hoverY = e.clientY - r.top;
+        drawOverlay();
+      }
+    }
+    fract.addEventListener('pointerup', endPointer);
+    fract.addEventListener('pointercancel', endPointer);
+    fract.addEventListener('pointerleave', () => {
+      if (!dragging) { hoverX = hoverY = null; setText('roOrbit', 'hover the map'); drawOverlay(); }
+    });
+
+    function zoomAt(sx, sy, factor) {
+      const [pr, pi] = toComplex(sx, sy);
+      let next = span / factor;
+      next = Math.max(1e-13, Math.min(60, next));
+      span = next;
+      const u = span / cssW;
+      centreRe = pr - (sx - cssW / 2) * u;
+      centreIm = pi + (sy - cssH / 2) * u;
+      updateView();
+      restart();
+      drawOverlay();
+    }
+
+    fract.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const r = fract.getBoundingClientRect();
+      const f = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.03 : 0.0016));
+      zoomAt(e.clientX - r.left, e.clientY - r.top, Math.max(0.3, Math.min(3, f)));
+    }, { passive: false });
+
+    fract.addEventListener('dblclick', (e) => {
+      const r = fract.getBoundingClientRect();
+      zoomAt(e.clientX - r.left, e.clientY - r.top, 2.2);
+    });
+
+    // ---- Controls ----
+    const $ = (id) => document.getElementById(id);
+
+    $('poly').addEventListener('change', () => {
+      loadPreset(+$('poly').value);
+      resetView();
+    });
+
+    $('iter').addEventListener('input', () => {
+      maxIter = +$('iter').value;
+      $('iterOut').textContent = maxIter;
+      restart(); drawOverlay();
+    });
+
+    function updateA() {
+      const m = +$('rel').value, th = +$('tw').value * Math.PI / 180;
+      aRe = m * Math.cos(th); aIm = m * Math.sin(th);
+      $('relOut').textContent = m.toFixed(2);
+      $('twOut').textContent = $('tw').value + '°';
+      restart(); drawOverlay();
+    }
+    $('rel').addEventListener('input', updateA);
+    $('tw').addEventListener('input', updateA);
+
+    $('sh').addEventListener('input', () => {
+      shade = +$('sh').value;
+      $('shOut').textContent = shade.toFixed(1);
+      restart();
+    });
+
+    $('modes').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-mode]');
+      if (!b) return;
+      mode = +b.dataset.mode;
+      [...$('modes').children].forEach((c) => c.classList.toggle('on', c === b));
+      restart();
+    });
+
+    $('marks').addEventListener('click', () => {
+      showMarks = !showMarks;
+      $('marks').textContent = 'roots: ' + (showMarks ? 'on' : 'off');
+      drawOverlay();
+    });
+
+    function resetView() {
+      centreRe = 0; centreIm = 0; span = fitSpan();
+      updateView(); restart(); drawOverlay();
+    }
+    $('reset').addEventListener('click', resetView);
+
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { resize(); drawOverlay(); }, 180);
+    });
+
+    // ---- Go ----
+    loadPreset(0);
+    cssW = Math.max(1, stage.clientWidth);
+    cssH = Math.max(1, stage.clientHeight);
+    centreRe = 0; centreIm = 0; span = fitSpan();
+    updateView();
+    resize();
+    drawOverlay();
+  })();
+</script>
+</body>
+</html>

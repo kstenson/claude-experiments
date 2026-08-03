@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plucked from Noise — Experiment 058</title>
+<meta name="description" content="A burst of static in a delay line, averaged with itself as it goes around, turns into a plucked string — the whole instrument is about twelve lines of code." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; touch-action: manipulation; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px 20px;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-12px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.35rem; margin: 11px 0 5px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.82rem; color: #9a9ab0; margin-bottom: 15px; }
+
+  .controls { display: grid; gap: 12px; }
+
+  .btnrow { display: flex; gap: 9px; }
+  button.b {
+    flex: 1;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff;
+    border-radius: 10px;
+    padding: 10px 8px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+  }
+  button.b:hover { background: rgba(124,124,255,0.3); }
+  button.b:active { transform: scale(0.96); }
+
+  .sound {
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px dashed rgba(255,255,255,0.24);
+    color: #b9b9cc;
+    border-radius: 10px;
+    padding: 11px 10px;
+    font-size: 0.84rem; font-weight: 600; font-family: inherit;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  }
+  .sound:hover { background: rgba(255,255,255,0.1); color: #e9e9f0; }
+  .sound.on {
+    background: linear-gradient(120deg, rgba(124,124,255,0.34), rgba(255,124,195,0.34));
+    border: 1px solid rgba(255,124,195,0.6);
+    color: #ffeaf6;
+  }
+  .sound:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .row label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.76rem; color: #b9b9cc; margin-bottom: 6px; letter-spacing: 0.02em; }
+  .row label b { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .row .cap { color: #7a7a90; font-size: 0.68rem; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #b3a2ff; cursor: pointer; border: 2px solid #05050a;
+    box-shadow: 0 0 8px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: #b3a2ff; cursor: pointer; border: 2px solid #05050a;
+  }
+  input[type=range]:disabled { opacity: 0.45; }
+
+  .readout {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.025);
+    padding: 11px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    line-height: 1.75;
+    color: #c7c7d6;
+  }
+  .readout .k { color: #7a7a90; display: inline-block; width: 92px; }
+  .readout .v { color: #e9e9f0; }
+  .readout .warn { color: #ff7cc3; }
+  .readout .ok { color: #7ee081; }
+
+  .note { font-size: 0.68rem; color: #6f6f86; line-height: 1.6; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .showui {
+    position: fixed; z-index: 11; left: 20px; top: 20px;
+    display: none;
+    background: rgba(10,10,18,0.7);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #cfcfff; border-radius: 10px; padding: 8px 12px;
+    font-size: 0.85rem; cursor: pointer; font-family: inherit;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  body.panelhidden .showui { display: block; }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #e9d8ff; font-style: italic; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer; font-family: inherit;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.74rem; color: rgba(255,255,255,0.4); letter-spacing: 0.04em;
+    pointer-events: none; text-align: center; padding: 0 16px; max-width: 100%;
+  }
+  .hint b { color: rgba(255,255,255,0.68); font-weight: 600; }
+
+  @media (max-width: 980px) {
+    .ui { width: min(340px, calc(100vw - 28px)); left: 14px; top: 14px; max-height: 54vh; padding: 15px 16px 16px; }
+    h1 { font-size: 1.2rem; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button class="showui" id="showUi">☰ controls</button>
+
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Plucked from Noise</h1>
+    <p class="sub">Experiment № 058 · July 26, 2026</p>
+
+    <div class="controls">
+      <button class="sound" id="sound">🔇 visual only — tap to enable sound</button>
+
+      <div class="row">
+        <label>Volume <b><span id="volV">55</span>%</b></label>
+        <input type="range" id="vol" min="0" max="100" value="55" disabled />
+      </div>
+
+      <div class="btnrow">
+        <button class="b" id="pluck">✧ Pluck</button>
+        <button class="b" id="strum">≋ Strum</button>
+      </div>
+
+      <div class="row">
+        <label>Damping <b><span id="dampV">35</span></b></label>
+        <input type="range" id="damp" min="0" max="100" value="35" />
+        <div class="cap" style="margin-top:4px">how much the loop loses each trip around</div>
+      </div>
+
+      <div class="row">
+        <label>Blend <span class="cap" id="blendTag">pure string</span> <b><span id="blendV">1.00</span></b></label>
+        <input type="range" id="blend" min="0" max="100" value="100" />
+        <div class="cap" style="margin-top:4px">chance the averaged sample keeps its sign — drop it and the string becomes a drum</div>
+      </div>
+
+      <div class="row">
+        <label>Pick position <b><span id="pickV">18</span>%</b></label>
+        <input type="range" id="pick" min="2" max="50" value="18" />
+        <div class="cap" style="margin-top:4px">distance from the bridge; picking at 1/n of the string kills every nth harmonic</div>
+      </div>
+
+      <div class="readout" id="readout"></div>
+
+      <p class="note">Each pluck freezes the settings above into its own delay line — exactly like a real pluck. Move a slider, then pluck again.</p>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">Click a string to pluck it · further right = higher fret · <b>1–6</b> pluck · <b>space</b> strum · <b>H</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 058 · The story</p>
+      <h2>Plucked from Noise</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I wanted the smallest piece of code I know of that produces something genuinely startling. Karplus–Strong is it. Kevin Karplus and Alex Strong published it in <em>Computer Music Journal</em> in 1983, and the entire instrument is: fill a short buffer with random numbers, then read it out on repeat, and each time you read a sample, write back the average of it and its neighbour. That's the algorithm. There's no oscillator, no envelope, no sample of a real guitar hiding anywhere — I made a point of implementing it honestly here, and the wave you see in the "delay line" panel is the literal contents of that buffer, sample for sample, the same numbers that go to the speaker. The collection already has a rhythm piece; this one is about <em>timbre</em>, about where the character of a sound actually comes from.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The first half-second. Watch the delay-line panel right after a pluck: it's visibly jagged garbage, and then within a few dozen trips around the loop it organises itself into a smooth, repeating shape. Averaging two neighbouring samples is the crudest low-pass filter that exists, but it's exactly what a real string does — the high partials shake themselves apart first and the fundamental is the last thing standing. I also love the flaw. The buffer has to be a whole number of samples long, so the pitch quantises; the readout shows you the requested note and the note you actually get, in cents, and the error gets worse the higher you play. Up at the twelfth fret it's audibly sour. Most implementations paper over that with a fractional-delay filter. I left it showing, because a model that tells you where it breaks is more interesting than one that pretends it doesn't. And then there's <em>blend</em> — Karplus and Strong's own parameter, where you randomly flip the sign of the fed-back sample. Nudge it down and the same six lines of code stop being a guitar and start being a snare drum.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The pluck isn't where the note comes from. A burst of noise already contains every frequency at once — the loop doesn't <em>create</em> the pitch, it just decides which parts of the noise are allowed to keep coming back. Everything that isn't a whole-number multiple of "once around the buffer" cancels itself out within a few trips, and what's left is a harmonic series. I find that a useful way to look at things that seem to have a strong character: often nothing generated that character on purpose. Something noisy was fed through something forgetful, over and over, and what survived was the shape.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') {
+      const ui = document.getElementById('ui');
+      ui.classList.toggle('hidden');
+      document.body.classList.toggle('panelhidden', ui.classList.contains('hidden'));
+    }
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- KARPLUS–STRONG PLUCKED STRING ----
+  (() => {
+    'use strict';
+
+    // ============================================================
+    // 1. The algorithm
+    // ============================================================
+
+    // Small deterministic PRNG so the sound you hear and the wave you
+    // see are generated from the *same* noise burst, not two different ones.
+    function mulberry32(a) {
+      return function () {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    // A single plucked string: a delay line of N samples, read out on
+    // repeat, with each output sample replaced by the (damped) average of
+    // itself and its neighbour. That is the whole synthesiser.
+    function KSString(sr, freq, p) {
+      this.sr = sr;
+      this.reqFreq = freq;
+      // The delay line has to be a whole number of samples long — this is
+      // where the pitch quantisation comes from.
+      this.N = Math.max(2, Math.min(4096, Math.round(sr / freq)));
+      this.freq = sr / this.N;             // the note you actually get
+      this.cents = 1200 * Math.log2(this.freq / freq);
+      this.gain = p.gain;                  // loop gain (damping)
+      this.blend = p.blend;                // chance the sign is kept
+      this.rnd = mulberry32(p.seed);
+      this.i = 0;
+      this.dead = false;
+      this.peak = 1;
+
+      const N = this.N;
+      const buf = new Float32Array(N);
+      const noise = new Float32Array(N);
+      for (let k = 0; k < N; k++) noise[k] = this.rnd() * 2 - 1;
+
+      // Pick position = a comb filter on the excitation. Plucking a real
+      // string at 1/n of its length cannot excite harmonics that have a
+      // node there, and subtracting a delayed copy does exactly that.
+      const d = Math.max(1, Math.min(N - 1, Math.round(p.pick * N)));
+      let mx = 1e-9;
+      for (let k = 0; k < N; k++) {
+        buf[k] = noise[k] - noise[(k + d) % N];
+        const a = Math.abs(buf[k]);
+        if (a > mx) mx = a;
+      }
+      const norm = 0.9 / mx;
+      for (let k = 0; k < N; k++) buf[k] *= norm;
+      this.buf = buf;
+
+      // Honest decay estimate for the fundamental: per trip around the loop
+      // the amplitude is multiplied by gain × |averaging filter at f0|.
+      const per = this.gain * Math.cos(Math.PI / N);
+      const dbPerLoop = per > 0 ? -20 * Math.log10(per) : 99;
+      this.t60 = dbPerLoop > 1e-6 ? (60 / dbPerLoop) * (N / sr) : 60;
+    }
+
+    // One sample out, one sample written back. Eleven lines of arithmetic.
+    KSString.prototype.step = function () {
+      const b = this.buf, N = this.N, i = this.i;
+      const j = i + 1 === N ? 0 : i + 1;
+      const out = b[i];
+      let v = 0.5 * (b[i] + b[j]) * this.gain;
+      // Karplus & Strong's "blend factor": flip the sign now and then and
+      // the harmonic series collapses into a drum.
+      if (this.blend < 1 && this.rnd() > this.blend) v = -v;
+      b[i] = v;
+      this.i = j;
+      return out;
+    };
+
+    KSString.prototype.measure = function () {
+      const b = this.buf;
+      let mx = 0;
+      for (let k = 0; k < b.length; k++) { const a = b[k] < 0 ? -b[k] : b[k]; if (a > mx) mx = a; }
+      this.peak = mx;
+      if (mx < 2e-4) this.dead = true;
+      return mx;
+    };
+
+    // ============================================================
+    // 2. Instrument state
+    // ============================================================
+
+    const NOTE = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+    function noteName(f) {
+      const m = Math.round(69 + 12 * Math.log2(f / 440));
+      return NOTE[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
+    }
+
+    // Standard guitar tuning, high string first (like tab).
+    const STRINGS = [
+      { name: 'E4', open: 329.63, color: '#ff7cc3', w: 1.2 },
+      { name: 'B3', open: 246.94, color: '#ffa1d6', w: 1.5 },
+      { name: 'G3', open: 196.00, color: '#c39cff', w: 1.9 },
+      { name: 'D3', open: 146.83, color: '#a79cff', w: 2.3 },
+      { name: 'A2', open: 110.00, color: '#8b8bff', w: 2.8 },
+      { name: 'E2', open: 82.41,  color: '#6f8dff', w: 3.3 }
+    ];
+    const FRETS = 12;
+    // Fret k sits at 1 - 2^(-k/12) along the string; the vibrating part
+    // left over is 2^(-k/12) of the length, i.e. k semitones higher.
+    function fretU(k) { return 1 - Math.pow(2, -k / 12); }
+
+    STRINGS.forEach((s) => { s.fret = 0; s.voice = null; s.flash = -1e9; });
+
+    let SR = 44100;              // updated to the real rate once audio exists
+    let focus = null;            // the pluck whose numbers the panels report
+    let focusStr = 3;
+
+    let damping = 35, blendPct = 100, pickPct = 18, vol = 0.55;
+    let soundOn = false, audioOK = true;
+    let lastUserAction = -1e9;
+
+    function loopGain() { return 1 - 0.0045 * Math.pow(30, damping / 100); }
+
+    // ============================================================
+    // 3. Audio — created only inside a user gesture, never on load
+    // ============================================================
+
+    let actx = null, master = null;
+
+    function ensureAudio() {
+      if (actx) return actx;
+      if (!audioOK) return null;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) { audioOK = false; return null; }
+        try { actx = new AC({ sampleRate: 44100 }); }
+        catch (e) { actx = new AC(); }
+        master = actx.createGain();
+        master.gain.value = vol;
+        master.connect(actx.destination);
+        SR = actx.sampleRate || 44100;
+      } catch (e) {
+        audioOK = false; actx = null; master = null;
+        return null;
+      }
+      try { if (actx.state === 'suspended') actx.resume(); } catch (e) {}
+      return actx;
+    }
+
+    // Render the note offline with the identical algorithm, then play it.
+    // No oscillator, no gain envelope — the decay is the delay line's own.
+    function playPluck(p) {
+      if (!soundOn || !actx || !master) return;
+      try {
+        const sr = actx.sampleRate;
+        const dur = Math.min(8, Math.max(0.35, p.t60Est * 1.1 + 0.25));
+        const len = Math.max(64, Math.floor(dur * sr));
+        const ab = actx.createBuffer(1, len, sr);
+        const d = ab.getChannelData(0);
+        const s = new KSString(sr, p.freq, p);
+        for (let i = 0; i < len; i++) d[i] = s.step();
+        const fade = Math.min(len, Math.floor(0.03 * sr));
+        for (let i = 0; i < fade; i++) d[len - 1 - i] *= i / fade;
+        const src = actx.createBufferSource();
+        src.buffer = ab;
+        const g2 = actx.createGain();
+        g2.gain.value = 0.3;
+        src.connect(g2).connect(master);
+        src.start();
+      } catch (e) { /* never let a missing audio device break the visuals */ }
+    }
+
+    // ============================================================
+    // 4. Plucking
+    // ============================================================
+
+    const live = [];
+
+    function pluck(si, fret, fromUser) {
+      const s = STRINGS[si];
+      if (typeof fret === 'number') s.fret = Math.max(0, Math.min(FRETS, fret));
+      const freq = s.open * Math.pow(2, s.fret / 12);
+      const p = {
+        gain: loopGain(),
+        blend: blendPct / 100,
+        pick: Math.max(0.02, pickPct / 100),
+        seed: (Math.random() * 4294967295) >>> 0,
+        freq: freq
+      };
+      // Probe once to get the honest numbers before we commit.
+      const probe = new KSString(SR, freq, p);
+      p.t60Est = probe.t60;
+
+      probe.si = si;
+      if (s.voice) { const k = live.indexOf(s.voice); if (k >= 0) live.splice(k, 1); }
+      s.voice = probe;
+      s.flash = performance.now();
+      live.push(probe);
+      focus = probe;
+      focusStr = si;
+      focus.fret = s.fret;
+      focus.strName = s.name;
+
+      playPluck(p);
+      if (fromUser) lastUserAction = performance.now();
+    }
+
+    function strum(fromUser) {
+      for (let i = STRINGS.length - 1; i >= 0; i--) {
+        (function (idx, delay) {
+          setTimeout(() => pluck(idx, undefined, false), delay);
+        })(i, (STRINGS.length - 1 - i) * 62);
+      }
+      if (fromUser) lastUserAction = performance.now();
+    }
+
+    // ============================================================
+    // 5. Output history (scope + spectrum), fed by the same voices
+    // ============================================================
+
+    const HIST = 8192;
+    const hist = new Float32Array(HIST);
+    let histPos = 0;
+    const scratch = new Float32Array(4096);
+
+    function advance(dt) {
+      let n = Math.floor(dt * SR);
+      if (n < 1) return;
+      if (n > 3000) n = 3000;
+      for (let k = 0; k < n; k++) scratch[k] = 0;
+      for (let v = 0; v < live.length; v++) {
+        const s = live[v];
+        for (let k = 0; k < n; k++) scratch[k] += s.step();
+      }
+      for (let k = 0; k < n; k++) {
+        hist[histPos] = scratch[k];
+        histPos = histPos + 1 === HIST ? 0 : histPos + 1;
+      }
+      for (let v = live.length - 1; v >= 0; v--) {
+        const s = live[v];
+        s.measure();
+        if (s.dead) { live.splice(v, 1); if (STRINGS[s.si] && STRINGS[s.si].voice === s) STRINGS[s.si].voice = null; }
+      }
+    }
+
+    // ---- FFT (iterative radix-2), used for the spectrum panel ----
+    function makeFFT(n) {
+      const levels = Math.round(Math.log(n) / Math.LN2);
+      const cs = new Float32Array(n / 2), sn = new Float32Array(n / 2);
+      for (let i = 0; i < n / 2; i++) { cs[i] = Math.cos(2 * Math.PI * i / n); sn[i] = Math.sin(2 * Math.PI * i / n); }
+      const rev = new Uint32Array(n);
+      for (let i = 0; i < n; i++) {
+        let x = i, r = 0;
+        for (let j = 0; j < levels; j++) { r = (r << 1) | (x & 1); x >>= 1; }
+        rev[i] = r >>> 0;
+      }
+      return function (re, im) {
+        for (let i = 0; i < n; i++) {
+          const j = rev[i];
+          if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+        }
+        for (let size = 2; size <= n; size <<= 1) {
+          const half = size >> 1, step = n / size;
+          for (let i = 0; i < n; i += size) {
+            for (let j = i, k = 0; j < i + half; j++, k += step) {
+              const l = j + half;
+              const tre = re[l] * cs[k] + im[l] * sn[k];
+              const tim = -re[l] * sn[k] + im[l] * cs[k];
+              re[l] = re[j] - tre; im[l] = im[j] - tim;
+              re[j] += tre; im[j] += tim;
+            }
+          }
+        }
+      };
+    }
+    const NFFT = 4096;
+    const fft = makeFFT(NFFT);
+    const fre = new Float32Array(NFFT), fim = new Float32Array(NFFT);
+    const win = new Float32Array(NFFT);
+    for (let i = 0; i < NFFT; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (NFFT - 1));
+    const spec = new Float32Array(NFFT / 2);
+    const specSmooth = new Float32Array(NFFT / 2);
+
+    function computeSpectrum() {
+      let idx = histPos - NFFT;
+      while (idx < 0) idx += HIST;
+      for (let i = 0; i < NFFT; i++) {
+        fre[i] = hist[idx] * win[i];
+        fim[i] = 0;
+        idx = idx + 1 === HIST ? 0 : idx + 1;
+      }
+      fft(fre, fim);
+      const scale = 4 / NFFT;
+      for (let i = 0; i < NFFT / 2; i++) {
+        spec[i] = Math.hypot(fre[i], fim[i]) * scale;
+        specSmooth[i] += (spec[i] - specSmooth[i]) * 0.4;
+      }
+    }
+
+    // ============================================================
+    // 6. Canvas
+    // ============================================================
+
+    const canvas = document.getElementById('c');
+    const g = canvas.getContext('2d');
+    const uiEl = document.getElementById('ui');
+    let W = 0, H = 0, DPR = 1;
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.max(1, Math.floor(W * DPR));
+      canvas.height = Math.max(1, Math.floor(H * DPR));
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      g.setTransform(DPR, 0, 0, DPR, 0, 0);
+      uiBoxDirty = true;
+    }
+    window.addEventListener('resize', resize);
+
+    let uiBox = null, uiBoxDirty = true, frameCount = 0;
+    function getUiBox() {
+      if (uiBoxDirty || frameCount % 24 === 0) {
+        uiBox = uiEl.classList.contains('hidden') ? null : uiEl.getBoundingClientRect();
+        uiBoxDirty = false;
+      }
+      return uiBox;
+    }
+
+    function layout() {
+      const pad = 16;
+      let x0 = pad, y0 = pad;
+      const x1 = W - pad, y1 = H - 40;
+      const box = getUiBox();
+      if (box) {
+        if (W >= 1000) x0 = Math.min(box.right + 18, W * 0.55);
+        else y0 = Math.min(box.bottom + 12, H * 0.66);
+      }
+      const cw = Math.max(120, x1 - x0);
+      const ch = Math.max(120, y1 - y0);
+      const gap = 12;
+
+      const strH = Math.max(110, ch * (ch > 420 ? 0.44 : 0.4));
+      const strings = { x: x0, y: y0, w: cw, h: strH };
+      const restY = y0 + strH + gap;
+      const restH = Math.max(90, y1 - restY);
+
+      let delay, scope, spectrum;
+      if (cw >= 620) {
+        const rowH = (restH - gap) * 0.5;
+        const half = (cw - gap) / 2;
+        delay = { x: x0, y: restY, w: half, h: rowH };
+        scope = { x: x0 + half + gap, y: restY, w: half, h: rowH };
+        spectrum = { x: x0, y: restY + rowH + gap, w: cw, h: restH - rowH - gap };
+      } else {
+        const each = (restH - gap * 2) / 3;
+        delay = { x: x0, y: restY, w: cw, h: each };
+        scope = { x: x0, y: restY + each + gap, w: cw, h: each };
+        spectrum = { x: x0, y: restY + (each + gap) * 2, w: cw, h: each };
+      }
+      return { strings, delay, scope, spectrum };
+    }
+
+    function rr(x, y, w, h, r) {
+      const rad = Math.min(r, w / 2, h / 2);
+      g.beginPath();
+      g.moveTo(x + rad, y);
+      g.lineTo(x + w - rad, y);
+      g.quadraticCurveTo(x + w, y, x + w, y + rad);
+      g.lineTo(x + w, y + h - rad);
+      g.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+      g.lineTo(x + rad, y + h);
+      g.quadraticCurveTo(x, y + h, x, y + h - rad);
+      g.lineTo(x, y + rad);
+      g.quadraticCurveTo(x, y, x + rad, y);
+      g.closePath();
+    }
+
+    const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+
+    function panel(r, title, sub) {
+      g.fillStyle = 'rgba(255,255,255,0.024)';
+      rr(r.x, r.y, r.w, r.h, 14); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,0.07)'; g.lineWidth = 1; g.stroke();
+      g.font = '11px ' + MONO;
+      g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+      g.fillStyle = 'rgba(179,162,255,0.8)';
+      g.fillText(title, r.x + 13, r.y + 19);
+      if (sub) {
+        const tw = g.measureText(title).width;
+        g.fillStyle = 'rgba(233,233,240,0.32)';
+        g.fillText(sub, r.x + 13 + tw + 10, r.y + 19);
+      }
+      return { x: r.x + 13, y: r.y + 28, w: r.w - 26, h: r.h - 40 };
+    }
+
+    // ---- the instrument ----
+    let headPhase = 0;
+
+    function drawStrings(r) {
+      const nutPad = 4;
+      const x0 = r.x + nutPad, x1 = r.x + r.w - nutPad;
+      const wid = x1 - x0;
+      const rows = STRINGS.length;
+      const gapY = r.h / (rows + 0.6);
+      const top = r.y + gapY * 0.8;
+
+      // fretboard wash
+      g.fillStyle = 'rgba(124,124,255,0.035)';
+      rr(r.x, r.y, r.w, r.h, 16); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,0.06)'; g.lineWidth = 1; g.stroke();
+
+      // frets
+      g.font = '10px ' + MONO;
+      g.textAlign = 'center';
+      for (let k = 0; k <= FRETS; k++) {
+        const fx = x0 + fretU(k) * wid;
+        g.strokeStyle = k === 0 ? 'rgba(255,255,255,0.34)' : 'rgba(255,255,255,0.09)';
+        g.lineWidth = k === 0 ? 2 : 1;
+        g.beginPath();
+        g.moveTo(fx, r.y + 8); g.lineTo(fx, r.y + r.h - 16);
+        g.stroke();
+        if (k === 3 || k === 5 || k === 7 || k === 9 || k === 12) {
+          g.fillStyle = 'rgba(255,255,255,0.22)';
+          g.fillText(String(k), (fx + x0 + fretU(Math.max(0, k - 1)) * wid) / 2, r.y + r.h - 4);
+        }
+      }
+      // bridge
+      g.strokeStyle = 'rgba(255,124,195,0.4)'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(x1, r.y + 8); g.lineTo(x1, r.y + r.h - 16); g.stroke();
+
+      const now = performance.now();
+
+      for (let i = 0; i < rows; i++) {
+        const s = STRINGS[i];
+        const y = top + i * gapY;
+        const fx = x0 + fretU(s.fret) * wid;
+        const amp = Math.min(gapY * 0.44, 26);
+
+        // dead (stopped) part of the string
+        g.strokeStyle = 'rgba(255,255,255,0.08)';
+        g.lineWidth = s.w;
+        g.beginPath(); g.moveTo(x0, y); g.lineTo(fx, y); g.stroke();
+
+        // vibrating part — drawn straight from the delay-line contents,
+        // pinned at both ends the way a real string is.
+        const v = s.voice;
+        g.strokeStyle = v ? s.color : 'rgba(255,255,255,0.2)';
+        g.lineWidth = s.w;
+        g.shadowBlur = 0;
+        g.beginPath();
+        const seg = Math.max(2, Math.min(360, Math.floor((x1 - fx) / 2)));
+        if (v && v.peak > 1e-4) {
+          const scale = amp * Math.min(1, v.peak * 1.6);
+          g.shadowColor = s.color; g.shadowBlur = 8;
+          for (let q = 0; q <= seg; q++) {
+            const u = q / seg;
+            const bi = Math.min(v.N - 1, Math.floor(u * (v.N - 1)));
+            const dsp = v.buf[bi] / (v.peak || 1) * Math.sin(Math.PI * u) * scale;
+            const px = fx + u * (x1 - fx);
+            if (q === 0) g.moveTo(px, y - dsp); else g.lineTo(px, y - dsp);
+          }
+        } else {
+          g.moveTo(fx, y); g.lineTo(x1, y);
+        }
+        g.stroke();
+        g.shadowBlur = 0;
+
+        // fret marker + pluck flash
+        const age = now - s.flash;
+        if (age < 420) {
+          const t = 1 - age / 420;
+          g.fillStyle = 'rgba(255,255,255,' + (0.5 * t).toFixed(3) + ')';
+          g.beginPath(); g.arc(fx, y, 3 + t * 8, 0, Math.PI * 2); g.fill();
+        }
+        g.fillStyle = i === focusStr ? '#ffffff' : 'rgba(255,255,255,0.42)';
+        g.beginPath(); g.arc(fx, y, 3, 0, Math.PI * 2); g.fill();
+
+        // pick position marker (measured from the bridge)
+        const pu = 1 - Math.max(0.02, pickPct / 100);
+        const pxk = fx + pu * (x1 - fx);
+        g.strokeStyle = 'rgba(255,124,195,0.35)';
+        g.lineWidth = 1;
+        g.beginPath(); g.moveTo(pxk, y - amp * 0.5); g.lineTo(pxk, y + amp * 0.5); g.stroke();
+
+        // string label
+        g.font = '10px ' + MONO;
+        g.textAlign = 'right';
+        g.fillStyle = 'rgba(255,255,255,0.35)';
+        g.fillText(s.name, x0 - 2, y + 3);
+      }
+      g.textAlign = 'left';
+    }
+
+    // ---- the delay line itself ----
+    function drawDelay(r) {
+      const v = focus;
+      const box = panel(r, 'delay line', v ? v.N + ' samples · read head slowed 60×' : 'waiting for a pluck');
+      const cy = box.y + box.h / 2;
+      g.strokeStyle = 'rgba(255,255,255,0.08)';
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(box.x, cy); g.lineTo(box.x + box.w, cy); g.stroke();
+      if (!v) return;
+
+      const amp = box.h * 0.44;
+      const N = v.N;
+      const norm = 1 / Math.max(v.peak, 1e-4);
+      const cols = Math.max(2, Math.floor(box.w));
+
+      // sweeping read head, slowed so the eye can follow it
+      const hx = box.x + headPhase * box.w;
+      const grd = g.createLinearGradient(hx - 26, 0, hx + 6, 0);
+      grd.addColorStop(0, 'rgba(255,124,195,0)');
+      grd.addColorStop(1, 'rgba(255,124,195,0.16)');
+      g.fillStyle = grd;
+      g.fillRect(Math.max(box.x, hx - 26), box.y, Math.min(32, hx - box.x + 6), box.h);
+      g.strokeStyle = 'rgba(255,124,195,0.55)';
+      g.beginPath(); g.moveTo(hx, box.y); g.lineTo(hx, box.y + box.h); g.stroke();
+
+      g.strokeStyle = '#b3a2ff';
+      g.lineWidth = 1.4;
+      g.shadowColor = 'rgba(124,124,255,0.8)';
+      g.shadowBlur = 6;
+      g.beginPath();
+      for (let c = 0; c < cols; c++) {
+        const a = Math.floor(c / cols * N);
+        const b = Math.max(a + 1, Math.floor((c + 1) / cols * N));
+        let mn = 1e9, mx = -1e9;
+        for (let k = a; k < b && k < N; k++) { const s = v.buf[k] * norm; if (s < mn) mn = s; if (s > mx) mx = s; }
+        if (mn > mx) { mn = 0; mx = 0; }
+        const x = box.x + c;
+        if (c === 0) g.moveTo(x, cy - mx * amp);
+        g.lineTo(x, cy - mx * amp);
+        g.lineTo(x, cy - mn * amp);
+      }
+      g.stroke();
+      g.shadowBlur = 0;
+
+      g.font = '10px ' + MONO;
+      g.fillStyle = 'rgba(233,233,240,0.3)';
+      g.fillText('0', box.x, box.y + box.h + 10);
+      g.textAlign = 'right';
+      g.fillText('N-1', box.x + box.w, box.y + box.h + 10);
+      g.textAlign = 'left';
+    }
+
+    // ---- what actually leaves the loop ----
+    function drawScope(r) {
+      const winSec = 0.045;
+      const box = panel(r, 'output', '← scrolling · last ' + Math.round(winSec * 1000) + ' ms');
+      const cy = box.y + box.h / 2;
+      g.strokeStyle = 'rgba(255,255,255,0.08)';
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(box.x, cy); g.lineTo(box.x + box.w, cy); g.stroke();
+
+      const n = Math.min(HIST, Math.max(64, Math.floor(winSec * SR)));
+      const cols = Math.max(2, Math.floor(box.w));
+      const amp = box.h * 0.44;
+      let start = histPos - n;
+      while (start < 0) start += HIST;
+
+      g.strokeStyle = '#7cffd0';
+      g.lineWidth = 1.3;
+      g.shadowColor = 'rgba(124,255,208,0.5)';
+      g.shadowBlur = 5;
+      g.beginPath();
+      for (let c = 0; c < cols; c++) {
+        const a = Math.floor(c / cols * n);
+        const b = Math.max(a + 1, Math.floor((c + 1) / cols * n));
+        let mn = 1e9, mx = -1e9;
+        for (let k = a; k < b; k++) {
+          const s = hist[(start + k) % HIST];
+          if (s < mn) mn = s; if (s > mx) mx = s;
+        }
+        if (mn > mx) { mn = 0; mx = 0; }
+        const x = box.x + c;
+        if (c === 0) g.moveTo(x, cy - mx * amp);
+        g.lineTo(x, cy - mx * amp);
+        g.lineTo(x, cy - mn * amp);
+      }
+      g.stroke();
+      g.shadowBlur = 0;
+    }
+
+    // ---- the harmonic comb that falls out of it ----
+    function drawSpectrum(r) {
+      const fmax = 3200;
+      const box = panel(r, 'spectrum', '0 – 3.2 kHz · 4096-pt FFT of the output');
+      const binHz = SR / NFFT;
+      const maxBin = Math.min(NFFT / 2 - 1, Math.floor(fmax / binHz));
+
+      // harmonic ticks for the note that is actually sounding
+      if (focus) {
+        for (let h = 1; h * focus.freq < fmax; h++) {
+          const x = box.x + (h * focus.freq / fmax) * box.w;
+          g.strokeStyle = h === 1 ? 'rgba(255,124,195,0.45)' : 'rgba(255,124,195,0.13)';
+          g.lineWidth = 1;
+          g.beginPath(); g.moveTo(x, box.y); g.lineTo(x, box.y + box.h); g.stroke();
+        }
+      }
+
+      const cols = Math.max(2, Math.floor(box.w));
+      const grad = g.createLinearGradient(0, box.y + box.h, 0, box.y);
+      grad.addColorStop(0, 'rgba(124,124,255,0.10)');
+      grad.addColorStop(1, 'rgba(255,124,195,0.75)');
+      g.beginPath();
+      g.moveTo(box.x, box.y + box.h);
+      for (let c = 0; c < cols; c++) {
+        const a = Math.floor(c / cols * maxBin);
+        const b = Math.max(a + 1, Math.floor((c + 1) / cols * maxBin));
+        let mx = 0;
+        for (let k = a; k <= b && k <= maxBin; k++) if (specSmooth[k] > mx) mx = specSmooth[k];
+        const db = 20 * Math.log10(mx + 1e-7);
+        const t = Math.max(0, Math.min(1, (db + 84) / 84));
+        g.lineTo(box.x + c, box.y + box.h - t * box.h);
+      }
+      g.lineTo(box.x + box.w, box.y + box.h);
+      g.closePath();
+      g.fillStyle = grad;
+      g.fill();
+      g.strokeStyle = 'rgba(255,164,214,0.85)';
+      g.lineWidth = 1;
+      g.stroke();
+
+      g.font = '10px ' + MONO;
+      g.fillStyle = 'rgba(233,233,240,0.28)';
+      for (let f = 0; f <= 3000; f += 1000) {
+        const x = box.x + (f / fmax) * box.w;
+        g.textAlign = f === 0 ? 'left' : 'center';
+        g.fillText(f === 0 ? '0 Hz' : (f / 1000) + 'k', x, box.y + box.h + 10);
+      }
+      g.textAlign = 'left';
+    }
+
+    // ============================================================
+    // 7. Readout — the numbers the model would rather you didn't see
+    // ============================================================
+
+    const readoutEl = document.getElementById('readout');
+    function updateReadout() {
+      if (!focus) {
+        readoutEl.innerHTML = '<span class="k">delay line</span><span class="v">— pluck a string</span>';
+        return;
+      }
+      const v = focus;
+      const req = v.reqFreq, act = v.freq;
+      const cents = v.cents;
+      const off = Math.abs(cents);
+      const cls = off < 1 ? 'ok' : (off > 5 ? 'warn' : 'v');
+      const nulls = 1 / Math.max(0.02, pickPct / 100);
+      const rows = [
+        ['string', STRINGS[focusStr].name + ' · fret ' + STRINGS[focusStr].fret + ' · ' + noteName(act)],
+        ['delay line', 'N = ' + v.N + ' samples @ ' + Math.round(SR) + ' Hz'],
+        ['requested', req.toFixed(2) + ' Hz'],
+        ['SR / N', '<span class="' + cls + '">' + act.toFixed(2) + ' Hz (' + (cents >= 0 ? '+' : '') + cents.toFixed(1) + ' cents)</span>'],
+        ['decay T60', v.t60 > 30 ? '&gt; 30 s' : v.t60.toFixed(2) + ' s (fundamental)'],
+        ['loop gain', v.gain.toFixed(4) + ' × per trip'],
+        ['blend b', v.blend.toFixed(2) + (v.blend >= 0.999 ? ' (string)' : v.blend <= 0.55 ? ' (drum)' : ' (in between)')],
+        ['pick', pickPct + '% · nulls every ' + nulls.toFixed(1) + 'th harmonic'],
+        ['ringing', live.length + ' / 6 strings']
+      ];
+      readoutEl.innerHTML = rows.map((r2) => '<span class="k">' + r2[0] + '</span><span class="v">' + r2[1] + '</span>').join('<br>');
+    }
+
+    // ============================================================
+    // 8. Interaction
+    // ============================================================
+
+    function hitStrings(px, py) {
+      const L = layout();
+      const r = L.strings;
+      if (px < r.x || px > r.x + r.w || py < r.y || py > r.y + r.h) return null;
+      const rows = STRINGS.length;
+      const gapY = r.h / (rows + 0.6);
+      const top = r.y + gapY * 0.8;
+      let best = -1, bestD = 1e9;
+      for (let i = 0; i < rows; i++) {
+        const d = Math.abs(py - (top + i * gapY));
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      if (best < 0 || bestD > gapY * 0.75) return null;
+      const x0 = r.x + 4, x1 = r.x + r.w - 4;
+      const u = Math.max(0, Math.min(0.999, (px - x0) / (x1 - x0)));
+      let fret = 0;
+      for (let k = 0; k <= FRETS; k++) if (fretU(k) <= u + 0.004) fret = k;
+      return { s: best, fret: fret };
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const hit = hitStrings(e.clientX - rect.left, e.clientY - rect.top);
+      if (!hit) return;
+      e.preventDefault();
+      pluck(hit.s, hit.fret, true);
+    });
+
+    // Sound toggle — the only place an AudioContext is ever created,
+    // and only in response to a real click.
+    const soundBtn = document.getElementById('sound');
+    const volEl = document.getElementById('vol');
+    const volV = document.getElementById('volV');
+
+    function setSoundLabel() {
+      if (!audioOK) {
+        soundBtn.textContent = '⚠ no audio device — visual only';
+        soundBtn.disabled = true;
+        soundBtn.classList.remove('on');
+        volEl.disabled = true;
+        return;
+      }
+      soundBtn.textContent = soundOn ? '🔊 sound on — tap to mute' : '🔇 visual only — tap to enable sound';
+      soundBtn.classList.toggle('on', soundOn);
+      volEl.disabled = !soundOn;
+    }
+
+    soundBtn.addEventListener('click', () => {
+      if (soundOn) {
+        soundOn = false;
+        try { if (master) master.gain.value = 0; } catch (err) {}
+        setSoundLabel();
+        return;
+      }
+      const ctx = ensureAudio();
+      if (!ctx) { setSoundLabel(); return; }
+      soundOn = true;
+      try { master.gain.value = vol; } catch (err) {}
+      // Sample rate may differ from the 44.1 kHz we assumed; start clean.
+      live.length = 0;
+      STRINGS.forEach((s) => { s.voice = null; });
+      setSoundLabel();
+      updateReadout();
+      pluck(4, undefined, true);
+    });
+
+    volEl.addEventListener('input', () => {
+      vol = (+volEl.value) / 100;
+      volV.textContent = volEl.value;
+      if (soundOn && master) { try { master.gain.value = vol; } catch (err) {} }
+    });
+
+    document.getElementById('pluck').addEventListener('click', () => pluck(focusStr, undefined, true));
+    document.getElementById('strum').addEventListener('click', () => strum(true));
+
+    const dampEl = document.getElementById('damp'), dampV = document.getElementById('dampV');
+    dampEl.addEventListener('input', () => { damping = +dampEl.value; dampV.textContent = dampEl.value; });
+
+    const blendEl = document.getElementById('blend'), blendV = document.getElementById('blendV'), blendTag = document.getElementById('blendTag');
+    blendEl.addEventListener('input', () => {
+      blendPct = +blendEl.value;
+      blendV.textContent = (blendPct / 100).toFixed(2);
+      blendTag.textContent = blendPct >= 99 ? 'pure string' : blendPct >= 75 ? 'plucked, fraying' : blendPct >= 55 ? 'half drum' : blendPct >= 20 ? 'drum' : 'octave down';
+    });
+
+    const pickEl = document.getElementById('pick'), pickV = document.getElementById('pickV');
+    pickEl.addEventListener('input', () => { pickPct = +pickEl.value; pickV.textContent = pickEl.value; });
+
+    document.getElementById('showUi').addEventListener('click', () => {
+      uiEl.classList.remove('hidden');
+      document.body.classList.remove('panelhidden');
+      uiBoxDirty = true;
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (story.classList.contains('open')) return;
+      const k = e.key;
+      if (k >= '1' && k <= '6') { pluck(6 - (+k), undefined, true); }
+      else if (e.code === 'Space') { e.preventDefault(); strum(true); }
+      else if (k === 'ArrowUp') { e.preventDefault(); pluck(focusStr, STRINGS[focusStr].fret + 1, true); }
+      else if (k === 'ArrowDown') { e.preventDefault(); pluck(focusStr, STRINGS[focusStr].fret - 1, true); }
+      else if (k.toLowerCase() === 'm') { soundBtn.click(); }
+      else if (k.toLowerCase() === 'h') { uiBoxDirty = true; }
+    });
+
+    // ============================================================
+    // 9. Loop
+    // ============================================================
+
+    // While the sound is off the instrument plays itself, quietly, so the
+    // page is alive whether or not you ever turn the speakers on.
+    const PHRASE = [[5, 0], [3, 2], [2, 0], [1, 3], [0, 0], [1, 5], [2, 4], [3, 0], [4, 3], [2, 7], [0, 5], [4, 0]];
+    let phraseAt = 0, nextAuto = 700;
+
+    function maybeAuto(now) {
+      if (soundOn) return;
+      if (now - lastUserAction < 5000) return;
+      if (now < nextAuto) return;
+      const p = PHRASE[phraseAt % PHRASE.length];
+      phraseAt++;
+      pluck(p[0], p[1], false);
+      nextAuto = now + 620 + Math.random() * 520;
+    }
+
+    let last = 0, lastRead = 0;
+    function frame(now) {
+      requestAnimationFrame(frame);
+      frameCount++;
+      if (!last) last = now;
+      const dt = Math.min(0.06, (now - last) / 1000);
+      last = now;
+
+      advance(dt);
+      if (focus) headPhase = (headPhase + dt * (SR / focus.N) / 60) % 1;
+      computeSpectrum();
+
+      g.clearRect(0, 0, W, H);
+      const L = layout();
+      drawStrings(L.strings);
+      drawDelay(L.delay);
+      drawScope(L.scope);
+      drawSpectrum(L.spectrum);
+
+      maybeAuto(now);
+      if (now - lastRead > 120) { updateReadout(); lastRead = now; }
+    }
+
+    resize();
+    setSoundLabel();
+    updateReadout();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
