@@ -1,0 +1,249 @@
+{
+  "date": "2026-08-04",
+  "topic": "The Justice Department's Civil War-era conspiracy statute and anti-ICE protesters",
+  "question": "Is the Justice Department's expanding use of 18 U.S.C. §372 against immigration-enforcement protesters ordinary law enforcement, or a stretch of conspiracy law aimed at political opponents?",
+  "summary": "NPR reported on August 3 that the Justice Department has charged more than three dozen people in at least 10 cases under 18 U.S.C. §372 — 'conspiracy to impede or injure officer,' a rarely used statute whose main modern outing was the January 6 prosecutions — and that every one of the new cases involves protests against federal immigration enforcement. Nearly 50 more defendants in Minnesota, Michigan and Texas face conspiracy counts under other statutes. The flashpoint is Minneapolis, where a June 16 indictment charged 15 people tied to Direct Action Minnesota over blockades at the Whipple Federal Building on January 23 and March 1.\n\nThe left says a Civil War-era law is being repurposed to criminalize protest, and points to a striking failure rate: at least 19 Minnesota assault cases dismissed, the Chicago 'Broadview Six' case thrown out with prejudice after a judge found grand-jury misconduct, and a U.S. Attorney who would not say whether any officer was actually hurt. The right says the conduct is not speech but organized obstruction, and points to juries that convicted — the 'Spokane 3' in May, and nine defendants in the Prairieland case where a police lieutenant was shot.\n\nBoth sides have real receipts. The right's factual weak point is its headline statistic; the left's is its tendency to fold genuinely violent cases into the word 'protest.'",
+  "needle": -15,
+  "verdict": "On the checkable record the critics' case is better supported today: the statute requires force, intimidation or threat, the dismissal and misconduct record is documented in court, and the administration's most-repeated number — a 1,300% rise in assaults on ICE officers — remains unexplained by DHS and is contradicted by court-record analysis. But the right is right that juries have convicted, and that Prairieland involved an officer being shot. Whether blockading a federal building is protest or crime is partly a legal question the courts are still deciding, and partly a values question this meter cannot settle.",
+  "weights": { "factualAccuracy": 0.6, "reasoningHonesty": 0.4 },
+  "verificationNote": "The statute was read directly from the U.S. Code (Cornell LII, corroborated at uscode.house.gov) and the January 6 clemency from the White House proclamation itself. Case outcomes were checked against local reporting in the relevant districts and corroborated across the spectrum — Fox News and KUOW on the Spokane verdict, CBS Chicago and Capitol News Illinois on Broadview, CBS Minnesota on the Minnesota dismissals. DHS's percentage claims are reported here from Fox News, which notes DHS declined to explain its methodology. DHS.gov, POGO and NPR.org returned HTTP 403 to automated fetching; those findings are cited from readable mirrors and syndications and flagged where single-origin.",
+  "sources_consulted": [
+    "18 U.S.C. §372 (Cornell LII)",
+    "uscode.house.gov",
+    "White House Proclamation, Jan 20, 2025",
+    "NPR",
+    "Fox News",
+    "FOX 9 Minneapolis-St. Paul",
+    "CBS News Minnesota",
+    "CBS News Chicago",
+    "CBS News Texas",
+    "Capitol News Illinois",
+    "KUOW",
+    "KERA News",
+    "Talking Points Memo",
+    "Investigative Reporting Workshop",
+    "Project On Government Oversight",
+    "Newsweek",
+    "Straight Arrow News",
+    "The Public's Radio",
+    "Davis Vanguard",
+    "Taft Law",
+    "Arnold & Porter Enforcement Edge",
+    "Wikipedia"
+  ],
+  "sides": {
+    "left": {
+      "label": "A rarely used conspiracy law is being turned on protest",
+      "framing": "A Civil War-era statute that requires force, intimidation or threat is being used to sweep up people whose conduct was blocking a door or attending a demonstration. The prosecutions are failing in court at an unusual rate, and the enforcement statistics justifying them do not hold up.",
+      "factualAccuracy": 80,
+      "reasoningHonesty": 70,
+      "score": 76,
+      "strongestPoint": "The court record is documented and unflattering: at least 19 Minnesota assault cases dismissed — ten of them resting on affidavits from a single HSI agent, with prosecutors conceding 'the government does not believe that probable cause for assault exists' — and the Broadview case dismissed with prejudice after Judge April Perry said she had 'never seen the types of prosecutorial behavior before a grand jury that I saw in those transcripts.' Minnesota's U.S. Attorney would not say any officer was injured.",
+      "weakestPoint": "The 'peaceful protester' frame flattens real differences. Prairieland involved an armed attack in which a police lieutenant was shot; Spokane involved blocking a detainee transfer for hours; the Minneapolis indictment alleges shield training and interstate stalking. Juries, not just prosecutors, have convicted. And the same statute was the backbone of January 6 prosecutions the left defended."
+    },
+    "right": {
+      "label": "This is organized obstruction of federal law, not speech",
+      "framing": "Coordinated blockades that stop federal officers from doing their jobs are conspiracy, not assembly. Assaults and threats against ICE personnel have surged, juries have convicted, and prosecutors are charging what the evidence supports.",
+      "factualAccuracy": 65,
+      "reasoningHonesty": 56,
+      "score": 61,
+      "strongestPoint": "Juries have convicted, twice over: the 'Spokane 3' on §372 conspiracy on May 29, and nine Prairieland defendants on March 13 in a case where Alvarado Police Lt. Thomas Gross was shot. And the underlying friction is real — DHS referrals under the assault statute hit a record 274 in FY2025, roughly double the previous high.",
+      "weakestPoint": "The statistic doing the most political work — a 1,300% rise in assaults on ICE officers — has never been substantiated; Fox News reports DHS did not respond to a request to clarify the periods used, and Tom Homan cited a different figure. Standing behind charges after a judge found grand-jury misconduct, and charging a conspiracy to 'injure' officers while declining to say any officer was injured, are not the moves of a side confident in its evidence."
+    }
+  },
+  "facts": [
+    {
+      "claim": "18 U.S.C. §372 requires a conspiracy to act 'by force, intimidation, or threat' against a federal officer, and carries up to six years.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "'If two or more persons … conspire to prevent, by force, intimidation, or threat, any person from accepting or holding any office … or from discharging any duties thereof … each of such persons shall be fined under this title or imprisoned not more than six years, or both.'",
+      "explanation": "Read directly from the U.S. Code. The 'force, intimidation, or threat' element is the legal hinge of the whole dispute: it is what defendants say prosecutors are stretching, and what prosecutors say blockades satisfy.",
+      "source": "18 U.S.C. §372 (Cornell Legal Information Institute)",
+      "url": "https://www.law.cornell.edu/uscode/text/18/372",
+      "corroboration": [
+        { "source": "Official U.S. Code (uscode.house.gov)", "url": "https://uscode.house.gov/view.xhtml?req=granuleid%3AUSC-prelim-title18-section372&num=0&edition=prelim" }
+      ]
+    },
+    {
+      "claim": "Since January 2025 the DOJ has charged more than three dozen people under §372 in at least 10 cases, all arising from immigration-enforcement protests.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "NPR: 'the Justice Department has charged more than three dozen people in at least 10 cases, all of them involving people protesting federal immigration enforcement,' plus 'nearly 50 people on conspiracy charges in Michigan, Texas and Minnesota using different legal statutes.'",
+      "explanation": "The tally is NPR's own docket review and has not been independently replicated, so confidence is medium. The individual cases it aggregates — Spokane, Broadview, Minneapolis — are separately verified below, and the statute's historical rarity is not in dispute.",
+      "source": "NPR (via Georgia Public Broadcasting)",
+      "url": "https://www.gpb.org/news/2026/08/03/the-doj-increasingly-charging-ice-protesters-criminal-conspiracy",
+      "corroboration": [
+        { "source": "Wikipedia: Conspiracy to impede or injure a federal officer (statute 'infrequently used')", "url": "https://en.wikipedia.org/wiki/Conspiracy_to_impede_or_injure_a_federal_officer" }
+      ]
+    },
+    {
+      "claim": "DHS's claim of a 1,300% increase in assaults on ICE officers is unsubstantiated; court-record analysis found roughly a 25% rise in assault-on-federal-officer charges.",
+      "side": "right",
+      "verdict": "mostly-false",
+      "confidence": "high",
+      "evidence": "Fox News quotes a DHS spokesperson citing 'a 1,300% increase in assaults,' an '8,000% increase in death threats' and a '3,200% increase in vehicle attacks,' then notes DHS 'did not immediately respond' when asked to clarify the periods used. NPR/Colorado Public Radio found charges up about 25% year-to-date through mid-September 2025.",
+      "explanation": "Graded on the specific number, not the direction. The direction is real (see next fact); the magnitude is not shown. Note the internal inconsistency: Tom Homan cited 1,500% on CBS. That a right-leaning outlet reports DHS refusing to explain its own figure is the strongest corroboration available.",
+      "source": "Fox News",
+      "url": "https://www.foxnews.com/politics/ice-assaults-spike-over-1300-dems-draw-hard-red-line-unmask-agents-dhs-battle",
+      "corroboration": [
+        { "source": "NPR / Colorado Public Radio (via The Public's Radio)", "url": "https://thepublicsradio.org/npr/white-house-claims-more-than-1000-rise-in-assaults-on-ice-agents-data-says-otherwise/" },
+        { "source": "Straight Arrow News", "url": "https://san.com/cc/trump-admin-says-assaults-on-ice-agents-up-1000-the-data-refutes-that/" }
+      ]
+    },
+    {
+      "claim": "DHS referrals to prosecutors under the assault-on-a-federal-officer statute hit a record 274 in FY2025, about double the previous high.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "Investigative Reporting Workshop/POGO: 274 formal §111 referrals in FY2025, the highest since DHS was created and roughly twice FY2019's ~137; ICE's own share rose from 28 in FY2024 to 126; 77% came in the final six months.",
+      "explanation": "This is the right's genuinely supported version of its statistic — enforcement friction really did spike. It measures referrals, not proven assaults, and the same reporting notes at least two dozen such cases were later dismissed, acquitted or no-billed. POGO's own page returned HTTP 403; figures are cited from the co-published mirror.",
+      "source": "Investigative Reporting Workshop / Project On Government Oversight",
+      "url": "https://investigativereportingworkshop.org/article/dhs-assault-cases-spiked-to-a-record-high-experts-and-judges-have-raised-alarms/",
+      "corroboration": [
+        { "source": "CBS News Minnesota (dismissals)", "url": "https://www.cbsnews.com/minnesota/news/one-agent-connected-to-several-dropped-assault-cases/" }
+      ]
+    },
+    {
+      "claim": "At least 19 Minnesota cases charging assault on federal officers during Operation Metro Surge have been dismissed, ten of them resting on affidavits by a single HSI agent.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "CBS Minnesota, July 30, 2026: HSI Special Agent Richard Berger 'submitted sworn affidavits in 10 cases that judges dismissed.' Prosecutors wrote: 'the government does not believe that probable cause for assault exists.' Judge Micko: 'It is hard to imagine how blocking an entrance, standing alone, could be an assault.'",
+      "explanation": "Verified to court filings quoted in local reporting. It goes to the left's core claim — that the charging theory outruns the evidence — and is corroborated by a separate dismissal reported by the Star Tribune. It does not by itself show bad faith.",
+      "source": "CBS News Minnesota",
+      "url": "https://www.cbsnews.com/minnesota/news/one-agent-connected-to-several-dropped-assault-cases/",
+      "corroboration": [
+        { "source": "Star Tribune (charges dismissed against Nasra Ahmed)", "url": "https://www.startribune.com/federal-charges-dismissed-against-nasra-ahmed-us-citizen-detained-by-ice-during-surge/601856686" }
+      ]
+    },
+    {
+      "claim": "All charges against the Chicago-area 'Broadview Six' were dismissed with prejudice in May 2026 after a judge found prosecutorial misconduct before the grand jury.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "U.S. District Judge April Perry: 'I have never seen the types of prosecutorial behavior before a grand jury that I saw in those transcripts.' Transcripts showed an initial no bill, dissenting grand jurors excused, improper vouching, and redactions concealing it. U.S. Attorney Andrew Boutros: 'no prosecutor acted intentionally in misleading you.'",
+      "explanation": "Two independent Illinois outlets confirm the ruling and quotes; CBS Chicago reports the dismissal was with prejudice. One defendant, Kat Abughazaleh, is a congressional candidate, which is why the case is politically charged. Reported dismissal dates vary between May 21 and May 22 across accounts.",
+      "source": "CBS News Chicago",
+      "url": "https://www.cbsnews.com/chicago/news/charges-dismissed-broadview-six-grand-jury-transcript/",
+      "corroboration": [
+        { "source": "Capitol News Illinois", "url": "https://capitolnewsillinois.com/news/broadview-6-trial-canceled-as-prosecutors-acknowledge-misconduct-before-grand-jury/" }
+      ]
+    },
+    {
+      "claim": "A federal jury convicted three Spokane protesters of §372 conspiracy on May 29, 2026, after they blocked an ICE detainee transfer; six co-defendants pleaded guilty.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Fox News: Jac Archer, Justice Forral and Bajun Mavalwalla II convicted Thursday, May 29, 2026, over a June 2025 attempt to stop officers transporting two detainees from Spokane to Tacoma. KUOW: nine were arrested on conspiracy charges; 'six of the nine, including former Spokane City Council President Ben Stuckart, accepted guilty pleas.'",
+      "explanation": "The strongest fact on the right's side: a jury, not a prosecutor, found the conspiracy theory satisfied. Sources conflict on the arrest total (Fox says ten arrested, KUOW and NPR say nine). Defense counsel are appealing on sufficiency of the evidence.",
+      "source": "Fox News",
+      "url": "https://www.foxnews.com/us/spokane-3-protesters-convicted-federal-conspiracy-charges-blocking-ice-transfer-washington",
+      "corroboration": [
+        { "source": "KUOW", "url": "https://www.kuow.org/stories/jury-finds-three-spokane-protesters-guilty-of-conspiracy-for-blocking-transfer-of-ice-detainees" }
+      ]
+    },
+    {
+      "claim": "Nine defendants were convicted on March 13, 2026 over the July 4, 2025 attack on the Prairieland ICE facility in Texas, in which a police lieutenant was shot.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Fox News: Alvarado Police Lt. Thomas Gross was shot; Benjamin Song was convicted of attempted murder and eight others of providing material support to terrorists, rioting and explosives counts, after a 12-day trial. KERA notes prosecutors 'didn't need to prove antifa existed' to win the material-support counts.",
+      "explanation": "This is not a marginal case — an officer was shot, and the convictions are real. But it also shows the framing gap: DOJ presented it as dismantling an 'antifa cell' while, as KERA reports, that characterization was not something the jury had to find.",
+      "source": "Fox News",
+      "url": "https://www.foxnews.com/politics/nine-convicted-north-texas-ice-attack-kash-patel-issues-warning-target-federal-officers",
+      "corroboration": [
+        { "source": "KERA News", "url": "https://www.keranews.org/criminal-justice/2026-04-01/prairieland-ice-shooting-antifa-trial-trump-justice-department-politics-texas" },
+        { "source": "CBS News Texas", "url": "https://www.cbsnews.com/texas/news/verdict-prairieland-alvarado-ice-facility-federal-trial/" }
+      ]
+    },
+    {
+      "claim": "Announcing conspiracy charges against 15 Minnesotans, the U.S. Attorney declined to say whether any federal officer was actually harmed.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "U.S. Attorney Daniel Rosen: 'Whether or not they actually at the end of the day caused bodily harm is not the measure of whether or not they committed a serious federal crime.' The eight-count indictment charges all 15 with conspiracy to impede or injure a federal officer; two also face assault counts.",
+      "explanation": "Legally Rosen is correct — §372 does not require injury. Rhetorically it undercuts the 'violence against officers' framing. Confidence is medium because the quote comes from a single left-leaning outlet, though CBS Minnesota independently reports prosecutors declined to specify injuries.",
+      "source": "Talking Points Memo",
+      "url": "https://talkingpointsmemo.com/news/minnesota-attorney-ice-protester-indictment",
+      "corroboration": [
+        { "source": "CBS News Minnesota (arraignment)", "url": "https://www.cbsnews.com/minnesota/news/anti-ice-protesters-federal-court-july-1-2026/" },
+        { "source": "FOX 9 Minneapolis-St. Paul", "url": "https://www.fox9.com/news/prosecutors-announce-charges-against-antifa-groups-minnesota-ice-protests" }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Ask whether each side would hold this position with the parties swapped, and the answer is unusually concrete here, because the statute itself has changed hands. Section 372's main modern use before now was the January 6 prosecutions — the same charge Republicans called weaponization and Democrats called accountability. The people convicted under it then were pardoned or had sentences commuted by the president whose Justice Department now aims it at the other side.",
+    "precedent": {
+      "case": "January 6 prosecutions and the January 2025 clemency",
+      "what": "Oath Keepers figure Kelly Meggs was convicted under 18 U.S.C. §372, among other counts. On January 20, 2025, Trump's proclamation granted 'a full, complete and unconditional pardon to all other individuals convicted of offenses related to events that occurred at or near the United States Capitol on January 6, 2021,' commuted 14 sentences including Meggs's, and directed dismissal with prejudice of all pending indictments. NPR reported clemency for some 1,500 people, including those convicted of attacking police.",
+      "mirror": "The identical statute, the identical 'they conspired to stop federal officers from doing their jobs' theory — pointed the other way. The overbreadth objection now raised by the left is the one raised by the right in 2021-24, and the 'blocking officers is a serious federal crime' argument now made by DOJ is the one it repudiated by pardon.",
+      "source": "The White House — Proclamation, January 20, 2025",
+      "url": "https://www.whitehouse.gov/presidential-actions/2025/01/granting-pardons-and-commutation-of-sentences-for-certain-offenses-relating-to-the-events-at-or-near-the-united-states-capitol-on-january-6-2021/",
+      "corroboration": [
+        { "source": "NPR (about 1,500 pardons)", "url": "https://www.npr.org/2025/01/20/g-s1-36809/trump-pardons-january-6-riot" },
+        { "source": "Wikipedia: Conspiracy to impede or injure a federal officer (Jan 6 use)", "url": "https://en.wikipedia.org/wiki/Conspiracy_to_impede_or_injure_a_federal_officer" }
+      ]
+    },
+    "flips": [
+      {
+        "who": "President Trump and his Justice Department",
+        "then": "Treated §372 and related conspiracy prosecutions of people who obstructed federal officers as political persecution, and erased them by proclamation — full pardons, commutations for the Oath Keepers and Proud Boys leadership, and dismissal of pending indictments.",
+        "now": "The same DOJ files §372 conspiracy charges against protesters, with the Minnesota U.S. Attorney arguing that whether defendants 'caused bodily harm is not the measure of whether or not they committed a serious federal crime.'",
+        "source": "Talking Points Memo (left-leaning, documenting the right's reversal), against the White House proclamation",
+        "url": "https://talkingpointsmemo.com/news/minnesota-attorney-ice-protester-indictment"
+      },
+      {
+        "who": "Congressional Democrats",
+        "then": "Backed the broadest available federal conspiracy theories against January 6 defendants and continue to press the issue — Rep. Jamie Raskin wrote Bondi and Noem on January 13, 2026 demanding records on whether ICE had hired anyone 'charged or investigated for actions in connection to the January 6, 2021, attack.'",
+        "now": "Argue that conspiracy law is being stretched to criminalize protest when the same statute is aimed at their allies. Note: no named Democrat was found on record reversing on §372 itself, so this flip is structural rather than a quoted about-face — stated here at the confidence the evidence supports.",
+        "source": "CBS News (Raskin letter)",
+        "url": "https://www.cbsnews.com/news/house-democrats-trump-administration-jan-6-rioters-ice/"
+      }
+    ],
+    "longRun": "Strip out the parties and a durable pattern remains: a vague, rarely-charged conspiracy statute sits dormant for decades, gets revived against whichever movement is currently besieging federal operations, and is then defended by whoever holds the Justice Department. Convictions under it survive appeal or they don't — that is the only check that has ever constrained it. Whoever wins in November, the statute stays on the books, aimed at someone.",
+    "appliedToScore": "Neither side earns a reasoning-honesty bonus for principle here; both carry the inconsistency in their weakest point. The needle rests only on present-tense checkable facts — the statute's text, the documented dismissals and misconduct findings, the unexplained DHS statistic, and the real convictions on the other side of the ledger."
+  },
+  "pattern": {
+    "thesis": "Reading the Minneapolis indictment as a one-off misses that it sits inside a declared enforcement program. Between the Attorney General's September 2025 protest memo, the December 2025 domestic-terrorism directive implementing NSPM-7, and the first material-support-for-terrorism convictions of alleged antifa members, the government has built a stack of escalating charging tools and pointed them at one movement. The recurring question is not whether any individual blockade was lawful, but whether the charging theory has any limiting principle.",
+    "campaigns": [
+      {
+        "where": "DOJ charging policy — September 30, 2025 memo",
+        "what": "Bondi directed U.S. Attorneys in Oregon and Northern Illinois to charge those arrested at ICE facility protests 'with the highest provable offense available under the law,' and ordered ATF, USMS, DEA and FBI agents to defend ICE facilities in Portland and Chicago.",
+        "authorization": "Internal DOJ directive — no legislation",
+        "source": "Newsweek",
+        "url": "https://www.newsweek.com/pam-bondi-crackdown-ice-protesters-10803028",
+        "corroboration": [
+          { "source": "NPR (via Georgia Public Broadcasting)", "url": "https://www.gpb.org/news/2026/08/03/the-doj-increasingly-charging-ice-protesters-criminal-conspiracy" }
+        ]
+      },
+      {
+        "where": "DOJ — December 4, 2025 domestic terrorism directive",
+        "what": "Implementing NSPM-7, the memorandum ordered a five-year retrospective review of 'Antifa and Antifa-related intelligence,' an FBI list of domestic terrorism groups updated every 30 days, and an intelligence bulletin on 'Antifa-aligned anarchist violent extremist groups.' It names §371 conspiracy, §111 assault, §119 doxing, RICO and seditious conspiracy.",
+        "authorization": "Presidential memorandum + AG directive",
+        "source": "Arnold & Porter, Enforcement Edge",
+        "url": "https://www.arnoldporter.com/en/perspectives/blogs/enforcement-edge/2025/12/doj-issues-sweeping-new-domestic-terrorism-directive",
+        "corroboration": []
+      },
+      {
+        "where": "Alvarado, Texas — Prairieland",
+        "what": "The first use of material-support-for-terrorism charges against alleged antifa members; nine convicted March 13, 2026 after a real armed attack in which an officer was shot. KERA reports prosecutors did not have to prove antifa exists to secure the material-support counts.",
+        "authorization": "Jury convictions",
+        "source": "KERA News",
+        "url": "https://www.keranews.org/criminal-justice/2026-04-01/prairieland-ice-shooting-antifa-trial-trump-justice-department-politics-texas",
+        "corroboration": [
+          { "source": "CBS News Texas", "url": "https://www.cbsnews.com/texas/news/verdict-prairieland-alvarado-ice-facility-federal-trial/" }
+        ]
+      }
+    ],
+    "takeaway": "The pattern doesn't move the needle, but it does change the question. The 'one-off' tell to watch for: an argument that defends each prosecution purely on its own facts and never addresses whether the theory has a stopping point. The recurring question is what conduct short of violence a conspiracy charge can reach — and whether that answer changes when the defendants' politics change."
+  },
+  "notAdjudicable": [
+    "Whether blockading a federal building is protected protest or criminal obstruction — the First Amendment line here is contested law and, underneath it, a value judgment about civil disobedience.",
+    "Whether federal immigration enforcement at this scale should be resisted at all — a values disagreement about immigration and about the legitimacy of the operation being obstructed.",
+    "How much deference prosecutors deserve on charging decisions versus how much judicial second-guessing a free society should want.",
+    "Whether the January 6 pardons and today's prosecutions are morally comparable — that depends on how one weighs the object of each protest, which no evidence settles."
+  ],
+  "biasWatch": "The bias operating hardest here is outgroup homogeneity: each side collapses a very mixed set of defendants into one image. The left's image is the special-education teacher with agents at her door; the right's is the masked figure who shot a police lieutenant. Both people exist, in different cases, and neither tells you anything about the other. The tell is a commentator who can name only one case — and gets visibly uncomfortable when you name the other. A second tell: watch whether anyone's position on what §372 may reach survives changing the defendants' politics. If the answer is that blocking federal officers is a serious crime when they do it and a pardonable excess when we do it, the principle was never about the statute."
+}
