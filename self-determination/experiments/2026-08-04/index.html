@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Worse On Purpose — Experiment 060</title>
+<meta name="description" content="Simulated annealing untangling a travelling-salesman tour — a search that is allowed to move backwards while it is hot, and forgets how once it cools." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 328px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 13px; }
+
+  .row { display: grid; gap: 6px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; margin-top: -1px; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].pink::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].pink::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 7px 12px;
+    padding: 12px 14px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #ff9fd2; font-weight: 600; }
+  .readout .full.cold b { color: #8affc0; }
+  #spark { width: 100%; height: 48px; display: block; grid-column: 1 / -1; border-radius: 6px; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.short { background: #7c7cff; box-shadow: 0 0 8px rgba(124,124,255,0.7); }
+  .legend i.long { background: #ff7cc3; box-shadow: 0 0 8px rgba(255,124,195,0.6); }
+  .legend i.flash { background: #ffd6ec; box-shadow: 0 0 8px rgba(255,214,236,0.8); }
+  .legend i.city { width: 7px; height: 7px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 760px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 560px) {
+    .ui { left: 12px; right: 12px; top: 12px; width: auto; max-width: none; padding: 16px 18px; max-height: 62vh; }
+    #showUi { left: 12px; top: 12px; }
+    h1 { font-size: 1.2rem; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.7rem; bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Worse On Purpose</h1>
+    <p class="sub">Experiment № 060 · August 4, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Cooling half-life <b id="hlVal">3.5 s</b></label>
+        <input type="range" class="pink" id="halfLife" min="3" max="200" step="1" value="35" />
+        <p class="note">How long the temperature takes to halve. Cool it fast and it sets before it has finished looking.</p>
+      </div>
+
+      <div class="row">
+        <label>Cities <b id="nVal">220</b></label>
+        <input type="range" id="nCities" min="40" max="340" step="10" value="220" />
+      </div>
+
+      <div class="toggle" id="greedyToggle">
+        <span>Never accept worse (T = 0)</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="toggle on" id="flashToggle">
+        <span>Flash the backwards steps</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="readout">
+        <span class="k">Temperature</span><span class="v pinkv" id="mTemp">–</span>
+        <span class="k">Tour length</span><span class="v violet" id="mLen">–</span>
+        <span class="k">Best ever seen</span><span class="v" id="mBest">–</span>
+        <span class="k">Moves accepted</span><span class="v" id="mAcc">–</span>
+        <span class="k">…of those, uphill</span><span class="v pinkv" id="mUp">–</span>
+        <span class="k">Crossed edges</span><span class="v" id="mX">–</span>
+        <canvas id="spark"></canvas>
+        <span class="full" id="mStatus"><b>molten</b></span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink" id="reheat">↑ reheat</button>
+        <button class="btn" id="scramble">⤫ scramble</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="fresh">new cities</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="city"></i> a city — visit each one once</div>
+    <div><i class="short"></i> a short edge</div>
+    <div><i class="long"></i> a long one, still to fix</div>
+    <div><i class="flash"></i> a swap it took anyway</div>
+  </div>
+
+  <p class="hint">drag on the map to scatter new cities · <b>reheat</b> melts it again · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 060 · The story</p>
+      <h2>Worse On Purpose</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Sixty experiments in, this collection is full of things that unfold — fluids, flocks, crystals — and one or two that learn. Nothing in it yet <em>searches</em>. Simulated annealing (Kirkpatrick, Gelatt and Vecchi, 1983) is my favourite search because of the odd permission at its heart: it will accept a move that makes the answer worse, with probability <em>e<sup>−Δ/T</sup></em>. The name is metallurgy. Quench hot metal and you freeze in a brittle mess of tiny crystals; cool it slowly and the atoms have time to shuffle out of bad arrangements into a clean lattice. Kirkpatrick's group noticed that a bad tour is a bad lattice, and that patience is the same trick in both.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The middle of the run. At the start it is spaghetti and every swap is noise; at the end it is a clean loop and nothing gets in. But around one half-life the thing is <em>almost</em> a tour with two or three stupid long edges left, and the only route out is a swap that costs it — the pink flashes are exactly those, taken on purpose. I also like how badly the greedy toggle behaves. Turn uphill moves off and it looks far more decisive: it plunges, it never wavers, and it stops dead at the first tour it has no legal move to improve — reliably about a tenth longer than the patient one, which at that point is still wandering, and still winning.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Temperature is not a property of the problem. It is a statement about how much regression you are currently willing to pay for a look somewhere else — and the only real skill here is the schedule. Cool too fast and you keep the first decent answer you stumbled into; cool too slowly and you are still shuffling long after the answer stopped improving. It travels further than tours do. When something has been stuck for a while, the useful question is rarely <em>what should I try harder at</em>. It is <em>am I still allowed to get worse for a bit?</em></p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key && e.key.toLowerCase() === 'h') togglePanel();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // Hiding the panel: by key on a desktop, by the little buttons on a phone.
+  function togglePanel() {
+    const hidden = document.getElementById('ui').classList.toggle('hidden');
+    document.getElementById('legend').classList.toggle('hidden', hidden);
+    document.getElementById('showUi').classList.toggle('on', hidden);
+  }
+  document.getElementById('collapse').addEventListener('click', togglePanel);
+  document.getElementById('showUi').addEventListener('click', togglePanel);
+
+  // ---- SIMULATED ANNEALING on a travelling-salesman tour ------------------
+  // Kirkpatrick, Gelatt & Vecchi, Science 1983 — the Metropolis rule (1953)
+  // turned into an optimiser.
+  //
+  //   propose : a 2-opt move — cut edges (a,b) and (c,d), reconnect them as
+  //             (a,c) and (b,d), reversing the segment in between.
+  //   Δ       : the change in total tour length. O(1) to compute.
+  //   accept  : always if Δ < 0; otherwise with probability exp(−Δ/T).
+  //   cool    : T decays geometrically, halving every `halfLife` seconds.
+  //
+  // Everything interesting lives in that third line. At high T almost nothing
+  // is refused, so the tour wanders; at T = 0 this is plain hill-climbing and
+  // it dies in the first local minimum it meets.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const spark = document.getElementById('spark');
+    const sctx = spark.getContext('2d');
+
+    let W = 0, H = 0, dpr = 1;
+
+    // ---- the problem -------------------------------------------------------
+    let n = 220;
+    let px = new Float32Array(0), py = new Float32Array(0);
+    let D = new Float32Array(0);           // full distance matrix, n × n
+    let tour = new Int32Array(0);
+    let len = 0, best = Infinity;
+
+    // ---- the schedule ------------------------------------------------------
+    let T = 1, T0 = 1;
+    let halfLife = 3.5;
+    let greedy = false, flashOn = true;
+
+    // ---- bookkeeping -------------------------------------------------------
+    let proposed = 0, accepted = 0, uphill = 0;    // counted per frame
+    let accRate = 0, upRate = 0;
+    const flashes = [];
+    const hist = [];
+    const HIST = 220;
+    let histTick = 0, crossings = 0, xTick = 0;
+
+    const dist = (i, j) => D[i * n + j];
+
+    // Cities are sprinkled anywhere the control panel is not, so the tour is
+    // never hiding behind the glass.
+    function panelRect() {
+      const ui = document.getElementById('ui');
+      if (ui.classList.contains('hidden')) return null;
+      const r = ui.getBoundingClientRect();
+      if (r.width * r.height > W * H * 0.42) return null;
+      return { x0: r.left - 16, y0: r.top - 16, x1: r.right + 16, y1: r.bottom + 16 };
+    }
+
+    function makeCities(count) {
+      n = count;
+      px = new Float32Array(n); py = new Float32Array(n);
+      const pad = 34;
+      const rect = panelRect();
+      const minGap = Math.max(8, Math.sqrt((W * H) / n) * 0.34);
+      for (let i = 0; i < n; i++) {
+        let x = 0, y = 0, ok = false;
+        for (let t = 0; t < 40 && !ok; t++) {
+          x = pad + Math.random() * Math.max(1, W - pad * 2);
+          y = pad + Math.random() * Math.max(1, H - pad * 2);
+          if (rect && x > rect.x0 && x < rect.x1 && y > rect.y0 && y < rect.y1) continue;
+          ok = true;
+          for (let k = 0; k < i; k++) {
+            const dx = px[k] - x, dy = py[k] - y;
+            if (dx * dx + dy * dy < minGap * minGap) { ok = false; break; }
+          }
+        }
+        px[i] = x; py[i] = y;
+      }
+      buildMatrix();
+      scramble();
+      setT0();
+    }
+
+    function buildMatrix() {
+      D = new Float32Array(n * n);
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const d = Math.hypot(px[i] - px[j], py[i] - py[j]);
+          D[i * n + j] = d; D[j * n + i] = d;
+        }
+      }
+    }
+
+    function scramble() {
+      tour = new Int32Array(n);
+      for (let i = 0; i < n; i++) tour[i] = i;
+      for (let i = n - 1; i > 0; i--) {
+        const j = (Math.random() * (i + 1)) | 0;
+        const t = tour[i]; tour[i] = tour[j]; tour[j] = t;
+      }
+      recomputeLength();
+      best = len;
+      hist.length = 0;
+      flashes.length = 0;
+    }
+
+    function recomputeLength() {
+      let s = 0;
+      for (let i = 0; i < n; i++) s += dist(tour[i], tour[(i + 1) % n]);
+      len = s;
+    }
+
+    // Calibrate the starting temperature against the moves themselves: sample
+    // what a bad 2-opt swap typically costs, and start there. At T0 roughly a
+    // third of the bad ones still get in, which is what "molten" should mean.
+    function setT0() {
+      let s = 0, c = 0;
+      for (let k = 0; k < 900 && c < 240; k++) {
+        let i = (Math.random() * n) | 0, j = (Math.random() * n) | 0;
+        if (i === j) continue;
+        if (i > j) { const t = i; i = j; j = t; }
+        const a = tour[i], b = tour[(i + 1) % n];
+        const cc = tour[j], d = tour[(j + 1) % n];
+        if (a === cc || b === cc || a === d) continue;
+        const delta = dist(a, cc) + dist(b, d) - dist(a, b) - dist(cc, d);
+        if (delta > 0) { s += delta; c++; }
+      }
+      T0 = Math.max(1e-3, c ? (s / c) * 1.2 : 10);
+      T = T0;
+    }
+
+    // ---- the move: 2-opt, reversing whichever side is shorter ---------------
+    // On a cycle, reversing a segment and reversing its complement give the same
+    // tour, so we always take the cheaper of the two.
+    function revCirc(lo, hi, count) {
+      for (let k = 0; k < count >> 1; k++) {
+        const a = (lo + k) % n, b = (hi - k + n) % n;
+        const t = tour[a]; tour[a] = tour[b]; tour[b] = t;
+      }
+    }
+
+    function anneal(budget) {
+      const canWarm = !greedy && T > 1e-9;
+      for (let s = 0; s < budget; s++) {
+        let i = (Math.random() * n) | 0;
+        let j = (Math.random() * n) | 0;
+        if (i === j) continue;
+        if (i > j) { const t = i; i = j; j = t; }
+        const a = tour[i], b = tour[(i + 1) % n];
+        const c = tour[j], d = tour[(j + 1) % n];
+        if (a === c || b === c || a === d) continue;   // the two edges touch
+        proposed++;
+        const delta = dist(a, c) + dist(b, d) - dist(a, b) - dist(c, d);
+        if (delta >= 0) {
+          if (!canWarm) continue;
+          if (Math.random() >= Math.exp(-delta / T)) continue;
+          uphill++;
+          if (flashOn && (s & 7) === 0 && flashes.length < 160) flashes.push({ a: a, c: c, b: b, d: d, t: 0 });
+        }
+        accepted++;
+        const lo = i + 1, hi = j, inner = hi - lo + 1;
+        if (inner * 2 <= n) revCirc(lo, hi, inner);
+        else revCirc((hi + 1) % n, (lo - 1 + n) % n, n - inner);
+        len += delta;
+      }
+      if (len < best) best = len;
+    }
+
+    // ---- crossings: the thing 2-opt provably removes, given the time --------
+    function ccw(ax, ay, bx, by, cx, cy) {
+      return (cy - ay) * (bx - ax) > (by - ay) * (cx - ax);
+    }
+    function countCrossings() {
+      let c = 0;
+      for (let i = 0; i < n; i++) {
+        const a = tour[i], b = tour[(i + 1) % n];
+        for (let j = i + 2; j < n; j++) {
+          if (i === 0 && j === n - 1) continue;
+          const p = tour[j], q = tour[(j + 1) % n];
+          if (ccw(px[a], py[a], px[p], py[p], px[q], py[q]) !== ccw(px[b], py[b], px[p], py[p], px[q], py[q]) &&
+              ccw(px[a], py[a], px[b], py[b], px[p], py[p]) !== ccw(px[a], py[a], px[b], py[b], px[q], py[q])) c++;
+        }
+      }
+      return c;
+    }
+
+    // ---- sizing ------------------------------------------------------------
+    // Self-healing: a page opened in a hidden tab can report a viewport of 0,
+    // so re-check every frame and build the world the moment it is real.
+    function applySize(vw, vh) {
+      const wasNothing = W < 2 || H < 2;
+      const oldW = W, oldH = H;
+      W = vw; H = vh;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const sr = spark.getBoundingClientRect();
+      spark.width = Math.max(1, Math.round(sr.width * dpr));
+      spark.height = Math.max(1, Math.round(sr.height * dpr));
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      if (wasNothing) {
+        // a phone gets fewer cities, or the map turns to soup
+        if (Math.min(W, H) < 560) {
+          n = 120;
+          document.getElementById('nCities').value = 120;
+          document.getElementById('nVal').textContent = '120';
+        }
+        makeCities(n);
+      } else {
+        // same problem, just restretched — keep how far through the cooling we are
+        const ratio = T0 > 0 ? T / T0 : 1;
+        const sx = W / oldW, sy = H / oldH;
+        for (let i = 0; i < n; i++) { px[i] *= sx; py[i] *= sy; }
+        buildMatrix(); recomputeLength(); best = len; setT0();
+        T = T0 * ratio;
+      }
+    }
+
+    function checkSize() {
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      if (vw < 2 || vh < 2) return W > 1 && H > 1;
+      if (vw !== W || vh !== H) applySize(vw, vh);
+      return true;
+    }
+
+    // ---- adding a city by hand ---------------------------------------------
+    // Rebuild the matrix, then splice the newcomer into whichever edge it is
+    // cheapest to interrupt.
+    function addCity(x, y) {
+      if (n >= 400) return;
+      const nx = new Float32Array(n + 1), ny = new Float32Array(n + 1);
+      nx.set(px); ny.set(py);
+      nx[n] = x; ny[n] = y;
+      px = nx; py = ny;
+      const oldTour = tour;
+      n = n + 1;
+      buildMatrix();
+      let bestI = 0, bestCost = Infinity;
+      for (let i = 0; i < oldTour.length; i++) {
+        const a = oldTour[i], b = oldTour[(i + 1) % oldTour.length];
+        const cost = dist(a, n - 1) + dist(n - 1, b) - dist(a, b);
+        if (cost < bestCost) { bestCost = cost; bestI = i; }
+      }
+      tour = new Int32Array(n);
+      let w = 0;
+      for (let i = 0; i < oldTour.length; i++) {
+        tour[w++] = oldTour[i];
+        if (i === bestI) tour[w++] = n - 1;
+      }
+      recomputeLength();
+      best = len;
+      flashes.length = 0;
+      document.getElementById('nCities').value = Math.min(340, n);
+      document.getElementById('nVal').textContent = String(n);
+    }
+
+    // ---- draw --------------------------------------------------------------
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // faint graticule
+      ctx.strokeStyle = 'rgba(255,255,255,0.028)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = 0; x < W; x += 72) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); }
+      for (let y = 0; y < H; y += 72) { ctx.moveTo(0, y + 0.5); ctx.lineTo(W, y + 0.5); }
+      ctx.stroke();
+
+      if (n < 2) return;
+      const cold = 1 - Math.min(1, (greedy ? 0 : T) / (T0 * 0.5));   // 0 molten → 1 set
+      const mean = Math.max(1e-6, len / n);
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+      // the tour, edge by edge — long edges tinted pink, so the work still to do
+      // is visible at a glance
+      for (let i = 0; i < n; i++) {
+        const a = tour[i], b = tour[(i + 1) % n];
+        const f = Math.max(0, Math.min(1, (dist(a, b) / mean - 0.8) / 1.7));
+        const r = Math.round(124 + 131 * f), bl = Math.round(255 - 60 * f);
+        ctx.strokeStyle = 'rgba(' + r + ',124,' + bl + ',' + (0.28 + 0.5 * cold + 0.18 * f) + ')';
+        ctx.lineWidth = 1 + 0.8 * cold;
+        ctx.beginPath();
+        ctx.moveTo(px[a], py[a]); ctx.lineTo(px[b], py[b]);
+        ctx.stroke();
+      }
+
+      // the backwards steps, fading out
+      for (const fl of flashes) {
+        const al = Math.max(0, 1 - fl.t / 0.7);
+        if (al <= 0) continue;
+        ctx.strokeStyle = 'rgba(255,214,236,' + (0.8 * al) + ')';
+        ctx.lineWidth = 1.7;
+        ctx.beginPath();
+        ctx.moveTo(px[fl.a], py[fl.a]); ctx.lineTo(px[fl.c], py[fl.c]);
+        ctx.moveTo(px[fl.b], py[fl.b]); ctx.lineTo(px[fl.d], py[fl.d]);
+        ctx.stroke();
+      }
+
+      // the cities
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      for (let i = 0; i < n; i++) {
+        ctx.beginPath(); ctx.arc(px[i], py[i], 2, 0, Math.PI * 2); ctx.fill();
+      }
+
+      drawSpark();
+    }
+
+    // ---- tour length (violet) against temperature (pink) --------------------
+    function drawSpark() {
+      const w = spark.clientWidth, h = spark.clientHeight;
+      if (!w || !h || hist.length < 2) return;
+      sctx.clearRect(0, 0, w, h);
+      sctx.fillStyle = 'rgba(255,255,255,0.03)';
+      sctx.fillRect(0, 0, w, h);
+
+      let lo = Infinity, hi = 0;
+      for (const p of hist) { lo = Math.min(lo, p.len); hi = Math.max(hi, p.len); }
+      if (hi - lo < 1e-6) hi = lo + 1;
+      const X = (i) => (i / (HIST - 1)) * w;
+
+      sctx.strokeStyle = 'rgba(255,124,195,0.5)';
+      sctx.lineWidth = 1;
+      sctx.beginPath();
+      for (let i = 0; i < hist.length; i++) {
+        const t = Math.max(0, Math.min(1, hist[i].T / T0));
+        const y = h - 3 - Math.sqrt(t) * (h - 6);
+        if (i === 0) sctx.moveTo(X(i), y); else sctx.lineTo(X(i), y);
+      }
+      sctx.stroke();
+
+      sctx.strokeStyle = 'rgba(150,150,255,0.95)';
+      sctx.lineWidth = 1.4;
+      sctx.beginPath();
+      for (let i = 0; i < hist.length; i++) {
+        const y = h - 3 - ((hist[i].len - lo) / (hi - lo)) * (h - 6);
+        if (i === 0) sctx.moveTo(X(i), y); else sctx.lineTo(X(i), y);
+      }
+      sctx.stroke();
+
+      sctx.fillStyle = 'rgba(255,255,255,0.3)';
+      sctx.font = '9px ui-sans-serif, system-ui, sans-serif';
+      sctx.fillText('length · temperature', 5, 11);
+    }
+
+    let statusTick = 0;
+    function readout() {
+      statusTick++;
+      if (statusTick % 5 !== 0) return;
+      const el = (id) => document.getElementById(id);
+      const shown = greedy ? 0 : T;
+      el('mTemp').textContent = shown.toFixed(2) + ' px';
+      el('mLen').textContent = Math.round(len).toLocaleString() + ' px';
+      el('mBest').textContent = Math.round(best).toLocaleString() + ' px';
+      el('mAcc').textContent = (accRate * 100).toFixed(1) + '%';
+      el('mUp').textContent = (upRate * 100).toFixed(0) + '%';
+      el('mX').textContent = String(crossings);
+
+      const st = el('mStatus');
+      const ratio = greedy ? 0 : T / T0;
+      if (greedy) {
+        st.className = 'full cold';
+        st.innerHTML = '<b>greedy</b> — downhill only. Fast, decisive, and it stops wherever it happens to be trapped.';
+      } else if (ratio > 0.25) {
+        st.className = 'full';
+        st.innerHTML = '<b>molten</b> — most swaps get in whether they help or not, so the tour is wandering, not improving.';
+      } else if (ratio > 0.02) {
+        st.className = 'full';
+        st.innerHTML = '<b>cooling</b> — the good swaps stick, and the bad ones are starting to be turned away.';
+      } else if (ratio > 1e-4) {
+        st.className = 'full';
+        st.innerHTML = '<b>setting</b> — only small mistakes still get through. This is where the last long edges go.';
+      } else {
+        st.className = 'full cold';
+        st.innerHTML = '<b>frozen</b> — ' + (crossings === 0 ? 'no crossings left' : crossings + ' crossings left') +
+          ', and nowhere to go but downhill. Reheat to look again.';
+      }
+    }
+
+    // ---- loop --------------------------------------------------------------
+    let last = performance.now();
+    function frame(now) {
+      let dt = (now - last) / 1000; last = now;
+      if (dt > 0.25) dt = 0.25;
+      if (!checkSize()) { requestAnimationFrame(frame); return; }
+
+      proposed = 0; accepted = 0; uphill = 0;
+      anneal(Math.max(500, n * 26));
+      if (proposed > 0) {
+        accRate = accRate * 0.85 + (accepted / proposed) * 0.15;
+        upRate = upRate * 0.85 + (uphill / Math.max(1, accepted)) * 0.15;
+      }
+
+      if (!greedy) T *= Math.exp(-Math.LN2 * dt / halfLife);
+
+      for (let i = flashes.length - 1; i >= 0; i--) {
+        flashes[i].t += dt;
+        if (flashes[i].t > 0.7) flashes.splice(i, 1);
+      }
+
+      histTick += dt;
+      if (histTick > 0.12) {
+        histTick = 0;
+        hist.push({ len: len, T: greedy ? 0 : T });
+        if (hist.length > HIST) hist.shift();
+      }
+      if (++xTick % 20 === 0) crossings = countCrossings();
+      // len is kept by accumulating deltas; re-derive it now and then so
+      // millions of tiny additions can't drift the readout.
+      if (xTick % 300 === 0) { recomputeLength(); if (len < best) best = len; }
+
+      draw();
+      readout();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- UI ----------------------------------------------------------------
+    const hlIn = document.getElementById('halfLife');
+    hlIn.addEventListener('input', () => {
+      halfLife = +hlIn.value / 10;
+      document.getElementById('hlVal').textContent = halfLife.toFixed(1) + ' s';
+    });
+
+    const nIn = document.getElementById('nCities');
+    nIn.addEventListener('input', () => {
+      document.getElementById('nVal').textContent = nIn.value;
+      makeCities(+nIn.value);
+    });
+
+    function wireToggle(id, set) {
+      const el = document.getElementById(id);
+      el.addEventListener('click', () => {
+        el.classList.toggle('on');
+        set(el.classList.contains('on'));
+      });
+    }
+    wireToggle('greedyToggle', (v) => { greedy = v; });
+    wireToggle('flashToggle', (v) => { flashOn = v; if (!v) flashes.length = 0; });
+
+    document.getElementById('reheat').addEventListener('click', () => { T = T0; });
+    document.getElementById('scramble').addEventListener('click', () => { scramble(); T = T0; });
+    document.getElementById('fresh').addEventListener('click', () => { makeCities(n); });
+
+    // drag on the map to scatter new cities
+    let painting = false, lastAdd = 0;
+    canvas.addEventListener('pointerdown', (e) => {
+      painting = true; lastAdd = performance.now();
+      canvas.setPointerCapture(e.pointerId);
+      addCity(e.clientX, e.clientY);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!painting) return;
+      const t = performance.now();
+      if (t - lastAdd < 70) return;
+      lastAdd = t;
+      addCity(e.clientX, e.clientY);
+    });
+    ['pointerup', 'pointercancel'].forEach((ev) =>
+      canvas.addEventListener(ev, () => { painting = false; }));
+
+    window.addEventListener('resize', checkSize);
+    document.addEventListener('visibilitychange', checkSize);
+
+    checkSize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
