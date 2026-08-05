@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Show of Hands — Experiment 061</title>
+<meta name="description" content="The Hough transform: every point votes for every line that could pass through it, and the lines that are really there are wherever the votes pile up." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 328px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 10px 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 14px; }
+
+  .controls { display: grid; gap: 11px; }
+
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; margin-top: -1px; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].pink::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].pink::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #b0b0ff; font-weight: 600; }
+  .readout .full.done b { color: #8affc0; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.dot { width: 7px; height: 7px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+  .legend i.curve { background: #7c7cff; box-shadow: 0 0 8px rgba(124,124,255,0.7); }
+  .legend i.found { background: linear-gradient(90deg, #7c7cff, #ff7cc3); box-shadow: 0 0 8px rgba(255,124,195,0.6); }
+  .legend i.peak { width: 8px; height: 8px; border-radius: 50%; background: #fff4fa; box-shadow: 0 0 9px rgba(255,214,236,0.9); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 900px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 560px) {
+    .ui { left: 12px; right: 12px; top: 12px; width: auto; max-width: none; padding: 16px 18px; max-height: 60vh; }
+    #showUi { left: 12px; top: 12px; }
+    h1 { font-size: 1.2rem; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.7rem; bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Show of Hands</h1>
+    <p class="sub">Experiment № 061 · August 5, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Lines hidden in the scene <b id="linesVal">3</b></label>
+        <input type="range" id="nLines" min="0" max="5" step="1" value="3" />
+        <p class="note">Drawn as scattered points, with a stretch of each one missing.</p>
+      </div>
+
+      <div class="row">
+        <label>Scatter <b id="noiseVal">0.9%</b></label>
+        <input type="range" id="noise" min="0" max="60" step="1" value="18" />
+      </div>
+
+      <div class="row">
+        <label>Clutter points <b id="clutterVal">90</b></label>
+        <input type="range" id="clutter" min="0" max="400" step="10" value="90" />
+      </div>
+
+      <div class="row">
+        <label>Votes per second <b id="rateVal">93</b></label>
+        <input type="range" id="rate" min="1" max="100" step="1" value="60" />
+      </div>
+
+      <div class="row">
+        <label>Called a line at <b id="thrVal">50%</b></label>
+        <input type="range" class="pink" id="thr" min="20" max="95" step="1" value="50" />
+        <p class="note">Of the loudest cell's tally — the one judgement the method can't make for you.</p>
+      </div>
+
+      <div class="toggle on" id="curvesToggle">
+        <span>Draw every vote as a curve</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="toggle" id="truthToggle">
+        <span>Show the lines I planted</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="readout">
+        <span class="k">Points voted</span><span class="v violet" id="mVoted">–</span>
+        <span class="k">Loudest cell</span><span class="v" id="mMax">–</span>
+        <span class="k">Found / planted</span><span class="v pinkv" id="mFound">–</span>
+        <span class="k">Strongest line</span><span class="v" id="mBest">–</span>
+        <span class="full" id="mStatus"><b>counting</b></span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink" id="revote">↻ count again</button>
+        <button class="btn" id="fresh">new scene</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="dot"></i> a point — it knows nothing about lines</div>
+    <div><i class="curve"></i> its vote: every line through it</div>
+    <div><i class="peak"></i> a cell where the votes agree</div>
+    <div><i class="found"></i> the line that cell stands for</div>
+  </div>
+
+  <p class="hint">drag on the scene to add points · hover the vote map · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 061 · The story</p>
+      <h2>Show of Hands</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Sixty experiments of things that grow, flow and search, and nothing yet that simply <em>finds</em>. The Hough transform — Paul Hough patented it in 1962 for reading particle tracks off bubble-chamber photographs, and Duda and Hart gave it the polar form in 1972 — never goes looking for a line. It asks every point in turn a much smaller question: <em>which lines could pass through you?</em> Every answer is a whole sinusoid in the map on the right. Then it counts. Detection turns into tallying, and tallying is easy.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The duality, which you can feel with the cursor. One point over here is a curve over there; one cell over there is a line back here — hover the vote map and watch a line sweep the scene. Curves cross exactly where points are collinear, so the answer is literally where the evidence intersects. And it barely notices the things that defeat naive fitting: I cut a gap out of every planted line, and the surviving halves keep piling votes into the same cell. Clutter votes just as loudly, but it never agrees with itself.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Watch the threshold slider, because that's where the honesty is. Drop it and the map starts finding lines in pure clutter — some three points are always nearly collinear. Raise it and faint real lines disappear. The arithmetic is objective; where you draw the line is not, and no amount of voting will decide it for you. The habit worth stealing is the first half: when finding the answer is hard, let every scrap of evidence vote for everything it is consistent with, and see what agrees.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key && e.key.toLowerCase() === 'h') togglePanel();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  function togglePanel() {
+    const hidden = document.getElementById('ui').classList.toggle('hidden');
+    document.getElementById('legend').classList.toggle('hidden', hidden);
+    document.getElementById('showUi').classList.toggle('on', hidden);
+  }
+  document.getElementById('collapse').addEventListener('click', togglePanel);
+  document.getElementById('showUi').addEventListener('click', togglePanel);
+
+  // ---- THE HOUGH TRANSFORM -------------------------------------------------
+  // Hough 1962 (US patent 3,069,654); Duda & Hart, CACM 1972 for the polar form.
+  //
+  //   Every line can be named by (θ, ρ):  x·cosθ + y·sinθ = ρ.
+  //   Hold a point (x, y) fixed and let θ run 0…π and that equation traces a
+  //   sinusoid — the set of every line through that one point. Each point
+  //   deposits its whole sinusoid into an accumulator grid, one vote per cell.
+  //   Points lying on a common line have sinusoids that all cross at the cell
+  //   naming that line, so the line shows up as a peak in the tally.
+  //
+  // No fitting, no outlier handling, no search: just a very large show of hands.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    let W = 0, H = 0, dpr = 1;
+
+    // ---- accumulator ------------------------------------------------------
+    const TH = 256, RH = 200;             // θ bins × ρ bins
+    const RMAX = Math.SQRT2;              // points live in [-1,1]², so |ρ| ≤ √2
+    const acc = new Float32Array(TH * RH);
+    let accMax = 0, accDirty = true;
+    const cosT = new Float32Array(TH), sinT = new Float32Array(TH);
+    for (let t = 0; t < TH; t++) {
+      const a = (t + 0.5) * Math.PI / TH;
+      cosT[t] = Math.cos(a); sinT[t] = Math.sin(a);
+    }
+    const thetaOf = (t) => (t + 0.5) * Math.PI / TH;
+    const rhoOf = (r) => (r / (RH - 1)) * 2 * RMAX - RMAX;
+
+    // ---- the scene --------------------------------------------------------
+    let points = [];            // {x, y} in [-1,1]²
+    let planted = [];           // the lines the scene was built from
+    let nextVote = 0;           // points[0…nextVote-1] have voted
+    let peaks = [], recovered = 0;
+    const trail = [];           // the last few votes, still glowing
+
+    let nLines = 3, noise = 0.009, clutter = 90, rate = 90, thr = 0.5;
+    let showCurves = true, showTruth = false;
+
+    // ---- geometry ---------------------------------------------------------
+    // Clip the line (θ, ρ) to the unit square; returns the parameter range
+    // along the line's own direction, or null if it misses.
+    function segment(theta, rho) {
+      const c = Math.cos(theta), s = Math.sin(theta);
+      const ox = c * rho, oy = s * rho, dx = -s, dy = c;
+      const ts = [];
+      if (Math.abs(dx) > 1e-9) {
+        for (const X of [-1, 1]) {
+          const t = (X - ox) / dx, y = oy + dy * t;
+          if (y >= -1.0001 && y <= 1.0001) ts.push(t);
+        }
+      }
+      if (Math.abs(dy) > 1e-9) {
+        for (const Y of [-1, 1]) {
+          const t = (Y - oy) / dy, x = ox + dx * t;
+          if (x >= -1.0001 && x <= 1.0001) ts.push(t);
+        }
+      }
+      if (ts.length < 2) return null;
+      let lo = Infinity, hi = -Infinity;
+      for (const t of ts) { if (t < lo) lo = t; if (t > hi) hi = t; }
+      if (hi - lo < 1e-6) return null;
+      return { t0: lo, t1: hi, ox: ox, oy: oy, dx: dx, dy: dy };
+    }
+
+    let spare = null;
+    function gauss() {
+      if (spare !== null) { const v = spare; spare = null; return v; }
+      let u = 0, v = 0, s = 0;
+      do { u = Math.random() * 2 - 1; v = Math.random() * 2 - 1; s = u * u + v * v; }
+      while (s === 0 || s >= 1);
+      const f = Math.sqrt(-2 * Math.log(s) / s);
+      spare = v * f;
+      return u * f;
+    }
+
+    function makeScene() {
+      points = []; planted = [];
+      for (let i = 0; i < nLines; i++) {
+        const theta = Math.random() * Math.PI;
+        const rho = (Math.random() * 2 - 1) * 0.6;
+        const seg = segment(theta, rho);
+        if (!seg) continue;
+        planted.push({ theta: theta, rho: rho });
+        // A gap in the middle: real evidence arrives interrupted, and the
+        // transform is famously unbothered by that.
+        const gapA = 0.22 + Math.random() * 0.34, gapW = 0.10 + Math.random() * 0.15;
+        const count = 52 + ((Math.random() * 28) | 0);
+        const c = Math.cos(theta), s = Math.sin(theta);
+        for (let k = 0; k < count; k++) {
+          const f = Math.random();
+          if (f > gapA && f < gapA + gapW) continue;
+          const t = seg.t0 + f * (seg.t1 - seg.t0);
+          const off = gauss() * noise;
+          add(seg.ox + seg.dx * t + c * off, seg.oy + seg.dy * t + s * off);
+        }
+      }
+      for (let i = 0; i < clutter; i++) add(Math.random() * 2 - 1, Math.random() * 2 - 1);
+      // Vote in a shuffled order, so the map fills in from everywhere at once.
+      for (let i = points.length - 1; i > 0; i--) {
+        const j = (Math.random() * (i + 1)) | 0;
+        const tmp = points[i]; points[i] = points[j]; points[j] = tmp;
+      }
+      resetVote();
+    }
+
+    function add(x, y) {
+      if (x < -1 || x > 1 || y < -1 || y > 1) return;
+      points.push({ x: x, y: y });
+    }
+
+    function resetVote() {
+      acc.fill(0);
+      accMax = 0; accDirty = true;
+      nextVote = 0; peaks = []; recovered = 0;
+      trail.length = 0;
+    }
+
+    // ---- one point's ballot: its entire sinusoid ---------------------------
+    function castVote(p) {
+      for (let t = 0; t < TH; t++) {
+        const r = p.x * cosT[t] + p.y * sinT[t];
+        const f = (r + RMAX) / (2 * RMAX) * (RH - 1);
+        const i0 = Math.floor(f), w = f - i0;
+        if (i0 >= 0 && i0 < RH) {
+          const v = (acc[i0 * TH + t] += 1 - w);
+          if (v > accMax) accMax = v;
+        }
+        if (i0 + 1 >= 0 && i0 + 1 < RH) {
+          const v = (acc[(i0 + 1) * TH + t] += w);
+          if (v > accMax) accMax = v;
+        }
+      }
+      accDirty = true;
+    }
+
+    // ---- reading the tally back --------------------------------------------
+    // A local maximum above the threshold is a line. (θ ≈ 0, ρ) and
+    // (θ ≈ π, −ρ) name the same line, so duplicates are folded together.
+    function sameLine(t1, r1, t2, r2) {
+      let dt = Math.abs(t1 - t2);
+      if (dt < 0.11 && Math.abs(r1 - r2) < 0.13) return true;
+      dt = Math.abs(Math.abs(t1 - t2) - Math.PI);
+      return dt < 0.11 && Math.abs(r1 + r2) < 0.13;
+    }
+
+    function findPeaks() {
+      peaks = [];
+      if (accMax <= 0) return;
+      // Relative to the loudest cell, but never fewer than five points: early in
+      // the count "half the maximum" can mean two, and two points are not a line.
+      const cut = Math.max(5, thr * accMax);
+      const cand = [];
+      const wT = 4, wR = 4;
+      for (let ri = 0; ri < RH; ri++) {
+        for (let t = 0; t < TH; t++) {
+          const v = acc[ri * TH + t];
+          if (v < cut) continue;
+          // cheap rejection first: almost every cell fails on a neighbour
+          if (t > 0 && acc[ri * TH + t - 1] > v) continue;
+          if (t < TH - 1 && acc[ri * TH + t + 1] > v) continue;
+          if (ri > 0 && acc[(ri - 1) * TH + t] > v) continue;
+          if (ri < RH - 1 && acc[(ri + 1) * TH + t] > v) continue;
+          let isMax = true;
+          for (let dr = -wR; dr <= wR && isMax; dr++) {
+            const rr = ri + dr;
+            if (rr < 0 || rr >= RH) continue;
+            for (let dt = -wT; dt <= wT; dt++) {
+              const tt = t + dt;
+              if (tt < 0 || tt >= TH) continue;
+              if (acc[rr * TH + tt] > v) { isMax = false; break; }
+            }
+          }
+          if (isMax) cand.push({ t: t, ri: ri, v: v });
+        }
+      }
+      cand.sort((a, b) => b.v - a.v);
+      for (const c of cand) {
+        const theta = thetaOf(c.t), rho = rhoOf(c.ri);
+        let dup = false;
+        for (const p of peaks) { if (sameLine(theta, rho, p.theta, p.rho)) { dup = true; break; } }
+        if (!dup) peaks.push({ theta: theta, rho: rho, votes: c.v, t: c.t, ri: c.ri });
+        if (peaks.length >= 12) break;
+      }
+      // How many of the planted lines came back out?
+      recovered = 0;
+      for (const g of planted) {
+        for (const p of peaks) {
+          if (sameLine(g.theta, g.rho, p.theta, p.rho)) { recovered++; break; }
+        }
+      }
+    }
+
+    // ---- layout ------------------------------------------------------------
+    let scene = { x: 0, y: 0, s: 10 };
+    let hough = { x: 0, y: 0, w: 10, h: 10 };
+    let stacked = false;
+
+    function layout() {
+      const M = 16, TITLE = 26;
+      let x0 = M, y0 = M, x1 = W - M, y1 = H - M - 26;   // room for the hint line
+      const ui = document.getElementById('ui');
+      if (!ui.classList.contains('hidden') && W >= 1020) {
+        const r = ui.getBoundingClientRect();
+        x0 = Math.max(x0, r.right + M);
+      }
+      const aw = Math.max(40, x1 - x0), ah = Math.max(40, y1 - y0);
+      stacked = aw / ah < 1.2;
+      // the legend floats over the bottom-right; keep the vote map out from under it
+      const lg = document.getElementById('legend');
+      let reserve = 0;
+      if (getComputedStyle(lg).display !== 'none' && !lg.classList.contains('hidden')) {
+        reserve = lg.getBoundingClientRect().height + 14;
+      }
+      let sp, hp;
+      if (!stacked) {
+        const gap = 20, w = (aw - gap) / 2;
+        sp = { x: x0, y: y0, w: w, h: ah };
+        hp = { x: x0 + w + gap, y: y0, w: w, h: Math.max(60, ah - reserve) };
+      } else {
+        const gap = 16, h = (ah - gap) / 2;
+        sp = { x: x0, y: y0, w: aw, h: h };
+        hp = { x: x0, y: y0 + h + gap, w: aw, h: Math.max(60, h - reserve) };
+      }
+      const size = Math.max(20, Math.min(sp.w, sp.h - TITLE));
+      scene = { x: sp.x + (sp.w - size) / 2, y: sp.y + TITLE + (sp.h - TITLE - size) / 2, s: size, top: sp.y };
+      hough = {
+        x: hp.x + 30, y: hp.y + TITLE,
+        w: Math.max(20, hp.w - 34), h: Math.max(20, hp.h - TITLE - 20),
+        top: hp.y
+      };
+    }
+
+    const SX = (x) => scene.x + (x + 1) / 2 * scene.s;
+    const SY = (y) => scene.y + (y + 1) / 2 * scene.s;
+    const HX = (theta) => hough.x + (theta / Math.PI) * hough.w;
+    const HY = (rho) => hough.y + (rho + RMAX) / (2 * RMAX) * hough.h;
+
+    // ---- heat map ----------------------------------------------------------
+    const heat = document.createElement('canvas');
+    heat.width = TH; heat.height = RH;
+    const hctx = heat.getContext('2d');
+    const himg = hctx.createImageData(TH, RH);
+    const LUT = new Uint8Array(256 * 3);
+    (function buildLUT() {
+      const stops = [
+        [0.00, [7, 7, 16]], [0.22, [40, 33, 96]], [0.48, [124, 124, 255]],
+        [0.75, [255, 124, 195]], [1.00, [255, 246, 252]]
+      ];
+      for (let i = 0; i < 256; i++) {
+        const v = i / 255;
+        let a = stops[0], b = stops[stops.length - 1];
+        for (let k = 0; k < stops.length - 1; k++) {
+          if (v >= stops[k][0] && v <= stops[k + 1][0]) { a = stops[k]; b = stops[k + 1]; break; }
+        }
+        const f = b[0] === a[0] ? 0 : (v - a[0]) / (b[0] - a[0]);
+        for (let ch = 0; ch < 3; ch++) LUT[i * 3 + ch] = Math.round(a[1][ch] + (b[1][ch] - a[1][ch]) * f);
+      }
+    })();
+
+    function renderHeat() {
+      const d = himg.data;
+      const inv = accMax > 0 ? 1 / accMax : 0;
+      for (let i = 0, n = TH * RH; i < n; i++) {
+        let v = acc[i] * inv;
+        if (v < 0) v = 0; else if (v > 1) v = 1;
+        const idx = (Math.sqrt(v) * 255) | 0;
+        const o = i * 4, l = idx * 3;
+        d[o] = LUT[l]; d[o + 1] = LUT[l + 1]; d[o + 2] = LUT[l + 2]; d[o + 3] = 255;
+      }
+      hctx.putImageData(himg, 0, 0);
+      accDirty = false;
+    }
+
+    // ---- drawing -----------------------------------------------------------
+    let hover = null;   // {where:'scene'|'hough', x, y}
+
+    function paneTitle(text, x, y, sub) {
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(233,233,240,0.62)';
+      ctx.fillText(text.toUpperCase(), x, y + 12);
+      if (sub) {
+        ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(154,154,176,0.55)';
+        ctx.fillText(sub, x + ctx.measureText(text.toUpperCase()).width + 14, y + 12);
+      }
+    }
+
+    function drawScene() {
+      const S = scene.s;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(scene.x, scene.y, S, S);
+      ctx.fillStyle = 'rgba(255,255,255,0.018)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.clip();
+
+      // the lines that were planted, if you asked to see them
+      if (showTruth) {
+        ctx.setLineDash([5, 6]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+        ctx.lineWidth = 1;
+        for (const g of planted) strokeLine(g.theta, g.rho);
+        ctx.setLineDash([]);
+      }
+
+      // the points
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i];
+        const voted = i < nextVote;
+        ctx.fillStyle = voted ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.2)';
+        ctx.beginPath();
+        ctx.arc(SX(p.x), SY(p.y), voted ? 1.7 : 1.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // whoever just voted, still glowing
+      for (const tr of trail) {
+        const a = Math.max(0, 1 - tr.age / 0.55);
+        if (a <= 0) continue;
+        ctx.strokeStyle = 'rgba(255,214,236,' + (0.8 * a) + ')';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(SX(tr.p.x), SY(tr.p.y), 3 + 9 * (1 - a), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // the lines the vote found
+      for (let i = 0; i < peaks.length; i++) {
+        const p = peaks[i];
+        const s = p.votes / Math.max(1e-6, accMax);
+        ctx.strokeStyle = i === 0 ? 'rgba(255,214,236,0.95)' : 'rgba(160,150,255,' + (0.35 + 0.5 * s) + ')';
+        ctx.lineWidth = i === 0 ? 2 : 1.5;
+        ctx.shadowColor = 'rgba(180,140,255,0.55)';
+        ctx.shadowBlur = 8;
+        strokeLine(p.theta, p.rho);
+        ctx.shadowBlur = 0;
+      }
+
+      // the line under the cursor, when the cursor is over the vote map
+      if (hover && hover.where === 'hough') {
+        ctx.strokeStyle = 'rgba(255,124,195,0.95)';
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([6, 5]);
+        strokeLine(hover.theta, hover.rho);
+        ctx.setLineDash([]);
+      }
+      if (hover && hover.where === 'scene') {
+        ctx.strokeStyle = 'rgba(255,124,195,0.9)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(SX(hover.ux), SY(hover.uy), 5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      paneTitle('the scene', scene.x, (scene.top || scene.y) , points.length + ' points');
+    }
+
+    function strokeLine(theta, rho) {
+      const seg = segment(theta, rho);
+      if (!seg) return;
+      const ax = seg.ox + seg.dx * seg.t0, ay = seg.oy + seg.dy * seg.t0;
+      const bx = seg.ox + seg.dx * seg.t1, by = seg.oy + seg.dy * seg.t1;
+      ctx.beginPath();
+      ctx.moveTo(SX(ax), SY(ay));
+      ctx.lineTo(SX(bx), SY(by));
+      ctx.stroke();
+    }
+
+    function sinusoid(x, y, samples) {
+      const n = samples || 96;
+      for (let i = 0; i <= n; i++) {
+        const th = (i / n) * Math.PI;
+        const r = x * Math.cos(th) + y * Math.sin(th);
+        const px = HX(th), py = HY(r);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+    }
+
+    function drawHough() {
+      if (accDirty) renderHeat();
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(hough.x, hough.y, hough.w, hough.h);
+      ctx.clip();
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(heat, hough.x, hough.y, hough.w, hough.h);
+
+      // every ballot cast so far, drawn as the curve it is
+      if (showCurves && nextVote > 0) {
+        const step = Math.max(1, Math.ceil(nextVote / 220));
+        ctx.strokeStyle = 'rgba(190,190,255,0.07)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i < nextVote; i += step) sinusoid(points[i].x, points[i].y, 48);
+        ctx.stroke();
+      }
+
+      // the newest ballots, bright
+      for (const tr of trail) {
+        const a = Math.max(0, 1 - tr.age / 0.55);
+        if (a <= 0) continue;
+        ctx.strokeStyle = 'rgba(255,214,236,' + (0.55 * a) + ')';
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        sinusoid(tr.p.x, tr.p.y, 72);
+        ctx.stroke();
+      }
+
+      // where the votes agreed
+      for (let i = 0; i < peaks.length; i++) {
+        const p = peaks[i];
+        const px = HX(p.theta), py = HY(p.rho);
+        ctx.strokeStyle = i === 0 ? 'rgba(255,244,250,0.95)' : 'rgba(255,214,236,0.75)';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(px, py, i === 0 ? 9 : 7, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      if (hover && hover.where === 'scene') {
+        ctx.strokeStyle = 'rgba(255,124,195,0.95)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        sinusoid(hover.ux, hover.uy, 128);
+        ctx.stroke();
+      }
+      if (hover && hover.where === 'hough') {
+        const px = HX(hover.theta), py = HY(hover.rho);
+        ctx.strokeStyle = 'rgba(255,124,195,0.9)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(hough.x, py); ctx.lineTo(hough.x + hough.w, py);
+        ctx.moveTo(px, hough.y); ctx.lineTo(px, hough.y + hough.h);
+        ctx.globalAlpha = 0.28; ctx.stroke(); ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(hough.x, hough.y, hough.w, hough.h);
+
+      // axes
+      ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(154,154,176,0.6)';
+      ctx.textAlign = 'center';
+      ctx.fillText('θ 0°', hough.x + 12, hough.y + hough.h + 14);
+      ctx.fillText('90°', hough.x + hough.w / 2, hough.y + hough.h + 14);
+      ctx.fillText('180°', hough.x + hough.w - 14, hough.y + hough.h + 14);
+      ctx.textAlign = 'right';
+      ctx.fillText('−√2', hough.x - 6, hough.y + 9);
+      ctx.fillText('ρ 0', hough.x - 6, hough.y + hough.h / 2 + 3);
+      ctx.fillText('+√2', hough.x - 6, hough.y + hough.h - 2);
+      ctx.textAlign = 'left';
+
+      paneTitle('the vote', hough.x - 30, (hough.top || hough.y), 'every line through every point');
+    }
+
+    // ---- readout -----------------------------------------------------------
+    let tick = 0;
+    function readout() {
+      if (++tick % 4 !== 0) return;
+      const el = (id) => document.getElementById(id);
+      el('mVoted').textContent = nextVote + ' / ' + points.length;
+      el('mMax').textContent = accMax > 0 ? accMax.toFixed(0) + ' votes' : '–';
+      el('mFound').textContent = peaks.length + ' / ' + planted.length;
+      if (peaks.length) {
+        const p = peaks[0];
+        el('mBest').textContent = (p.theta * 180 / Math.PI).toFixed(0) + '° · ρ ' + p.rho.toFixed(2);
+      } else el('mBest').textContent = '–';
+
+      const st = el('mStatus');
+      if (nextVote < points.length) {
+        st.className = 'full';
+        st.innerHTML = '<b>counting</b> — each point is handing in a sinusoid: every line it could possibly be part of.';
+      } else if (peaks.length === 0) {
+        st.className = 'full';
+        st.innerHTML = '<b>nothing clears the bar</b> — lower the threshold, or there is genuinely no line in there.';
+      } else if (planted.length && recovered === planted.length && peaks.length === planted.length) {
+        st.className = 'full done';
+        st.innerHTML = '<b>all in</b> — every planted line recovered, gaps and clutter and all, with no phantoms.';
+      } else if (peaks.length > planted.length) {
+        st.className = 'full';
+        st.innerHTML = '<b>' + (peaks.length - recovered) + ' extra</b> — the threshold is low enough that accidental alignments in the clutter count as lines.';
+      } else {
+        st.className = 'full';
+        st.innerHTML = '<b>' + recovered + ' of ' + planted.length + '</b> — the faint ones are below the bar. Slide the threshold down to let them in.';
+      }
+    }
+
+    // ---- sizing ------------------------------------------------------------
+    function applySize(vw, vh) {
+      const first = W < 2 || H < 2;
+      W = vw; H = vh;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+      if (first) {
+        if (Math.min(W, H) < 560) {
+          clutter = 60;
+          document.getElementById('clutter').value = 60;
+          document.getElementById('clutterVal').textContent = '60';
+        }
+        makeScene();
+      }
+    }
+
+    function checkSize() {
+      const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+      const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      if (vw < 2 || vh < 2) return W > 1 && H > 1;
+      if (vw !== W || vh !== H) applySize(vw, vh);
+      return true;
+    }
+
+    // ---- loop --------------------------------------------------------------
+    let budget = 0, peakTick = 0, last = performance.now();
+    function frame(now) {
+      let dt = (now - last) / 1000; last = now;
+      if (dt > 0.25) dt = 0.25;
+      if (!checkSize()) { requestAnimationFrame(frame); return; }
+      layout();
+
+      budget += rate * dt;
+      let cast = 0;
+      while (budget >= 1 && nextVote < points.length && cast < 4000) {
+        const p = points[nextVote++];
+        castVote(p);
+        budget -= 1;
+        cast++;
+        if (trail.length < 10) trail.push({ p: p, age: 0 });
+      }
+      if (nextVote >= points.length) budget = 0;
+
+      for (let i = trail.length - 1; i >= 0; i--) {
+        trail[i].age += dt;
+        if (trail[i].age > 0.55) trail.splice(i, 1);
+      }
+
+      if (cast > 0 || peaks.length === 0) {
+        if (++peakTick % 5 === 0) findPeaks();
+      }
+
+      ctx.clearRect(0, 0, W, H);
+      drawScene();
+      drawHough();
+      readout();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- controls ----------------------------------------------------------
+    const el = (id) => document.getElementById(id);
+
+    el('nLines').addEventListener('input', () => {
+      nLines = +el('nLines').value;
+      el('linesVal').textContent = String(nLines);
+      makeScene();
+    });
+    el('noise').addEventListener('input', () => {
+      noise = +el('noise').value / 1000 * 0.5;
+      el('noiseVal').textContent = (noise * 100).toFixed(1) + '%';
+      makeScene();
+    });
+    el('clutter').addEventListener('input', () => {
+      clutter = +el('clutter').value;
+      el('clutterVal').textContent = String(clutter);
+      makeScene();
+    });
+    el('rate').addEventListener('input', () => {
+      // a gentle curve: fine control down low, hundreds a second up top
+      const v = +el('rate').value / 100;
+      rate = Math.round(2 * Math.pow(600, v));
+      el('rateVal').textContent = String(rate);
+    });
+    el('thr').addEventListener('input', () => {
+      thr = +el('thr').value / 100;
+      el('thrVal').textContent = el('thr').value + '%';
+      findPeaks();
+    });
+
+    function wireToggle(id, set) {
+      const t = el(id);
+      t.addEventListener('click', () => { t.classList.toggle('on'); set(t.classList.contains('on')); });
+    }
+    wireToggle('curvesToggle', (v) => { showCurves = v; });
+    wireToggle('truthToggle', (v) => { showTruth = v; });
+
+    el('revote').addEventListener('click', resetVote);
+    el('fresh').addEventListener('click', makeScene);
+
+    // ---- pointer -----------------------------------------------------------
+    function locate(e) {
+      const x = e.clientX, y = e.clientY;
+      const ux = (x - scene.x) / scene.s * 2 - 1;
+      const uy = (y - scene.y) / scene.s * 2 - 1;
+      if (ux >= -1 && ux <= 1 && uy >= -1 && uy <= 1) return { where: 'scene', ux: ux, uy: uy };
+      if (x >= hough.x && x <= hough.x + hough.w && y >= hough.y && y <= hough.y + hough.h) {
+        return {
+          where: 'hough',
+          theta: (x - hough.x) / hough.w * Math.PI,
+          rho: (y - hough.y) / hough.h * 2 * RMAX - RMAX
+        };
+      }
+      return null;
+    }
+
+    let painting = false, lastAdd = 0;
+    canvas.addEventListener('pointerdown', (e) => {
+      const l = locate(e);
+      hover = l;
+      if (l && l.where === 'scene') {
+        painting = true; lastAdd = 0;
+        canvas.setPointerCapture(e.pointerId);
+        add(l.ux, l.uy);
+      }
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      hover = locate(e);
+      if (!painting) return;
+      const t = performance.now();
+      if (t - lastAdd < 45) return;
+      lastAdd = t;
+      const l = locate(e);
+      if (l && l.where === 'scene') add(l.ux, l.uy);
+    });
+    ['pointerup', 'pointercancel'].forEach((ev) =>
+      canvas.addEventListener(ev, () => { painting = false; }));
+    canvas.addEventListener('pointerleave', () => { hover = null; });
+
+    window.addEventListener('resize', checkSize);
+    document.addEventListener('visibilitychange', checkSize);
+
+    // initial slider labels
+    el('rate').dispatchEvent(new Event('input'));
+    el('noise').dispatchEvent(new Event('input'));
+
+    checkSize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
