@@ -1,0 +1,234 @@
+{
+  "date": "2026-08-16",
+  "topic": "Trump's memorandum deputizing vetted private companies for offensive cyber operations — 'cyber privateers' or ordinary government contracting?",
+  "question": "Can the President create a private offensive-hacking program by memorandum, when the anti-hacking statute is unchanged and the bill authorizing exactly this is still in committee?",
+  "summary": "On August 12 President Trump signed a national security memorandum, 'Expanding Capabilities to Combat Transnational Cyber-Enabled Crime,' establishing the first federal program to authorize vetted private U.S. companies to run offensive cyber operations — surveillance, plus 'Cyber Effects Operations' that manipulate, disrupt, degrade or destroy information systems — against foreign cyber-enabled criminal organizations. Co-Executive Directors from Justice and Homeland Security must approve every operations package in writing, participants post a $1 million bond, the operational workflow sits in a classified annex, and implementing procedures are due within 60 days. Reporting Wednesday, and commentary through the weekend, labeled the participants 'cyber privateers.'\n\nThe administration's case is scale: Americans reported $20.877 billion in losses to the FBI in 2025, and the memorandum insists every action is 'exclusively conducted on behalf of and under the supervision of the Federal Government.'\n\nThe critics' case is authority: the Computer Fraud and Abuse Act is unchanged, the word 'Congress' never appears in the document, and a Republican bill to authorize precisely this — Sen. Mike Lee's Cyber Letters of Marque and Reprisal Act — has sat in committee since July 15.\n\nBoth sides are describing real features of the same document, and each leaves out the half that cuts against it.",
+  "needle": -3,
+  "verdict": "On the checkable facts this is nearly even. The critics hold the load-bearing legal points: the memorandum never mentions Congress, does not amend section 1030, and manufactures by contract what two Republican bills assume requires a statute. The administration is right about the text: this is not victim 'hack back,' every operation needs written government approval, anything rising to a use of force is off-limits, and the fraud figures it cites are accurate. The debate's loudest word — 'privateer' — fits Sen. Lee's bill, which splits proceeds with the government, far better than it fits this memo, which does not. Whether the program is wise, the meter cannot say.",
+  "weights": { "factualAccuracy": 0.6, "reasoningHonesty": 0.4 },
+  "verificationNote": "The memorandum was read directly on whitehouse.gov and quoted from its own text, including a targeted check confirming the word 'Congress' does not appear. The FBI's 2025 IC3 report was downloaded and read as a PDF for the loss figures. Section 1030 and the Article I clause were read at Cornell's LII; S.5000, H.R.9697 and H.R.4036 came from govinfo bulk bill-status data. The Washington Post, CNN, fbi.gov, lee.senate.gov and the Daily Caller all returned HTTP 403/451 to automated fetching; NPR timed out and is cited via its KPBS carriage, and Sen. Lee's July release via Utah Policy's reprint. Confidence is marked down where a quotation could only be read in one outlet.",
+  "sources_consulted": [
+    "White House presidential actions (memorandum text)",
+    "White House fact sheet",
+    "FBI Internet Crime Complaint Center, 2025 Annual Report",
+    "Cornell Legal Information Institute (18 U.S.C. 1030; Article I)",
+    "GovInfo bill status (S.5000, H.R.9697, H.R.4036)",
+    "CyberScoop",
+    "NPR (via KPBS)",
+    "TechCrunch",
+    "Crowell & Moring",
+    "Lawfare",
+    "Utah Policy",
+    "Deseret News",
+    "The Record (Recorded Future News)",
+    "CBS News",
+    "Just Security",
+    "The Hill",
+    "TechRadar"
+  ],
+  "sides": {
+    "left": {
+      "label": "A program built by contract around a statute Congress never changed",
+      "framing": "Offensive hacking by private firms is a crime under section 1030, and the memorandum does not amend it — it simply asserts that a federal contract cures the problem. Congress holds the power to commission private force, a Republican senator's bill to grant it is sitting in committee, and the memorandum never mentions Congress at all. Approval runs through political appointees under a classified annex, with no reporting to anyone outside the executive branch.",
+      "factualAccuracy": 76,
+      "reasoningHonesty": 65,
+      "score": 72,
+      "strongestPoint": "The documentary case is airtight and comes from primary texts: section 1030 is untouched, its law-enforcement exemption at (f) covers agencies rather than contractors, its civil action at (g) is available to anyone damaged, 'protected computer' expressly reaches computers located abroad, and the word 'Congress' appears nowhere in the memorandum. Sen. Mike Lee introduced S.5000 on July 15 precisely because he believed a statute was required.",
+      "weakestPoint": "The 'privateer' and 'corporate militia' framing is refuted by the document being criticized. Privateers acted on their own account for prize; these firms may not act without written approval of each operations package, may not be approved for anything rising to a use of force under international law, and take no prize — the profit-splitting feature belongs to Lee's bill, not to the memo. Escalation and misattribution are real risks but are predictions, not present facts."
+    },
+    "right": {
+      "label": "Government-directed contracting against a $20 billion criminal industry",
+      "framing": "Foreign criminal networks took nearly $21 billion from Americans last year, $7.7 billion of it from people over 60, and the capability to find and disrupt them sits in private companies. This is not vigilantism: participants are vetted, contracted, bonded, forbidden to target Americans without authorization, forbidden from anything that would amount to a use of force, and act only on written government direction. Adversaries have used contract hackers for years.",
+      "factualAccuracy": 71,
+      "reasoningHonesty": 65,
+      "score": 69,
+      "strongestPoint": "The predicate facts check out against primary sources. The FBI's own 2025 report records $20.877 billion in losses across 1,008,597 complaints, a 26 percent jump. And the memorandum's control language is real, not decorative: operations are 'exclusively conducted on behalf of and under the supervision of the Federal Government,' the directors must 'review every cyber operations package and provide written approval,' and they 'may not approve operations resulting in Critical Outcomes.'",
+      "weakestPoint": "The legality claim is asserted, not demonstrated. The memorandum says activities will comply with section 1030 while describing conduct section 1030 prohibits, and rests on an untested theory that a contract confers the 'authorization' the statute requires — a theory no court has tested and that offers no protection against the statute's private civil suits or foreign criminal law. The 'China and Russia do it' argument points to conduct the Justice Department indicts."
+    }
+  },
+  "facts": [
+    {
+      "claim": "Americans reported $20.877 billion in losses to the FBI's Internet Crime Complaint Center in 2025, across 1,008,597 complaints, with $7.7 billion of it reported by people aged 60 and over.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "IC3's 2025 annual report: '1,008,597 complaints; $20.877 billion in losses; 26% increase in losses from 2024; $20,699 Average Loss,' and by age group '60+: 201,266 complaints, $7.7 billion in losses.' The White House fact sheet's figure — 'more than $20.8 billion' — matches.",
+      "explanation": "Read directly from the FBI's own PDF, so this is primary. One caveat the administration does not mention: IC3 totals are self-reported victim complaints, not an audited measure of national loss, and reflect reporting volume as well as crime. The direction and scale are nonetheless well established.",
+      "source": "FBI Internet Crime Complaint Center, 2025 Internet Crime Report",
+      "url": "https://www.ic3.gov/AnnualReport/Reports/2025_IC3Report.pdf",
+      "corroboration": [
+        { "source": "The National CIO Review", "url": "https://nationalcioreview.com/articles-insights/extra-bytes/fbi-cybercrime-report-reveals-20-8-billion-lost-in-2025/" },
+        { "source": "White House fact sheet", "url": "https://www.whitehouse.gov/fact-sheets/2026/08/fact-sheet-president-donald-j-trump-expands-capabilities-to-combat-transnational-cyber-enabled-crime/" }
+      ]
+    },
+    {
+      "claim": "The memorandum does not let companies 'hack back' on their own initiative: operations run only on written government approval and on the government's behalf.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "'Any resulting operational action will be exclusively conducted on behalf of and under the supervision of the Federal Government pursuant to the Federal Government's lawful authorities,' and the Program Executive Directors must 'review every cyber operations package and provide written approval and direction.' Participants must 'maintain a bond or escrow in an amount not less than $1 million.'",
+      "explanation": "Read from the memorandum itself and confirmed in independent reporting. This is the strongest correction to the loosest coverage: the program is a contracting mechanism, not a licence for victims to strike back. It does not answer the separate question of what makes the contracted conduct lawful.",
+      "source": "Presidential Memorandum, 'Expanding Capabilities to Combat Transnational Cyber-Enabled Crime' (whitehouse.gov)",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/expanding-capabilities-to-combat-transnational-cyber-enabled-crime/",
+      "corroboration": [
+        { "source": "CyberScoop", "url": "https://cyberscoop.com/trump-memo-private-sector-offensive-hacking/" },
+        { "source": "NPR (via KPBS)", "url": "https://www.kpbs.org/news/national/2026/08/15/trump-administration-wants-to-allow-companies-to-hack-foreign-cybercriminals" }
+      ]
+    },
+    {
+      "claim": "The program's directors may not approve operations likely to cause death or serious injury, or to rise to the level of a use of force or armed attack under international law.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "A 'Critical Outcome' is defined as an action likely to 'result in the loss of life or serious injury; or rise to the level of use of force or armed attack under international law,' and the memorandum states that the Program Executive Directors 'may not approve operations resulting in Critical Outcomes.'",
+      "explanation": "A genuine limit, and the answer to the 'corporate militias waging cyberwar' charge. Confidence is medium rather than high because the ceiling is self-policed inside the executive branch and the adjudicatory framework is in a classified annex; nothing here is reviewable by a court or reported to Congress.",
+      "source": "Presidential Memorandum (whitehouse.gov)",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/expanding-capabilities-to-combat-transnational-cyber-enabled-crime/",
+      "corroboration": [
+        { "source": "TechCrunch", "url": "https://techcrunch.com/2026/08/13/in-a-first-us-will-allow-some-private-firms-to-carry-out-cyberattacks/" }
+      ]
+    },
+    {
+      "claim": "The memorandum never mentions Congress and requires no congressional notification, while the Republican bill that would authorize cyber letters of marque by statute has sat in committee since July 15, 2026.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "A targeted search of the memorandum's text for 'Congress,' 'congressional' and 'report to Congress' returned none. S.5000, 'A bill to authorize the President of the United States to issue cyber letters of marque and reprisal,' sponsored by Sen. Mike Lee, was 'Read twice and referred to the Committee on Foreign Relations' on July 15, 2026; H.R.9697 (Rep. Tim Burchett) was referred to House Foreign Affairs the same day.",
+      "explanation": "Two primary sources, and together the sharpest fact of the day: the sponsors are Republicans, which makes it hard to cast the objection as partisan. Neither bill has moved. An absence of a word is weaker evidence than its presence, so this establishes no reporting duty in the document — not that no briefing will occur.",
+      "source": "GovInfo bill status, S.5000 (119th Congress)",
+      "url": "https://www.govinfo.gov/bulkdata/BILLSTATUS/119/s/BILLSTATUS-119s5000.xml",
+      "corroboration": [
+        { "source": "GovInfo bill status, H.R.9697", "url": "https://www.govinfo.gov/bulkdata/BILLSTATUS/119/hr/BILLSTATUS-119hr9697.xml" },
+        { "source": "Presidential Memorandum (whitehouse.gov)", "url": "https://www.whitehouse.gov/presidential-actions/2026/08/expanding-capabilities-to-combat-transnational-cyber-enabled-crime/" }
+      ]
+    },
+    {
+      "claim": "The memorandum amounts to the President issuing letters of marque, a power Article I gives to Congress.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "high",
+      "evidence": "Article I, Section 8: Congress shall have power 'To declare war, grant letters of marque and reprisal, and make rules concerning captures on land and water.' Sen. Lee's own description of his bill: 'stealing from America's enemies at the direction of the President, and splitting the profits with the federal government,' with up to 15 percent of recovered assets available for bounties.",
+      "explanation": "The constitutional text is exactly as critics say. But the defining features of a letter of marque — acting on one's own account, and taking prize — are in Lee's bill and absent from the memorandum, which authorizes no seizure and no profit share. The document is closer to contracting than commissioning; the label is doing argumentative work the text does not support.",
+      "source": "Cornell Legal Information Institute, U.S. Constitution Article I",
+      "url": "https://www.law.cornell.edu/constitution/articlei",
+      "corroboration": [
+        { "source": "Utah Policy (reprinting Sen. Lee's release)", "url": "https://utahpolicy.com/news-release/77968-lee-bill-authorizes-american-hackers-to-fight-foreign-cyberattacks" }
+      ]
+    },
+    {
+      "claim": "The Computer Fraud and Abuse Act is unchanged: its exemption covers law-enforcement and intelligence agencies rather than contractors, it reaches computers located abroad, and its private civil action survives.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Section 1030(f): 'This section does not prohibit any lawfully authorized investigative, protective, or intelligence activity of a law enforcement agency of the United States... or of an intelligence agency of the United States.' Section 1030(e)(2)(B) covers a computer 'located outside the United States that is used in a manner that affects interstate or foreign commerce.' Section 1030(g): 'Any person who suffers damage or loss... may maintain a civil action.'",
+      "explanation": "The statutory text is certain; the legal conclusion is not, which is why this is graded mostly-supported. The government's theory is that operations conducted at its direction are its own 'lawfully authorized' activity. No court has tested that as applied to contractors, and one law-firm analysis notes the memorandum 'does not appear to offer safe harbor against civil liability.'",
+      "source": "Cornell Legal Information Institute, 18 U.S.C. 1030",
+      "url": "https://www.law.cornell.edu/uscode/text/18/1030",
+      "corroboration": [
+        { "source": "Crowell & Moring client alert", "url": "https://www.crowell.com/en/insights/client-alerts/license-to-hack-the-white-house-greenlights-private-sector-offensive-cyber-operations" }
+      ]
+    },
+    {
+      "claim": "America's adversaries already run offensive cyber operations through contracted private firms.",
+      "side": "right",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "In March 2025 the Justice Department charged twelve Chinese nationals, including eight employees of the contractor i-Soon and two Ministry of Public Security officers, over a hacking-for-hire operation run since at least 2016 at the direction of Chinese security agencies, with victims including the U.S. Treasury, dissidents, journalists and foreign ministries.",
+      "explanation": "The practice is documented, so the premise of Joshua Steinman's 'the Chinese and the Russians do this at scale' holds. Two caveats: the cited conduct is espionage against governments and dissidents rather than counter-crime, and the United States prosecutes it — which is an argument about parity, not about legality. The DOJ release itself returned HTTP 403; cited via readable reporting.",
+      "source": "The Record (Recorded Future News)",
+      "url": "https://therecord.media/doj-charges-chinese-nationals-isoon-cyberattacks-treasury",
+      "corroboration": [
+        { "source": "Dark Reading", "url": "https://www.darkreading.com/threat-intelligence/us-charges-china-apt-for-hire-hackers" },
+        { "source": "Maryland Coordination and Analysis Center (DOJ release text)", "url": "https://mcac.maryland.gov/2025/03/justice-department-charges-12-chinese-contract-hackers-and-law-enforcement-officers-in-global-computer-intrusion-campaigns/" }
+      ]
+    },
+    {
+      "claim": "Nothing is operational yet: the rules governing targeting, vetting and approval are due within 60 days, and the operational workflow will sit in a classified annex.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "'Within 60 days of the date of this memorandum, the Program Executive Directors shall... establish consensus operating procedures,' covering minimum standards for 'technical proficiency, proven performance of cyber operations, facility security, personnel vetting,' standardized target-identification rubrics, and an operational workflow and adjudicatory framework carried in a classified annex.",
+      "explanation": "The single most useful corrective to both sides' certainty: the arguments now being made about what the program will do are arguments about a framework whose substance is unwritten and will be partly secret. No participating company has been named. This is why several quoted experts hedge on whether firms will accept the legal risk at all.",
+      "source": "Presidential Memorandum (whitehouse.gov)",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/expanding-capabilities-to-combat-transnational-cyber-enabled-crime/",
+      "corroboration": [
+        { "source": "CyberScoop (expert reaction)", "url": "https://cyberscoop.com/private-sector-hacking-presidential-memo-cybersecurity/" }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Would each side hold this position with the parties reversed? On private offensive hacking the honest answer is no, and the receipt is nine years old. The Active Cyber Defense Certainty Act, which would have legalized private 'active defense' abroad, was a Republican bill with Democratic cosponsors — and its entire premise was that doing this lawfully required amending section 1030. That shared premise is what today's memorandum discards. What has flipped is not the appetite for private cyber force; it is who thinks a statute is necessary before exercising it.",
+    "precedent": {
+      "case": "The Active Cyber Defense Certainty Act, H.R.4036 (2017)",
+      "what": "Rep. Tom Graves (R-GA) introduced a bill 'to amend title 18, United States Code, to provide a defense to prosecution' for people responding to intrusions on their computers. Its cosponsors included Democrats Kyrsten Sinema, Stephanie Murphy and Henry Cuellar alongside six Republicans; a later version was co-introduced with Rep. Josh Gottheimer (D-NJ).",
+      "mirror": "Same capability, opposite method. In 2017 both parties assumed private offensive action required Congress to rewrite the criminal statute, and the bill died without a floor vote. In 2026 the capability arrives with the statute untouched — created by contract, under an executive program, with no legislative vehicle enacted.",
+      "source": "GovInfo bill status, H.R.4036 (115th Congress)",
+      "url": "https://www.govinfo.gov/bulkdata/BILLSTATUS/115/hr/BILLSTATUS-115hr4036.xml",
+      "corroboration": [
+        { "source": "CyberScoop", "url": "https://cyberscoop.com/hack-back-bill-tom-graves-kyrsten-sineman-cfaa/" }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Congressional Republicans and the administration",
+        "then": "Republicans wrote both statutory vehicles on the theory that Congress must act first: Graves in 2017 to amend section 1030, and Sen. Mike Lee on July 15, 2026, grounding his cyber privateering bill in Congress's Article I power to 'grant Letters of Marque and Reprisal.'",
+        "now": "The same coalition welcomes a program created four weeks later by presidential memorandum, with section 1030 unamended, Lee's bill still in committee, and the word 'Congress' absent from the document.",
+        "source": "Utah Policy (reprinting Sen. Lee's July 2026 release)",
+        "url": "https://utahpolicy.com/news-release/77968-lee-bill-authorizes-american-hackers-to-fight-foreign-cyberattacks"
+      },
+      {
+        "who": "Congressional Democrats",
+        "then": "Democratic members cosponsored the bill to legalize private offensive cyber action — a broader version than today's program, since it would have let victims act on their own initiative rather than under written government direction.",
+        "now": "Democratic-aligned criticism treats private participation in offensive operations as illegitimate in kind. Stated at its true strength: this is a tension, not a documented reversal by any named member, since the objection now is to the method of authorization rather than to the capability.",
+        "source": "GovInfo bill status, H.R.4036 (cosponsors Sinema, Murphy, Cuellar)",
+        "url": "https://www.govinfo.gov/bulkdata/BILLSTATUS/115/hr/BILLSTATUS-115hr4036.xml"
+      }
+    ],
+    "longRun": "Strip out the party labels and the durable pattern is that capabilities Congress declines to authorize get built anyway, through instruments the next president inherits. The program that exists after the 60-day guidance — vetted contractors, a classified adjudicatory annex, no statutory basis, no reporting duty — will belong to whoever wins in 2028. The predictable sequel is that today's defenders discover an oversight principle the moment the other party is approving the target packages, and today's critics discover that the tool is useful.",
+    "appliedToScore": "Neither side earns a reasoning-honesty bonus for constitutional principle here. The right's own bills concede that this requires legislation, and the left's own members once cosponsored a broader version. Both carry it in their weakest point. The needle rests only on present-tense checkable facts: what the memorandum says, what section 1030 says, what the FBI's data show, and what has and has not passed Congress."
+  },
+  "pattern": {
+    "thesis": "Treating this as a self-contained cybercrime measure misses the shape it shares with several other actions: a coercive capability stood up by executive instrument while the matching statute sits unpassed, with the pending bill serving as the clearest evidence that someone thought a statute was needed. Judged in isolation, each instance can be defended on its own emergency; judged as a series, the question is whether legislation has become optional.",
+    "campaigns": [
+      {
+        "where": "Cyberspace — the August 12 memorandum",
+        "what": "A private offensive-cyber program created by memorandum, four weeks after two Republican bills proposed to create it by statute. Both bills remain in committee; section 1030 is unamended.",
+        "authorization": "Presidential memorandum; no statute",
+        "source": "GovInfo bill status, S.5000",
+        "url": "https://www.govinfo.gov/bulkdata/BILLSTATUS/119/s/BILLSTATUS-119s5000.xml",
+        "corroboration": [
+          { "source": "Presidential Memorandum (whitehouse.gov)", "url": "https://www.whitehouse.gov/presidential-actions/2026/08/expanding-capabilities-to-combat-transnational-cyber-enabled-crime/" }
+        ]
+      },
+      {
+        "where": "The Caribbean and eastern Pacific — Operation Southern Spear",
+        "what": "Lethal strikes on suspected trafficking vessels have proceeded without any authorization for the use of military force, while war-powers resolutions to halt them were defeated in both chambers — 49-51 in the Senate on the Venezuela measure, 211-213 in the House. Sen. Lee's separate cartel letters-of-marque bill, introduced in December 2025, also never advanced.",
+        "authorization": "Executive action; war-powers resolutions defeated",
+        "source": "CBS News",
+        "url": "https://www.cbsnews.com/news/senate-war-powers-vote-venezuela-drug-boats-military-strikes/",
+        "corroboration": [
+          { "source": "Just Security syllabus supplement on the boat strikes", "url": "https://www.justsecurity.org/153296/syllabus-supplements-us-boat-strikes/" },
+          { "source": "Deseret News (Lee's cartel privateering bill)", "url": "https://www.deseret.com/u-s-world/2025/12/19/mike-lee-wants-american-privateers-to-seize-drug-cartel-property-on-the-high-seas/" }
+        ]
+      },
+      {
+        "where": "The executive branch's own build-out — Executive Order 14390",
+        "what": "The March 6, 2026 executive order on cyber-enabled crime is the instrument this memorandum expands; the program is layered on a prior executive action rather than on legislation, and the memorandum cites it as its foundation.",
+        "authorization": "Executive order",
+        "source": "Presidential Memorandum, Sec. 1 (whitehouse.gov)",
+        "url": "https://www.whitehouse.gov/presidential-actions/2026/08/expanding-capabilities-to-combat-transnational-cyber-enabled-crime/",
+        "corroboration": [
+          { "source": "Infosecurity Magazine", "url": "https://www.infosecurity-magazine.com/news/trump-private-offensive-cyber/" }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is what a pending bill means. When a member of the President's own party introduces legislation to authorize an action and the action happens anyway, either the bill was unnecessary or the action was unauthorized — and nobody in the coalition is asked to say which. The 'one-off' tell: a defense that argues only from the urgency of this threat and never explains what the sponsor thought his bill was for."
+  },
+  "notAdjudicable": [
+    "Whether the state should share the power to break into computers with profit-making firms at all — a question about the proper boundaries of public force, not about what the memorandum does.",
+    "Whether a measurable reduction in fraud losses is worth an increased chance of misattributed strikes and international incidents; that trade is a judgment about acceptable risk, not a fact.",
+    "Whether a classified adjudicatory annex is a reasonable price for operational security or an unacceptable removal of coercive decisions from public view.",
+    "Whether 'our adversaries already do this' is ever a good reason to adopt a practice the United States prosecutes as a crime — a question about moral consistency in statecraft."
+  ],
+  "biasWatch": "The bias doing the most work today is the label standing in for the argument. 'Cyber privateers' is vivid, historically resonant and largely wrong about this document — privateers kept the prize, and these contractors take none — yet it has organized nearly all the coverage, including from people who never quote the text. The administration runs the same move from the other end, with 'under the control and oversight of the United States Government' repeated as though supervision were the same thing as legal authority. The tell in either direction is an argument that never quotes the memorandum: watch for critics who say 'letters of marque' without noting the ban on operations rising to a use of force, and for defenders who say 'lawful authorities' without naming the statute that makes contracted intrusion lawful."
+}
