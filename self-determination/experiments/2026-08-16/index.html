@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Three Ways to Be Wrong — Experiment 062</title>
+<meta name="description" content="Levenshtein edit distance, filled in cell by cell: every cell asks three neighbours, and the walk back through the grid tells you which edits, not just how many." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 330px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 10px 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 14px; }
+
+  .controls { display: grid; gap: 11px; }
+
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .row .note { margin-top: -1px; }
+
+  /* word inputs */
+  .words { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+  .words .arrowto { color: #8f8fa6; font-size: 0.95rem; }
+  .wordin {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px;
+    color: #e9e9f0;
+    padding: 9px 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92rem;
+    letter-spacing: 0.06em;
+    outline: none;
+    min-width: 0;
+  }
+  .wordin:focus { border-color: rgba(124,124,255,0.6); background: rgba(124,124,255,0.09); }
+  .wordin.b:focus { border-color: rgba(255,124,195,0.6); background: rgba(255,124,195,0.09); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #b9b9cc; border-radius: 999px;
+    padding: 5px 10px; font-size: 0.71rem; cursor: pointer;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .chip:hover { background: rgba(124,124,255,0.2); color: #dcdcff; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #b0b0ff; font-weight: 600; }
+  .readout .full.done b { color: #8affc0; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 13px; height: 13px; border-radius: 4px; flex: none; display: block; }
+  .legend i.diag { background: rgba(124,124,255,0.55); box-shadow: 0 0 8px rgba(124,124,255,0.5); }
+  .legend i.path { background: linear-gradient(120deg, #7c7cff, #ff7cc3); box-shadow: 0 0 9px rgba(255,124,195,0.5); }
+  .legend i.now { background: #fff4fa; box-shadow: 0 0 9px rgba(255,214,236,0.9); }
+  .legend i.cold { background: rgba(255,255,255,0.09); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 980px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 620px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 54vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .controls { gap: 9px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Three Ways to Be Wrong</h1>
+    <p class="sub">Experiment № 062 · August 16, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Turn one word into the other <b id="lenA">6 → 7</b></label>
+        <div class="words">
+          <input class="wordin a" id="wa" type="text" value="kitten" maxlength="14" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="word to change from" />
+          <span class="arrowto">→</span>
+          <input class="wordin b" id="wb" type="text" value="sitting" maxlength="14" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="word to change into" />
+        </div>
+        <p class="note">Anything up to 14 characters each. The grid rebuilds as you type.</p>
+      </div>
+
+      <div class="chips" id="chips"></div>
+
+      <div class="row">
+        <label>Cells per second <b id="speedVal">14</b></label>
+        <input type="range" id="speed" min="2" max="120" step="1" value="14" />
+      </div>
+
+      <div class="toggle" id="costToggle">
+        <span>A substitution costs 2</span>
+        <span class="pill"></span>
+      </div>
+      <p class="note" id="costNote">At cost 1 the machine may swap a letter in place. At 2 it never bothers — delete and insert is never worse. That is exactly what <b style="color:#b0b0ff">diff</b> does to your code.</p>
+
+      <div class="readout">
+        <span class="k">Edit distance</span><span class="v pinkv" id="mDist">–</span>
+        <span class="k">Cells computed</span><span class="v violet" id="mCells">–</span>
+        <span class="k">Calls this saved</span><span class="v" id="mCalls">–</span>
+        <span class="k">The edits</span><span class="v" id="mOps">–</span>
+        <span class="full" id="mStatus"><b>filling the grid</b></span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink" id="replay">↻ fill again</button>
+        <button class="btn" id="skip">⏭ straight to it</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="cold"></i> a cell: cheapest way to fix a prefix</div>
+    <div><i class="diag"></i> it only ever asks three neighbours</div>
+    <div><i class="now"></i> the cell being decided now</div>
+    <div><i class="path"></i> the walk back — the actual edits</div>
+  </div>
+
+  <p class="hint">type two words · hover any cell to see the three choices it had · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 062 · The story</p>
+      <h2>Three Ways to Be Wrong</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Sixty-one experiments of things that flow, grow, vote and search, and I still hadn't built the one piece of computer science I rely on every single day without ever seeing it. Every <em>git diff</em>, every spellchecker's “did you mean”, every DNA alignment and fuzzy address match is this grid. Vladimir Levenshtein defined the distance in 1965; Wagner and Fischer published the way to actually compute it in 1974. The recursion underneath is the obvious one — at each end, either the letters match or you paid for one of three ways to be wrong: substitute, delete, insert. Written as plain recursion it re-solves the same prefixes over and over and dies exponentially. Written as this grid, every prefix pair is priced exactly once. That's the whole of dynamic programming, in a rectangle you can watch fill.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>How local it is. Hover any cell and you'll see it consults three neighbours and nothing else — it has no idea what the words are, or that words exist. Yet the corner ends up holding a true global minimum over every possible sequence of edits, and nobody ever enumerated them. I also love that the number alone is nearly useless: the interesting thing arrives on the walk back, when the path reconstructs <em>which</em> edits, and the word visibly turns into the other one below the grid. Watch how the path hugs the diagonal for similar words — matching letters are free, so the cheap route is to keep going straight — and how it lurches sideways the moment a word gains a letter. And the counter I couldn't resist: for <em>intention → execution</em> the grid does a hundred cells where the naive recursion would make tens of millions of calls.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Two things. First, the distance is a policy, not a fact — flip substitutions to cost 2 and the machine stops swapping letters entirely, because a delete plus an insert is then never worse. That single number is the difference between a spellchecker and <em>diff</em>, and both are “correct”. Second, and more useful: whenever a problem feels exponential, check whether it's actually the same small question asked repeatedly. Write down what you'd have recomputed, in a grid, in the order the answers become available — and keep the arrows, because the reason is usually worth more than the score.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    const typing = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+    if (!typing && e.key && e.key.toLowerCase() === 'h') togglePanel();
+    if (e.key === 'Escape') { story.classList.remove('open'); if (typing) e.target.blur(); }
+  });
+
+  function togglePanel() {
+    const hidden = document.getElementById('ui').classList.toggle('hidden');
+    document.getElementById('legend').classList.toggle('hidden', hidden);
+    document.getElementById('showUi').classList.toggle('on', hidden);
+  }
+  document.getElementById('collapse').addEventListener('click', togglePanel);
+  document.getElementById('showUi').addEventListener('click', togglePanel);
+
+  // ---- LEVENSHTEIN EDIT DISTANCE ------------------------------------------
+  // Levenshtein 1965 (the distance); Wagner & Fischer, JACM 1974 (this grid).
+  //
+  //   D[i][j] = cheapest way to turn the first i letters of A into the first
+  //             j letters of B.
+  //
+  //   D[i][0] = i          (delete everything)
+  //   D[0][j] = j          (insert everything)
+  //   D[i][j] = min( D[i-1][j-1] + (A[i-1] === B[j-1] ? 0 : SUB),   substitute/match
+  //                  D[i-1][j]   + 1,                              delete A[i-1]
+  //                  D[i][j-1]   + 1 )                             insert B[j-1]
+  //
+  // Each cell reads three neighbours, so filling row by row means every answer
+  // it needs is already on the board. The corner is the distance; the arrows
+  // walked backwards from it are the actual edits.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const ui = document.getElementById('ui');
+    const MAXLEN = 14;
+
+    let W = 0, H = 0, dpr = 1;
+
+    // ---- state ------------------------------------------------------------
+    const S = {
+      a: 'kitten', b: 'sitting',
+      sub: 1,
+      D: null, m: 0, n: 0,
+      order: [],        // reveal order of cells (base cases first, then row-major)
+      revealed: 0,
+      path: [],         // traceback cells, (0,0) → (m,n)
+      ops: [],
+      snaps: [],
+      phase: 'fill',    // fill → trace → morph
+      traceIdx: 0,
+      morphIdx: 0,
+      acc: 0,
+      calls: 0,
+      hover: null
+    };
+
+    const els = {
+      wa: document.getElementById('wa'), wb: document.getElementById('wb'),
+      lenA: document.getElementById('lenA'),
+      speed: document.getElementById('speed'), speedVal: document.getElementById('speedVal'),
+      dist: document.getElementById('mDist'), cells: document.getElementById('mCells'),
+      calls: document.getElementById('mCalls'), ops: document.getElementById('mOps'),
+      status: document.getElementById('mStatus'), chips: document.getElementById('chips')
+    };
+
+    // ---- the algorithm ----------------------------------------------------
+    function compute() {
+      const a = S.a, b = S.b, sub = S.sub;
+      const m = S.m = a.length, n = S.n = b.length;
+      const D = S.D = new Int32Array((m + 1) * (n + 1));
+      const at = (i, j) => i * (n + 1) + j;
+      for (let i = 0; i <= m; i++) D[at(i, 0)] = i;
+      for (let j = 0; j <= n; j++) D[at(0, j)] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const diag = D[at(i - 1, j - 1)] + (a[i - 1] === b[j - 1] ? 0 : sub);
+          const up = D[at(i - 1, j)] + 1;
+          const left = D[at(i, j - 1)] + 1;
+          D[at(i, j)] = Math.min(diag, up, left);
+        }
+      }
+
+      // How many calls the same recursion makes with no memo at all.
+      // R(i,0) = R(0,j) = 1;  R(i,j) = 1 + R(i-1,j-1) + R(i-1,j) + R(i,j-1)
+      const R = new Float64Array((m + 1) * (n + 1));
+      for (let i = 0; i <= m; i++) R[at(i, 0)] = 1;
+      for (let j = 0; j <= n; j++) R[at(0, j)] = 1;
+      for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+          R[at(i, j)] = 1 + R[at(i - 1, j - 1)] + R[at(i - 1, j)] + R[at(i, j - 1)];
+      S.calls = R[at(m, n)];
+
+      // reveal order: the free base row and column first, then row by row
+      const order = [];
+      for (let j = 0; j <= n; j++) order.push([0, j]);
+      for (let i = 1; i <= m; i++) order.push([i, 0]);
+      for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) order.push([i, j]);
+      S.order = order;
+
+      // Traceback. Ties are broken toward the diagonal so equal-cost paths look
+      // sane — except when a substitution costs 2, where delete + insert costs
+      // exactly the same and the honest reading is the one diff would give: no
+      // substitutions at all, only lines removed and lines added.
+      const path = [];
+      let i = m, j = n;
+      path.push([i, j]);
+      while (i > 0 || j > 0) {
+        const cur = D[at(i, j)];
+        const match = i > 0 && j > 0 && a[i - 1] === b[j - 1];
+        const diag = (i > 0 && j > 0) ? D[at(i - 1, j - 1)] + (match ? 0 : sub) : Infinity;
+        const up = i > 0 ? D[at(i - 1, j)] + 1 : Infinity;
+        const left = j > 0 ? D[at(i, j - 1)] + 1 : Infinity;
+        if (diag === cur && (match || sub < 2 || (diag < up && diag < left))) { i--; j--; }
+        else if (up === cur) i--;
+        else j--;
+        path.push([i, j]);
+      }
+      path.reverse();
+      S.path = path;
+
+      // the edits themselves, read off consecutive path cells
+      const ops = [];
+      for (let k = 1; k < path.length; k++) {
+        const [pi, pj] = path[k - 1], [ci, cj] = path[k];
+        if (ci === pi + 1 && cj === pj + 1) {
+          const from = a[ci - 1], to = b[cj - 1];
+          ops.push(from === to ? { kind: 'keep', ch: to } : { kind: 'sub', from, to });
+        } else if (ci === pi + 1) ops.push({ kind: 'del', ch: a[ci - 1] });
+        else ops.push({ kind: 'ins', ch: b[cj - 1] });
+      }
+      S.ops = ops;
+
+      // frames of one word turning into the other
+      const snaps = [{ text: a, mark: -1, kind: 'start', caption: 'start', cell: 0 }];
+      const cur = a.split('');
+      let p = 0;
+      ops.forEach((op, k) => {
+        if (op.kind === 'keep') {
+          snaps.push({ text: cur.join(''), mark: p, kind: 'keep', caption: 'keep ' + op.ch, cell: k + 1 });
+          p++;
+        } else if (op.kind === 'sub') {
+          cur[p] = op.to;
+          snaps.push({ text: cur.join(''), mark: p, kind: 'sub', caption: 'substitute ' + op.from + ' → ' + op.to, cell: k + 1 });
+          p++;
+        } else if (op.kind === 'ins') {
+          cur.splice(p, 0, op.ch);
+          snaps.push({ text: cur.join(''), mark: p, kind: 'ins', caption: 'insert ' + op.ch, cell: k + 1 });
+          p++;
+        } else {
+          snaps.push({ text: cur.join(''), mark: p, kind: 'del', caption: 'delete ' + op.ch, cell: k + 1 });
+          cur.splice(p, 1);
+        }
+      });
+      const edits = ops.filter((o) => o.kind !== 'keep').length;
+      snaps.push({ text: b, mark: -1, kind: 'done', caption: edits + (edits === 1 ? ' edit, done' : ' edits, done'), cell: path.length - 1 });
+      S.snaps = snaps;
+
+      S.revealed = 0; S.traceIdx = 0; S.morphIdx = 0; S.acc = 0; S.phase = 'fill';
+      updateReadout();
+    }
+
+    const at = (i, j) => i * (S.n + 1) + j;
+
+    function fmtCalls(v) {
+      if (v >= 1e12) return (v / 1e12).toFixed(1) + ' trillion';
+      if (v >= 1e9) return (v / 1e9).toFixed(1) + ' billion';
+      if (v >= 1e6) return (v / 1e6).toFixed(1) + ' million';
+      if (v >= 1e4) return Math.round(v / 1e3) + ' thousand';
+      return Math.round(v).toLocaleString();
+    }
+
+    function updateReadout() {
+      const total = (S.m + 1) * (S.n + 1);
+      const done = S.phase === 'fill' ? S.revealed : total;
+      els.cells.textContent = done + ' / ' + total;
+      els.lenA.textContent = S.a.length + ' → ' + S.b.length + ' letters';
+      els.calls.textContent = fmtCalls(Math.max(0, S.calls - total));
+
+      if (S.phase === 'fill') {
+        els.dist.textContent = '…';
+        els.ops.textContent = '…';
+        const cell = S.order[Math.min(S.revealed, S.order.length - 1)];
+        els.status.className = 'full';
+        els.status.innerHTML = S.revealed < (S.m + 1) + S.n
+          ? '<b>the free edges</b> — an empty word costs one edit per letter'
+          : '<b>row ' + cell[0] + ' of ' + S.m + '</b> — each cell asks three neighbours';
+      } else {
+        els.dist.textContent = S.D[at(S.m, S.n)];
+        const c = { keep: 0, sub: 0, ins: 0, del: 0 };
+        S.ops.forEach((o) => c[o.kind]++);
+        const bits = [];
+        if (c.sub) bits.push(c.sub + '×sub');
+        if (c.del) bits.push(c.del + '×del');
+        if (c.ins) bits.push(c.ins + '×ins');
+        els.ops.textContent = bits.length ? bits.join(' · ') : 'none — identical';
+        if (S.phase === 'trace') {
+          els.status.className = 'full';
+          els.status.innerHTML = '<b>walking back</b> — recovering which edits, not just how many';
+        } else {
+          const sn = S.snaps[S.morphIdx];
+          els.status.className = 'full done';
+          els.status.innerHTML = '<b>' + sn.caption + '</b> — step ' + S.morphIdx + ' of ' + (S.snaps.length - 1);
+        }
+      }
+    }
+
+    // ---- layout -----------------------------------------------------------
+    function box() {
+      const hidden = ui.classList.contains('hidden');
+      const r = ui.getBoundingClientRect();
+      let x, y, w, h;
+      if (hidden) { x = 18; y = 18; w = W - 36; h = H - 62; }
+      else if (W >= 780) { x = r.right + 30; y = 20; w = W - (r.right + 30) - 24; h = H - 64; }
+      else { x = 12; y = r.bottom + 14; w = W - 24; h = H - (r.bottom + 14) - 40; }
+      return { x, y, w: Math.max(120, w), h: Math.max(140, h) };
+    }
+
+    function geom() {
+      const bx = box();
+      const strip = bx.h > 300 ? 96 : (bx.h > 210 ? 70 : 56);
+      const gh = bx.h - strip;
+      const cols = S.n + 2, rows = S.m + 2;
+      const cell = Math.max(13, Math.min(56, Math.min(bx.w / cols, gh / rows)));
+      const gw = cell * cols, ghh = cell * rows;
+      return {
+        bx, cell, strip,
+        ox: bx.x + (bx.w - gw) / 2 + cell,      // origin of D[0][0]
+        oy: bx.y + (gh - ghh) / 2 + cell,
+        stripY: bx.y + gh + strip * 0.42
+      };
+    }
+
+    // ---- painting ---------------------------------------------------------
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function heat(v, maxv) {
+      const t = maxv > 0 ? Math.min(1, v / maxv) : 0;
+      // cheap = bright violet, expensive = cold slate
+      const r = Math.round(150 + (58 - 150) * t);
+      const g = Math.round(150 + (58 - 150) * t);
+      const bl = Math.round(255 + (96 - 255) * t);
+      return 'rgb(' + r + ',' + g + ',' + bl + ')';
+    }
+
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+      const g = geom();
+      const cell = g.cell, m = S.m, n = S.n;
+      const maxv = Math.max(1, Math.max(m, n));
+      const fs = Math.round(cell * 0.42);
+      const onPath = new Set();
+      const pathShown = S.phase === 'fill' ? 0 : (S.phase === 'trace' ? S.traceIdx : S.path.length);
+      for (let k = S.path.length - pathShown; k < S.path.length; k++) {
+        if (k >= 0) onPath.add(S.path[k][0] * (n + 1) + S.path[k][1]);
+      }
+
+      // header letters
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '600 ' + fs + 'px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      for (let j = 1; j <= n; j++) {
+        ctx.fillStyle = 'rgba(255,124,195,0.85)';
+        ctx.fillText(S.b[j - 1], g.ox + (j + 0.5) * cell, g.oy - cell * 0.5);
+      }
+      for (let i = 1; i <= m; i++) {
+        ctx.fillStyle = 'rgba(124,124,255,0.9)';
+        ctx.fillText(S.a[i - 1], g.ox - cell * 0.5, g.oy + (i + 0.5) * cell);
+      }
+      ctx.font = Math.round(cell * 0.3) + 'px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      ctx.fillText('ε', g.ox + cell * 0.5, g.oy + cell * 0.5);
+
+      // cells
+      const revealed = S.phase === 'fill' ? S.revealed : S.order.length;
+      const shown = new Uint8Array((m + 1) * (n + 1));
+      for (let k = 0; k < revealed; k++) {
+        const [i, j] = S.order[k];
+        shown[i * (n + 1) + j] = 1;
+      }
+      const pad = Math.max(1, cell * 0.06);
+      for (let i = 0; i <= m; i++) {
+        for (let j = 0; j <= n; j++) {
+          const x = g.ox + j * cell + pad, y = g.oy + i * cell + pad;
+          const s = cell - pad * 2, idx = i * (n + 1) + j;
+          const isPath = onPath.has(idx);
+          rr(x, y, s, s, Math.max(3, cell * 0.16));
+          if (!shown[idx]) {
+            ctx.fillStyle = 'rgba(255,255,255,0.022)';
+            ctx.fill();
+            continue;
+          }
+          if (isPath) {
+            const gr = ctx.createLinearGradient(x, y, x + s, y + s);
+            gr.addColorStop(0, 'rgba(124,124,255,0.42)');
+            gr.addColorStop(1, 'rgba(255,124,195,0.42)');
+            ctx.fillStyle = gr;
+          } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.045)';
+          }
+          ctx.fill();
+          if (isPath) {
+            ctx.strokeStyle = 'rgba(255,167,214,0.75)';
+            ctx.lineWidth = Math.max(1, cell * 0.045);
+            ctx.stroke();
+          }
+          const v = S.D[idx];
+          ctx.font = (isPath ? '700 ' : '500 ') + fs + 'px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+          ctx.fillStyle = isPath ? '#fff0f8' : heat(v, maxv);
+          ctx.fillText(String(v), x + s / 2, y + s / 2 + 0.5);
+        }
+      }
+
+      // the cell being decided, plus the three neighbours it is asking
+      if (S.phase === 'fill' && S.revealed < S.order.length) {
+        const [i, j] = S.order[S.revealed];
+        const cx = g.ox + (j + 0.5) * cell, cy = g.oy + (i + 0.5) * cell;
+        if (i > 0 && j > 0) {
+          const src = [[i - 1, j - 1], [i - 1, j], [i, j - 1]];
+          const cost = [
+            S.D[at(i - 1, j - 1)] + (S.a[i - 1] === S.b[j - 1] ? 0 : S.sub),
+            S.D[at(i - 1, j)] + 1,
+            S.D[at(i, j - 1)] + 1
+          ];
+          const best = Math.min(cost[0], cost[1], cost[2]);
+          ctx.lineWidth = Math.max(1.2, cell * 0.06);
+          src.forEach((sc, k) => {
+            const sx = g.ox + (sc[1] + 0.5) * cell, sy = g.oy + (sc[0] + 0.5) * cell;
+            const win = cost[k] === best;
+            ctx.strokeStyle = win ? 'rgba(255,124,195,0.85)' : 'rgba(124,124,255,0.3)';
+            ctx.beginPath();
+            ctx.moveTo(sx + (cx - sx) * 0.28, sy + (cy - sy) * 0.28);
+            ctx.lineTo(sx + (cx - sx) * 0.76, sy + (cy - sy) * 0.76);
+            ctx.stroke();
+          });
+        }
+        const pulse = 0.55 + 0.45 * Math.sin(now / 210);
+        rr(g.ox + j * cell + pad, g.oy + i * cell + pad, cell - pad * 2, cell - pad * 2, Math.max(3, cell * 0.16));
+        ctx.strokeStyle = 'rgba(255,244,250,' + (0.4 + 0.5 * pulse) + ')';
+        ctx.lineWidth = Math.max(1.4, cell * 0.07);
+        ctx.stroke();
+      }
+
+      // linked highlight: the path cell for the morph step we're on
+      if (S.phase === 'morph' && S.snaps.length) {
+        const c = S.path[Math.min(S.snaps[S.morphIdx].cell, S.path.length - 1)];
+        const x = g.ox + c[1] * cell, y = g.oy + c[0] * cell;
+        rr(x + pad, y + pad, cell - pad * 2, cell - pad * 2, Math.max(3, cell * 0.16));
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = Math.max(1.4, cell * 0.08);
+        ctx.stroke();
+      }
+
+      drawStrip(g, now);
+      if (S.hover) drawTip(g);
+    }
+
+    const KIND = {
+      keep: { c: '#e9e9f0', tag: 'rgba(255,255,255,0.16)' },
+      sub: { c: '#ff9fd2', tag: 'rgba(255,124,195,0.28)' },
+      ins: { c: '#b0b0ff', tag: 'rgba(124,124,255,0.3)' },
+      del: { c: '#ff9fd2', tag: 'rgba(255,124,195,0.22)' },
+      start: { c: '#c7c7d6', tag: 'rgba(255,255,255,0.1)' },
+      done: { c: '#8affc0', tag: 'rgba(138,255,192,0.2)' }
+    };
+
+    // the word turning into the other word, under the grid
+    function drawStrip(g, now) {
+      const sn = S.phase === 'morph' ? S.snaps[S.morphIdx] : null;
+      const text = sn ? sn.text : S.a;
+      const cap = sn ? sn.caption : (S.phase === 'fill' ? 'the grid prices every prefix pair once' : 'reading the edits off the path');
+      const cx = g.bx.x + g.bx.w / 2, y = g.stripY;
+      const maxw = g.bx.w * 0.94;
+      let fs = Math.min(40, g.strip * 0.44);
+      const chars = text.split('');
+      let step = fs * 0.78;
+      while (chars.length * step > maxw && fs > 10) { fs -= 1; step = fs * 0.78; }
+
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const startX = cx - (chars.length * step) / 2 + step / 2;
+      chars.forEach((ch, k) => {
+        const x = startX + k * step;
+        const marked = sn && k === sn.mark;
+        if (marked) {
+          const kd = KIND[sn.kind] || KIND.keep;
+          rr(x - step * 0.48, y - fs * 0.66, step * 0.96, fs * 1.32, 6);
+          ctx.fillStyle = kd.tag;
+          ctx.fill();
+        }
+        ctx.font = '600 ' + Math.round(fs) + 'px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+        ctx.fillStyle = marked ? (KIND[sn.kind] || KIND.keep).c
+          : (sn && sn.mark >= 0 && k < sn.mark ? 'rgba(233,233,240,0.92)' : 'rgba(233,233,240,0.5)');
+        ctx.fillText(ch, x, y);
+        if (marked && sn.kind === 'del') {
+          ctx.strokeStyle = '#ff9fd2';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x - step * 0.4, y); ctx.lineTo(x + step * 0.4, y);
+          ctx.stroke();
+        }
+      });
+      ctx.font = Math.max(10, Math.round(fs * 0.34)) + 'px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = sn ? (KIND[sn.kind] || KIND.keep).c : 'rgba(255,255,255,0.35)';
+      ctx.globalAlpha = sn ? 0.9 : 0.7;
+      ctx.fillText(cap, cx, y + fs * 0.95);
+      ctx.globalAlpha = 1;
+    }
+
+    function drawTip(g) {
+      const { i, j } = S.hover;
+      const lines = [];
+      const pa = S.a.slice(0, i) || 'ε', pb = S.b.slice(0, j) || 'ε';
+      lines.push(pa + ' → ' + pb + '  costs ' + S.D[at(i, j)]);
+      if (i > 0 && j > 0) {
+        const same = S.a[i - 1] === S.b[j - 1];
+        const diag = S.D[at(i - 1, j - 1)] + (same ? 0 : S.sub);
+        const up = S.D[at(i - 1, j)] + 1;
+        const left = S.D[at(i, j - 1)] + 1;
+        const best = Math.min(diag, up, left);
+        lines.push((diag === best ? '● ' : '○ ') + (same ? 'keep ' + S.a[i - 1] : 'sub ' + S.a[i - 1] + '→' + S.b[j - 1]) + ' = ' + diag);
+        lines.push((up === best && diag !== best ? '● ' : '○ ') + 'delete ' + S.a[i - 1] + ' = ' + up);
+        lines.push((left === best && diag !== best && up !== best ? '● ' : '○ ') + 'insert ' + S.b[j - 1] + ' = ' + left);
+      } else {
+        lines.push(i === 0 ? '○ nothing to delete — all inserts' : '○ nothing to match — all deletes');
+      }
+
+      const fs = 12.5, padx = 11, pady = 9, lh = 17;
+      ctx.font = fs + 'px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      let wmax = 0;
+      lines.forEach((l) => { wmax = Math.max(wmax, ctx.measureText(l).width); });
+      const bw = wmax + padx * 2, bh = lines.length * lh + pady * 2;
+      let x = S.hover.px + 16, y = S.hover.py + 16;
+      if (x + bw > W - 8) x = S.hover.px - bw - 16;
+      if (y + bh > H - 8) y = S.hover.py - bh - 16;
+      x = Math.max(8, x); y = Math.max(8, y);
+      rr(x, y, bw, bh, 10);
+      ctx.fillStyle = 'rgba(12,12,22,0.94)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      lines.forEach((l, k) => {
+        ctx.fillStyle = k === 0 ? '#e9e9f0' : (l[0] === '●' ? '#ff9fd2' : '#8f8fa6');
+        ctx.fillText(l, x + padx, y + pady + k * lh);
+      });
+    }
+
+    // ---- ticking ----------------------------------------------------------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      const cps = +els.speed.value;
+
+      if (S.phase === 'fill') {
+        S.acc += dt * cps;
+        let changed = false;
+        while (S.acc >= 1 && S.revealed < S.order.length) { S.acc -= 1; S.revealed++; changed = true; }
+        if (S.revealed >= S.order.length) { S.phase = 'trace'; S.traceIdx = 0; S.acc = 0; changed = true; }
+        if (changed) updateReadout();
+      } else if (S.phase === 'trace') {
+        S.acc += dt * Math.max(6, cps * 0.7);
+        let changed = false;
+        while (S.acc >= 1 && S.traceIdx < S.path.length) { S.acc -= 1; S.traceIdx++; changed = true; }
+        if (S.traceIdx >= S.path.length) { S.phase = 'morph'; S.morphIdx = 0; S.acc = 0; }
+        if (changed) updateReadout();
+      } else {
+        S.acc += dt;
+        if (S.acc >= (S.morphIdx === S.snaps.length - 1 ? 1.8 : 0.85)) {
+          S.acc = 0;
+          S.morphIdx = (S.morphIdx + 1) % S.snaps.length;
+          updateReadout();
+        }
+      }
+
+      draw(now);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- input ------------------------------------------------------------
+    function clean(v) {
+      return v.replace(/[^\S ]/g, '').slice(0, MAXLEN);
+    }
+    function reread() {
+      const a = clean(els.wa.value), b = clean(els.wb.value);
+      if (a === S.a && b === S.b) return;
+      S.a = a; S.b = b;
+      compute();
+    }
+    els.wa.addEventListener('input', reread);
+    els.wb.addEventListener('input', reread);
+
+    const PRESETS = [
+      ['kitten', 'sitting'], ['intention', 'execution'], ['sunday', 'saturday'],
+      ['flaw', 'lawn'], ['algorithm', 'altruistic'], ['receive', 'recieve']
+    ];
+    PRESETS.forEach(([a, b]) => {
+      const el = document.createElement('button');
+      el.className = 'chip';
+      el.textContent = a + '→' + b;
+      el.addEventListener('click', () => {
+        els.wa.value = a; els.wb.value = b;
+        S.a = a; S.b = b; compute();
+      });
+      els.chips.appendChild(el);
+    });
+
+    els.speed.addEventListener('input', () => { els.speedVal.textContent = els.speed.value; });
+    document.getElementById('replay').addEventListener('click', () => {
+      S.revealed = 0; S.traceIdx = 0; S.morphIdx = 0; S.acc = 0; S.phase = 'fill'; updateReadout();
+    });
+    document.getElementById('skip').addEventListener('click', () => {
+      S.revealed = S.order.length; S.traceIdx = S.path.length; S.morphIdx = 0; S.acc = 0; S.phase = 'morph'; updateReadout();
+    });
+    const costToggle = document.getElementById('costToggle');
+    costToggle.addEventListener('click', () => {
+      const on = costToggle.classList.toggle('on');
+      S.sub = on ? 2 : 1;
+      compute();
+    });
+
+    // hover / touch on the grid
+    function pick(ev) {
+      const g = geom();
+      const j = Math.floor((ev.clientX - g.ox) / g.cell);
+      const i = Math.floor((ev.clientY - g.oy) / g.cell);
+      if (i < 0 || j < 0 || i > S.m || j > S.n) { S.hover = null; return; }
+      const k = S.order.findIndex((c) => c[0] === i && c[1] === j);
+      if (S.phase === 'fill' && k >= S.revealed) { S.hover = null; return; }
+      S.hover = { i, j, px: ev.clientX, py: ev.clientY };
+    }
+    canvas.addEventListener('pointermove', pick);
+    canvas.addEventListener('pointerdown', pick);
+    canvas.addEventListener('pointerleave', () => { S.hover = null; });
+
+    // ---- resize -----------------------------------------------------------
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
+
+    resize();
+    els.speedVal.textContent = els.speed.value;
+    compute();
+    requestAnimationFrame((t) => { last = t; frame(t); });
+  })();
+</script>
+</body>
+</html>
