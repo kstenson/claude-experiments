@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Where the Error Goes — Experiment 063</title>
+<meta name="description" content="Floyd–Steinberg error diffusion, 1976: a pixel rounds to a colour it isn't, and hands the leftover error to the neighbours it hasn't decided yet." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 330px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 10px 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 14px; }
+
+  .controls { display: grid; gap: 11px; }
+
+  .row { display: grid; gap: 5px; }
+  .row.off { opacity: 0.4; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .note b { color: #b0b0ff; font-weight: 600; }
+  .row .note { margin-top: -1px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #b9b9cc; border-radius: 999px;
+    padding: 5px 11px; font-size: 0.72rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .chip:hover { background: rgba(124,124,255,0.2); color: #dcdcff; }
+  .chip.on {
+    background: linear-gradient(120deg, rgba(124,124,255,0.34), rgba(255,124,195,0.28));
+    border-color: rgba(179,136,255,0.55); color: #f0e6ff; font-weight: 600;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #b0b0ff; font-weight: 600; }
+  .readout .full.done b { color: #8affc0; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Kernel legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    padding: 13px 15px 12px; border-radius: 13px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend .ktitle { color: #cfcfe6; font-weight: 600; font-size: 0.76rem; margin-bottom: 9px; letter-spacing: 0.01em; }
+  .kgrid {
+    display: grid; grid-template-columns: repeat(4, 30px); gap: 3px;
+    margin-bottom: 9px;
+  }
+  .kgrid i {
+    height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-style: normal; font-size: 0.72rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: rgba(255,255,255,0.03); color: transparent;
+  }
+  .kgrid i.w { background: rgba(255,124,195,0.16); border: 1px solid rgba(255,124,195,0.35); color: #ffb8db; }
+  .kgrid i.cur { background: rgba(255,255,255,0.9); color: #0a0a12; font-weight: 700; }
+  .kfoot { max-width: 168px; line-height: 1.45; color: #7b7b92; }
+  .kfoot b { color: #b0b0ff; font-weight: 600; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1080px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 620px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 56vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .controls { gap: 9px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Where the Error Goes</h1>
+    <p class="sub">Experiment № 063 · August 17, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>What to draw</label>
+        <div class="chips" id="scenes"></div>
+      </div>
+
+      <div class="row">
+        <label>How to round it</label>
+        <div class="chips" id="methods"></div>
+      </div>
+
+      <div class="row">
+        <label>Greys allowed <b id="levVal">2 — black &amp; white</b></label>
+        <input type="range" id="levels" min="2" max="8" step="1" value="2" />
+      </div>
+
+      <div class="row" id="spreadRow">
+        <label>Error passed on <b id="sprVal">100%</b></label>
+        <input type="range" id="spread" min="0" max="120" step="2" value="100" />
+        <p class="note" id="sprNote">At <b>0%</b> every pixel keeps its own mistake and the picture bands. Past <b>100%</b> it hands on more than it owes, and the texture starts ringing.</p>
+      </div>
+
+      <div class="row">
+        <label>Dot size <b id="dotVal">4 px</b></label>
+        <input type="range" id="dot" min="1" max="10" step="1" value="4" />
+      </div>
+
+      <div class="row">
+        <label>Scan speed <b id="spdVal">60 rows/s</b></label>
+        <input type="range" id="speed" min="1" max="100" step="1" value="35" />
+      </div>
+
+      <div class="toggle on" id="serpToggle">
+        <span>Serpentine — reverse every other row</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="toggle" id="viewToggle">
+        <span>Show the error being carried</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="readout">
+        <span class="k">Eye-level error</span><span class="v good" id="mMine">–</span>
+        <span class="k">If you just rounded</span><span class="v pinkv" id="mPlain">–</span>
+        <span class="k">Dots on screen</span><span class="v violet" id="mDots">–</span>
+        <span class="full" id="mStatus"><b>scanning</b></span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink" id="replay">↻ scan again</button>
+        <button class="btn" id="clear">✦ clear light</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div class="ktitle" id="ktitle">Floyd–Steinberg, 1976</div>
+    <div class="kgrid" id="kgrid"></div>
+    <div class="kfoot" id="kfoot">The error is split into <b>sixteenths</b> and pushed forward only — never back into a pixel already decided.</div>
+  </div>
+
+  <p class="hint">drag on the picture to paint light into it · hover a dot to see its error split up · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 063 · The story</p>
+      <h2>Where the Error Goes</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Sixty-two experiments about things that grow, flow, vote and search, and I had skipped the one algorithm that has quietly run on every screen I have ever looked at. Robert Floyd and Louis Steinberg published it in 1976 in about half a page — “An adaptive algorithm for spatial greyscale” — for the very practical problem of printing a photograph with ink that only knows <em>dot</em> or <em>no dot</em>. Their move is so small it barely looks like an idea: when you round a pixel to the nearest available shade, you are wrong by some amount, and that amount is a <em>number</em>. Numbers can be moved. So don't discard it — hand it to the neighbours you have not decided yet, and make them pay it. Set <em>error passed on</em> to zero and you get the honest, stupid alternative: every pixel rounds alone, gradients collapse into flat plates, and the picture goes to pieces the moment you take colours away.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>How little the algorithm is allowed to know. One pass, left to right, top to bottom, no lookahead, no second thoughts, nothing ever revisited — and yet from two colours it produces something the eye reads as continuous tone. Watch the scan line and you can see it happening a row at a time. Turn on <em>show the error being carried</em> and the picture is replaced by a debt map: pink where a pixel was rounded down and owes brightness forward, violet where it was rounded up and passed along a surplus. The serpentine toggle is my favourite detail — scanning every other row backwards, so the error stops always drifting the same direction, and the faint diagonal worms that error diffusion is famous for mostly dissolve. And the number in the panel is the whole argument in one line: average an eight-by-eight patch of the result against the same patch of the original and the error is a fraction of what plain rounding gives you, using exactly the same two colours.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Rounding error does not vanish when you ignore it. It accumulates, silently, and shows up later as banding — as a flat plate where a gradient should be. The fix here is not more precision; it is bookkeeping. Keep a running account of what you dropped, and pay it forward, and the local average stays honest even though no individual pixel can be. That trick is everywhere once you look: noise shaping in audio converters, accumulating fixed-point money in cents rather than rounding each line, the largest-remainder method for handing out parliamentary seats, a progress bar that must total exactly 100. Any time you are forced to be discrete about something continuous, the interesting question is never <em>how do I round this</em> — it is <em>where does the error go</em>.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key && e.key.toLowerCase() === 'h') togglePanel();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  function togglePanel() {
+    const hidden = document.getElementById('ui').classList.toggle('hidden');
+    document.getElementById('legend').classList.toggle('hidden', hidden);
+    document.getElementById('showUi').classList.toggle('on', hidden);
+    // the drawing area grows when the panel gets out of the way
+    window.dispatchEvent(new Event('resize'));
+  }
+  document.getElementById('collapse').addEventListener('click', togglePanel);
+  document.getElementById('showUi').addEventListener('click', togglePanel);
+
+  // ---- FLOYD–STEINBERG ERROR DIFFUSION -------------------------------------
+  // R. W. Floyd & L. Steinberg, "An adaptive algorithm for spatial greyscale",
+  // Proc. SID 17(2), 1976.
+  //
+  // Walk the pixels in scan order. For each one:
+  //
+  //   old  = value (original + whatever error the neighbours already handed it)
+  //   new  = nearest available shade          <- this is the only lossy step
+  //   err  = old - new                        <- and this is what it cost
+  //
+  // then push err forward, in sixteenths, to the pixels not yet decided:
+  //
+  //            *   7/16
+  //     3/16  5/16  1/16
+  //
+  // Nothing is ever revisited. The picture is wrong pixel by pixel, and right
+  // on average — which is the only kind of right an eye at arm's length can see.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const ui = document.getElementById('ui');
+
+    let W = 0, H = 0, dpr = 1;
+    const off = document.createElement('canvas');
+    const offCtx = off.getContext('2d');
+    let imgData = null;
+
+    // ---- kernels ----------------------------------------------------------
+    const KERNELS = {
+      fs: { den: 16, taps: [[1, 0, 7], [-1, 1, 3], [0, 1, 5], [1, 1, 1]],
+            title: 'Floyd–Steinberg, 1976',
+            foot: 'The error is split into <b>sixteenths</b> and pushed forward only — never back into a pixel already decided.' },
+      atkinson: { den: 8, taps: [[1, 0, 1], [2, 0, 1], [-1, 1, 1], [0, 1, 1], [1, 1, 1], [0, 2, 1]],
+            title: 'Atkinson, ~1984',
+            foot: 'Bill Atkinson\'s Macintosh variant passes on six eighths and <b>throws away the rest</b> — crisper, at the cost of blown highlights.' },
+      none: { den: 0, taps: [], title: 'Plain rounding',
+            foot: 'Every pixel rounds alone and the error is <b>discarded</b>. This is what banding looks like.' },
+      random: { den: 0, taps: [], title: 'Random threshold',
+            foot: 'Rattle the threshold with white noise. Unbiased, no structure — and <b>very</b> grainy.' },
+      bayer: { den: 0, taps: [], title: 'Ordered (Bayer 8×8)',
+            foot: 'A fixed threshold matrix, 1973. No memory at all, so it is parallel — but it stamps its own <b>crosshatch</b> on everything.' }
+    };
+    const DIFFUSES = { fs: 1, atkinson: 1 };
+
+    // Bayer 8x8, normalised to [0,1)
+    const BAYER = (() => {
+      let m = [[0, 2], [3, 1]];
+      while (m.length < 8) {
+        const n = m.length, o = [];
+        for (let y = 0; y < n * 2; y++) o.push(new Array(n * 2).fill(0));
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+          const v = m[y][x] * 4;
+          o[y][x] = v; o[y][x + n] = v + 2; o[y + n][x] = v + 3; o[y + n][x + n] = v + 1;
+        }
+        m = o;
+      }
+      const out = new Float32Array(64);
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) out[y * 8 + x] = m[y][x] / 64;
+      return out;
+    })();
+
+    // ---- duotone ramp -----------------------------------------------------
+    const STOPS = [[0, 6, 6, 14], [0.35, 46, 42, 86], [0.7, 142, 134, 204], [1, 244, 240, 252]];
+    const LUT = new Uint8Array(256 * 3);
+    for (let i = 0; i < 256; i++) {
+      const t = i / 255;
+      let k = 0;
+      while (k < STOPS.length - 2 && t > STOPS[k + 1][0]) k++;
+      const a = STOPS[k], b = STOPS[k + 1];
+      const f = (t - a[0]) / (b[0] - a[0] || 1);
+      LUT[i * 3] = a[1] + (b[1] - a[1]) * f;
+      LUT[i * 3 + 1] = a[2] + (b[2] - a[2]) * f;
+      LUT[i * 3 + 2] = a[3] + (b[3] - a[3]) * f;
+    }
+
+    // ---- state ------------------------------------------------------------
+    const S = {
+      scene: 'sphere', method: 'fs', levels: 2, spread: 1, dot: 4,
+      serpentine: true, view: 'result',
+      gw: 0, gh: 0, cell: 4, dx: 0, dy: 0, dw: 0, dh: 0,
+      base: null, paint: null, src: null,
+      buf: null, out: null, old: null, err: null, plain: null,
+      y: 0, running: false, instant: false, acc: 0, dirty: true, needsRestart: false,
+      mine: 0, plainErr: 0,
+      hover: null, painting: false
+    };
+
+    const els = {
+      levels: document.getElementById('levels'), levVal: document.getElementById('levVal'),
+      spread: document.getElementById('spread'), sprVal: document.getElementById('sprVal'),
+      spreadRow: document.getElementById('spreadRow'),
+      dot: document.getElementById('dot'), dotVal: document.getElementById('dotVal'),
+      speed: document.getElementById('speed'), spdVal: document.getElementById('spdVal'),
+      mine: document.getElementById('mMine'), plain: document.getElementById('mPlain'),
+      dots: document.getElementById('mDots'), status: document.getElementById('mStatus'),
+      ktitle: document.getElementById('ktitle'), kgrid: document.getElementById('kgrid'),
+      kfoot: document.getElementById('kfoot')
+    };
+
+    const clamp01 = (v) => v < 0 ? 0 : (v > 1 ? 1 : v);
+
+    // ---- the pictures being quantised -------------------------------------
+    function hash2(i, j) {
+      let n = (i * 374761393 + j * 668265263) | 0;
+      n = (n ^ (n >> 13)) * 1274126177;
+      return ((n ^ (n >> 16)) >>> 0) / 4294967296;
+    }
+    function vnoise(x, y) {
+      const ix = Math.floor(x), iy = Math.floor(y);
+      let fx = x - ix, fy = y - iy;
+      fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+      const a = hash2(ix, iy), b = hash2(ix + 1, iy), c = hash2(ix, iy + 1), d = hash2(ix + 1, iy + 1);
+      return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fy;
+    }
+    function fbm(x, y) {
+      let v = 0, amp = 0.5, f = 1;
+      for (let o = 0; o < 5; o++) { v += amp * vnoise(x * f, y * f); f *= 2.03; amp *= 0.5; }
+      return v;
+    }
+
+    function sceneValue(scene, u, v, aspect) {
+      const px = (u - 0.5) * aspect, py = v - 0.5;
+      if (scene === 'ramp') {
+        return clamp01(0.5 + (u - 0.5) * 1.04 + (0.5 - v) * 0.16);
+      }
+      if (scene === 'dunes') {
+        const n = fbm(u * 4.2 * aspect + 11.3, v * 4.2 + 4.7);
+        const ridge = 1 - Math.abs(n - 0.5) * 2;
+        return clamp01(0.1 + 0.85 * (0.45 * n + 0.55 * ridge * ridge) - 0.12 * v);
+      }
+      if (scene === 'rings') {
+        const r2 = px * px + py * py;
+        const fade = Math.exp(-r2 * 1.9);
+        return clamp01(0.5 + 0.46 * fade * Math.cos(150 * r2 + 0.4));
+      }
+      // sphere: shaded ball on a floor, the classic gradient torture test
+      let val = 0.055 + 0.30 * Math.pow(1 - v, 1.5);
+      if (v > 0.74) val = 0.09 + 0.05 * (1 - (v - 0.74) / 0.26);
+      // contact shadow
+      const sdx = px / 0.34, sdy = (py - 0.30) / 0.075;
+      const sd = sdx * sdx + sdy * sdy;
+      if (sd < 1 && v > 0.6) val *= 0.25 + 0.75 * sd;
+      const R = 0.30, cx = 0, cy = -0.03;
+      const dx = px - cx, dy = py - cy, d2 = dx * dx + dy * dy;
+      if (d2 < R * R) {
+        const nx = dx / R, ny = dy / R, nz = Math.sqrt(Math.max(0, R * R - d2)) / R;
+        const lx = -0.44, ly = -0.60, lz = 0.67;
+        const lam = Math.max(0, nx * lx + ny * ly + nz * lz);
+        const hx = lx, hy = ly, hz = lz + 1;
+        const hl = Math.hypot(hx, hy, hz);
+        const spec = Math.pow(Math.max(0, (nx * hx + ny * hy + nz * hz) / hl), 70);
+        const rim = 0.13 * Math.pow(1 - nz, 3);
+        val = clamp01(0.035 + 0.82 * lam + 0.55 * spec + rim);
+      }
+      // vignette
+      return clamp01(val * (1 - 0.22 * (px * px + py * py)));
+    }
+
+    // ---- geometry ---------------------------------------------------------
+    function boxRect() {
+      const hidden = ui.classList.contains('hidden');
+      const r = ui.getBoundingClientRect();
+      let x, y, w, h;
+      if (hidden) { x = 20; y = 20; w = W - 40; h = H - 62; }
+      else if (W >= 800) { x = r.right + 30; y = 22; w = W - (r.right + 30) - 24; h = H - 66; }
+      else { x = 12; y = r.bottom + 14; w = W - 24; h = H - (r.bottom + 14) - 40; }
+      return { x, y, w: Math.max(80, w), h: Math.max(80, h) };
+    }
+
+    function rebuild(animate) {
+      const b = boxRect();
+      const cell = S.dot;
+      const gw = Math.max(8, Math.floor(b.w / cell));
+      const gh = Math.max(8, Math.floor(b.h / cell));
+      const resized = gw !== S.gw || gh !== S.gh;
+      const dx = Math.round(b.x + (b.w - gw * cell) / 2);
+      const dy = Math.round(b.y + (b.h - gh * cell) / 2);
+      const moved = resized || dx !== S.dx || dy !== S.dy || cell !== S.cell || !S.base;
+      S.gw = gw; S.gh = gh; S.cell = cell;
+      S.dw = gw * cell; S.dh = gh * cell;
+      S.dx = dx; S.dy = dy;
+      if (!moved) return;   // nothing actually changed — let the run carry on
+
+      const n = gw * gh;
+      if (resized || !S.base) {
+        S.base = new Float32Array(n);
+        S.paint = new Float32Array(n);
+        S.src = new Float32Array(n);
+        S.buf = new Float32Array(n);
+        S.out = new Float32Array(n);
+        S.old = new Float32Array(n);
+        S.err = new Float32Array(n);
+        S.plain = new Float32Array(n);
+        off.width = gw; off.height = gh;
+        imgData = offCtx.createImageData(gw, gh);
+        paintScene();
+      }
+      restart(animate);
+    }
+
+    function paintScene() {
+      const gw = S.gw, gh = S.gh, aspect = gw / gh;
+      for (let y = 0; y < gh; y++) {
+        const v = (y + 0.5) / gh;
+        for (let x = 0; x < gw; x++) {
+          S.base[y * gw + x] = sceneValue(S.scene, (x + 0.5) / gw, v, aspect);
+        }
+      }
+    }
+
+    // ---- the run ----------------------------------------------------------
+    function restart(animate) {
+      const n = S.gw * S.gh;
+      for (let i = 0; i < n; i++) {
+        const s = clamp01(S.base[i] + S.paint[i]);
+        S.src[i] = s;
+        S.buf[i] = s;
+      }
+      S.err.fill(0);
+      S.y = 0; S.acc = 0;
+      S.running = true;
+      S.instant = !animate;
+      S.dirty = true;
+      updateReadout();
+    }
+
+    function stepRow() {
+      const gw = S.gw, gh = S.gh, y = S.y;
+      if (y >= gh) return;
+      const dv = S.levels - 1;
+      const buf = S.buf, out = S.out, old = S.old, err = S.err;
+      const m = S.method;
+      const K = KERNELS[m];
+      const diffuse = !!DIFFUSES[m];
+      const sp = S.spread;
+      const dir = (S.serpentine && (y & 1)) ? -1 : 1;
+      const x0 = dir > 0 ? 0 : gw - 1;
+
+      for (let k = 0; k < gw; k++) {
+        const x = x0 + dir * k;
+        const i = y * gw + x;
+        const v = buf[i];
+        let biased = v;
+        if (m === 'bayer') biased = v + (BAYER[(y & 7) * 8 + (x & 7)] - 0.5) / dv;
+        else if (m === 'random') biased = v + (Math.random() - 0.5) / dv;
+        old[i] = biased;
+        const q = Math.round(clamp01(biased) * dv) / dv;
+        out[i] = q;
+        if (diffuse) {
+          const e = (v - q) * sp;
+          err[i] = e;
+          for (let t = 0; t < K.taps.length; t++) {
+            const tap = K.taps[t];
+            const nx = x + dir * tap[0], ny = y + tap[1];
+            if (nx < 0 || nx >= gw || ny >= gh) continue;
+            buf[ny * gw + nx] += e * tap[2] / K.den;
+          }
+        } else err[i] = 0;
+      }
+      S.y++;
+      if (S.y >= gh) finish();
+    }
+
+    // Average an 8x8 patch of the result against the same patch of the
+    // original. This is roughly what an eye at arm's length does.
+    function blockError(arr) {
+      const gw = S.gw, gh = S.gh, B = 8;
+      let total = 0, blocks = 0;
+      for (let by = 0; by < gh; by += B) {
+        for (let bx = 0; bx < gw; bx += B) {
+          let sa = 0, sb = 0, c = 0;
+          const ye = Math.min(gh, by + B), xe = Math.min(gw, bx + B);
+          for (let y = by; y < ye; y++) {
+            for (let x = bx; x < xe; x++) {
+              const i = y * gw + x;
+              sa += S.src[i]; sb += arr[i]; c++;
+            }
+          }
+          if (c) { total += Math.abs(sa / c - sb / c); blocks++; }
+        }
+      }
+      return blocks ? total / blocks : 0;
+    }
+
+    function finish() {
+      S.running = false;
+      const dv = S.levels - 1, n = S.gw * S.gh;
+      for (let i = 0; i < n; i++) S.plain[i] = Math.round(S.src[i] * dv) / dv;
+      S.mine = blockError(S.out);
+      S.plainErr = blockError(S.plain);
+      updateReadout();
+    }
+
+    function updateReadout() {
+      els.dots.textContent = S.gw + ' × ' + S.gh;
+      if (S.running) {
+        els.status.className = 'full';
+        els.status.innerHTML = '<b>row ' + (S.y + 1) + ' of ' + S.gh + '</b> — one pass, no going back';
+        return;
+      }
+      els.mine.textContent = (S.mine * 100).toFixed(1) + '%';
+      els.plain.textContent = (S.plainErr * 100).toFixed(1) + '%';
+      els.mine.className = 'v ' + (S.mine <= S.plainErr * 0.8 ? 'good' : 'pinkv');
+      els.status.className = 'full done';
+      if (S.method === 'none') {
+        els.status.innerHTML = '<b>the same picture, rounded</b> — the error was thrown away';
+      } else {
+        const ratio = S.mine > 0 ? S.plainErr / S.mine : 0;
+        els.status.innerHTML = ratio >= 1.2
+          ? '<b>' + ratio.toFixed(1) + '× closer</b> than plain rounding, with the same greys'
+          : '<b>done</b> — same greys, no better than rounding here';
+      }
+    }
+
+    // ---- painting to screen -----------------------------------------------
+    // Repaint the offscreen bitmap only when something actually changed —
+    // hovering and the pulsing scan glow do not need a million-pixel rebuild.
+    function repaintBitmap() {
+      const gw = S.gw, gh = S.gh;
+      const d = imgData.data;
+      const scanned = S.y;
+      for (let y = 0; y < gh; y++) {
+        const done = y < scanned;
+        for (let x = 0; x < gw; x++) {
+          const i = y * gw + x, o = i * 4;
+          let r, g, b;
+          if (!done) {
+            const t = (clamp01(S.src[i]) * 255) | 0;
+            r = LUT[t * 3] * 0.4; g = LUT[t * 3 + 1] * 0.4; b = LUT[t * 3 + 2] * 0.46;
+          } else if (S.view === 'error') {
+            const e = S.err[i];
+            const a = Math.abs(e);
+            const mag = a / (a + 0.42);   // soft roll-off, so small debts stay dark
+            if (e >= 0) { r = 12 + 243 * mag; g = 12 + 112 * mag; b = 22 + 173 * mag; }
+            else { r = 12 + 112 * mag; g = 12 + 112 * mag; b = 22 + 233 * mag; }
+          } else {
+            const t = (clamp01(S.out[i]) * 255) | 0;
+            r = LUT[t * 3]; g = LUT[t * 3 + 1]; b = LUT[t * 3 + 2];
+          }
+          d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = 255;
+        }
+      }
+      offCtx.putImageData(imgData, 0, 0);
+      S.dirty = false;
+    }
+
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+      const scanned = S.y;
+      if (S.dirty) repaintBitmap();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(off, S.dx, S.dy, S.dw, S.dh);
+
+      // frame
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(S.dx + 0.5, S.dy + 0.5, S.dw - 1, S.dh - 1);
+
+      // the scan line
+      if (S.running && scanned > 0) {
+        const y = S.dy + scanned * S.cell;
+        const g = ctx.createLinearGradient(S.dx, 0, S.dx + S.dw, 0);
+        g.addColorStop(0, 'rgba(124,124,255,0.15)');
+        g.addColorStop(0.5, 'rgba(255,124,195,0.95)');
+        g.addColorStop(1, 'rgba(124,124,255,0.15)');
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(S.dx, y + 0.5); ctx.lineTo(S.dx + S.dw, y + 0.5);
+        ctx.stroke();
+        ctx.globalAlpha = 0.35 + 0.2 * Math.sin(now / 180);
+        ctx.lineWidth = 7;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      if (S.hover && !S.running) drawTip();
+    }
+
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function tapName(tap) {
+      const dx = tap[0], dy = tap[1];
+      if (dy === 0) return dx === 1 ? 'right' : 'right +2';
+      if (dy === 2) return 'two rows down';
+      return dx === -1 ? 'below-left' : (dx === 0 ? 'below' : 'below-right');
+    }
+
+    function drawTip() {
+      const { gx, gy } = S.hover;
+      const i = gy * S.gw + gx;
+      const K = KERNELS[S.method];
+      const lines = [];
+      const f = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(3);
+      lines.push('source ' + S.src[i].toFixed(3) + (DIFFUSES[S.method] ? '   handed in ' + f(S.old[i] - S.src[i]) : ''));
+      lines.push('nearest of ' + S.levels + ' shades: ' + S.out[i].toFixed(3));
+      if (DIFFUSES[S.method]) {
+        lines.push('left over ' + f(S.err[i]) + ', handed on:');
+        for (let t = 0; t < K.taps.length; t++) {
+          const tap = K.taps[t];
+          lines.push('  ' + tap[2] + '/' + K.den + '  ' + tapName(tap) + '  ' + f(S.err[i] * tap[2] / K.den));
+        }
+      } else {
+        lines.push('left over ' + f(S.old[i] - S.out[i]) + ' — discarded');
+      }
+
+      const fs = 12.5, padx = 11, pady = 9, lh = 17;
+      ctx.font = fs + 'px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      let wmax = 0;
+      lines.forEach((l) => { wmax = Math.max(wmax, ctx.measureText(l).width); });
+      const bw = wmax + padx * 2, bh = lines.length * lh + pady * 2;
+      let x = S.hover.px + 16, y = S.hover.py + 16;
+      if (x + bw > W - 8) x = S.hover.px - bw - 16;
+      if (y + bh > H - 8) y = S.hover.py - bh - 16;
+      x = Math.max(8, x); y = Math.max(8, y);
+      rr(x, y, bw, bh, 10);
+      ctx.fillStyle = 'rgba(12,12,22,0.94)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      lines.forEach((l, k) => {
+        ctx.fillStyle = k === 0 ? '#e9e9f0' : (k === 1 ? '#b0b0ff' : (k === 2 ? '#ff9fd2' : '#8f8fa6'));
+        ctx.fillText(l, x + padx, y + pady + k * lh);
+      });
+      ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+
+      // ring the hovered dot
+      const s = Math.max(6, S.cell);
+      rr(S.dx + gx * S.cell - (s - S.cell) / 2, S.dy + gy * S.cell - (s - S.cell) / 2, s, s, 3);
+      ctx.strokeStyle = 'rgba(255,244,250,0.95)';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+
+    // ---- ticking ----------------------------------------------------------
+    function rowsPerSecond() {
+      const v = +els.speed.value;
+      if (v >= 100) return Infinity;
+      return 8 * Math.pow(1.06, v);
+    }
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      // painting can fire many pointer moves per frame; re-dither once
+      if (S.needsRestart) { S.needsRestart = false; restart(false); }
+      if (S.running) {
+        if (S.instant || rowsPerSecond() === Infinity) {
+          while (S.running && S.y < S.gh) stepRow();
+          S.dirty = true;
+        } else {
+          S.acc += dt * rowsPerSecond();
+          let n = 0;
+          while (S.acc >= 1 && S.running && S.y < S.gh && n < 4000) { S.acc -= 1; stepRow(); n++; }
+          if (n) { S.dirty = true; updateReadout(); }
+        }
+      }
+      draw(now);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- controls ---------------------------------------------------------
+    function chipSet(host, items, get, set) {
+      host.innerHTML = '';
+      items.forEach(([key, label]) => {
+        const el = document.createElement('button');
+        el.className = 'chip' + (get() === key ? ' on' : '');
+        el.textContent = label;
+        el.addEventListener('click', () => {
+          set(key);
+          [...host.children].forEach((c, k) => c.classList.toggle('on', items[k][0] === get()));
+        });
+        host.appendChild(el);
+      });
+    }
+
+    chipSet(document.getElementById('scenes'), [
+      ['sphere', 'sphere'], ['ramp', 'ramp'], ['dunes', 'dunes'], ['rings', 'rings']
+    ], () => S.scene, (k) => {
+      S.scene = k;
+      S.paint.fill(0);
+      paintScene();
+      restart(true);
+    });
+
+    chipSet(document.getElementById('methods'), [
+      ['fs', 'Floyd–Steinberg'], ['atkinson', 'Atkinson'], ['bayer', 'ordered'],
+      ['random', 'random'], ['none', 'none']
+    ], () => S.method, (k) => { S.method = k; syncKernel(); restart(true); });
+
+    function syncKernel() {
+      const K = KERNELS[S.method];
+      els.ktitle.textContent = K.title;
+      els.kfoot.innerHTML = K.foot;
+      els.kgrid.innerHTML = '';
+      const cells = [];
+      for (let dy = 0; dy < 3; dy++) for (let dx = -1; dx <= 2; dx++) cells.push([dx, dy]);
+      cells.forEach(([dx, dy]) => {
+        const el = document.createElement('i');
+        if (dx === 0 && dy === 0) { el.className = 'cur'; el.textContent = '✳'; }
+        else {
+          const tap = K.taps.find((t) => t[0] === dx && t[1] === dy);
+          if (tap) { el.className = 'w'; el.textContent = String(tap[2]); }
+        }
+        els.kgrid.appendChild(el);
+      });
+      els.spreadRow.classList.toggle('off', !DIFFUSES[S.method]);
+    }
+
+    const LEVEL_NAMES = { 2: '2 — black & white' };
+    els.levels.addEventListener('input', () => {
+      S.levels = +els.levels.value;
+      els.levVal.textContent = LEVEL_NAMES[S.levels] || (S.levels + ' shades');
+      restart(false);
+    });
+    els.spread.addEventListener('input', () => {
+      S.spread = +els.spread.value / 100;
+      els.sprVal.textContent = els.spread.value + '%';
+      restart(false);
+    });
+    els.dot.addEventListener('input', () => {
+      S.dot = +els.dot.value;
+      els.dotVal.textContent = S.dot + ' px';
+      rebuild(false);
+    });
+    els.speed.addEventListener('input', () => {
+      const r = rowsPerSecond();
+      els.spdVal.textContent = r === Infinity ? 'instant' : Math.round(r) + ' rows/s';
+    });
+
+    const serp = document.getElementById('serpToggle');
+    serp.addEventListener('click', () => {
+      S.serpentine = serp.classList.toggle('on');
+      restart(true);
+    });
+    const viewT = document.getElementById('viewToggle');
+    viewT.addEventListener('click', () => {
+      S.view = viewT.classList.toggle('on') ? 'error' : 'result';
+      S.dirty = true;
+    });
+    document.getElementById('replay').addEventListener('click', () => restart(true));
+    document.getElementById('clear').addEventListener('click', () => {
+      S.paint.fill(0);
+      restart(false);
+    });
+
+    // ---- pointer: paint light, or inspect a dot ---------------------------
+    function toGrid(ev) {
+      const gx = Math.floor((ev.clientX - S.dx) / S.cell);
+      const gy = Math.floor((ev.clientY - S.dy) / S.cell);
+      if (gx < 0 || gy < 0 || gx >= S.gw || gy >= S.gh) return null;
+      return { gx, gy };
+    }
+    function brush(g) {
+      const rad = Math.max(3, Math.round(26 / S.cell));
+      const gw = S.gw, gh = S.gh;
+      for (let dy = -rad; dy <= rad; dy++) {
+        const y = g.gy + dy;
+        if (y < 0 || y >= gh) continue;
+        for (let dx = -rad; dx <= rad; dx++) {
+          const x = g.gx + dx;
+          if (x < 0 || x >= gw) continue;
+          const t = 1 - Math.hypot(dx, dy) / rad;
+          if (t <= 0) continue;
+          const i = y * gw + x;
+          S.paint[i] = Math.min(0.85, S.paint[i] + 0.09 * t * t);
+        }
+      }
+    }
+    canvas.addEventListener('pointerdown', (ev) => {
+      const g = toGrid(ev);
+      if (!g) return;
+      S.painting = true;
+      canvas.setPointerCapture(ev.pointerId);
+      brush(g);
+      S.needsRestart = true;
+    });
+    canvas.addEventListener('pointermove', (ev) => {
+      const g = toGrid(ev);
+      if (S.painting) {
+        if (g) { brush(g); S.needsRestart = true; }
+        return;
+      }
+      S.hover = g ? { gx: g.gx, gy: g.gy, px: ev.clientX, py: ev.clientY } : null;
+    });
+    const stop = () => { S.painting = false; };
+    canvas.addEventListener('pointerup', stop);
+    canvas.addEventListener('pointercancel', stop);
+    canvas.addEventListener('pointerleave', () => { stop(); S.hover = null; });
+
+    // ---- resize -----------------------------------------------------------
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      rebuild(false);
+    }
+    let rt = 0;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 120); });
+    window.addEventListener('orientationchange', () => { clearTimeout(rt); rt = setTimeout(resize, 160); });
+
+    syncKernel();
+    els.levVal.textContent = LEVEL_NAMES[S.levels] || (S.levels + ' shades');
+    els.sprVal.textContent = els.spread.value + '%';
+    els.dotVal.textContent = S.dot + ' px';
+    els.spdVal.textContent = Math.round(rowsPerSecond()) + ' rows/s';
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    rebuild(true);
+    // Re-fit once the panel has actually been laid out (and again after fonts
+    // settle) so the picture always fills the space left over beside it.
+    requestAnimationFrame(() => resize());
+    setTimeout(resize, 300);
+    window.addEventListener('load', resize);
+    requestAnimationFrame((t) => { last = t; frame(t); });
+  })();
+</script>
+</body>
+</html>
