@@ -1,0 +1,272 @@
+{
+  "date": "2026-08-18",
+  "topic": "Trump's executive order splitting the MMR vaccine and shrinking the childhood schedule",
+  "question": "Eight days after Executive Order 14420, and with the Republican chairman of the Senate health committee calling it 'crazy, stupid,' whose checkable claims about the order hold up — the administration's or its critics'?",
+  "summary": "On August 10, 2026 President Trump signed Executive Order 14420, 'Delivering Gold Standard Childhood Vaccine Recommendations for Americans.' It declares that the combined MMR shot 'should be administered in three separate single-disease shots once such products are domestically available,' that childhood immunizations should be given at separate visits, that the list of diseases every child is advised to be vaccinated against should fall from 18 to 11, and that the Attorney General should bring litigation against state school-immunization laws that it says infringe parental authority or religious exemptions.\n\nThe argument peaked this week rather than on signing day, because the loudest critics are Republicans. On ABC's 'This Week' on August 16 and again in remarks reported August 17, Sen. Bill Cassidy — a physician who chairs the Senate HELP committee and cast a decisive vote to confirm Robert F. Kennedy Jr. — called the order 'stupid policy' built on 'crazy, stupid' claims. The Wall Street Journal's editorial board attacked it. The American Academy of Pediatrics, AMA and American College of Physicians oppose it.\n\nThe defense is that the U.S. schedule grew into an outlier and that parents deserve flexibility and consent. The dispute has an unusually hard factual core: whether the single-disease vaccines the order calls for exist, how many injections it implies, what the autism evidence shows, and how the U.S. schedule actually compares with peer nations.",
+  "needle": -39,
+  "verdict": "The critics have much the better of the checkable facts. The order's central premises — that the combined MMR may be 'quite lethal,' that splitting it would cut autism — are false, and it orders a product no manufacturer makes. The administration's one solid fact is that the pre-2026 U.S. schedule did cover more diseases than any peer nation; its claim that cutting to 11 'aligns' the U.S. with peers is the reverse of true. This does not settle whether parents should be able to space shots, what schedule size is right, or who should set medical recommendations — those are value and institutional questions the meter cannot decide.",
+  "weights": { "factualAccuracy": 0.6, "reasoningHonesty": 0.4 },
+  "verificationNote": "The order's text and the May 2026 predecessor were read directly on whitehouse.gov; the 2020 vice-presidential debate quote comes from the Commission on Presidential Debates transcript. CDC's measles page, the HHS peer-schedule assessment PDF, Nature, The Hill and CNBC all returned HTTP 403 and were not read, so case counts rest on CIDRAP and on figures the Wall Street Journal editorial itself cites, and the peer-schedule numbers on the White House fact sheet plus STAT and KFF. Court-ruling details come from APHA, a plaintiff — confidence marked down accordingly.",
+  "sources_consulted": [
+    "The White House (Executive Order 14420)",
+    "The White House (Executive Order 14407 fact sheet)",
+    "FactCheck.org",
+    "CIDRAP",
+    "PBS NewsHour",
+    "ABC News",
+    "CBS News",
+    "Wall Street Journal editorial board",
+    "Washington Examiner",
+    "KFF",
+    "STAT News",
+    "JURIST",
+    "American Public Health Association",
+    "NACCHO",
+    "Medical News Today",
+    "PAHO",
+    "Commission on Presidential Debates",
+    "National Law Review",
+    "Raw Story",
+    "The American Presidency Project",
+    "Time",
+    "NFIB",
+    "Axios",
+    "The Hill"
+  ],
+  "sides": {
+    "left": {
+      "label": "An order built on false premises, mandating a vaccine that does not exist",
+      "framing": "No single-disease measles, mumps or rubella vaccine is licensed in the United States; Merck stopped making them in 2009 and no manufacturer wants to restart. Following the order would mean six injections and six visits instead of two. The autism rationale has been tested in millions of children and found empty. All of this lands in the worst measles year since 1991, with the country's elimination status up for review.",
+      "factualAccuracy": 85,
+      "reasoningHonesty": 67,
+      "score": 78,
+      "strongestPoint": "The load-bearing facts are conceded by the order itself. It asks for shots that are 'domestically available' only in the future tense, and the two claims Trump used to justify it — that combined MMR could be 'quite lethal' and that splitting it would cut autism — are contradicted by the record. The Wall Street Journal's editorial board and the Republican chairman of the Senate health committee say so too.",
+      "weakestPoint": "Critics keep sliding from what the order does to what they predict it will cause. Headlines about an order that 'promises to kill more kids' state a forecast as a fact; the order is advisory and changes no state's school requirement. Some critics also wave off the schedule comparison, when the administration's own agency documented that the pre-2026 U.S. list covered more diseases than any of 20 peer nations."
+    },
+    "right": {
+      "label": "Fewer shots at once, more parental consent, and a schedule brought back toward peer nations",
+      "framing": "The U.S. schedule grew from 7 diseases in 1980 to 18 by 2024 — more than any peer nation and more than twice the doses of some European countries — without anyone re-asking whether all of it is necessary for every child. The order restores tiering, spacing and informed consent, protects religious and medical exemptions, and changes no law: states still set school requirements.",
+      "factualAccuracy": 40,
+      "reasoningHonesty": 38,
+      "score": 39,
+      "strongestPoint": "Two things check out. The schedule really did grow, and HHS's own assessment put the pre-2026 U.S. list above every one of its 20 comparison countries. And the legal modesty is real: the order is advisory, states set school-entry rules, and even critics' own explainers concede it changes nothing immediately.",
+      "weakestPoint": "The order gives no scientific rationale for its own headline instruction, and the president's stated ones are false. Asked for evidence that combined MMR is 'quite lethal,' Trump answered 'let's say there's a 5% chance of it.' The order also cannot be read as principled federalism while directing the Justice Department to sue states over their own immunization laws."
+    }
+  },
+  "facts": [
+    {
+      "claim": "No single-disease measles, mumps or rubella vaccine is licensed or sold in the United States, and the order's instruction is conditional on products that do not yet exist.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "EO 14420: the MMR vaccine 'should be administered in three separate single-disease shots once such products are domestically available.' CIDRAP: the three separate vaccines are 'not currently licensed in the United States nor approved by the Food and Drug Administration.'",
+      "explanation": "The order concedes the point in its own text. Merck, the sole U.S. maker, ended monovalent production in 2009; PBS reports Merck and GSK now make only combination shots and that building new vaccine plants typically takes about five years. Nothing in the record suggests a manufacturer intends to restart.",
+      "source": "The White House — Executive Order 14420",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/delivering-gold-standard-childhood-vaccine-recommendations-for-americans/",
+      "corroboration": [
+        { "source": "CIDRAP", "url": "https://www.cidrap.umn.edu/childhood-vaccines/trump-signs-executive-order-break-measles-mumps-rubella-vaccine" },
+        { "source": "PBS NewsHour", "url": "https://www.pbs.org/newshour/health/trumps-vaccine-order-would-require-millions-of-individual-shots-last-used-decades-ago" }
+      ]
+    },
+    {
+      "claim": "Splitting MMR would require six injections rather than two for the same protection, at correspondingly more office visits.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Cassidy on ABC's 'This Week': 'Instead of your child getting two shots, she has to get six shots… you're missing work to take your child to the doctor two times, you're doing it six times.' PBS: splitting the components 'would require six office visits' instead of the current two doses.",
+      "explanation": "The arithmetic is not disputed by anyone: the schedule calls for two MMR doses, and three components times two doses is six. The visit count depends on how strictly the order's 'separate medical visits' language is followed; six is the ceiling, not a floor, and the order sets no timetable.",
+      "source": "ABC News — 'This Week,' August 16, 2026",
+      "url": "https://abcnews.com/Politics/gop-sen-bill-cassidy-trumps-vaccine-executive-order/story?id=135685348",
+      "corroboration": [
+        { "source": "PBS NewsHour", "url": "https://www.pbs.org/newshour/health/trumps-vaccine-order-would-require-millions-of-individual-shots-last-used-decades-ago" },
+        { "source": "The Hill", "url": "https://thehill.com/policy/healthcare/6032232-cassidy-slams-trump-vaccine-order/" }
+      ]
+    },
+    {
+      "claim": "Trump's assertion that the combined MMR shot 'could be quite lethal,' with roughly a 5% chance, is supported by evidence.",
+      "side": "right",
+      "verdict": "false",
+      "confidence": "high",
+      "evidence": "FactCheck.org, quoting the Infectious Diseases Society of America: 'There have been no deaths shown to be related to the MMR vaccine in healthy people.' Asked for his evidence, Trump said: 'What I've heard is that there are some people that say it is that way… And I say, well, let's say there's a 5% chance of it.'",
+      "explanation": "A 5% fatality rate across roughly four million U.S. births a year would be, as FactCheck puts it, astronomically high and trivially detectable. Trump's own answer offered no source. The narrow true kernel is that MMR is contraindicated for the severely immunocompromised — a documented exception, not a general risk.",
+      "source": "FactCheck.org",
+      "url": "https://www.factcheck.org/2026/08/trumps-false-mmr-vaccine-claims/",
+      "corroboration": [
+        { "source": "Time", "url": "https://time.com/article/2026/08/12/what-trump-executive-order-could-mean-for-childhood-vaccines/" },
+        { "source": "CBS News", "url": "https://www.cbsnews.com/news/trump-childhood-vaccines-executive-order/" }
+      ]
+    },
+    {
+      "claim": "Separating the MMR components would reduce autism.",
+      "side": "right",
+      "verdict": "false",
+      "confidence": "high",
+      "evidence": "FactCheck.org: the Institute of Medicine concluded the evidence 'favors rejection of a causal relationship,' and recent studies of millions of children found none. A cohort of 2.56 million U.S. children found 'no association between MMR vaccination before 24 months and childhood autism.' Cassidy: 'There's no evidence that vaccines causes autism.'",
+      "explanation": "Japan is the closest natural experiment: it dropped combined MMR in 1993 — over a mumps strain never used in the U.S. — and autism diagnoses did not fall. The honest residual is that autism's causes remain poorly understood; that uncertainty is not evidence for this specific mechanism.",
+      "source": "FactCheck.org",
+      "url": "https://www.factcheck.org/2026/08/trumps-false-mmr-vaccine-claims/",
+      "corroboration": [
+        { "source": "Medical News Today", "url": "https://www.medicalnewstoday.com/articles/trump-executive-order-mmr-vaccine-spaced-out-autism-claims" },
+        { "source": "ABC News", "url": "https://abcnews.com/Politics/gop-sen-bill-cassidy-trumps-vaccine-executive-order/story?id=135685348" }
+      ]
+    },
+    {
+      "claim": "Before 2026 the U.S. recommended childhood vaccination against more diseases than any peer nation, and the new 11-disease list brings the U.S. into line with peers.",
+      "side": "right",
+      "verdict": "mixed",
+      "confidence": "medium",
+      "evidence": "White House fact sheet: 'In 2024, the recommended number of routine vaccines had risen to at least 84 vaccine doses in at least 57 shots for 17 diseases, plus the RSV monoclonal antibody immunization for a total of 18 diseases,' versus '23 vaccine doses in 7 shots against 7 different diseases' in 1980. STAT: the 20 peer countries average 13.6 diseases; only Denmark, at 10, is lower than 11.",
+      "explanation": "The first half holds up — on the administration's own accounting the pre-2026 U.S. list led its comparison group. The second half inverts: 11 puts the U.S. below all 20 peers but Denmark. The underlying HHS assessment PDF returned HTTP 403 and could not be read directly, so confidence is medium.",
+      "source": "The White House — fact sheet, Executive Order 14407",
+      "url": "https://www.whitehouse.gov/fact-sheets/2026/05/fact-sheet-president-donald-j-trump-realigns-u-s-core-childhood-vaccine-recommendations-with-best-practices-from-peer-developed-countries/",
+      "corroboration": [
+        { "source": "STAT News", "url": "https://www.statnews.com/2026/01/09/childhood-vaccination-fact-check-denmark-not-america-is-the-outlier/" },
+        { "source": "KFF", "url": "https://www.kff.org/other-health/the-white-house-takes-another-shot-at-changing-u-s-childhood-vaccine-recommendations/" }
+      ]
+    },
+    {
+      "claim": "U.S. measles cases in 2026 have already passed the 2025 annual total, the highest since 1991, with the country's elimination status under review.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "CIDRAP: '2,465 cases confirmed in 2026' as of August 6, past '2,289 reported for all of 2025,' itself the highest total since 1991; 93% of patients unvaccinated or of unknown status, 68% under 20. The Wall Street Journal editorial cites the same August 6 figure and the November elimination review.",
+      "explanation": "Counts move weekly and sources differ slightly — trackers reported roughly 2,566 by August 13, and the 2025 total appears as both 2,289 and 2,295. CDC's own page returned HTTP 403, so this rests on secondary tallies. PAHO's review timing is also inconsistently reported, listed as April and as November 2026.",
+      "source": "CIDRAP",
+      "url": "https://www.cidrap.umn.edu/childhood-vaccines/executive-order-confirmed-director-and-20-straight-months-measles-state-us",
+      "corroboration": [
+        { "source": "Wall Street Journal editorial, via Raw Story", "url": "https://www.rawstory.com/trump-wsj-2677689259/" },
+        { "source": "PAHO", "url": "https://www.paho.org/en/news/16-1-2026-measles-elimination-status-united-states-and-mexico" }
+      ]
+    },
+    {
+      "claim": "The executive order does not itself change any state's school immunization requirement.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "JURIST: 'States, not the federal government, set immunization requirements for school entry,' the recommendations 'are advisory,' and the order only 'advises' states and territories to consider updating their laws. The Washington Examiner likewise reports the changes are 'unlikely to immediately affect school vaccine requirements.'",
+      "explanation": "This is the administration's strongest legal point and critics' explainers concede it. The qualifier is that federal recommendations drive insurance coverage and Vaccines for Children purchasing, so 'no legal change' is not the same as 'no practical effect.' KFF notes most states have already decoupled from federal recommendations.",
+      "source": "JURIST",
+      "url": "https://www.jurist.org/news/2026/08/trump-order-directs-justice-department-to-sue-states-over-vaccine-exemptions/",
+      "corroboration": [
+        { "source": "Washington Examiner", "url": "https://www.washingtonexaminer.com/policy/healthcare/4683830/trump-vaccine-order-reshape-childhood-immunization-gabrielle-etzel/" },
+        { "source": "KFF", "url": "https://www.kff.org/other-health/the-white-house-takes-another-shot-at-changing-u-s-childhood-vaccine-recommendations/" }
+      ]
+    },
+    {
+      "claim": "The order directs the Attorney General to bring litigation against state immunization laws over religious and parental-authority grounds.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "EO 14420, Section 4: the Attorney General shall 'take appropriate measures to further meritorious legal actions challenging State laws' concerning parental authority and religious exemptions from immunization requirements.",
+      "explanation": "Read in the order's own text. It matters for the federalism argument on both sides: the same document that leaves school rules to states also tasks federal lawyers with attacking them. The Journal's editorial board flagged exactly this, noting DOJ 'could sue states for infringing on parental authority.'",
+      "source": "The White House — Executive Order 14420",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/08/delivering-gold-standard-childhood-vaccine-recommendations-for-americans/",
+      "corroboration": [
+        { "source": "JURIST", "url": "https://www.jurist.org/news/2026/08/trump-order-directs-justice-department-to-sue-states-over-vaccine-exemptions/" },
+        { "source": "Wall Street Journal editorial, via Raw Story", "url": "https://www.rawstory.com/trump-wsj-2677689259/" }
+      ]
+    },
+    {
+      "claim": "The administration's earlier rewrite of the childhood schedule, and the ACIP that approved it, are currently blocked by a federal court.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "APHA: on March 16, 2026 Judge Brian Murphy of the U.S. District Court for the District of Massachusetts stayed Secretary Kennedy's 13 ACIP appointments, all votes taken by that panel, the revised schedule issued January 5, 2026, the May 2025 COVID-19 directive and the December 2025 hepatitis B downgrade.",
+      "explanation": "Confidence is medium because APHA is a named plaintiff and the ruling itself was not read directly; NACCHO's independent guide describes the same stay. The caveat cuts both ways: an injunction is not a merits judgment, and it is on appeal, so 'the courts have rejected this' overstates what has been decided.",
+      "source": "American Public Health Association",
+      "url": "https://www.apha.org/news-and-media/news-releases/apha-news-releases/federal-judge-blocks-immunization-schedule-changes",
+      "corroboration": [
+        { "source": "NACCHO", "url": "https://www.naccho.org/blog/articles/federal-judge-blocks-immunization-schedule-changes-stays-acip-member-appointments-a-resource-guide-for-local-public-health" }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Would each side hold this position if the other party held the White House? The structural question is identical to the one that dominated 2021-22: how far a president may reach into the nation's vaccination practice. Then a Democratic administration pushed vaccination by executive action and Republicans said the White House had no business dictating medical decisions; the Supreme Court agreed. Now a Republican president dictates how a vaccine should be administered and tasks DOJ with suing states over their exemption laws — and the objections have swapped mouths, not content.",
+    "precedent": {
+      "case": "NFIB v. OSHA, decided January 13, 2022",
+      "what": "The Supreme Court stayed the Biden administration's OSHA vaccine-or-test emergency standard for employers with 100+ workers, 6-3 per curiam, calling it 'a significant encroachment' and holding that 'the Secretary of Labor lacked authority to issue this vaccine-or-test mandate' because COVID was a general public-health risk rather than an occupational hazard.",
+      "mirror": "The complaint then — an executive agency using general authority to set national vaccination practice, over the judgment of states and individuals — is precisely the complaint against EO 14420 now, only with the arrow reversed and the parties' roles exchanged.",
+      "source": "National Law Review",
+      "url": "https://natlawreview.com/article/split-decision-scotus-stays-osha-ets-while-upholding-cms-vaccine-mandate",
+      "corroboration": [
+        { "source": "NFIB (the winning plaintiff)", "url": "https://www.nfib.com/news/legal-blog/u-s-supreme-court-blocks-osha-vaccine-mandate/" },
+        { "source": "Wikipedia", "url": "https://en.wikipedia.org/wiki/National_Federation_of_Independent_Business_v._Occupational_Safety_and_Health_Administration" }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Trump and Republican federalism",
+        "then": "Republicans spent 2021-22 arguing that vaccination decisions belong to states, doctors and parents, and that Washington may not override state health law; Trump ran on Operation Warp Speed as his signature achievement.",
+        "now": "The same movement backs a presidential order prescribing how a vaccine should be split and administered, and Section 4 turns the Justice Department loose on state immunization statutes. The Wall Street Journal's editorial board — a right-leaning outlet documenting the right's own reversal — wrote that 'Breaking up the MMR shot would require changes in production that could take years… Thanks, Dr. Trump.'",
+        "source": "Wall Street Journal editorial, via Raw Story",
+        "url": "https://www.rawstory.com/trump-wsj-2677689259/"
+      },
+      {
+        "who": "Democrats on trusting the federal vaccine process",
+        "then": "At the October 7, 2020 vice-presidential debate, Kamala Harris said of a COVID vaccine: 'If Donald Trump tells us that we should take it, I'm not taking it.' Mike Pence answered that 'your continuous undermining of confidence in a vaccine is just, it's just unacceptable.' New York's governor said the state would run its own review of any federally approved shot.",
+        "now": "The same coalition now argues that federal vaccine recommendations must be trusted and that a president has no standing to second-guess them. The principle held in 2020 was narrower than it sounded: distrust of this president's influence over the process, not deference to the process itself.",
+        "source": "Commission on Presidential Debates — 2020 vice-presidential debate transcript",
+        "url": "https://www.debates.org/voter-education/debate-transcripts/vice-presidential-debate-at-the-university-of-utah-in-salt-lake-city-utah/",
+        "corroboration": [
+          { "source": "The American Presidency Project (2020 Trump campaign release documenting the remarks)", "url": "https://www.presidency.ucsb.edu/documents/trump-campaign-press-release-fact-kamala-harriss-anti-vaccine-rhetoric-anti-science-and" }
+        ]
+      }
+    ],
+    "longRun": "Strip the labels and the durable question is who sets national medical recommendations, on what evidentiary showing, and how reversible it is. Both parties have now used executive power to move vaccination policy toward their preference, and each has discovered the same three brakes when out of power: the courts, state authority, and the professional bodies. Whoever holds the White House next will inherit an expectation that the schedule is a presidential prerogative — and the precedent that a single judge can freeze it.",
+    "appliedToScore": "Neither side earns a reasoning-honesty bonus for its stated principle here. 'The president isn't a doctor' and 'medical decisions belong to families' are both positions that flipped with the partisan label within four years, and each side's inconsistency is recorded in its weakestPoint. The needle rests only on present-tense checkable facts: whether the monovalent shots exist, how many injections the order implies, what the autism evidence shows, and how the schedule compares with peers."
+  },
+  "pattern": {
+    "thesis": "Treating EO 14420 as a standalone idea about one vaccine keeps the argument off the trend. It is the latest step in a fourteen-month reconstruction of the machinery that produces federal vaccine recommendations — the advisory committee, the schedule, and now the delivery method — with the previous two steps currently enjoined.",
+    "campaigns": [
+      {
+        "where": "Advisory Committee on Immunization Practices, June 9, 2025",
+        "what": "HHS Secretary Kennedy removed all 17 sitting ACIP members at once, calling it a 'clean sweep… to re-establish public confidence in vaccine science,' then seated a smaller replacement panel.",
+        "authorization": "Secretarial action",
+        "source": "CBS News",
+        "url": "https://www.cbsnews.com/news/rfk-jr-removes-members-cdc-immunization-advisory-committee-acip/",
+        "corroboration": [
+          { "source": "STAT News", "url": "https://www.statnews.com/2025/06/09/rfk-jr-fires-every-member-of-cdc-vaccine-expert-panel-acip/" }
+        ]
+      },
+      {
+        "where": "The federal childhood schedule, December 2025 - May 2026",
+        "what": "A presidential memorandum commissioned an HHS comparison of the U.S. schedule with 20 peer nations; a revised schedule issued January 5, 2026 cut the universally recommended list, and Executive Order 14407 of May 29, 2026 directed CDC and ACIP to update the schedule and give 'maximum flexibility to parents and doctors through recommendations for timing and sequencing.'",
+        "authorization": "Executive Order 14407",
+        "source": "The White House",
+        "url": "https://www.whitehouse.gov/presidential-actions/2026/05/realigning-united-states-core-childhood-vaccine-recommendations-with-best-practices-from-peer-developed-countries/",
+        "corroboration": [
+          { "source": "KFF", "url": "https://www.kff.org/other-health/the-white-house-takes-another-shot-at-changing-u-s-childhood-vaccine-recommendations/" }
+        ]
+      },
+      {
+        "where": "U.S. District Court, District of Massachusetts, March 16, 2026",
+        "what": "Judge Brian Murphy stayed the 13 ACIP appointments and their votes, the January 2026 schedule, the May 2025 COVID-19 directive and the December 2025 hepatitis B downgrade, in a suit brought by the AAP, APHA, ACP, IDSA and others.",
+        "authorization": "Preliminary injunction",
+        "source": "American Public Health Association",
+        "url": "https://www.apha.org/news-and-media/news-releases/apha-news-releases/federal-judge-blocks-immunization-schedule-changes",
+        "corroboration": [
+          { "source": "NACCHO", "url": "https://www.naccho.org/blog/articles/federal-judge-blocks-immunization-schedule-changes-stays-acip-member-appointments-a-resource-guide-for-local-public-health" }
+        ]
+      },
+      {
+        "where": "Region of the Americas, November 2025 onward",
+        "what": "PAHO reported the region lost measles elimination status after endemic transmission persisted past 12 months, and convened its verification commission to assess whether U.S. transmission has been re-established, following outbreaks that began January 20, 2025.",
+        "authorization": "Regional verification review",
+        "source": "PAHO",
+        "url": "https://www.paho.org/en/news/16-1-2026-measles-elimination-status-united-states-and-mexico",
+        "corroboration": [
+          { "source": "CIDRAP", "url": "https://www.cidrap.umn.edu/childhood-vaccines/executive-order-confirmed-director-and-20-straight-months-measles-state-us" }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is whether these recommendations are changing because new evidence arrived or because the people making them were replaced — a question the orders themselves never answer, since EO 14420 states what should happen without stating why. The 'one-off' tell: any defense that argues the merits of splitting MMR without mentioning that the two prior rounds of the same project are currently under injunction."
+  },
+  "notAdjudicable": [
+    "Whether parents should be able to space or decline routine childhood vaccines is a question about the boundary between individual conscience and collective risk, not a question evidence can settle.",
+    "How many diseases a national schedule *should* cover is a values-and-tradeoffs judgment about cost, burden and tolerance for rare harms — the peer comparison informs it but cannot decide it.",
+    "Whether religious exemptions from school immunization laws should be constitutionally required is a contested legal-moral question, distinct from what any current statute says.",
+    "Whether an elected president or an appointed expert committee should hold final say over medical recommendations is a question about democratic accountability versus technical competence, and both answers have real costs.",
+    "Whether declining public trust in health agencies is best repaired by deferring to them or by visibly overhauling them is a judgment about institutions that the measles numbers alone cannot resolve."
+  ],
+  "biasWatch": "The bias doing the most work today is credentialism running in both directions — treating the speaker's title as the argument. On one side, 'he's not a doctor' is offered where the actual rebuttal is that monovalent vaccines are not licensed and the autism studies are negative; on the other, 'I'm a doctor' does real work for both Cassidy and Kennedy, who reach opposite conclusions. The tell: notice how much of a paragraph is spent establishing who is qualified to speak versus what is checkably true. If you can remove every credential from a passage and it loses its force, it was never carrying evidence. Applied honestly, this cuts against the critics too: their case is strong because of the licensing record and the cohort studies, not because the AAP said so."
+}
