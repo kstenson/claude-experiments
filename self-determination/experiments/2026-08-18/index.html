@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Who Asks First — Experiment 064</title>
+<meta name="description" content="Gale and Shapley's deferred acceptance: one side works down its list asking, the other only ever trades up, and the matching that survives has no pair who'd both rather walk." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 336px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 10px 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 14px; }
+
+  .controls { display: grid; gap: 11px; }
+
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .note b { color: #b0b0ff; font-weight: 600; }
+  .row .note { margin-top: -1px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.warn { color: #ffb072; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full.done b { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 13px; height: 13px; border-radius: 4px; flex: none; display: block; }
+  .legend i.ask { background: rgba(124,124,255,0.75); box-shadow: 0 0 8px rgba(124,124,255,0.5); }
+  .legend i.ans { background: rgba(255,124,195,0.75); box-shadow: 0 0 8px rgba(255,124,195,0.5); }
+  .legend i.link { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .legend i.spent { background: rgba(255,176,114,0.35); }
+  .legend i.block { background: repeating-linear-gradient(45deg, #ffb072 0 4px, transparent 4px 7px); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 980px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 620px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 50vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .controls { gap: 9px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Who Asks First</h1>
+    <p class="sub">Experiment № 064 · August 18, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>People on each side <b id="nVal">10</b></label>
+        <input type="range" id="n" min="4" max="14" step="1" value="10" />
+      </div>
+
+      <div class="row">
+        <label>Shared taste <b id="corrVal">20%</b></label>
+        <input type="range" id="corr" min="0" max="100" step="1" value="20" />
+        <p class="note" id="corrNote">At 0% everyone wants someone different. At 100% both sides agree on exactly who is most desirable — and then there is only one stable matching, so asking first buys you nothing.</p>
+      </div>
+
+      <div class="toggle" id="sideToggle">
+        <span id="sideLabel">Asking side: <b style="color:#b0b0ff">the violet letters</b></span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="row">
+        <label>Asks per second <b id="speedVal">6</b></label>
+        <input type="range" id="speed" min="1" max="40" step="1" value="6" />
+      </div>
+
+      <div class="readout">
+        <span class="k">Asks made</span><span class="v" id="mAsks">0</span>
+        <span class="k">Asking side's average rank</span><span class="v violet" id="mP">–</span>
+        <span class="k">Answering side's average</span><span class="v pinkv" id="mR">–</span>
+        <span class="k">Pairs who'd both walk</span><span class="v warn" id="mBlock">–</span>
+        <hr />
+        <span class="full" id="mStatus">Nobody has asked anyone yet.</span>
+      </div>
+
+      <div class="toggle" id="greedyToggle">
+        <span>Show a greedy pairing instead</span>
+        <span class="pill"></span>
+      </div>
+      <p class="note" id="greedyNote">Deferred acceptance, running. Every provisional couple can still break.</p>
+
+      <div class="btn-row">
+        <button class="btn pink" id="regen">↻ new tastes</button>
+        <button class="btn" id="skip">⏭ straight to it</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="ask"></i> the asking side — works <em>down</em> its list</div>
+    <div><i class="ans"></i> the answering side — only ever trades <em>up</em></div>
+    <div><i class="link"></i> engaged, provisionally</div>
+    <div><i class="spent"></i> a name already refused — gone for good</div>
+    <div><i class="block"></i> a blocking pair — both would walk</div>
+  </div>
+
+  <p class="hint">hover anyone to see their whole ranking · flip who asks and watch the same tastes land differently · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 064 · The story</p>
+      <h2>Who Asks First</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Sixty-three experiments of things that flow, grow, erode, sync and search — and not one of them about people with opinions about each other. Gale and Shapley's 1962 paper is nine pages of the American Mathematical Monthly with no computer anywhere near it, and it settles a question you'd swear needs one: given two sides who rank each other, can you always pair everybody so that no two people would rather ditch their partners for each other? Yes, always, and here is the procedure. What sold me is that the procedure is embarrassingly simple — ask, hold on provisionally, trade up, repeat — and that it was already quietly running the American medical residency match a decade before anyone proved it worked. Shapley shared the 2012 Nobel in economics with Alvin Roth for what came of it; Gale had died in 2008.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Two counters running in opposite directions, which you can watch on the little rank strips. The asking side starts at its first choice and can only ever slide further down its list. The answering side starts with whoever turned up and can only ever trade up, because it never lets go of anyone until something better knocks. Nobody in the whole picture ever checks whether the matching is stable — there is no global test anywhere in the code — and yet the counter for pairs who'd both walk falls to zero and stays there. I also love the cruelty of the middle of a run: a couple can look settled for twenty asks and then break in one frame because someone better finally got round to knocking. Turn the shared-taste dial to 100% and the drama vanishes entirely — when both sides agree on who's desirable there is only one stable matching, and it doesn't matter who speaks.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Stable is not the same as fair. This algorithm doesn't find <em>a</em> stable matching, it finds a very particular one: the best stable outcome that exists for every single person on the asking side, and simultaneously the worst for every single person on the answering side. Flip the toggle and the same preferences, the same rules and the same definition of success hand the advantage straight to the other team. That's not a quirk — the residency match ran hospital-proposing for decades and switched to applicant-proposing in 1998, once it was clear which way the thumb was on the scale. So when someone describes a process as neutral because everyone's preferences are taken into account, the question worth asking is a much smaller one: who gets to propose, and who is only allowed to answer?</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key && e.key.toLowerCase() === 'h') togglePanel();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  function togglePanel() {
+    const hidden = document.getElementById('ui').classList.toggle('hidden');
+    document.getElementById('legend').classList.toggle('hidden', hidden);
+    document.getElementById('showUi').classList.toggle('on', hidden);
+  }
+  document.getElementById('collapse').addEventListener('click', togglePanel);
+  document.getElementById('showUi').addEventListener('click', togglePanel);
+
+  // ---- GALE–SHAPLEY DEFERRED ACCEPTANCE ------------------------------------
+  // Gale & Shapley, "College Admissions and the Stability of Marriage",
+  // American Mathematical Monthly 69 (1962).
+  //
+  //   while someone on the asking side is free:
+  //     they ask the best person on their list they have not yet asked
+  //     if that person is free            → hold, provisionally
+  //     else if that person prefers them  → hold, and release the old partner
+  //     else                              → refused; the asker moves down one
+  //
+  // Nobody is ever committed until the music stops, which is the whole trick:
+  // an answer of "yes" only means "yes for now". At most n² asks happen (each
+  // asker crosses off each name at most once), so it always terminates, and
+  // the matching it lands on has no blocking pair — no two people who would
+  // both rather have each other than what they got.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, dpr = 1;
+
+    const VIO = [124, 124, 255];
+    const PNK = [255, 124, 195];
+    const WARN = [255, 176, 114];
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+    const LETTERS = 'ABCDEFGHIJKLMN';
+    const label = (side, i) => side === 0 ? LETTERS[i] : String(i + 1);
+
+    const S = {
+      n: 10, corr: 0.2, speed: 6,
+      leftAsks: true,          // side 0 (violet letters) proposes
+      greedy: false,
+      // preferences: pref[side][i] = ordered list of indices on the other side
+      pref: [[], []],
+      rank: [[], []],          // rank[side][i][j] = position of j in i's list
+      // run state (indices are per-side; proposers on side pSide)
+      partner: [[], []],       // partner[side][i] = index on other side, or -1
+      nextIdx: [],             // per proposer: how many names crossed off
+      events: [], evIdx: 0,
+      asks: 0, acc: 0, anim: null, done: false,
+      flash: [[], []],         // {t, kind} per person
+      log: 'Nobody has asked anyone yet.',
+      hover: null,             // {side, i}
+      greedyPairs: null, greedyBlock: 0,
+      alt: null                // stats if the other side asked
+    };
+
+    const els = {
+      n: document.getElementById('n'), nVal: document.getElementById('nVal'),
+      corr: document.getElementById('corr'), corrVal: document.getElementById('corrVal'),
+      speed: document.getElementById('speed'), speedVal: document.getElementById('speedVal'),
+      asks: document.getElementById('mAsks'), p: document.getElementById('mP'),
+      r: document.getElementById('mR'), block: document.getElementById('mBlock'),
+      status: document.getElementById('mStatus'),
+      sideToggle: document.getElementById('sideToggle'),
+      sideLabel: document.getElementById('sideLabel'),
+      greedyToggle: document.getElementById('greedyToggle'),
+      greedyNote: document.getElementById('greedyNote')
+    };
+
+    const pSide = () => S.leftAsks ? 0 : 1;
+    const rSide = () => S.leftAsks ? 1 : 0;
+
+    // ---- preferences ------------------------------------------------------
+    // "Shared taste" mixes a per-person private score with one universal
+    // desirability score everyone agrees on. At corr = 1 both sides rank the
+    // other identically, and the stable matching becomes unique.
+    function genPrefs() {
+      const n = S.n, c = S.corr;
+      const universal = [[], []];
+      for (const side of [0, 1]) for (let i = 0; i < n; i++) universal[side][i] = Math.random();
+      for (const side of [0, 1]) {
+        const other = 1 - side;
+        S.pref[side] = []; S.rank[side] = [];
+        for (let i = 0; i < n; i++) {
+          const scored = [];
+          for (let j = 0; j < n; j++) {
+            scored.push([j, c * universal[other][j] + (1 - c) * Math.random()]);
+          }
+          scored.sort((a, b) => b[1] - a[1]);
+          const list = scored.map((s) => s[0]);
+          const rk = new Array(n);
+          list.forEach((j, k) => { rk[j] = k; });
+          S.pref[side][i] = list;
+          S.rank[side][i] = rk;
+        }
+      }
+    }
+
+    // ---- the algorithm, recorded as a list of events ----------------------
+    function runGS(ps) {
+      const n = S.n, rs = 1 - ps;
+      const pref = S.pref[ps], rank = S.rank[rs];
+      const mP = new Array(n).fill(-1), mR = new Array(n).fill(-1);
+      const next = new Array(n).fill(0);
+      const free = [];
+      for (let i = 0; i < n; i++) free.push(i);
+      const events = [];
+      let guard = n * n + 5;
+      while (free.length && guard-- > 0) {
+        const p = free.shift();
+        const r = pref[p][next[p]++];
+        const cur = mR[r];
+        if (cur === -1) {
+          mR[r] = p; mP[p] = r;
+          events.push({ p, r, kind: 'accept', dumped: -1 });
+        } else if (rank[r][p] < rank[r][cur]) {
+          mP[cur] = -1; mR[r] = p; mP[p] = r;
+          free.push(cur);
+          events.push({ p, r, kind: 'swap', dumped: cur });
+        } else {
+          free.push(p);
+          events.push({ p, r, kind: 'reject', dumped: -1 });
+        }
+      }
+      return { events, mP, mR };
+    }
+
+    // average rank obtained (1 = got their first choice)
+    function avgRank(side, partner) {
+      const n = S.n;
+      let sum = 0, cnt = 0;
+      for (let i = 0; i < n; i++) {
+        if (partner[i] >= 0) { sum += S.rank[side][i][partner[i]] + 1; cnt++; }
+      }
+      return cnt ? sum / cnt : NaN;
+    }
+
+    // A blocking pair: i and j are not together, and each prefers the other to
+    // what they currently have (being unmatched counts as worst of all).
+    function blockingPairs(m0, m1) {
+      const n = S.n;
+      let count = 0;
+      for (let i = 0; i < n; i++) {
+        const pi = m0[i];
+        for (let j = 0; j < n; j++) {
+          if (pi === j) continue;
+          const iWants = pi < 0 || S.rank[0][i][j] < S.rank[0][i][pi];
+          if (!iWants) continue;
+          const pj = m1[j];
+          const jWants = pj < 0 || S.rank[1][j][i] < S.rank[1][j][pj];
+          if (jWants) count++;
+        }
+      }
+      return count;
+    }
+
+    // A plausible-looking alternative: repeatedly take the pair with the best
+    // combined ranking among whoever is still free. Fast, tidy — and it leaves
+    // people who would both rather have walked.
+    function greedyMatch() {
+      const n = S.n;
+      const pairs = [];
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        pairs.push([i, j, S.rank[0][i][j] + S.rank[1][j][i]]);
+      }
+      pairs.sort((a, b) => a[2] - b[2]);
+      const m0 = new Array(n).fill(-1), m1 = new Array(n).fill(-1);
+      for (const [i, j] of pairs) {
+        if (m0[i] === -1 && m1[j] === -1) { m0[i] = j; m1[j] = i; }
+      }
+      S.greedyPairs = [m0, m1];
+      S.greedyBlock = blockingPairs(m0, m1);
+    }
+
+    // ---- run control ------------------------------------------------------
+    function reset(newPrefs) {
+      const n = S.n;
+      if (newPrefs) genPrefs();
+      const ps = pSide(), rs = rSide();
+      const run = runGS(ps);
+      S.events = run.events; S.evIdx = 0;
+      S.partner[0] = new Array(n).fill(-1);
+      S.partner[1] = new Array(n).fill(-1);
+      S.nextIdx = new Array(n).fill(0);
+      S.flash[0] = new Array(n).fill(null);
+      S.flash[1] = new Array(n).fill(null);
+      S.asks = 0; S.acc = 0; S.anim = null; S.done = false;
+      S.log = `<b class="${ps === 0 ? 'v' : 'p'}">${ps === 0 ? 'Letters' : 'Numbers'}</b> will do the asking. Everyone starts free.`;
+      greedyMatch();
+      // What the other side asking would give — computed silently, for contrast.
+      const otherRun = runGS(rs);
+      S.alt = {
+        pAvg: avgRank(rs, otherRun.mP),
+        rAvg: avgRank(ps, otherRun.mR)
+      };
+      readout();
+    }
+
+    function apply(ev) {
+      const ps = pSide(), rs = rSide();
+      S.nextIdx[ev.p]++;
+      S.asks++;
+      const L = (s, i) => `<b class="${s === 0 ? 'v' : 'p'}">${label(s, i)}</b>`;
+      if (ev.kind === 'accept') {
+        S.partner[ps][ev.p] = ev.r; S.partner[rs][ev.r] = ev.p;
+        S.flash[rs][ev.r] = { t: 0.55, kind: 'accept' };
+        S.log = `${L(ps, ev.p)} asked ${L(rs, ev.r)} — free, so yes. For now.`;
+      } else if (ev.kind === 'swap') {
+        S.partner[ps][ev.dumped] = -1;
+        S.partner[ps][ev.p] = ev.r; S.partner[rs][ev.r] = ev.p;
+        S.flash[rs][ev.r] = { t: 0.55, kind: 'accept' };
+        S.flash[ps][ev.dumped] = { t: 0.7, kind: 'dumped' };
+        S.log = `${L(ps, ev.p)} asked ${L(rs, ev.r)} — who was holding ${L(ps, ev.dumped)}, and ranks ${label(ps, ev.p)} higher. ${L(ps, ev.dumped)} is free again.`;
+      } else {
+        S.flash[ps][ev.p] = { t: 0.5, kind: 'reject' };
+        S.log = `${L(ps, ev.p)} asked ${L(rs, ev.r)} — already holding better. Refused; ${label(ps, ev.p)} moves one down the list.`;
+      }
+    }
+
+    function finish() {
+      S.done = true;
+      const b = blockingPairs(S.partner[0], S.partner[1]);
+      S.log = `Nobody is free, so it stops. <b>${b} blocking pairs</b> — there is no couple anywhere who would both rather have each other.`;
+    }
+
+    function skipToEnd() {
+      while (S.evIdx < S.events.length) apply(S.events[S.evIdx++]);
+      S.anim = null;
+      finish();
+      readout();
+    }
+
+    // ---- readout ----------------------------------------------------------
+    const fmt = (x) => Number.isFinite(x) ? x.toFixed(2) : '–';
+    function readout() {
+      const ps = pSide(), rs = rSide();
+      const shown = S.greedy && S.greedyPairs ? S.greedyPairs : S.partner;
+      const pAvg = avgRank(ps, shown[ps]), rAvg = avgRank(rs, shown[rs]);
+      els.asks.textContent = S.greedy ? '—' : S.asks;
+      els.p.textContent = fmt(pAvg);
+      els.r.textContent = fmt(rAvg);
+      const blocks = S.greedy ? S.greedyBlock : blockingPairs(shown[0], shown[1]);
+      els.block.textContent = blocks;
+      els.block.className = 'v ' + (blocks === 0 ? 'good' : 'warn');
+      if (S.greedy) {
+        els.status.className = 'full';
+        els.status.innerHTML = `A greedy pairing: take the best-matched couple still free, over and over. It looks reasonable and it is <b>not stable</b> — ${S.greedyBlock === 0 ? 'though this time it got lucky' : `${S.greedyBlock} pair${S.greedyBlock === 1 ? '' : 's'} would walk out of it`}.`;
+      } else {
+        els.status.className = 'full' + (S.done ? ' done' : '');
+        let txt = S.log;
+        if (S.done && S.alt) {
+          const askName = ps === 0 ? 'violet' : 'pink';
+          const othName = rs === 0 ? 'violet' : 'pink';
+          const cls = (s) => s === 0 ? 'v' : 'p';
+          txt += `<br />If <b class="${cls(rs)}">${othName}</b> asked instead: ${othName} ${fmt(S.alt.pAvg)}, ${askName} ${fmt(S.alt.rAvg)} — the advantage changes sides.`;
+        }
+        els.status.innerHTML = txt;
+      }
+      els.greedyNote.innerHTML = S.greedy
+        ? (S.done
+          ? 'The stable matching is still there underneath — flip back to compare them.'
+          : 'Deferred acceptance is still running underneath — flip back to watch it.')
+        : (S.done
+          ? 'Finished. Every ask is crossed off; nothing left can improve for both parties at once.'
+          : 'Deferred acceptance, running. Every provisional couple can still break.');
+    }
+
+    // ---- layout -----------------------------------------------------------
+    let LAY = null;
+    function layout() {
+      const n = S.n;
+      const uiEl = document.getElementById('ui');
+      const uiOn = !uiEl.classList.contains('hidden');
+      const narrow = W < 760;
+      const padL = (uiOn && W > 980) ? 396 : 20;
+      const padR = 20;
+      // On a phone the panel sits across the top, so start the columns below
+      // whatever height it actually took.
+      const padT = narrow
+        ? (uiOn ? Math.min(H * 0.7, uiEl.getBoundingClientRect().bottom + 40) : 74)
+        : 92;
+      const padB = W > 980 ? 134 : 96;   // keep the bottom cards clear of the legend
+      const availW = Math.max(200, W - padL - padR);
+      const availH = Math.max(120, H - padT - padB);
+      const step = availH / n;
+      const cardH = Math.max(18, Math.min(52, step - 6));
+      const cardW = Math.max(74, Math.min(230, availW * 0.33));
+      const span = Math.max(cardW * 2 + 60, Math.min(availW, cardW * 2 + 460));
+      const x0 = padL + (availW - span) / 2;
+      LAY = {
+        cardW, cardH, step,
+        yTop: padT + (availH - step * n) / 2,
+        x: [x0, x0 + span - cardW],
+        headY: Math.max(28, padT - 30)
+      };
+      return LAY;
+    }
+    const cardY = (i) => LAY.yTop + i * LAY.step + (LAY.step - LAY.cardH) / 2;
+    const cardCY = (i) => cardY(i) + LAY.cardH / 2;
+
+    // ---- drawing ----------------------------------------------------------
+    function roundRect(x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function linkPath(i, j) {
+      const ax = LAY.x[0] + LAY.cardW, ay = cardCY(i);
+      const bx = LAY.x[1], by = cardCY(j);
+      const dx = (bx - ax) * 0.45;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.bezierCurveTo(ax + dx, ay, bx - dx, by, bx, by);
+      return { ax, ay, bx, by, dx };
+    }
+
+    function bezPoint(p, t) {
+      const mt = 1 - t;
+      const x = mt * mt * mt * p.ax + 3 * mt * mt * t * (p.ax + p.dx) + 3 * mt * t * t * (p.bx - p.dx) + t * t * t * p.bx;
+      const y = mt * mt * mt * p.ay + 3 * mt * mt * t * p.ay + 3 * mt * t * t * p.by + t * t * t * p.by;
+      return { x, y };
+    }
+
+    function drawLinks() {
+      const n = S.n;
+      const shown = S.greedy && S.greedyPairs ? S.greedyPairs : S.partner;
+      for (let i = 0; i < n; i++) {
+        const j = shown[0][i];
+        if (j == null || j < 0) continue;
+        const p = linkPath(i, j);
+        const g = ctx.createLinearGradient(p.ax, p.ay, p.bx, p.by);
+        if (S.greedy) {
+          g.addColorStop(0, 'rgba(160,160,180,0.45)');
+          g.addColorStop(1, 'rgba(160,160,180,0.45)');
+        } else {
+          g.addColorStop(0, rgba(VIO, 0.75));
+          g.addColorStop(1, rgba(PNK, 0.75));
+        }
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.stroke();
+      }
+      // blocking pairs, drawn as the tension they are
+      if (S.greedy || S.done) {
+        const m0 = shown[0], m1 = shown[1];
+        ctx.setLineDash([6, 6]);
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = rgba(WARN, 0.5);
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j < n; j++) {
+            if (m0[i] === j) continue;
+            const pi = m0[i], pj = m1[j];
+            const iw = pi < 0 || S.rank[0][i][j] < S.rank[0][i][pi];
+            const jw = pj < 0 || S.rank[1][j][i] < S.rank[1][j][pj];
+            if (iw && jw) { linkPath(i, j); ctx.stroke(); }
+          }
+        }
+        ctx.setLineDash([]);
+      }
+    }
+
+    function drawCard(side, i) {
+      const n = S.n;
+      const isAsker = side === pSide();
+      const col = side === 0 ? VIO : PNK;
+      const partner = S.greedy && S.greedyPairs ? S.greedyPairs[side][i] : S.partner[side][i];
+      const engaged = partner >= 0;
+      const fl = S.flash[side][i];
+      const w = LAY.cardW, h = LAY.cardH;
+      let x = LAY.x[side], y = cardY(i);
+      if (fl && fl.kind === 'dumped') x += Math.sin(fl.t * 46) * 5 * (fl.t / 0.7);
+
+      const hovered = S.hover && S.hover.side === side && S.hover.i === i;
+
+      ctx.save();
+      if (fl) {
+        ctx.shadowColor = fl.kind === 'dumped' ? rgba(WARN, 0.9)
+          : fl.kind === 'reject' ? 'rgba(255,255,255,0.5)' : rgba(col, 0.9);
+        ctx.shadowBlur = 26 * (fl.t / 0.7);
+      } else if (hovered) {
+        ctx.shadowColor = rgba(col, 0.7); ctx.shadowBlur = 18;
+      }
+      roundRect(x, y, w, h, Math.min(12, h / 2.4));
+      ctx.fillStyle = engaged ? rgba(col, 0.13) : 'rgba(255,255,255,0.035)';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = hovered ? 2 : 1;
+      ctx.strokeStyle = hovered ? rgba(col, 0.95) : engaged ? rgba(col, 0.5) : 'rgba(255,255,255,0.11)';
+      ctx.stroke();
+      ctx.restore();
+
+      // name
+      const big = Math.min(17, h * 0.52);
+      ctx.font = `600 ${big}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+      ctx.fillStyle = engaged ? '#f2f2fa' : 'rgba(233,233,240,0.55)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label(side, i), x + 11, y + h / 2 + 0.5);
+
+      if (w < 118 || h < 24) return;
+
+      // rank badge
+      const rk = engaged ? S.rank[side][i][partner] + 1 : 0;
+      ctx.font = `600 ${Math.min(11, h * 0.34)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+      ctx.textAlign = 'right';
+      ctx.fillStyle = engaged ? rgba(col, 0.95) : 'rgba(255,255,255,0.22)';
+      ctx.fillText(engaged ? '#' + rk : '–', x + w - 10, y + h / 2 + 0.5);
+
+      // preference strip: the asking side's marker slides right (down the
+      // list), the answering side's marker slides left (trading up).
+      const sx = x + 11 + big * 0.95;
+      const sw = w - (sx - x) - 30;
+      if (sw < 20) return;
+      const tw = sw / n;
+      const th = Math.max(4, Math.min(8, h * 0.24));
+      const ty = y + h / 2 - th / 2;
+      const asked = isAsker ? S.nextIdx[i] : 0;
+      const prk = engaged ? S.rank[side][i][partner] : (isAsker ? -1 : n);
+      for (let k = 0; k < n; k++) {
+        const bx = sx + k * tw;
+        const bw = Math.max(1.5, tw - 2);
+        // Asking side: the names behind them are refusals, gone for good.
+        // Answering side: the names ahead of them are still live — they would
+        // trade up in a heartbeat if any of them ever knocked.
+        if (k === prk) ctx.fillStyle = rgba(col, 0.95);
+        else if (isAsker) ctx.fillStyle = k < asked ? rgba(WARN, 0.2) : 'rgba(255,255,255,0.09)';
+        else ctx.fillStyle = k < prk ? rgba(col, 0.3) : 'rgba(255,255,255,0.09)';
+        ctx.fillRect(bx, ty, bw, th);
+      }
+    }
+
+    function drawHeaders() {
+      const ps = pSide();
+      ctx.textBaseline = 'middle';
+      for (const side of [0, 1]) {
+        const col = side === 0 ? VIO : PNK;
+        ctx.textAlign = side === 0 ? 'left' : 'right';
+        const x = side === 0 ? LAY.x[0] : LAY.x[1] + LAY.cardW;
+        ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = rgba(col, 0.95);
+        ctx.fillText(side === ps ? 'THESE ASK' : 'THESE ANSWER', x, LAY.headY);
+        ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.34)';
+        ctx.fillText(side === ps ? 'working down their lists' : 'only ever trading up', x, LAY.headY + 17);
+      }
+    }
+
+    function drawHover() {
+      const { side, i } = S.hover;
+      const n = S.n;
+      const col = side === 0 ? VIO : PNK;
+      const other = 1 - side;
+      const partner = S.greedy && S.greedyPairs ? S.greedyPairs[side][i] : S.partner[side][i];
+      const prk = partner >= 0 ? S.rank[side][i][partner] : n;
+
+      // faint lines to everyone they still rank above what they've got
+      ctx.setLineDash([4, 5]);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = rgba(WARN, 0.28);
+      for (let k = 0; k < prk; k++) {
+        const j = S.pref[side][i][k];
+        if (side === 0) linkPath(i, j); else linkPath(j, i);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // the ranking, spelled out along the bottom
+      const chipW = Math.min(34, Math.max(18, (Math.min(W - 40, 760)) / n - 4));
+      const totalW = chipW * n + 4 * (n - 1);
+      const bx = Math.max(12, (W - totalW) / 2);
+      const by = H - 82;
+      ctx.font = '600 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let k = 0; k < n; k++) {
+        const j = S.pref[side][i][k];
+        const x = bx + k * (chipW + 4);
+        roundRect(x, by, chipW, 22, 7);
+        const isPartner = j === partner;
+        ctx.fillStyle = isPartner ? rgba(col, 0.32) : k < prk ? rgba(WARN, 0.14) : 'rgba(255,255,255,0.05)';
+        ctx.fill();
+        ctx.lineWidth = isPartner ? 1.6 : 1;
+        ctx.strokeStyle = isPartner ? rgba(col, 0.95) : k < prk ? rgba(WARN, 0.4) : 'rgba(255,255,255,0.1)';
+        ctx.stroke();
+        ctx.fillStyle = isPartner ? '#ffffff' : k < prk ? 'rgba(255,236,220,0.9)' : 'rgba(255,255,255,0.4)';
+        ctx.fillText(label(other, j), x + chipW / 2, by + 11.5);
+      }
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      const name = label(side, i);
+      const msg = partner >= 0
+        ? `${name} ranks them best-first · holding ${label(other, partner)} (choice #${prk + 1})` +
+          (prk > 0 ? ` · would leave for any of the ${prk} in amber` : ' · nobody left to want')
+        : `${name} ranks them best-first · currently with nobody`;
+      ctx.fillText(msg, W / 2, by - 12);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      layout();
+      drawLinks();
+      if (S.hover) drawHover();
+      for (let i = 0; i < S.n; i++) { drawCard(0, i); drawCard(1, i); }
+      drawHeaders();
+
+      // the ask in flight
+      if (S.anim) {
+        const a = S.anim;
+        const t = a.t < 0.5 ? 2 * a.t * a.t : 1 - Math.pow(-2 * a.t + 2, 2) / 2;
+        const i = pSide() === 0 ? a.ev.p : a.ev.r;
+        const j = pSide() === 0 ? a.ev.r : a.ev.p;
+        const p = linkPath(i, j);
+        ctx.setLineDash([5, 7]);
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const fwd = pSide() === 0;
+        const pt = bezPoint(p, fwd ? t : 1 - t);
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff6fb';
+        ctx.shadowColor = 'rgba(255,255,255,0.9)';
+        ctx.shadowBlur = 16;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // ---- loop -------------------------------------------------------------
+    let last = 0;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000 || 0);
+      last = now;
+
+      for (const side of [0, 1]) {
+        for (let i = 0; i < S.n; i++) {
+          const f = S.flash[side][i];
+          if (f) { f.t -= dt; if (f.t <= 0) S.flash[side][i] = null; }
+        }
+      }
+
+      if (!S.done && !S.greedy) {
+        const dur = 1 / S.speed;
+        if (S.anim) {
+          S.anim.t += dt / dur;
+          if (S.anim.t >= 1) { apply(S.anim.ev); S.anim = null; readout(); }
+        } else {
+          S.acc += dt;
+          if (S.acc >= dur * 0.25) {
+            S.acc = 0;
+            if (S.evIdx < S.events.length) S.anim = { ev: S.events[S.evIdx++], t: 0 };
+            else { finish(); readout(); }
+          }
+        }
+      }
+
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- interaction ------------------------------------------------------
+    function hitTest(mx, my) {
+      if (!LAY) return null;
+      for (const side of [0, 1]) {
+        const x = LAY.x[side];
+        if (mx < x - 6 || mx > x + LAY.cardW + 6) continue;
+        for (let i = 0; i < S.n; i++) {
+          const y = cardY(i);
+          if (my >= y - 3 && my <= y + LAY.cardH + 3) return { side, i };
+        }
+      }
+      return null;
+    }
+    function pointer(e) {
+      const t = e.touches && e.touches[0] ? e.touches[0] : e;
+      S.hover = hitTest(t.clientX, t.clientY);
+    }
+    canvas.addEventListener('mousemove', pointer);
+    canvas.addEventListener('mouseleave', () => { S.hover = null; });
+    canvas.addEventListener('touchstart', (e) => { pointer(e); }, { passive: true });
+    canvas.addEventListener('touchmove', (e) => { pointer(e); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchend', () => { S.hover = null; });
+
+    els.n.addEventListener('input', () => {
+      S.n = +els.n.value; els.nVal.textContent = S.n;
+      reset(true);
+    });
+    els.corr.addEventListener('input', () => {
+      S.corr = +els.corr.value / 100;
+      els.corrVal.textContent = els.corr.value + '%';
+      reset(true);
+    });
+    els.speed.addEventListener('input', () => {
+      S.speed = +els.speed.value; els.speedVal.textContent = S.speed;
+    });
+    els.sideToggle.addEventListener('click', () => {
+      S.leftAsks = !S.leftAsks;
+      els.sideToggle.classList.toggle('on', !S.leftAsks);
+      els.sideLabel.innerHTML = S.leftAsks
+        ? 'Asking side: <b style="color:#b0b0ff">the violet letters</b>'
+        : 'Asking side: <b style="color:#ff9fd2">the pink numbers</b>';
+      reset(false);   // same tastes, other side speaks first
+    });
+    els.greedyToggle.addEventListener('click', () => {
+      S.greedy = !S.greedy;
+      els.greedyToggle.classList.toggle('on', S.greedy);
+      readout();
+    });
+    document.getElementById('regen').addEventListener('click', () => reset(true));
+    document.getElementById('skip').addEventListener('click', () => {
+      if (S.greedy) { S.greedy = false; els.greedyToggle.classList.remove('on'); }
+      skipToEnd();
+    });
+
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
+
+    resize();
+    reset(true);
+    requestAnimationFrame((t) => { last = t; frame(t); });
+  })();
+</script>
+</body>
+</html>
