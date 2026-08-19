@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Short Words for Common Things — Experiment 065</title>
+<meta name="description" content="Huffman coding, built the way Huffman built it: merge the two rarest symbols, over and over, until one tree is left and the commonest letters have the shortest codes." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 10px 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 14px; }
+
+  .controls { display: grid; gap: 11px; }
+
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .note b { color: #b0b0ff; font-weight: 600; }
+  .row .note { margin-top: -1px; }
+
+  textarea {
+    width: 100%; resize: none;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: #e9e9f0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem; line-height: 1.5;
+    padding: 9px 10px;
+    outline: none;
+  }
+  textarea:focus { border-color: rgba(124,124,255,0.55); background: rgba(124,124,255,0.07); }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.small { font-size: 0.74rem; padding: 7px 8px; flex: 1 1 44%; }
+  .btn.small.on { background: rgba(124,124,255,0.34); border-color: rgba(124,124,255,0.75); color: #fff; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.warn { color: #ffb072; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full.done b { color: #8affc0; }
+  .readout .full code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #ffd6ec; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 232px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 13px; height: 13px; border-radius: 4px; flex: none; display: block; }
+  .legend i.leaf { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .legend i.node { background: rgba(255,255,255,0.18); border-radius: 50%; }
+  .legend i.next { background: rgba(255,176,114,0.75); box-shadow: 0 0 8px rgba(255,176,114,0.5); }
+  .legend i.one { background: rgba(176,176,255,0.9); }
+  .legend i.zero { background: rgba(176,176,255,0.28); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 980px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 620px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 52vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .controls { gap: 9px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Short Words for Common Things</h1>
+    <p class="sub">Experiment № 065 · August 19, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>The message <b id="lenVal">0 chars</b></label>
+        <textarea id="text" rows="3" spellcheck="false" maxlength="400"></textarea>
+        <p class="note">Every character counts, spaces included. Capitals are their own symbols.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn small" id="pEnglish">a sentence</button>
+        <button class="btn small" id="pDna">a strand of DNA</button>
+        <button class="btn small" id="pSkew">almost all one letter</button>
+        <button class="btn small" id="pEven">eight, all equal</button>
+      </div>
+
+      <div class="row">
+        <label>Merges per second <b id="speedVal">3</b></label>
+        <input type="range" id="speed" min="1" max="30" step="1" value="3" />
+      </div>
+
+      <div class="readout">
+        <span class="k">Distinct symbols</span><span class="v" id="mSym">–</span>
+        <span class="k">Fixed width, every symbol</span><span class="v" id="mFixed">–</span>
+        <span class="k">Huffman, this message</span><span class="v violet" id="mHuff">–</span>
+        <span class="k">Bits saved</span><span class="v good" id="mSaved">–</span>
+        <hr />
+        <span class="k">Average code length</span><span class="v violet" id="mAvg">–</span>
+        <span class="k">Entropy — the floor</span><span class="v pinkv" id="mEnt">–</span>
+        <hr />
+        <span class="full" id="mStatus">Type something, or pick a source above.</span>
+      </div>
+
+      <div class="toggle" id="uniformToggle">
+        <span>Show the fixed-width code instead</span>
+        <span class="pill"></span>
+      </div>
+      <p class="note" id="uniformNote">Huffman code, running. Rare symbols pay; common ones don't.</p>
+
+      <div class="btn-row">
+        <button class="btn pink" id="replay">↻ replay the merges</button>
+        <button class="btn" id="skip">⏭ straight to it</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="leaf"></i> a symbol, with how often it appears</div>
+    <div><i class="node"></i> a merged node — the two weights added</div>
+    <div><i class="next"></i> the two rarest: next to be merged</div>
+    <div><i class="one"></i> a 1 bit &nbsp;<i class="zero"></i> a 0 bit</div>
+  </div>
+
+  <p class="hint">hover a letter to trace its path and light up its bits · type your own message · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 065 · The story</p>
+      <h2>Short Words for Common Things</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Because the origin story is too good to leave alone. In 1951 Robert Fano gave his MIT information theory class a choice: sit the final exam, or write a term paper finding the optimal way to assign codes to symbols. Fano didn't mention that he and Shannon had already failed at it. David Huffman, twenty-five, spent months on it, got nowhere, and was throwing his notes away when the answer arrived — and it arrived because he stopped building the code the way everyone else did. Shannon and Fano had worked <em>top down</em>, splitting the alphabet into halves of roughly equal probability. Huffman went <em>bottom up</em>: find the two rarest symbols, and whatever else is true of the best code, those two must sit deepest and be siblings. Merge them, treat the pair as one symbol, repeat. Sixty-odd experiments in, I wanted one where the whole algorithm fits in a sentence and still comes with a proof of optimality — and one that is running, right now, inside every JPEG and every zip file on your machine.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>That the queue does the thinking. The strip of trees is kept sorted by weight, so the next merge is always the leftmost pair — there is no search anywhere, no comparing of alternatives, no backtracking. Just take the two smallest, over and over. And nothing has a code until the very last merge: the bits are read off the finished tree from the root down, so a letter's code is not <em>decided</em> at any point, it is a consequence of how many merges happened above it. Watch where the common letters end up — a hair below the root, one or two bits deep — while the ones that appear twice sink to the floor. The moment I like best is the fixed-width toggle on the eight-equal preset: Huffman spends exactly three bits per symbol, saves absolutely nothing, and is still provably optimal. When every symbol is equally surprising, there is no cleverness available. That's not a failure of the algorithm; it's the algorithm telling you the truth about your data.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Price should track surprise. Shannon's entropy says a symbol of probability <em>p</em> is worth −log₂<em>p</em> bits and no fewer, and Huffman gets within one bit of that floor without ever computing a logarithm — it just lets frequency decide depth. But look at the <em>almost all one letter</em> preset: the floor is around a third of a bit per symbol, and Huffman still pays a full bit, because the cheapest code it is allowed to write is one bit long. That gap isn't inefficiency, it's the granularity of the format — and it is the entire reason arithmetic coding, which lets a symbol cost a fraction of a bit, exists at all. So when something optimal still looks expensive, the question worth asking isn't whether the algorithm is smart enough. It's what unit you've been forced to pay in.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') {
+      if (e.key === 'Escape') document.activeElement.blur();
+      return;
+    }
+    if (e.key && e.key.toLowerCase() === 'h') togglePanel();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  function togglePanel() {
+    const hidden = document.getElementById('ui').classList.toggle('hidden');
+    document.getElementById('legend').classList.toggle('hidden', hidden);
+    document.getElementById('showUi').classList.toggle('on', hidden);
+  }
+  document.getElementById('collapse').addEventListener('click', togglePanel);
+  document.getElementById('showUi').addEventListener('click', togglePanel);
+
+  // ---- HUFFMAN CODING ------------------------------------------------------
+  // David A. Huffman, "A Method for the Construction of Minimum-Redundancy
+  // Codes", Proceedings of the IRE 40 (1952) — written as a term paper.
+  //
+  //   count every symbol
+  //   put each symbol in a queue, sorted by count
+  //   while more than one tree remains:
+  //     pull the two lightest, join them under a new node
+  //     the new node's weight is the sum; put it back in the queue
+  //   read the codes off the finished tree: left = 0, right = 1
+  //
+  // The greedy choice is safe because of one observation: in *any* optimal
+  // prefix code the two rarest symbols can be made siblings at the greatest
+  // depth, so merging them costs nothing you could have saved elsewhere. The
+  // result minimises the total bits — no prefix code does better on this text.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, dpr = 1;
+
+    const VIO = [124, 124, 255];
+    const PNK = [255, 124, 195];
+    const WARN = [255, 176, 114];
+    const rgba = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
+    const mix = (a, b, t) => [
+      Math.round(a[0] + (b[0] - a[0]) * t),
+      Math.round(a[1] + (b[1] - a[1]) * t),
+      Math.round(a[2] + (b[2] - a[2]) * t)
+    ];
+    const clamp = (v, lo, hi) => v < lo ? lo : (v > hi ? hi : v);
+    const fmt = (n) => n.toLocaleString('en-US');
+
+    // ---- sources ----------------------------------------------------------
+    const ENGLISH = 'every letter here gets counted, and the ones that show up most often are the ones that end up with the shortest codes. that is the whole trick, and you can watch it happen in the tree above.';
+
+    function dna(n) {
+      // A deterministic strand with lopsided base frequencies, so the four
+      // letters end up with codes of two different lengths.
+      let s = 20260819, out = '';
+      for (let i = 0; i < n; i++) {
+        s = (s * 1103515245 + 12345) & 0x7fffffff;
+        const r = ((s >>> 9) & 0xffff) / 65536;
+        out += r < 0.40 ? 'A' : r < 0.70 ? 'T' : r < 0.89 ? 'G' : 'C';
+      }
+      return out;
+    }
+
+    function lopsided(n) {
+      let out = '';
+      for (let i = 0; i < n; i++) {
+        out += (i % 41 === 0) ? 'b' : (i % 59 === 0) ? 'c' : (i % 97 === 0) ? 'd' : 'a';
+      }
+      return out;
+    }
+
+    const SOURCES = {
+      english: ENGLISH,
+      dna: dna(240),
+      skew: lopsided(200),
+      even: 'abcdefgh'.repeat(25)
+    };
+
+    // ---- state ------------------------------------------------------------
+    const S = {
+      text: '',
+      leaves: [], nodes: [], steps: [], root: null, rootH: 0,
+      revealed: 0, done: false,
+      speed: 3, acc: 0,
+      uniform: false,
+      hover: null,          // a character
+      len: 0, k: 0,
+      fixedLen: 0, fixedBits: 0, huffBits: 0, avg: 0, entropy: 0,
+      encoded: [],          // {ch, bit, si} for the whole message
+      colorOf: new Map(),   // ch -> [r,g,b]
+      codeOf: new Map(),    // ch -> "0110"
+      countOf: new Map(),
+      preset: 'english'
+    };
+
+    const els = {
+      text: document.getElementById('text'),
+      lenVal: document.getElementById('lenVal'),
+      speed: document.getElementById('speed'), speedVal: document.getElementById('speedVal'),
+      sym: document.getElementById('mSym'), fixed: document.getElementById('mFixed'),
+      huff: document.getElementById('mHuff'), saved: document.getElementById('mSaved'),
+      avg: document.getElementById('mAvg'), ent: document.getElementById('mEnt'),
+      status: document.getElementById('mStatus'),
+      uniformToggle: document.getElementById('uniformToggle'),
+      uniformNote: document.getElementById('uniformNote'),
+      presets: {
+        english: document.getElementById('pEnglish'),
+        dna: document.getElementById('pDna'),
+        skew: document.getElementById('pSkew'),
+        even: document.getElementById('pEven')
+      }
+    };
+
+    const glyph = (ch) => ch === ' ' ? '␣' : ch === '\n' ? '⏎' : ch === '\t' ? '⇥' : ch;
+
+    // ---- build ------------------------------------------------------------
+    // Ordering rule for the queue: lighter first; ties broken by id, so a node
+    // created later sits behind an equally light one. Deterministic, and it
+    // keeps subtrees contiguous on screen — the tree never crosses itself.
+    const cmp = (a, b) => (a.w - b.w) || (a.id - b.id);
+
+    function insertSorted(pool, node) {
+      let i = 0;
+      while (i < pool.length && cmp(pool[i], node) <= 0) i++;
+      pool.splice(i, 0, node);
+    }
+
+    function build(text) {
+      S.text = text;
+      S.countOf = new Map();
+      for (const ch of text) S.countOf.set(ch, (S.countOf.get(ch) || 0) + 1);
+
+      S.len = text.length;
+      S.k = S.countOf.size;
+      S.leaves = [];
+      S.nodes = [];
+      S.steps = [];
+      S.root = null;
+      S.rootH = 0;
+      S.revealed = 0;
+      S.done = false;
+      S.acc = 0;
+      S.codeOf = new Map();
+      S.colorOf = new Map();
+      S.encoded = [];
+      S.hover = null;
+
+      if (S.k === 0) { readout(); return; }
+
+      // Colour by rank: the commonest symbol violet, the rarest pink.
+      const byFreq = [...S.countOf.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+      byFreq.forEach(([ch], i) => {
+        const t = byFreq.length > 1 ? i / (byFreq.length - 1) : 0;
+        S.colorOf.set(ch, mix(VIO, PNK, t));
+      });
+
+      // Leaves, in a stable order: rarest on the left.
+      const order = [...S.countOf.entries()].sort((a, b) => a[1] - b[1] || (a[0] < b[0] ? -1 : 1));
+      order.forEach(([ch, w]) => {
+        const leaf = { id: S.nodes.length, ch, w, l: null, r: null, h: 0, par: null, step: -1 };
+        S.nodes.push(leaf); S.leaves.push(leaf);
+      });
+
+      // The algorithm itself, played out in full and recorded as steps so the
+      // animation can reveal it one merge at a time.
+      const pool = S.leaves.slice().sort(cmp);
+      while (pool.length > 1) {
+        const a = pool.shift(), b = pool.shift();
+        const p = {
+          id: S.nodes.length, ch: null, w: a.w + b.w,
+          l: a, r: b, h: Math.max(a.h, b.h) + 1, par: null, step: -1
+        };
+        a.par = p; b.par = p;
+        a.step = S.steps.length; b.step = S.steps.length;
+        S.nodes.push(p);
+        S.steps.push({ a, b, p });
+        insertSorted(pool, p);
+      }
+      S.root = pool[0];
+      S.rootH = S.root.h;
+
+      // Codes: left branch 0, right branch 1. A single-symbol message still
+      // needs one bit — you cannot spend nothing and still say something.
+      if (S.k === 1) {
+        S.codeOf.set(S.leaves[0].ch, '0');
+      } else {
+        const walk = (n, code) => {
+          if (!n.l) { S.codeOf.set(n.ch, code); return; }
+          walk(n.l, code + '0');
+          walk(n.r, code + '1');
+        };
+        walk(S.root, '');
+      }
+
+      // Arithmetic: what it costs fixed-width, what it costs coded, and the
+      // entropy floor underneath both.
+      S.fixedLen = Math.max(1, Math.ceil(Math.log2(S.k)));
+      S.fixedBits = S.fixedLen * S.len;
+      S.huffBits = 0; S.entropy = 0;
+      for (const [ch, w] of S.countOf) {
+        S.huffBits += w * S.codeOf.get(ch).length;
+        const p = w / S.len;
+        S.entropy -= p * Math.log2(p);
+      }
+      S.avg = S.huffBits / S.len;
+
+      // The message, bit by bit, tagged with which symbol each bit belongs to.
+      let si = 0;
+      for (const ch of text) {
+        const code = S.codeOf.get(ch);
+        for (let i = 0; i < code.length; i++) S.encoded.push({ ch, bit: code[i], si });
+        si++;
+      }
+
+      readout();
+    }
+
+    // Replay the first `n` merges and return the queue as it stood then.
+    function liveQueue(n) {
+      const pool = S.leaves.slice().sort(cmp);
+      for (let i = 0; i < n; i++) {
+        pool.shift(); pool.shift();
+        insertSorted(pool, S.steps[i].p);
+      }
+      return pool;
+    }
+
+    // ---- layout -----------------------------------------------------------
+    let LAY = null;
+
+    function layout() {
+      const uiEl = document.getElementById('ui');
+      const uiOn = !uiEl.classList.contains('hidden');
+      const narrow = W < 760;
+      const padL = (uiOn && W > 980) ? 400 : 18;
+      const padR = 18;
+      const padT = narrow
+        ? (uiOn ? Math.min(H * 0.62, uiEl.getBoundingClientRect().bottom + 22) : 62)
+        : 44;
+
+      const bandH = clamp(H * 0.34, 120, 210);
+      const bandTop = H - bandH;
+      const leafY = bandTop - (narrow ? 40 : 52);
+      const levelH = clamp((leafY - padT - 26) / Math.max(1, S.rootH), 16, 62);
+      const availW = Math.max(120, W - padL - padR);
+      const nLeaves = Math.max(1, S.leaves.length);
+      const step = Math.min(96, availW / nLeaves);
+      const x0 = padL + (availW - step * nLeaves) / 2;
+
+      // The legend sits bottom-right on wide screens; keep the ribbon clear.
+      const ribR = W > 980 ? 268 : 18;
+
+      LAY = {
+        padL, padR, padT, leafY, levelH, step, x0, narrow,
+        bandTop,
+        barY: bandTop + (narrow ? 6 : 12),
+        barW: Math.max(120, W - padL - ribR),
+        ribTop: bandTop + (narrow ? 56 : 70),
+        ribBot: H - (narrow ? 56 : 64),
+        ribW: Math.max(120, W - padL - ribR)
+      };
+      return LAY;
+    }
+
+    // ---- animated node positions -----------------------------------------
+    function place(node, xs, out) {
+      // x is the mean of the subtree's leaf slots; y is set by height, so the
+      // tree grows upward out of the row of symbols.
+      if (!node.l) {
+        node.tx = xs.next();
+        node.ty = LAY.leafY;
+      } else {
+        place(node.l, xs, out);
+        place(node.r, xs, out);
+        node.tx = (node.l.tx + node.r.tx) / 2;
+        node.ty = LAY.leafY - node.h * LAY.levelH;
+      }
+      out.push(node);
+    }
+
+    function positions(pool) {
+      let i = 0;
+      const xs = { next: () => LAY.x0 + (i++ + 0.5) * LAY.step };
+      const all = [];
+      for (const root of pool) place(root, xs, all);
+      for (const n of all) {
+        if (n.x === undefined) {
+          // A node born this frame slides out from between its children.
+          if (n.l && n.l.x !== undefined) { n.x = (n.l.x + n.r.x) / 2; n.y = Math.min(n.l.y, n.r.y); }
+          else { n.x = n.tx; n.y = n.ty; }
+        }
+        n.x += (n.tx - n.x) * 0.2;
+        n.y += (n.ty - n.y) * 0.2;
+      }
+      return all;
+    }
+
+    // ---- drawing ----------------------------------------------------------
+    function hoverPath() {
+      // The chain of nodes from the hovered symbol up to whatever root it
+      // currently belongs to — only through merges that have happened.
+      if (!S.hover) return null;
+      const leaf = S.leaves.find((l) => l.ch === S.hover);
+      if (!leaf) return null;
+      const chain = [leaf];
+      let n = leaf;
+      while (n.par && n.step < S.revealed) { chain.push(n.par); n = n.par; }
+      return chain;
+    }
+
+    function drawTree(pool) {
+      const all = positions(pool);
+      const chain = hoverPath();
+      const inChain = new Set(chain ? chain.map((n) => n.id) : []);
+      const next = (!S.done && S.revealed < S.steps.length)
+        ? [S.steps[S.revealed].a.id, S.steps[S.revealed].b.id] : [];
+
+      // edges
+      for (const n of all) {
+        if (!n.l) continue;
+        for (const [kid, bit] of [[n.l, '0'], [n.r, '1']]) {
+          const hot = inChain.has(n.id) && inChain.has(kid.id);
+          ctx.beginPath();
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(kid.x, (kid.l ? kid.y : kid.y - 15));
+          ctx.strokeStyle = hot ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.16)';
+          ctx.lineWidth = hot ? 2.4 : 1.2;
+          ctx.stroke();
+          if (LAY.levelH >= 24 && LAY.step >= 26) {
+            const mx = (n.x + kid.x) / 2, my = (n.y + kid.y) / 2;
+            ctx.font = '600 10px ui-monospace, Menlo, monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = hot ? 'rgba(255,255,255,0.95)' : 'rgba(176,176,255,0.5)';
+            ctx.fillText(bit, mx + (bit === '0' ? -7 : 7), my);
+          }
+        }
+      }
+
+      // internal nodes
+      for (const n of all) {
+        if (!n.l) continue;
+        const hot = inChain.has(n.id);
+        const isNext = next.indexOf(n.id) >= 0;
+        const r = clamp(LAY.levelH * 0.28, 7, 15);
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = isNext ? rgba(WARN, 0.28) : 'rgba(255,255,255,0.07)';
+        ctx.fill();
+        ctx.strokeStyle = isNext ? rgba(WARN, 0.9) : (hot ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.2)');
+        ctx.lineWidth = isNext || hot ? 1.8 : 1;
+        ctx.stroke();
+        if (r >= 10) {
+          ctx.font = '600 ' + Math.round(r * 0.86) + 'px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = isNext ? '#ffd9b8' : 'rgba(233,233,240,0.75)';
+          ctx.fillText(String(n.w), n.x, n.y + 0.5);
+        }
+      }
+
+      // leaves
+      const cw = Math.min(LAY.step - (LAY.narrow ? 2.5 : 6), 62);
+      const showText = cw >= 9;
+      const tiny = cw < 17;
+      for (const n of all) {
+        if (n.l) continue;
+        const col = S.colorOf.get(n.ch) || VIO;
+        const hot = S.hover === n.ch;
+        const isNext = next.indexOf(n.id) >= 0;
+        const h = 30, x = n.x - cw / 2, y = n.y - 15;
+        roundRect(x, y, cw, h, 8);
+        ctx.fillStyle = rgba(col, hot ? 0.42 : 0.16);
+        ctx.fill();
+        ctx.strokeStyle = isNext ? rgba(WARN, 0.9) : rgba(col, hot ? 1 : 0.6);
+        ctx.lineWidth = hot || isNext ? 1.9 : 1;
+        ctx.stroke();
+        if (showText) {
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = (tiny ? '700 9px' : '700 14px') + ' ui-monospace, Menlo, monospace';
+          ctx.fillStyle = hot ? '#ffffff' : '#e9e9f0';
+          ctx.fillText(glyph(n.ch), n.x, y + (tiny ? 15 : 11));
+          if (!tiny) {
+            ctx.font = '600 9px ui-sans-serif, system-ui, sans-serif';
+            ctx.fillStyle = rgba(col, 0.85);
+            ctx.fillText(String(n.w), n.x, y + 23);
+          }
+        }
+        // the code, once the tree is finished
+        if (S.done && showText && !tiny) {
+          const code = S.codeOf.get(n.ch) || '';
+          ctx.font = '600 9px ui-monospace, Menlo, monospace';
+          ctx.fillStyle = hot ? '#ffffff' : 'rgba(176,176,255,0.72)';
+          const maxChars = Math.floor(cw / 5.2);
+          ctx.fillText(code.length > maxChars ? code.slice(0, maxChars - 1) + '…' : code, n.x, y + h + 10);
+        }
+      }
+    }
+
+    function roundRect(x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+
+    function drawBars() {
+      const x = LAY.padL, y = LAY.barY, w = LAY.barW;
+      const h = LAY.narrow ? 9 : 11;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+
+      if (!S.k) {
+        ctx.font = '13px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillText('Nothing to encode yet.', x, y + 20);
+        return;
+      }
+
+      const maxBits = Math.max(1, S.fixedBits);
+      const fixedW = w;
+      const huffW = w * (S.huffBits / maxBits);
+
+      const label = (t, yy, col) => {
+        ctx.font = '600 10.5px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = col;
+        ctx.fillText(t, x, yy);
+      };
+
+      label(S.fixedLen + ' bits each, no code — ' + fmt(S.fixedBits) + ' bits', y, 'rgba(255,255,255,0.5)');
+      roundRect(x, y + 9, fixedW, h, 4);
+      ctx.fillStyle = 'rgba(255,255,255,0.13)';
+      ctx.fill();
+
+      const y2 = y + 9 + h + (LAY.narrow ? 12 : 16);
+      if (S.done) {
+        const pct = Math.round((1 - S.huffBits / S.fixedBits) * 100);
+        label('Huffman — ' + fmt(S.huffBits) + ' bits' + (pct > 0 ? '  ·  ' + pct + '% less' : '  ·  nothing saved'),
+          y2, '#cfcfff');
+        const g = ctx.createLinearGradient(x, 0, x + Math.max(2, huffW), 0);
+        g.addColorStop(0, rgba(VIO, 0.85));
+        g.addColorStop(1, rgba(PNK, 0.85));
+        roundRect(x, y2 + 9, Math.max(2, huffW), h, 4);
+        ctx.fillStyle = g;
+        ctx.fill();
+      } else {
+        label('Huffman — no code exists until the last merge', y2, 'rgba(255,255,255,0.32)');
+        roundRect(x, y2 + 9, w, h, 4);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    function drawRibbon() {
+      if (!S.k) return;
+      const x = LAY.padL, top = LAY.ribTop, w = LAY.ribW;
+      const availH = LAY.ribBot - top;
+      if (availH < 26) return;
+
+      const cw = LAY.narrow ? 5 : 8;
+      const ch = LAY.narrow ? 11 : 14;
+      const rowGap = 5;
+      const perRow = Math.max(8, Math.floor(w / cw));
+      const maxRows = Math.max(1, Math.floor((availH + rowGap) / (ch + rowGap)));
+
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+
+      if (!S.done && !S.uniform) {
+        ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.28)';
+        ctx.fillText('the bits arrive when the tree does', x, top + 12);
+        return;
+      }
+
+      // Either the Huffman stream, or the same message at fixed width.
+      let stream;
+      if (S.uniform) {
+        stream = [];
+        let si = 0;
+        const idx = new Map();
+        [...S.countOf.keys()].forEach((c, i) => idx.set(c, i));
+        for (const c of S.text) {
+          const bits = idx.get(c).toString(2).padStart(S.fixedLen, '0');
+          for (const b of bits) stream.push({ ch: c, bit: b, si });
+          si++;
+        }
+      } else {
+        stream = S.encoded;
+      }
+
+      const shown = Math.min(stream.length, perRow * maxRows);
+      let col = 0, row = 0, lastSi = -1;
+      for (let i = 0; i < shown; i++) {
+        const e = stream[i];
+        const fresh = e.si !== lastSi;
+        lastSi = e.si;
+        const bx = x + col * cw, by = top + row * (ch + rowGap);
+        const c = S.colorOf.get(e.ch) || VIO;
+        const hot = S.hover === e.ch;
+        const on = e.bit === '1';
+        ctx.fillStyle = hot
+          ? (on ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)')
+          : rgba(c, on ? 0.85 : 0.22);
+        ctx.fillRect(bx, by, cw - 1.6, ch);
+        // A tick above the first bit of each symbol: where one letter's word
+        // ends and the next begins — nothing in the stream itself says so.
+        if (fresh) {
+          ctx.fillStyle = hot ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.22)';
+          ctx.fillRect(bx, by - 3, 1.6, 2);
+        }
+        col++;
+        if (col >= perRow) { col = 0; row++; if (row >= maxRows) break; }
+      }
+
+      ctx.font = '10.5px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.34)';
+      const tail = shown < stream.length
+        ? 'first ' + fmt(shown) + ' of ' + fmt(stream.length) + ' bits'
+        : fmt(stream.length) + ' bits, the whole message';
+      const ty = Math.min(LAY.ribBot + 13, H - (LAY.narrow ? 26 : 34));
+      ctx.fillText((S.uniform ? 'fixed width · ' : 'huffman coded · ') + tail, x, ty);
+    }
+
+    function draw() {
+      layout();
+      ctx.clearRect(0, 0, W, H);
+      if (S.k) drawTree(liveQueue(S.revealed));
+      drawBars();
+      drawRibbon();
+    }
+
+    // ---- readout ----------------------------------------------------------
+    function readout() {
+      els.lenVal.textContent = S.len + ' char' + (S.len === 1 ? '' : 's');
+      els.status.className = 'full';
+      if (!S.k) {
+        els.sym.textContent = els.fixed.textContent = els.huff.textContent = '–';
+        els.saved.textContent = els.avg.textContent = els.ent.textContent = '–';
+        els.status.innerHTML = 'Type something, or pick a source above.';
+        return;
+      }
+      els.sym.textContent = S.k;
+      els.fixed.textContent = S.fixedLen + ' × ' + fmt(S.len) + ' = ' + fmt(S.fixedBits) + ' bits';
+      els.ent.textContent = S.entropy.toFixed(2) + ' b/sym';
+
+      if (!S.done) {
+        const left = S.steps.length - S.revealed;
+        els.huff.textContent = '…';
+        els.saved.textContent = '…';
+        els.avg.textContent = '…';
+        if (S.revealed === 0) {
+          els.status.innerHTML = '<b>' + S.k + '</b> trees, one per symbol, sorted by how often it appears. The two lightest go first.';
+        } else {
+          const st = S.steps[S.revealed - 1];
+          const nm = (n) => n.l ? String(n.w) : glyph(n.ch) + '(' + n.w + ')';
+          els.status.innerHTML = 'Merged <b class="v">' + nm(st.a) + '</b> and <b class="p">' + nm(st.b) +
+            '</b> → <b>' + st.p.w + '</b>. ' + (left === 0 ? 'Done.' : left + ' merge' + (left === 1 ? '' : 's') + ' to go.');
+        }
+        return;
+      }
+
+      const pct = Math.round((1 - S.huffBits / S.fixedBits) * 100);
+      els.huff.textContent = fmt(S.huffBits) + ' bits';
+      els.saved.textContent = pct + '%';
+      els.saved.className = 'v ' + (pct > 0 ? 'good' : 'warn');
+      els.avg.textContent = S.avg.toFixed(2) + ' b/sym';
+
+      if (S.hover) {
+        const code = S.codeOf.get(S.hover) || '';
+        const w = S.countOf.get(S.hover) || 0;
+        els.status.innerHTML = '<b>' + glyph(S.hover) + '</b> appears <b>' + w + '×</b> and costs <code>' + code +
+          '</code> — <b>' + code.length + ' bit' + (code.length === 1 ? '' : 's') + '</b>, ' + (w * code.length) + ' in total.';
+        return;
+      }
+
+      const gap = S.avg - S.entropy;
+      if (S.k === 1) {
+        els.status.innerHTML = 'One symbol, zero surprise — the message carries no information at all, and a code still has to spend a bit per character to say so.';
+      } else if (pct === 0) {
+        els.status.innerHTML = 'Optimal — and it saved nothing. Every symbol is equally likely, so there is no cheap one to reward.';
+      } else if (gap > 0.4) {
+        els.status.innerHTML = 'Optimal, yet <b>' + gap.toFixed(2) + '</b> bits/symbol above the floor: no code here can charge less than one whole bit for a symbol.';
+      } else {
+        els.status.innerHTML = 'Optimal. No prefix code spends fewer bits on this text — and it lands <b>' +
+          gap.toFixed(2) + '</b> bits/symbol above the entropy floor.';
+      }
+      els.status.className = 'full done';
+    }
+
+    // ---- interaction ------------------------------------------------------
+    function setText(t, preset) {
+      S.preset = preset || null;
+      for (const key in els.presets) els.presets[key].classList.toggle('on', key === preset);
+      els.text.value = t;
+      build(t);
+    }
+
+    els.text.addEventListener('input', () => {
+      S.preset = null;
+      for (const key in els.presets) els.presets[key].classList.remove('on');
+      build(els.text.value);
+    });
+
+    for (const key in els.presets) {
+      els.presets[key].addEventListener('click', () => setText(SOURCES[key], key));
+    }
+
+    els.speed.addEventListener('input', () => {
+      S.speed = +els.speed.value;
+      els.speedVal.textContent = S.speed;
+    });
+
+    els.uniformToggle.addEventListener('click', () => {
+      S.uniform = !S.uniform;
+      els.uniformToggle.classList.toggle('on', S.uniform);
+      els.uniformNote.textContent = S.uniform
+        ? 'Same message, every symbol the same width — the honest baseline, and the thing to beat.'
+        : 'Huffman code, running. Rare symbols pay; common ones don\'t.';
+    });
+
+    document.getElementById('replay').addEventListener('click', () => {
+      S.revealed = 0; S.done = false; S.acc = 0;
+      for (const n of S.nodes) { if (n.l) { n.x = undefined; n.y = undefined; } }
+      readout();
+    });
+    document.getElementById('skip').addEventListener('click', () => {
+      S.revealed = S.steps.length; S.done = true; readout();
+    });
+
+    function pick(px, py) {
+      // Nearest symbol chip, if the pointer is anywhere near the leaf row.
+      if (!LAY || !S.leaves.length) return null;
+      let best = null, bestD = 1e9;
+      for (const n of S.leaves) {
+        if (n.x === undefined) continue;
+        const dx = Math.abs(px - n.x), dy = Math.abs(py - n.y);
+        const d = dx + dy * 0.6;
+        if (dx < Math.max(14, LAY.step / 2) && dy < 34 && d < bestD) { bestD = d; best = n; }
+      }
+      if (best) return best.ch;
+      // Or a bit in the ribbon.
+      if (S.done && py > LAY.ribTop - 6 && py < LAY.ribBot + 6) {
+        const cw = LAY.narrow ? 5 : 8, chh = LAY.narrow ? 11 : 14, rowGap = 5;
+        const perRow = Math.max(8, Math.floor(LAY.ribW / cw));
+        const col = Math.floor((px - LAY.padL) / cw);
+        const row = Math.floor((py - LAY.ribTop) / (chh + rowGap));
+        if (col >= 0 && col < perRow && row >= 0) {
+          const i = row * perRow + col;
+          if (i < S.encoded.length) return S.encoded[i].ch;
+        }
+      }
+      return null;
+    }
+
+    function onMove(px, py) {
+      const ch = pick(px, py);
+      if (ch !== S.hover) { S.hover = ch; readout(); }
+    }
+    canvas.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+    canvas.addEventListener('mouseleave', () => { S.hover = null; readout(); });
+    canvas.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      if (t) onMove(t.clientX, t.clientY);
+    }, { passive: true });
+    canvas.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      if (t) onMove(t.clientX, t.clientY);
+    }, { passive: true });
+
+    // ---- loop -------------------------------------------------------------
+    let last = 0;
+    function frame(t) {
+      const dt = Math.min(0.05, (t - last) / 1000 || 0);
+      last = t;
+      if (!S.done && S.steps.length) {
+        S.acc += dt * S.speed;
+        while (S.acc >= 1 && S.revealed < S.steps.length) {
+          S.acc -= 1; S.revealed++;
+          if (S.revealed >= S.steps.length) S.done = true;
+          readout();
+        }
+      } else if (!S.done && S.k === 1) {
+        S.done = true; readout();
+      }
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
+
+    resize();
+    setText(SOURCES.english, 'english');
+    requestAnimationFrame((t) => { last = t; frame(t); });
+  })();
+</script>
+</body>
+</html>
