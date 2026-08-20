@@ -40,14 +40,60 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-08-19",
+    "lastUpdated": "2026-08-20",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-08-20",
+      "date": "2026-08-20",
+      "headline": true,
+      "topic": "Inflation since the Conservatives left office",
+      "claim": "Price rises are accelerating once again under Labour. We left inflation bang on the 2% target, now it has been above that level for 22 months in a row.",
+      "speaker": "Mel Stride",
+      "party": "Conservative",
+      "role": "Shadow Chancellor",
+      "discussionScore": 84,
+      "discussionNote": "Parliament is in recess, so the ONS inflation release on 19 August was the dominant political story. Stride's response was the opposition's main line and ran across national coverage, against Chancellor John Healey blaming the Gulf conflict.",
+      "score": 82,
+      "verdict": "Mostly True",
+      "explanation": "Both numbers check out exactly. ONS puts CPI at 2.0% in May and June 2024, the Conservatives' last full months in office, and the series has been above 2% every month since October 2024 — 22 in a row to July 2026. The framing is what strains. July's rise to 2.9% came overwhelmingly from Ofgem's 13% price cap increase on 1 July, itself a response to wholesale gas costs amid the Gulf conflict: ONS puts the largest upward contribution on gas and electricity, with gas up 14.7% year-on-year. And 2.0% was a two-month touch-down after a peak of 11.1% in October 2022 on the Conservatives' watch, not a settled state — inflation was already back to 2.2% by July 2024. Accurate arithmetic, selective causation.",
+      "evidence": [
+        "ONS CPI annual rate: 2.0% in May and June 2024; 2.2% in July 2024, the month Labour took office.",
+        "Last reading below target was September 2024 (1.7%). Every month from October 2024 to July 2026 was above 2% — 22 consecutive months.",
+        "July 2026 CPI was 2.9%, up from 2.6% in June: a four-month high.",
+        "Ofgem raised the price cap 13% on 1 July 2026, roughly £221 on a typical annual dual-fuel bill, citing wholesale gas prices.",
+        "ONS: housing and household services made the largest upward contribution, gas up 14.7% year-on-year; motor fuel pulled the rate down.",
+        "CPI peaked at 11.1% in October 2022, under the Conservatives."
+      ],
+      "confidence": "High — every figure read directly from the ONS bulletin and CPI time series, with the drivers confirmed by Ofgem.",
+      "sources": [
+        {
+          "title": "ONS — Consumer price inflation, UK: July 2026",
+          "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/consumerpriceinflation/july2026"
+        },
+        {
+          "title": "ONS — CPI annual rate, all items (series D7G7)",
+          "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+        },
+        {
+          "title": "Ofgem — Energy price cap will rise by 13% from July",
+          "url": "https://www.ofgem.gov.uk/press-release/energy-price-cap-will-rise-13-july"
+        },
+        {
+          "title": "Full Fact — Is inflation up or down under Labour?",
+          "url": "https://fullfact.org/economy/reeves-stride-inflation-down-up/"
+        },
+        {
+          "title": "MoneyWeek — July inflation live blog (19 August 2026)",
+          "url": "https://moneyweek.com/economy/news/live/inflation-cpi-july-2026-report"
+        }
+      ]
+    },
+    {
       "id": "2026-08-19",
       "date": "2026-08-19",
-      "headline": true,
+      "headline": false,
       "topic": "Unauthorised traveller sites and the new planning rules",
       "claim": "Communities across the country are being forced to tolerate lawbreaking from a small minority of travellers - unauthorised traveller caravans are up 73% since January 2020, from 2,860 to 4,950.",
       "speaker": "James Cleverly",
