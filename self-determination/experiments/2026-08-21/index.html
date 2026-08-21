@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aim at the Corners — Experiment 067</title>
+<meta name="description" content="The visibility polygon: a light in a dark room, computed exactly by casting three rays at every wall corner instead of a fan of rays at nothing in particular." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 10px 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 14px; }
+
+  .controls { display: grid; gap: 11px; }
+
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row.off label { color: #5d5d70; }
+  .row.off label b { color: #6f6f86; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .note b { color: #b0b0ff; font-weight: 600; }
+  .row .note { margin-top: -1px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]:disabled { opacity: 0.45; }
+  input[type=range]:disabled::-webkit-slider-thumb { background: #6a6a86; box-shadow: none; cursor: default; }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle.off { color: #5d5d70; cursor: default; }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.small { font-size: 0.74rem; padding: 7px 8px; flex: 1 1 40%; }
+  .btn.small.on { background: rgba(124,124,255,0.34); border-color: rgba(124,124,255,0.75); color: #fff; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full.done b { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 250px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 13px; height: 13px; border-radius: 50%; flex: none; display: block; }
+  .legend i.lit { background: rgba(160,160,255,0.85); box-shadow: 0 0 9px rgba(124,124,255,0.8); }
+  .legend i.corner { background: transparent; border: 2px solid rgba(255,214,140,0.9); box-shadow: 0 0 8px rgba(255,200,120,0.5); }
+  .legend i.wall { background: #cfcfe0; border-radius: 2px; height: 4px; }
+  .legend i.miss { background: rgba(255,124,195,0.55); border-radius: 2px; transform: rotate(45deg); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card em { color: #dcdcf0; font-style: italic; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 980px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 620px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 56vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .controls { gap: 9px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Aim at the Corners</h1>
+    <p class="sub">Experiment № 067 · August 21, 2026</p>
+
+    <div class="controls">
+      <div class="btn-row">
+        <button class="btn small on" id="mCorner">three rays per corner</button>
+        <button class="btn small" id="mFan">a fan of rays</button>
+      </div>
+      <p class="note" id="modeNote">For every wall corner, one ray straight at it and two nudged a whisker either side. Sort the hits by angle, join them up — that polygon is <b>exactly</b> what the light can see.</p>
+
+      <div class="row off" id="rowFan">
+        <label>Rays in the fan <b id="fanVal">176</b></label>
+        <input type="range" id="fan" min="0" max="100" step="1" value="78" disabled />
+        <p class="note">Evenly spaced, aimed at nothing in particular.</p>
+      </div>
+
+      <div class="row">
+        <label>Blocks in the room <b id="blocksVal">7</b></label>
+        <input type="range" id="blocks" min="0" max="14" step="1" value="7" />
+      </div>
+
+      <div class="row">
+        <label>Light source width <b id="srcVal">point</b></label>
+        <input type="range" id="src" min="0" max="60" step="1" value="0" />
+        <p class="note">Above zero the light becomes nine lights on a small ring — hard shadows grow a penumbra, for free.</p>
+      </div>
+
+      <div class="readout">
+        <span class="k">Wall segments</span><span class="v" id="mSegs">–</span>
+        <span class="k">Corners to aim at</span><span class="v" id="mCorners">–</span>
+        <hr />
+        <span class="k">Rays cast per frame</span><span class="v violet" id="mRays">–</span>
+        <span class="k">Polygon vertices</span><span class="v violet" id="mVerts">–</span>
+        <span class="k">Room lit</span><span class="v" id="mLit">–</span>
+        <span class="k">Room lit wrongly</span><span class="v" id="mWrong">–</span>
+        <hr />
+        <span class="full" id="mStatus">Casting…</span>
+      </div>
+
+      <div class="toggle on" id="tRays">
+        <span>Draw the rays</span>
+        <span class="pill"></span>
+      </div>
+      <div class="toggle off" id="tWrong">
+        <span>Show what the fan gets wrong</span>
+        <span class="pill"></span>
+      </div>
+      <div class="toggle" id="tSweep">
+        <span>Animate the sweep</span>
+        <span class="pill"></span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink" id="again">↻ new room</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="lit"></i> everything visible from the light</div>
+    <div><i class="wall"></i> a wall — opaque from either side</div>
+    <div><i class="corner"></i> a corner, worth three rays</div>
+    <div><i class="miss"></i> where the fan disagrees with the truth</div>
+  </div>
+
+  <p class="hint">the light follows your pointer · <b>click or tap</b> to pin it in place · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 067 · The story</p>
+      <h2>Aim at the Corners</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Put a lamp in a dark room full of pillars and ask what it lights. Almost everyone's first program answers by brute force: fire a thousand rays out in a fan, stop each at the first wall, join the dots. It looks fine until you zoom in, and then the shadows have serrated edges that shimmer as the lamp moves, because a ray fan is a sampling grid and sampling grids alias. The fix isn't more rays. It's noticing that the answer is a polygon, and that a polygon only turns where something makes it turn — and the only thing in a room that can make a shadow boundary turn is the <em>end</em> of a wall. So you don't sample. You aim: one ray straight at every corner, and two more nudged a hair either side of it, because the interesting thing at a corner is what lies just past it. Sort the hits by angle, join them in order, and you have not an approximation but the exact visibility polygon, in about a hundred rays instead of a thousand. There is a lot of good mathematics stacked behind that little picture. Victor Klee asked in 1973 how many guards a gallery of <em>n</em> walls could possibly need; Chvátal proved ⌊n/3⌋ in 1975, and Steve Fisk found the proof from the book three years later — triangulate the polygon, three-colour the vertices, station your guards on the rarest colour. The linear-time algorithm for one guard's view had a rockier ride: it was published, then republished, and Joe and Simpson were still issuing corrections to it in 1987.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The two nudged rays. The ray that hits the corner dead-on is the boring one — it just lands there. Its neighbours are the whole trick: one slides past the corner and travels on until it finds whatever is hiding behind, and that long jump is the shadow's edge. Turn on <em>draw the rays</em> and you can see the pairs splitting apart, each corner spitting out one short ray and one long one. Then switch to the fan and watch the same room come apart at the seams: the outline of the true answer is still drawn over it, and the fan's polygon keeps cutting inside it or leaping outside it, lighting slivers of floor that are genuinely in shadow. The readout counts those misses honestly, as a percentage of the room, and the number is stubborn — in a room like the one that loads, 176 rays get one or two percent of the floor wrong, and every doubling of the rays only halves that, forever. Meanwhile the exact method is sitting there at about 120 rays with an error of zero. My other favourite is how cheaply softness arrives. A real lamp is not a point, so make it nine points on a small ring, run the same code nine times and average — and the hard shadow grows a proper penumbra, wide where the occluder is far away and tight where it is close, which is exactly the physics, with nobody having written any physics.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When you're tempted to sample something uniformly, ask first where the answer is actually allowed to change. Sampling spends its whole budget in the flat places where nothing is happening and still gets the edges wrong; if you can name the events — the corners, the crossings, the discontinuities — you can go straight to them and be exactly right for less money. That one move is most of computational geometry: Bentley and Ottmann finding line-segment crossings by sweeping a line and only stopping at endpoints, Fortune's beach line only stopping when a circle closes, a discrete-event simulator jumping between the moments the queue changes rather than ticking through empty time. Even graphics does it — Crow's 1977 shadow volumes extrude the silhouette edges of an object, which are corners again, wearing a hat. The habit generalises past geometry, too: the expensive part of most problems is a small set of places where behaviour switches, and finding them beats sampling around them. It's worth being suspicious of any loop whose accuracy you improve by making it longer. That's often a sign you're approximating something that has an exact answer waiting one insight away.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (!e.key) return;
+    if (e.key.toLowerCase() === 'h') toggleUi();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  const uiEl = document.getElementById('ui');
+  const showUiBtn = document.getElementById('showUi');
+  const legendEl = document.getElementById('legend');
+  function toggleUi() {
+    const hidden = uiEl.classList.toggle('hidden');
+    showUiBtn.classList.toggle('on', hidden);
+    legendEl.classList.toggle('hidden', hidden);
+  }
+  document.getElementById('collapse').addEventListener('click', toggleUi);
+  showUiBtn.addEventListener('click', toggleUi);
+
+  // ---- Aim at the Corners — the exact visibility polygon ----
+  (() => {
+    const cvs = document.getElementById('c');
+    const ctx = cvs.getContext('2d');
+    const el = (id) => document.getElementById(id);
+
+    const fanIn = el('fan'), blocksIn = el('blocks'), srcIn = el('src');
+
+    let W = 0, H = 0, DPR = 1;
+    let mode = 'corner';
+    let fanRays = 180;
+    let nBlocks = 7;
+    let srcWidth = 0;
+    let showRays = true, showWrong = false, sweeping = false;
+
+    // scene
+    let segs = [];       // {ax, ay, bx, by}
+    let corners = [];    // {x, y}
+    let blocks = [];     // arrays of points, for drawing the fill
+
+    // light
+    let light = { x: 0, y: 0 };
+    let pinned = false;
+
+    // current answer
+    let poly = [];       // what the chosen method sees   {x, y, ang}
+    let exact = [];      // what is actually visible
+    let raysCast = 0;
+    let wrongCells = [];
+    let wrongPct = 0, litPct = 0;
+    let lastMetrics = 0;
+    let sweepA = -Math.PI;
+
+    const TAU = Math.PI * 2;
+    const EPS = 0.00015;          // the nudge either side of a corner
+
+    // ---- geometry --------------------------------------------------------
+    // Ray from (ox,oy) along ang, against every segment: nearest hit wins.
+    function cast(ox, oy, ang) {
+      const dx = Math.cos(ang), dy = Math.sin(ang);
+      let best = Infinity;
+      for (let i = 0; i < segs.length; i++) {
+        const s = segs[i];
+        const sx = s.bx - s.ax, sy = s.by - s.ay;
+        const den = dx * sy - dy * sx;
+        if (den > -1e-12 && den < 1e-12) continue;      // parallel
+        const wx = s.ax - ox, wy = s.ay - oy;
+        const t = (wx * sy - wy * sx) / den;            // along the ray
+        if (t <= 1e-7 || t >= best) continue;
+        const u = (wx * dy - wy * dx) / den;            // along the segment
+        if (u < 0 || u > 1) continue;
+        best = t;
+      }
+      if (!isFinite(best)) best = Math.max(W, H) * 2;   // shouldn't happen: the room is closed
+      return { x: ox + dx * best, y: oy + dy * best, ang: ang, d: best };
+    }
+
+    function norm(a) {
+      while (a > Math.PI) a -= TAU;
+      while (a <= -Math.PI) a += TAU;
+      return a;
+    }
+
+    // The algorithm: three rays per corner, hits sorted by angle.
+    function visibility(ox, oy) {
+      const pts = [];
+      for (let i = 0; i < corners.length; i++) {
+        const base = Math.atan2(corners[i].y - oy, corners[i].x - ox);
+        pts.push(cast(ox, oy, norm(base - EPS)));
+        pts.push(cast(ox, oy, base));
+        pts.push(cast(ox, oy, norm(base + EPS)));
+      }
+      pts.sort((p, q) => p.ang - q.ang);
+      return pts;
+    }
+
+    // The brute-force comparison: n rays, evenly spaced, aimed at nothing.
+    function fanPoly(ox, oy, n) {
+      const pts = [];
+      for (let i = 0; i < n; i++) pts.push(cast(ox, oy, -Math.PI + (i + 0.5) * TAU / n));
+      return pts;
+    }
+
+    function area(p) {
+      let a = 0;
+      for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+        a += (p[j].x + p[i].x) * (p[j].y - p[i].y);
+      }
+      return Math.abs(a) * 0.5;
+    }
+
+    // Both polygons are star-shaped about the light, so "is this point lit?"
+    // is one binary search for the edge covering its angle.
+    function inside(p, ox, oy, x, y) {
+      const m = p.length;
+      if (m < 3) return false;
+      const ang = Math.atan2(y - oy, x - ox);
+      let lo = 0, hi = m - 1, k = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (p[mid].ang <= ang) { k = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      const a = p[(k + m) % m], b = p[(k + 1) % m];
+      const dx = x - ox, dy = y - oy;
+      const sx = b.x - a.x, sy = b.y - a.y;
+      const den = dx * sy - dy * sx;
+      if (den > -1e-12 && den < 1e-12) return true;
+      const wx = a.x - ox, wy = a.y - oy;
+      const t = (wx * sy - wy * sx) / den;              // wall crossing, in units of (dx,dy)
+      return t >= 1 - 1e-6;
+    }
+
+    // ---- the room --------------------------------------------------------
+    function seg(ax, ay, bx, by) { segs.push({ ax: ax, ay: ay, bx: bx, by: by }); }
+
+    function buildScene() {
+      segs = []; blocks = [];
+      const m = 1;
+      seg(m, m, W - m, m);
+      seg(W - m, m, W - m, H - m);
+      seg(W - m, H - m, m, H - m);
+      seg(m, H - m, m, m);
+
+      const scale = Math.sqrt((W * H) / (1280 * 720));
+      const placed = [];
+      let guard = 900;
+      while (blocks.length < nBlocks && guard-- > 0) {
+        const rad = (26 + Math.random() * 62) * Math.max(0.55, Math.min(1.4, scale));
+        const cx = rad + 26 + Math.random() * Math.max(1, W - 2 * rad - 52);
+        const cy = rad + 26 + Math.random() * Math.max(1, H - 2 * rad - 52);
+        let ok = true;
+        for (let i = 0; i < placed.length; i++) {
+          const p = placed[i];
+          if (Math.hypot(p.cx - cx, p.cy - cy) < p.rad + rad + 34) { ok = false; break; }
+        }
+        if (!ok) continue;
+        placed.push({ cx: cx, cy: cy, rad: rad });
+
+        const n = 3 + ((Math.random() * 4) | 0);
+        const spin = Math.random() * TAU;
+        const pts = [];
+        for (let i = 0; i < n; i++) {
+          const a = spin + (i / n) * TAU + (Math.random() - 0.5) * 0.4;
+          const r = rad * (0.62 + Math.random() * 0.38);
+          pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+        }
+        for (let i = 0; i < n; i++) {
+          const a = pts[i], b = pts[(i + 1) % n];
+          seg(a.x, a.y, b.x, b.y);
+        }
+        blocks.push(pts);
+      }
+
+      // a couple of free-standing walls: opaque, but with two ends to slip past
+      const freeWalls = nBlocks > 1 ? 1 + ((Math.random() * 3) | 0) : 0;
+      let g2 = 300;
+      for (let i = 0; i < freeWalls && g2-- > 0; ) {
+        const len = (70 + Math.random() * 150) * Math.max(0.6, Math.min(1.3, scale));
+        const a = Math.random() * Math.PI;
+        const cx = 60 + Math.random() * Math.max(1, W - 120);
+        const cy = 60 + Math.random() * Math.max(1, H - 120);
+        const ax = cx - Math.cos(a) * len / 2, ay = cy - Math.sin(a) * len / 2;
+        const bx = cx + Math.cos(a) * len / 2, by = cy + Math.sin(a) * len / 2;
+        if (ax < 20 || bx < 20 || ax > W - 20 || bx > W - 20 || ay < 20 || by < 20 || ay > H - 20 || by > H - 20) continue;
+        let clash = false;
+        for (let k = 0; k < placed.length; k++) {
+          if (Math.hypot(placed[k].cx - cx, placed[k].cy - cy) < placed[k].rad + len / 2 + 20) { clash = true; break; }
+        }
+        if (clash) continue;
+        seg(ax, ay, bx, by);
+        i++;
+      }
+
+      // unique endpoints — a shared polygon vertex is still just one corner
+      const seen = new Map();
+      corners = [];
+      for (let i = 0; i < segs.length; i++) {
+        const s = segs[i];
+        for (const p of [{ x: s.ax, y: s.ay }, { x: s.bx, y: s.by }]) {
+          const key = Math.round(p.x * 4) + ':' + Math.round(p.y * 4);
+          if (!seen.has(key)) { seen.set(key, 1); corners.push(p); }
+        }
+      }
+      lastMetrics = 0;
+    }
+
+    // Keep the light out of the furniture (crossing-number test per block).
+    function inBlock(x, y) {
+      for (let b = 0; b < blocks.length; b++) {
+        const p = blocks[b];
+        let hit = false;
+        for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+          if ((p[i].y > y) !== (p[j].y > y) &&
+              x < (p[j].x - p[i].x) * (y - p[i].y) / (p[j].y - p[i].y) + p[i].x) hit = !hit;
+        }
+        if (hit) return true;
+      }
+      return false;
+    }
+
+    // ---- drawing ---------------------------------------------------------
+    function polyPath(p, ox, oy, upTo) {
+      ctx.beginPath();
+      if (upTo === undefined) {
+        if (!p.length) return;
+        ctx.moveTo(p[0].x, p[0].y);
+        for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y);
+        ctx.closePath();
+      } else {
+        ctx.moveTo(ox, oy);
+        for (let i = 0; i < upTo; i++) ctx.lineTo(p[i].x, p[i].y);
+        ctx.closePath();
+      }
+    }
+
+    function fillLit(p, ox, oy, alpha, upTo) {
+      if (p.length < 3) return;
+      ctx.save();
+      polyPath(p, ox, oy, upTo);
+      ctx.clip();
+      const reach = Math.hypot(W, H) * 0.85;
+      const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, reach);
+      g.addColorStop(0.00, 'rgba(214,214,255,' + (0.92 * alpha).toFixed(4) + ')');
+      g.addColorStop(0.14, 'rgba(150,150,255,' + (0.42 * alpha).toFixed(4) + ')');
+      g.addColorStop(0.42, 'rgba(112,112,236,' + (0.17 * alpha).toFixed(4) + ')');
+      g.addColorStop(1.00, 'rgba(90,90,200,' + (0.05 * alpha).toFixed(4) + ')');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      const upTo = sweeping ? sweptCount(poly) : undefined;
+
+      // the lit region, once per light sample
+      ctx.globalCompositeOperation = 'lighter';
+      if (samples.length > 1) {
+        for (let i = 0; i < samples.length; i++) {
+          fillLit(samples[i].poly, samples[i].x, samples[i].y, 1 / samples.length, undefined);
+        }
+      } else {
+        fillLit(poly, light.x, light.y, 1, upTo);
+      }
+      ctx.globalCompositeOperation = 'source-over';
+
+      // where the fan is lying
+      if (showWrong && mode === 'fan' && wrongCells.length) {
+        for (let i = 0; i < wrongCells.length; i++) {
+          const c = wrongCells[i];
+          ctx.fillStyle = c.over ? 'rgba(255,124,195,0.5)' : 'rgba(255,196,120,0.42)';
+          ctx.fillRect(c.x - 2.5, c.y - 2.5, 5, 5);
+        }
+      }
+
+      // the truth, drawn over the fan's guess
+      if (mode === 'fan' && exact.length > 2) {
+        ctx.strokeStyle = 'rgba(160,160,255,0.75)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([6, 5]);
+        polyPath(exact);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // rays
+      if (showRays && poly.length) {
+        const n = poly.length;
+        const lim = upTo === undefined ? n : upTo;
+        ctx.strokeStyle = mode === 'fan' ? 'rgba(255,124,195,0.20)' : 'rgba(255,214,150,0.24)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const stride = Math.max(1, Math.ceil(n / 420));
+        for (let i = 0; i < lim; i += stride) {
+          ctx.moveTo(light.x, light.y);
+          ctx.lineTo(poly[i].x, poly[i].y);
+        }
+        ctx.stroke();
+      }
+
+      // the leading edge of the sweep
+      if (sweeping && poly.length) {
+        const h = cast(light.x, light.y, sweepA);
+        ctx.strokeStyle = 'rgba(255,236,180,0.85)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(light.x, light.y);
+        ctx.lineTo(h.x, h.y);
+        ctx.stroke();
+      }
+
+      // blocks, filled so they read as solid objects
+      ctx.fillStyle = 'rgba(9,9,16,0.96)';
+      for (let b = 0; b < blocks.length; b++) {
+        const p = blocks[b];
+        ctx.beginPath();
+        ctx.moveTo(p[0].x, p[0].y);
+        for (let i = 1; i < p.length; i++) ctx.lineTo(p[i].x, p[i].y);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // walls
+      ctx.strokeStyle = 'rgba(206,206,228,0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < segs.length; i++) {
+        const s = segs[i];
+        ctx.moveTo(s.ax, s.ay); ctx.lineTo(s.bx, s.by);
+      }
+      ctx.stroke();
+
+      // corners — the only places the answer can turn
+      if (mode === 'corner') {
+        ctx.fillStyle = 'rgba(255,214,140,0.9)';
+        for (let i = 0; i < corners.length; i++) {
+          ctx.beginPath();
+          ctx.arc(corners[i].x, corners[i].y, 2.6, 0, TAU);
+          ctx.fill();
+        }
+      }
+
+      // the lamp
+      const lg = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, 26);
+      lg.addColorStop(0, 'rgba(255,255,255,0.95)');
+      lg.addColorStop(0.35, 'rgba(200,200,255,0.35)');
+      lg.addColorStop(1, 'rgba(160,160,255,0)');
+      ctx.fillStyle = lg;
+      ctx.fillRect(light.x - 26, light.y - 26, 52, 52);
+      if (srcWidth > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(light.x, light.y, srcWidth / 2, 0, TAU);
+        ctx.stroke();
+      }
+      if (pinned) {
+        ctx.strokeStyle = 'rgba(255,236,180,0.8)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(light.x, light.y, 12, 0, TAU);
+        ctx.stroke();
+      }
+    }
+
+    function sweptCount(p) {
+      let k = 0;
+      while (k < p.length && p[k].ang <= sweepA) k++;
+      return k;
+    }
+
+    // ---- solving each frame ---------------------------------------------
+    let samples = [];   // extra light positions when the source has width
+
+    function solve() {
+      raysCast = 0;
+      const wantSoft = srcWidth > 0;
+      const perLight = mode === 'fan' ? fanRays : corners.length * 3;
+      let nSamples = 1;
+      // budget in ray×segment tests, so a crowded room drops samples rather than frames
+      if (wantSoft) nSamples = Math.max(1, Math.min(9, Math.floor(90000 / Math.max(1, perLight * segs.length))));
+
+      samples = [];
+      if (nSamples > 1) {
+        for (let i = 0; i < nSamples; i++) {
+          const a = (i / nSamples) * TAU;
+          let x = light.x + Math.cos(a) * srcWidth / 2;
+          let y = light.y + Math.sin(a) * srcWidth / 2;
+          if (inBlock(x, y)) { x = light.x; y = light.y; }
+          const p = mode === 'fan' ? fanPoly(x, y, fanRays) : visibility(x, y);
+          raysCast += perLight;
+          samples.push({ x: x, y: y, poly: p });
+        }
+        poly = samples[0].poly;
+      } else {
+        poly = mode === 'fan' ? fanPoly(light.x, light.y, fanRays) : visibility(light.x, light.y);
+        raysCast += perLight;
+      }
+
+      exact = mode === 'fan' ? visibility(light.x, light.y) : poly;
+    }
+
+    // ---- metrics ---------------------------------------------------------
+    function computeMetrics() {
+      const roomArea = Math.max(1, (W - 2) * (H - 2));
+      litPct = exact.length > 2 ? Math.min(100, area(exact) / roomArea * 100) : 0;
+
+      wrongCells = [];
+      let wrong = 0, total = 0;
+      if (mode === 'fan' && poly.length > 2 && exact.length > 2) {
+        const step = Math.max(9, Math.round(Math.min(W, H) / 90));
+        for (let y = step * 0.5; y < H; y += step) {
+          for (let x = step * 0.5; x < W; x += step) {
+            if (inBlock(x, y)) continue;
+            total++;
+            const a = inside(exact, light.x, light.y, x, y);
+            const b = inside(poly, light.x, light.y, x, y);
+            if (a !== b) {
+              wrong++;
+              if (wrongCells.length < 4000) wrongCells.push({ x: x, y: y, over: b });
+            }
+          }
+        }
+      }
+      wrongPct = total ? (wrong / total) * 100 : 0;
+      paintReadout();
+    }
+
+    const num = (v) => Math.round(v).toLocaleString('en-GB');
+
+    function paintReadout() {
+      el('mSegs').textContent = num(segs.length);
+      el('mCorners').textContent = num(corners.length);
+      el('mRays').textContent = num(raysCast);
+
+      // count distinct polygon vertices — coincident hits at a corner are one turn
+      let verts = 0;
+      for (let i = 0; i < poly.length; i++) {
+        const p = poly[i], q = poly[(i + 1) % poly.length];
+        if (Math.hypot(p.x - q.x, p.y - q.y) > 0.75) verts++;
+      }
+      el('mVerts').textContent = num(verts);
+      el('mLit').textContent = litPct.toFixed(1) + '%';
+
+      const we = el('mWrong');
+      if (mode === 'fan') {
+        we.textContent = wrongPct < 0.005 ? '0%' : wrongPct.toFixed(2) + '%';
+        we.className = 'v ' + (wrongPct < 0.005 ? 'good' : 'pinkv');
+      } else {
+        we.textContent = 'none — exact';
+        we.className = 'v good';
+      }
+
+      const st = el('mStatus');
+      st.classList.toggle('done', mode === 'corner');
+      if (mode === 'corner') {
+        st.innerHTML = '<b>' + num(corners.length) + '</b> corners × 3 rays = <b class="v">' + num(corners.length * 3) +
+          '</b> rays, and the polygon is exact — no error to reduce, at any zoom.';
+      } else {
+        const exactCost = corners.length * 3;
+        st.innerHTML = '<b class="v">' + num(fanRays) + '</b> rays — ' +
+          (fanRays >= exactCost
+            ? '<b>' + (fanRays / Math.max(1, exactCost)).toFixed(1) + '×</b> the cost of the exact answer, and still '
+            : 'cheaper than the exact answer, but ') +
+          '<b class="p">' + (wrongPct < 0.005 ? 'under 0.01' : wrongPct.toFixed(2)) + '%</b> of the floor is called wrong.';
+      }
+    }
+
+    // ---- main loop -------------------------------------------------------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(100, now - last);
+      last = now;
+
+      if (sweeping) {
+        sweepA += (dt / 1000) * 2.3;
+        if (sweepA > Math.PI) sweepA -= TAU;
+      }
+
+      solve();
+      draw();
+
+      if (now - lastMetrics > 160) { lastMetrics = now; computeMetrics(); }
+      requestAnimationFrame(frame);
+    }
+
+    // ---- input -----------------------------------------------------------
+    function placeLightSomewhereSensible() {
+      for (let i = 0; i < 400; i++) {
+        const x = 40 + Math.random() * Math.max(1, W - 80);
+        const y = 40 + Math.random() * Math.max(1, H - 80);
+        if (!inBlock(x, y)) { light.x = x; light.y = y; return; }
+      }
+      light.x = W / 2; light.y = H / 2;
+    }
+
+    function resize() {
+      DPR = Math.min(2, window.devicePixelRatio || 1);
+      W = cvs.clientWidth; H = cvs.clientHeight;
+      cvs.width = Math.max(1, Math.round(W * DPR));
+      cvs.height = Math.max(1, Math.round(H * DPR));
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      buildScene();
+      placeLightSomewhereSensible();
+    }
+
+    let resizeT = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeT);
+      resizeT = setTimeout(resize, 180);
+    });
+
+    function pos(e) {
+      const b = cvs.getBoundingClientRect();
+      const p = e.touches && e.touches[0] ? e.touches[0] : e;
+      return { x: p.clientX - b.left, y: p.clientY - b.top };
+    }
+    function moveLight(p) {
+      if (inBlock(p.x, p.y)) return;                       // a lamp inside a pillar sees nothing
+      light.x = Math.max(2, Math.min(W - 2, p.x));
+      light.y = Math.max(2, Math.min(H - 2, p.y));
+      lastMetrics = 0;
+    }
+    let down = false, dragged = false, wasPinned = false;
+    cvs.addEventListener('pointermove', (e) => {
+      if (down) { dragged = true; moveLight(pos(e)); }
+      else if (!pinned) moveLight(pos(e));
+    });
+    cvs.addEventListener('pointerdown', (e) => {
+      down = true; dragged = false; wasPinned = pinned; pinned = false;
+      moveLight(pos(e));
+    });
+    window.addEventListener('pointerup', () => {
+      if (!down) return;
+      down = false;
+      // a tap toggles the pin; a drag just leaves the light where it was let go
+      pinned = dragged ? false : !wasPinned;
+    });
+
+    // controls
+    function setMode(m) {
+      mode = m;
+      el('mCorner').classList.toggle('on', m === 'corner');
+      el('mFan').classList.toggle('on', m === 'fan');
+      el('modeNote').innerHTML = m === 'corner'
+        ? 'For every wall corner, one ray straight at it and two nudged a whisker either side. Sort the hits by angle, join them up — that polygon is <b>exactly</b> what the light can see.'
+        : 'Rays fired at even angles, hoping to land near the corners that matter. The dashed outline is the true answer, for comparison.';
+      fanIn.disabled = (m !== 'fan');
+      el('rowFan').classList.toggle('off', m !== 'fan');
+      const tw = el('tWrong');
+      tw.classList.toggle('off', m !== 'fan');
+      if (m !== 'fan') { tw.classList.remove('on'); showWrong = false; }
+      lastMetrics = 0;
+    }
+    el('mCorner').addEventListener('click', () => setMode('corner'));
+    el('mFan').addEventListener('click', () => setMode('fan'));
+
+    // log-spaced fan slider: 4 … 512 rays
+    function fanFromSlider(v) { return Math.max(4, Math.round(4 * Math.pow(128, v / 100))); }
+    fanIn.addEventListener('input', () => {
+      fanRays = fanFromSlider(+fanIn.value);
+      el('fanVal').textContent = fanRays;
+      lastMetrics = 0;
+    });
+
+    blocksIn.addEventListener('input', () => {
+      nBlocks = +blocksIn.value;
+      el('blocksVal').textContent = nBlocks;
+      buildScene();
+      if (inBlock(light.x, light.y)) placeLightSomewhereSensible();
+    });
+
+    srcIn.addEventListener('input', () => {
+      srcWidth = +srcIn.value;
+      el('srcVal').textContent = srcWidth === 0 ? 'point' : srcWidth + ' px';
+    });
+
+    function wireToggle(id, set) {
+      const t = el(id);
+      t.addEventListener('click', () => {
+        if (t.classList.contains('off')) return;
+        t.classList.toggle('on');
+        set(t.classList.contains('on'));
+      });
+    }
+    wireToggle('tRays', (v) => { showRays = v; });
+    wireToggle('tWrong', (v) => { showWrong = v; });
+    wireToggle('tSweep', (v) => { sweeping = v; sweepA = -Math.PI; });
+
+    el('again').addEventListener('click', () => {
+      buildScene();
+      if (inBlock(light.x, light.y)) placeLightSomewhereSensible();
+    });
+
+    // go
+    fanRays = fanFromSlider(+fanIn.value);
+    el('fanVal').textContent = fanRays;
+    resize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
