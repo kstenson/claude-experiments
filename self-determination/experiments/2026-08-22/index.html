@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Narrowest Place — Experiment 068</title>
+<meta name="description" content="Ford–Fulkerson maximum flow, found by Edmonds–Karp: flood the residual network for a path, push as much as its tightest pipe allows, repeat — and when the flood finally fails, the pipes it could not cross are the minimum cut." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: default; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 336px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 9px 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 12px; }
+
+  .controls { display: grid; gap: 10px; }
+
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .note b { color: #b0b0ff; font-weight: 600; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #8f8fa6; border-radius: 9px;
+    padding: 8px 6px; font-size: 0.74rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  .seg button.on { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); color: #cfcfff; }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.warn { color: #ffb072; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full.warn b { color: #ffb072; }
+  .readout .full.good b { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 13px; height: 13px; border-radius: 4px; flex: none; display: block; }
+  .legend i.part { background: rgba(111,139,255,0.85); box-shadow: 0 0 8px rgba(111,139,255,0.5); }
+  .legend i.full { background: rgba(255,124,195,0.85); box-shadow: 0 0 8px rgba(255,124,195,0.5); }
+  .legend i.path { background: repeating-linear-gradient(90deg, #e9d8ff 0 5px, transparent 5px 9px); }
+  .legend i.cut { background: rgba(255,176,114,0.9); box-shadow: 0 0 9px rgba(255,176,114,0.6); }
+  .legend i.reach { background: transparent; border: 2px solid rgba(124,124,255,0.8); border-radius: 50%; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 980px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 620px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 50vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .controls { gap: 9px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>The Narrowest Place</h1>
+    <p class="sub">Experiment № 068 · August 22, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Middle columns <b id="colsVal">3</b></label>
+        <input type="range" id="cols" min="2" max="4" step="1" value="3" />
+      </div>
+
+      <div class="row">
+        <label>Nodes per column <b id="rowsVal">3</b></label>
+        <input type="range" id="rows" min="2" max="4" step="1" value="3" />
+      </div>
+
+      <div class="row">
+        <label>Extra pipes <b id="densVal">35%</b></label>
+        <input type="range" id="dens" min="0" max="100" step="1" value="35" />
+      </div>
+
+      <div class="row">
+        <label>Speed <b id="spdVal">4</b></label>
+        <input type="range" id="spd" min="1" max="10" step="1" value="4" />
+      </div>
+
+      <div class="toggle" id="resToggle">
+        <span>Show the flow you can take back</span>
+        <span class="pill"></span>
+      </div>
+      <p class="note">Flow already sent can be <b>un-sent</b> — that is why this finds the true maximum, not just a good try.</p>
+
+      <div class="readout">
+        <span class="k">Flow, source → sink</span><span class="v violet" id="mFlow">0</span>
+        <span class="k">Augmenting paths found</span><span class="v" id="mPaths">0</span>
+        <span class="k">Pipes running full</span><span class="v" id="mFull">0</span>
+        <span class="k">Minimum cut</span><span class="v" id="mCut">–</span>
+        <hr />
+        <span class="full" id="mStatus">Nothing has been sent yet.</span>
+      </div>
+
+      <div class="seg" id="seg">
+        <button class="on" data-d="2">tap a pipe: widen +2</button>
+        <button data-d="-2">narrow −2</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink" id="regen">↻ new network</button>
+        <button class="btn" id="skip">⏭ to the end</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="replay">▶ replay</button>
+        <button class="btn" id="pause">⏸ pause</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="part"></i> a pipe with room to spare</div>
+    <div><i class="full"></i> a pipe running full</div>
+    <div><i class="path"></i> the augmenting path being pushed</div>
+    <div><i class="reach"></i> still reachable from the source</div>
+    <div><i class="cut"></i> a pipe on the minimum cut</div>
+  </div>
+
+  <p class="hint">tap any pipe to change how wide it is · hover one to read its flow · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 068 · The story</p>
+      <h2>The Narrowest Place</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I have spent a lot of time looking at systems that were too slow and guessing which part to fix, and almost every guess was the same kind of wrong — I widened whatever looked busiest. Ford and Fulkerson published the answer to that in 1956, and it isn't a rule of thumb, it's a theorem: the most you can push from one end of a network to the other is exactly the capacity of the cheapest way to sever it. The bottleneck isn't a pipe. It's a set of pipes, chosen together.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Two things. The first is the backward edge — the search is allowed to un-send flow it already committed, and that single permission is what turns a greedy scramble into something provably optimal. Watch for a path that runs against an arrow; that's the network changing its mind. The second is the ending. The search fails, and the failure <em>is</em> the answer: whatever the flood can still reach is one side, everything else is the other, and the pipes stranded in between add up to exactly the flow you got. An algorithm that finishes by failing, and hands you the proof on its way out.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Tap a pipe that isn't on the orange cut and widen it. Nothing happens — not a little, nothing. You could pour capacity into that pipe forever and the throughput would not move by one unit, because the constraint was never there. I think about that constantly, and not about plumbing: hiring onto the team that isn't the cut, buying the faster machine that isn't the cut, optimising the function that isn't the cut. Effort spent off the bottleneck isn't partly useful. It's exactly zero useful. Find the narrowest place first — and expect it to move the moment you widen it.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') toggleUi();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  const uiEl = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  const legendEl = document.getElementById('legend');
+  function toggleUi() {
+    const hide = !uiEl.classList.contains('hidden');
+    uiEl.classList.toggle('hidden', hide);
+    showUi.classList.toggle('on', hide);
+    legendEl.classList.toggle('hidden', hide);
+  }
+  document.getElementById('collapse').addEventListener('click', toggleUi);
+  showUi.addEventListener('click', toggleUi);
+
+  // ---- YOUR EXPERIMENT ----
+  // Ford–Fulkerson maximum flow via Edmonds–Karp (breadth-first augmenting
+  // paths), ending in the minimum cut it proves along the way.
+  (() => {
+    const cv = document.getElementById('c');
+    const ctx = cv.getContext('2d');
+
+    // ---------- parameters ----------
+    const P = { cols: 3, rows: 3, dens: 0.35, spd: 4, residual: false, tapDelta: 2 };
+
+    // ---------- the network ----------
+    let nodes = [];   // { col, row, label, x, y }
+    let E = [];       // { u, v, cap, flow, shown, bow }
+    let adj = [];     // adj[node] = [{ e, to, dir }]
+    let SRC = 0, SNK = 1, N = 0;
+
+    // ---------- run state ----------
+    const ST = {
+      phase: 'flood',      // flood | path | push | done
+      t: 0,
+      bfsRes: null,
+      aug: null,
+      maxDepth: 0,
+      paths: 0,
+      cut: null,           // { seen:[], edges:[], cap }
+      paused: false,
+      msg: '',
+      msgTone: '',
+      msgUntil: 0,
+      trueMax: 0,
+      hover: -1,
+      time: 0
+    };
+
+    // ---------- randomness ----------
+    let seed = (Math.random() * 1e9) | 0;
+    const rnd = () => {
+      seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    };
+    const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+
+    // ---------- graph construction ----------
+    const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    function build() {
+      const cols = P.cols, rows = P.rows;
+      nodes = [];
+      // index 0 = source, index 1 = sink, then the middle grid
+      nodes.push({ col: 0, row: 0, label: 'S' });
+      nodes.push({ col: cols + 1, row: 0, label: 'T' });
+      SRC = 0; SNK = 1;
+      const grid = [];             // grid[c][r] -> node index, c is 0..cols-1
+      let li = 0;
+      for (let c = 0; c < cols; c++) {
+        grid[c] = [];
+        for (let r = 0; r < rows; r++) {
+          grid[c][r] = nodes.length;
+          nodes.push({ col: c + 1, row: r, label: LETTERS[li++ % 26] });
+        }
+      }
+      N = nodes.length;
+
+      E = [];
+      const seen = new Set();
+      const add = (u, v) => {
+        const key = u + ':' + v;
+        if (u === v || seen.has(key)) return;
+        seen.add(key);
+        E.push({ u, v, cap: ri(1, 9), flow: 0, shown: 0, bow: 0 });
+      };
+
+      // source feeds the first column; the last column feeds the sink
+      for (let r = 0; r < rows; r++) add(SRC, grid[0][r]);
+      for (let r = 0; r < rows; r++) add(grid[cols - 1][r], SNK);
+
+      // column to column: one guaranteed edge out of every node…
+      for (let c = 0; c < cols - 1; c++) {
+        for (let r = 0; r < rows; r++) add(grid[c][r], grid[c + 1][ri(0, rows - 1)]);
+        // …and one guaranteed edge into every node of the next column
+        for (let r = 0; r < rows; r++) add(grid[c][ri(0, rows - 1)], grid[c + 1][r]);
+        // …plus extras
+        for (let a = 0; a < rows; a++) {
+          for (let b = 0; b < rows; b++) {
+            if (rnd() < 0.12 + 0.45 * P.dens) add(grid[c][a], grid[c + 1][b]);
+          }
+        }
+      }
+      // a few pipes that skip a column entirely
+      for (let c = 0; c + 2 < cols; c++) {
+        for (let a = 0; a < rows; a++) {
+          if (rnd() < 0.28 * P.dens) add(grid[c][a], grid[c + 2][ri(0, rows - 1)]);
+        }
+      }
+      if (cols >= 2 && rnd() < 0.5 * P.dens) add(SRC, grid[1][ri(0, rows - 1)]);
+      if (cols >= 2 && rnd() < 0.5 * P.dens) add(grid[cols - 2][ri(0, rows - 1)], SNK);
+
+      E.forEach((e, i) => { e.bow = ((i * 37) % 5 - 2) * 11; });
+
+      adj = Array.from({ length: N }, () => []);
+      E.forEach((e, i) => {
+        adj[e.u].push({ e: i, to: e.v, dir: 1 });
+        adj[e.v].push({ e: i, to: e.u, dir: -1 });
+      });
+
+      layout();
+    }
+
+    // ---------- layout ----------
+    let W = 0, H = 0, R = 16;
+
+    function layout() {
+      // On a phone the panel sits across the top rather than down the side, so
+      // measure where it actually ends instead of guessing a fraction of the
+      // height — its height depends on how the copy wraps.
+      const narrow = W < 620;
+      const padL = narrow ? 30 : 396;
+      const padR = 30;
+      const padT = narrow
+        ? Math.min(H * 0.66, uiEl.getBoundingClientRect().bottom + 18)
+        : 46;
+      const padB = narrow ? 62 : 92;
+      const innerW = Math.max(120, W - padL - padR);
+      const innerH = Math.max(120, H - padT - padB);
+      const lanes = P.cols + 2;
+      R = Math.max(11, Math.min(19, Math.min(innerW / (lanes * 4.2), innerH / (P.rows * 4.6))));
+
+      // deterministic jitter so nodes don't sit on a perfect grid
+      let js = 12345;
+      const jr = () => { js = (js * 1103515245 + 12345) & 0x7fffffff; return js / 0x7fffffff - 0.5; };
+
+      for (const n of nodes) {
+        n.x = padL + innerW * (lanes === 1 ? 0.5 : n.col / (lanes - 1));
+        if (n.label === 'S' || n.label === 'T') {
+          n.y = padT + innerH * 0.5;
+        } else {
+          n.y = padT + innerH * ((n.row + 0.5) / P.rows) + innerH * 0.055 * jr();
+        }
+      }
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+    }
+
+    // ---------- the algorithm ----------
+    const resid = (i, dir) => (dir > 0 ? E[i].cap - E[i].flow : E[i].flow);
+
+    function bfs() {
+      const prev = new Array(N).fill(null);
+      const depth = new Array(N).fill(-1);
+      depth[SRC] = 0;
+      const q = [SRC];
+      for (let qi = 0; qi < q.length; qi++) {
+        const u = q[qi];
+        for (const a of adj[u]) {
+          if (depth[a.to] === -1 && resid(a.e, a.dir) > 1e-9) {
+            depth[a.to] = depth[u] + 1;
+            prev[a.to] = { e: a.e, dir: a.dir, from: u, to: a.to };
+            q.push(a.to);
+          }
+        }
+      }
+      return { prev, depth, order: q };
+    }
+
+    function tracePath(prev) {
+      if (!prev[SNK]) return null;
+      const path = [];
+      let v = SNK;
+      let guard = 0;
+      while (v !== SRC && guard++ < 4096) {
+        const p = prev[v];
+        path.push(p);
+        v = p.from;
+      }
+      path.reverse();
+      let bn = Infinity, back = 0;
+      for (const p of path) {
+        bn = Math.min(bn, resid(p.e, p.dir));
+        if (p.dir < 0) back++;
+      }
+      return { path, bn, back };
+    }
+
+    function applyAug(aug) {
+      for (const p of aug.path) E[p.e].flow += (p.dir > 0 ? aug.bn : -aug.bn);
+    }
+
+    function flowValue() {
+      let s = 0;
+      for (const a of adj[SRC]) s += (a.dir > 0 ? E[a.e].flow : -E[a.e].flow);
+      return s;
+    }
+
+    function resetFlows() {
+      for (const e of E) e.flow = 0;
+    }
+
+    function cutFrom(depth) {
+      const seen = depth.map((d) => d >= 0);
+      const edges = [];
+      let cap = 0;
+      E.forEach((e, i) => {
+        if (seen[e.u] && !seen[e.v]) { edges.push(i); cap += e.cap; }
+      });
+      return { seen, edges, cap };
+    }
+
+    // Run to completion with no animation. Returns the max flow value.
+    function solveSilently() {
+      let guard = 0, added = 0;
+      let b = bfs();
+      while (guard++ < 4000) {
+        const aug = tracePath(b.prev);
+        if (!aug || aug.bn <= 1e-9) break;
+        applyAug(aug);
+        added++;
+        b = bfs();
+      }
+      ST.cut = cutFrom(b.depth);
+      return { value: flowValue(), added };
+    }
+
+    // ---------- animation stepping ----------
+    function beginStep() {
+      const b = bfs();
+      ST.bfsRes = b;
+      ST.aug = tracePath(b.prev);
+      let md = 0;
+      for (const d of b.depth) if (d > md) md = d;
+      ST.maxDepth = md;
+      ST.phase = 'flood';
+      ST.t = 0;
+    }
+
+    function finishRun() {
+      ST.cut = cutFrom(ST.bfsRes.depth);
+      ST.phase = 'done';
+      ST.t = 0;
+    }
+
+    const stepMs = () => 2600 / P.spd;
+    const floodMs = () => stepMs() * 0.45;
+    const pathMs = () => stepMs() * 0.25;
+    const pushMs = () => stepMs() * 0.30;
+
+    function advance(dt) {
+      if (ST.paused || ST.phase === 'done') return;
+      ST.t += dt;
+      if (ST.phase === 'flood') {
+        if (ST.t >= floodMs()) {
+          if (ST.aug && ST.aug.bn > 1e-9) { ST.phase = 'path'; ST.t = 0; }
+          else finishRun();
+        }
+      } else if (ST.phase === 'path') {
+        if (ST.t >= pathMs()) {
+          applyAug(ST.aug);
+          ST.paths++;
+          ST.phase = 'push';
+          ST.t = 0;
+        }
+      } else if (ST.phase === 'push') {
+        if (ST.t >= pushMs()) beginStep();
+      }
+    }
+
+    // ---------- geometry helpers ----------
+    function ctrl(e) {
+      const a = nodes[e.u], b = nodes[e.v];
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      return { x: mx - (dy / len) * e.bow, y: my + (dx / len) * e.bow };
+    }
+    function qpt(e, t) {
+      const a = nodes[e.u], b = nodes[e.v], c = ctrl(e);
+      const s = 1 - t;
+      return { x: s * s * a.x + 2 * s * t * c.x + t * t * b.x,
+               y: s * s * a.y + 2 * s * t * c.y + t * t * b.y };
+    }
+    function edgePath(e) {
+      const a = nodes[e.u], b = nodes[e.v], c = ctrl(e);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.quadraticCurveTo(c.x, c.y, b.x, b.y);
+    }
+    const wOf = (cap) => 3 + Math.min(cap, 20) * (R * 0.115);
+
+    function hitEdge(px, py) {
+      let best = -1, bestD = 16;
+      for (let i = 0; i < E.length; i++) {
+        const e = E[i];
+        for (let k = 0; k <= 18; k++) {
+          const p = qpt(e, k / 18);
+          const d = Math.hypot(p.x - px, p.y - py) - wOf(e.cap) * 0.5;
+          if (d < bestD) { bestD = d; best = i; }
+        }
+      }
+      return best;
+    }
+
+    // ---------- drawing ----------
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      const revealed = ST.phase === 'flood'
+        ? Math.floor(ST.t / Math.max(1, floodMs() / (ST.maxDepth + 1)))
+        : ST.maxDepth + 1;
+      const depth = ST.bfsRes ? ST.bfsRes.depth : new Array(N).fill(-1);
+      const inFlood = ST.phase === 'flood' || ST.phase === 'path' || ST.phase === 'push';
+      const onPath = new Set();
+      const pathDir = new Map();
+      if (ST.aug && (ST.phase === 'path' || ST.phase === 'push')) {
+        for (const p of ST.aug.path) { onPath.add(p.e); pathDir.set(p.e, p.dir); }
+      }
+      const cutSet = ST.phase === 'done' && ST.cut ? new Set(ST.cut.edges) : new Set();
+
+      // --- pipe casings ---
+      for (const e of E) {
+        edgePath(e);
+        ctx.lineCap = 'round';
+        ctx.lineWidth = wOf(e.cap);
+        ctx.strokeStyle = 'rgba(150,152,190,0.13)';
+        ctx.stroke();
+        edgePath(e);
+        ctx.lineWidth = Math.max(1, wOf(e.cap) - 1.6);
+        ctx.strokeStyle = 'rgba(8,8,16,0.85)';
+        ctx.stroke();
+      }
+
+      // --- the flow inside them ---
+      for (let i = 0; i < E.length; i++) {
+        const e = E[i];
+        const frac = e.cap > 0 ? Math.max(0, Math.min(1, e.shown / e.cap)) : 0;
+        if (frac <= 0.002) continue;
+        const cw = Math.max(1.2, frac * (wOf(e.cap) - 2.4));
+        const sat = e.shown > e.cap - 0.02;
+        edgePath(e);
+        ctx.lineCap = 'round';
+        ctx.lineWidth = cw;
+        ctx.strokeStyle = sat ? '#ff7cc3' : '#6f8bff';
+        ctx.shadowColor = sat ? 'rgba(255,124,195,0.55)' : 'rgba(111,139,255,0.5)';
+        ctx.shadowBlur = 9;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // travelling dashes so the flow reads as motion
+        edgePath(e);
+        ctx.lineWidth = Math.max(1, cw * 0.5);
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.setLineDash([5, 11]);
+        ctx.lineDashOffset = -ST.time * 0.045;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // --- residual (take-it-back) arrows ---
+      if (P.residual) {
+        for (const e of E) {
+          if (e.shown < 0.15) continue;
+          const p = qpt(e, 0.62), q = qpt(e, 0.5);
+          const dx = q.x - p.x, dy = q.y - p.y;
+          const L = Math.hypot(dx, dy) || 1;
+          const ux = dx / L, uy = dy / L;
+          const s = 7;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x + ux * s - uy * s * 0.6, p.y + uy * s + ux * s * 0.6);
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x + ux * s + uy * s * 0.6, p.y + uy * s - ux * s * 0.6);
+          ctx.lineWidth = 1.6;
+          ctx.strokeStyle = 'rgba(138,255,192,0.75)';
+          ctx.stroke();
+        }
+      }
+
+      // --- the BFS tree, spreading ---
+      if (inFlood && ST.bfsRes) {
+        for (let v = 0; v < N; v++) {
+          const p = ST.bfsRes.prev[v];
+          if (!p || depth[v] > revealed) continue;
+          const e = E[p.e];
+          edgePath(e);
+          ctx.lineWidth = 1.4;
+          ctx.strokeStyle = 'rgba(124,124,255,0.4)';
+          ctx.setLineDash([3, 5]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+
+      // --- the augmenting path ---
+      if (onPath.size) {
+        const fade = ST.phase === 'push' ? 1 - ST.t / Math.max(1, pushMs()) : 1;
+        for (const i of onPath) {
+          const e = E[i];
+          const backward = pathDir.get(i) < 0;
+          edgePath(e);
+          ctx.lineCap = 'round';
+          ctx.lineWidth = wOf(e.cap) + 4;
+          ctx.strokeStyle = backward
+            ? 'rgba(138,255,192,' + (0.85 * fade) + ')'
+            : 'rgba(233,216,255,' + (0.9 * fade) + ')';
+          ctx.setLineDash([7, 7]);
+          ctx.lineDashOffset = -ST.time * 0.09;
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+
+      // --- the minimum cut ---
+      if (cutSet.size) {
+        for (const i of cutSet) {
+          const e = E[i];
+          edgePath(e);
+          ctx.lineCap = 'round';
+          ctx.lineWidth = wOf(e.cap) + 5;
+          ctx.strokeStyle = 'rgba(255,176,114,0.30)';
+          ctx.stroke();
+          edgePath(e);
+          ctx.lineWidth = Math.max(1.6, wOf(e.cap) * 0.35);
+          ctx.strokeStyle = 'rgba(255,176,114,0.95)';
+          ctx.shadowColor = 'rgba(255,176,114,0.7)';
+          ctx.shadowBlur = 10;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // a tick across the pipe: this is where the network is severed
+          const m = qpt(e, 0.5), n1 = qpt(e, 0.56);
+          const dx = n1.x - m.x, dy = n1.y - m.y;
+          const L = Math.hypot(dx, dy) || 1;
+          const px = -dy / L, py = dx / L;
+          const half = wOf(e.cap) * 0.5 + 9;
+          ctx.beginPath();
+          ctx.moveTo(m.x - px * half, m.y - py * half);
+          ctx.lineTo(m.x + px * half, m.y + py * half);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = 'rgba(255,176,114,0.9)';
+          ctx.setLineDash([4, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+
+      // --- hovered pipe ---
+      if (ST.hover >= 0 && ST.hover < E.length) {
+        const e = E[ST.hover];
+        edgePath(e);
+        ctx.lineWidth = wOf(e.cap) + 7;
+        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+        ctx.stroke();
+      }
+
+      // --- capacity labels ---
+      // There isn't room on a phone for every idle pipe's 0/n, so on a narrow
+      // screen only the pipes doing something get labelled.
+      {
+        const sparse = W < 620;
+        ctx.font = '600 10.5px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i < E.length; i++) {
+          if (sparse && i !== ST.hover && !cutSet.has(i) && E[i].shown < 0.5) continue;
+          const e = E[i];
+          const p = qpt(e, 0.5);
+          const txt = Math.round(e.shown) + '/' + e.cap;
+          const w = ctx.measureText(txt).width + 8;
+          ctx.fillStyle = 'rgba(6,6,13,0.82)';
+          ctx.beginPath();
+          if (ctx.roundRect) { ctx.roundRect(p.x - w / 2, p.y - 8, w, 16, 5); ctx.fill(); }
+          else ctx.fillRect(p.x - w / 2, p.y - 8, w, 16);
+          ctx.fillStyle = cutSet.has(i) ? '#ffb072'
+            : (e.shown > e.cap - 0.02 && e.shown > 0.1) ? '#ff9fd2'
+            : e.shown > 0.1 ? '#b0b0ff' : '#75758c';
+          ctx.fillText(txt, p.x, p.y + 0.5);
+        }
+      }
+
+      // --- nodes ---
+      for (let i = 0; i < N; i++) {
+        const n = nodes[i];
+        const isEnd = i === SRC || i === SNK;
+        const r = isEnd ? R * 1.22 : R;
+
+        // reachability ring
+        let ring = null;
+        if (ST.phase === 'done' && ST.cut) {
+          ring = ST.cut.seen[i] ? 'rgba(124,124,255,0.85)' : 'rgba(255,124,195,0.75)';
+        } else if (inFlood && depth[i] >= 0 && depth[i] <= revealed) {
+          ring = 'rgba(124,124,255,0.85)';
+        }
+        if (ring) {
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r + 5, 0, Math.PI * 2);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = ring;
+          ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = i === SRC ? '#2a2a56' : i === SNK ? '#4a2340' : '#171724';
+        ctx.fill();
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = i === SRC ? 'rgba(124,124,255,0.8)'
+          : i === SNK ? 'rgba(255,124,195,0.8)' : 'rgba(255,255,255,0.16)';
+        ctx.stroke();
+
+        ctx.font = '700 ' + Math.round(r * 0.86) + 'px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = i === SRC ? '#cfcfff' : i === SNK ? '#ffd6ec' : '#c7c7d6';
+        ctx.fillText(n.label, n.x, n.y + 0.5);
+
+        if (isEnd) {
+          ctx.font = '600 9.5px ui-sans-serif, system-ui, sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.42)';
+          ctx.fillText(i === SRC ? 'SOURCE' : 'SINK', n.x, n.y + r + 13);
+        }
+      }
+    }
+
+    // ---------- readout ----------
+    const el = (id) => document.getElementById(id);
+
+    let lastStatus = '';
+    function setStatus(cls, html) {
+      const s = el('mStatus');
+      const key = cls + '|' + html;
+      if (key === lastStatus) return;
+      lastStatus = key;
+      s.className = cls;
+      s.innerHTML = html;
+    }
+
+    function updateReadout() {
+      const val = flowValue();
+      el('mFlow').textContent = val;
+      el('mPaths').textContent = ST.paths;
+      const fullCount = E.filter((e) => e.flow > e.cap - 1e-9 && e.cap > 0).length;
+      el('mFull').textContent = fullCount + ' of ' + E.length;
+
+      const cutEl = el('mCut');
+      if (ST.phase === 'done' && ST.cut) {
+        cutEl.textContent = ST.cut.cap + ' (' + ST.cut.edges.length + ' pipe' + (ST.cut.edges.length === 1 ? '' : 's') + ')';
+        cutEl.className = 'v good';
+      } else {
+        cutEl.textContent = '–';
+        cutEl.className = 'v';
+      }
+
+      // A fresh verdict from tapping a pipe outranks the hover text for a
+      // moment — the pointer is still sitting on the pipe that was just
+      // changed, and that verdict is the whole point of tapping it.
+      if (ST.msg && ST.time < ST.msgUntil) { setStatus('full ' + ST.msgTone, ST.msg); return; }
+      if (ST.hover >= 0 && ST.hover < E.length) {
+        const e = E[ST.hover];
+        const spare = e.cap - e.flow;
+        setStatus('full', 'Pipe <b>' + nodes[e.u].label + ' → ' + nodes[e.v].label + '</b> carries <b>' +
+          e.flow + '</b> of <b>' + e.cap + '</b>' +
+          (spare > 0 ? ' — <b>' + spare + '</b> spare.' : ' — running full.') +
+          ' Tap it to ' + (P.tapDelta > 0 ? 'widen' : 'narrow') + ' it.');
+        return;
+      }
+      if (ST.msg) { setStatus('full ' + ST.msgTone, ST.msg); return; }
+      if (ST.phase === 'done' && ST.cut) {
+        setStatus('full good',
+          'No path left. Everything the flood could still reach is one side, the rest is the other, and the <b>' +
+          ST.cut.edges.length + '</b> pipe' + (ST.cut.edges.length === 1 ? '' : 's') + ' between them hold exactly <b>' +
+          ST.cut.cap + '</b> — the same number as the flow. Max flow is min cut.');
+        return;
+      }
+      if (ST.phase === 'flood') {
+        setStatus('full', 'Flooding outward from <b>S</b>, following only pipes with room left — and any flow that could be taken back.');
+        return;
+      }
+      if (ST.aug) {
+        const names = ST.aug.path.map((p) => nodes[p.from].label);
+        names.push('T');
+        setStatus('full', 'Found <b>' + names.join(' → ') + '</b>. Its tightest pipe has <b>' + ST.aug.bn +
+          '</b> to spare, so <b>' + ST.aug.bn + '</b> is what goes through.' +
+          (ST.aug.back ? ' One step runs <b>backwards</b> — the network is un-sending flow it already committed.' : ''));
+      }
+    }
+
+    // ---------- interaction ----------
+    function pointerAt(ev) {
+      const r = cv.getBoundingClientRect();
+      return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+    }
+
+    cv.addEventListener('pointermove', (ev) => {
+      const p = pointerAt(ev);
+      const h = hitEdge(p.x, p.y);
+      if (h !== ST.hover) { ST.hover = h; cv.style.cursor = h >= 0 ? 'pointer' : 'default'; }
+    });
+    cv.addEventListener('pointerleave', () => { ST.hover = -1; cv.style.cursor = 'default'; });
+
+    cv.addEventListener('pointerdown', (ev) => {
+      const p = pointerAt(ev);
+      const i = hitEdge(p.x, p.y);
+      ST.hover = i;
+      if (i >= 0) editEdge(i, P.tapDelta);
+    });
+
+    function editEdge(i, d) {
+      const e = E[i];
+      const before = ST.trueMax;
+      const oldCap = e.cap;
+      e.cap = Math.max(1, Math.min(24, e.cap + d));
+      const name = nodes[e.u].label + ' → ' + nodes[e.v].label;
+      if (e.cap === oldCap) {
+        ST.msg = 'Pipe <b>' + name + '</b> is already as ' + (d > 0 ? 'wide' : 'narrow') + ' as it goes.';
+        ST.msgTone = '';
+        ST.msgUntil = ST.time + 4200;
+        return;
+      }
+      resetFlows();
+      const res = solveSilently();
+      ST.trueMax = res.value;
+      ST.paths = res.added;
+      ST.phase = 'done';
+      ST.t = 0;
+      ST.aug = null;
+      ST.bfsRes = bfs();
+      const head = 'Pipe <b>' + name + '</b> is now <b>' + e.cap + '</b> wide. ';
+      // Note the middle case: a pipe can sit on *a* minimum cut and still buy
+      // you nothing, because another cut of the same capacity is also binding.
+      // So the verdict is always phrased from the measured flow, never from
+      // whether the pipe happened to be coloured orange.
+      if (res.value === before) {
+        ST.msg = head + 'Max flow: still <b>' + res.value + '</b> — the narrowest place is somewhere else.';
+        ST.msgTone = 'warn';
+      } else if (res.value > before) {
+        ST.msg = head + 'Max flow <b>' + before + ' → ' + res.value + '</b> — that one really was holding everything back.';
+        ST.msgTone = 'good';
+      } else {
+        ST.msg = head + 'Max flow <b>' + before + ' → ' + res.value + '</b> — it is part of the narrowest place now.';
+        ST.msgTone = 'warn';
+      }
+      ST.msgUntil = ST.time + 4200;
+    }
+
+    // ---------- lifecycle ----------
+    function regenerate() {
+      seed = (Math.random() * 1e9) | 0;
+      build();
+      const res = solveSilently();
+      ST.trueMax = res.value;
+      resetFlows();
+      for (const e of E) e.shown = 0;
+      ST.paths = 0;
+      ST.msg = '';
+      ST.msgTone = '';
+      ST.hover = -1;
+      ST.paused = false;
+      el('pause').textContent = '⏸ pause';
+      beginStep();
+    }
+
+    function replay() {
+      resetFlows();
+      ST.paths = 0;
+      ST.msg = '';
+      ST.msgTone = '';
+      ST.paused = false;
+      el('pause').textContent = '⏸ pause';
+      beginStep();
+    }
+
+    function skipToEnd() {
+      const res = solveSilently();
+      ST.trueMax = res.value;
+      ST.paths = ST.paths + res.added;
+      ST.bfsRes = bfs();
+      ST.aug = null;
+      ST.phase = 'done';
+      ST.t = 0;
+      ST.msg = '';
+      ST.msgTone = '';
+    }
+
+    // ---------- controls ----------
+    const bind = (id, valId, fmt, apply) => {
+      const inp = el(id);
+      const out = el(valId);
+      const sync = () => { out.textContent = fmt(+inp.value); apply(+inp.value); };
+      inp.addEventListener('input', sync);
+      sync();
+    };
+
+    bind('cols', 'colsVal', (v) => v, (v) => { if (P.cols !== v) { P.cols = v; regenerate(); } });
+    bind('rows', 'rowsVal', (v) => v, (v) => { if (P.rows !== v) { P.rows = v; regenerate(); } });
+    bind('dens', 'densVal', (v) => v + '%', (v) => {
+      const d = v / 100;
+      if (Math.abs(P.dens - d) > 1e-9) { P.dens = d; regenerate(); }
+    });
+    bind('spd', 'spdVal', (v) => v, (v) => { P.spd = v; });
+
+    const resToggle = el('resToggle');
+    resToggle.addEventListener('click', () => {
+      P.residual = !P.residual;
+      resToggle.classList.toggle('on', P.residual);
+    });
+
+    const seg = el('seg');
+    seg.addEventListener('click', (ev) => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      P.tapDelta = +b.dataset.d;
+      [...seg.children].forEach((c) => c.classList.toggle('on', c === b));
+    });
+
+    el('regen').addEventListener('click', regenerate);
+    el('replay').addEventListener('click', replay);
+    el('skip').addEventListener('click', skipToEnd);
+    el('pause').addEventListener('click', () => {
+      ST.paused = !ST.paused;
+      el('pause').textContent = ST.paused ? '▶ resume' : '⏸ pause';
+    });
+
+    // ---------- main loop ----------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(64, now - last);
+      last = now;
+      ST.time += dt;
+
+      advance(dt);
+
+      // ease the drawn flow toward the real flow so pipes fill smoothly
+      const k = 1 - Math.exp(-dt / 95);
+      for (const e of E) {
+        if (Math.abs(e.shown - e.flow) < 0.004) e.shown = e.flow;
+        else e.shown += (e.flow - e.shown) * k;
+      }
+
+      draw();
+      updateReadout();
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', () => { resize(); });
+    resize();
+    regenerate();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
