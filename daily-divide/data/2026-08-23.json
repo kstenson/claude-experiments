@@ -1,0 +1,311 @@
+{
+  "date": "2026-08-23",
+  "topic": "Trump's 50% Section 338 tariffs on Canada and Ottawa's dollar-for-dollar retaliation",
+  "question": "Are the 50% tariffs that hit Canadian goods on August 22 legally sound and factually justified — and who actually pays them?",
+  "summary": "Talks collapsed late Friday, August 21, and at 12:01 a.m. Saturday the United States began collecting an additional 50 percent duty on Canadian dairy, alcohol and a sprawling motor-vehicle annex. The legal basis is unusual: Section 338 of the Tariff Act of 1930 (19 U.S.C. 1338), a Smoot-Hawley provision with no public record of use for tariffs since at least 1949. Trump signed three proclamations (11046, 11047, 11048) on July 20; a further proclamation suspended them for three days while a deal looked close. Prime Minister Mark Carney says Canada will match the tariffs 'dollar for dollar' beginning September 8.\n\nThe right's case is that Canada genuinely discriminates against American goods and that a statute Congress wrote is a lawful answer. The left's case is that the tariffs breach the trade agreement the US itself signed, rest on a zombie statute, and will be paid by Americans.\n\nBoth halves have real support. Canada's discrimination is documented in primary records — a 25 percent surtax applied only to US-origin vehicles, every province halting US alcohol sales, dairy quota rules that admit EU-agreement retailers but not USMCA ones. But the US already litigated the dairy claim under USMCA and lost, the duties override USMCA origin rules, the covered goods run far past the sectors complained of, and the evidence that foreigners pay tariffs is thin. The needle leans slightly left on the checkable merits.",
+  "needle": -10,
+  "verdict": "On today's checkable facts the critics' case is somewhat stronger: the duties exceed the harm the administration itself documented, sweep in goods unrelated to the complaint, override USMCA origin rules, and will be borne mostly by American buyers. But the right is correct on the thing the left most often waves away — Canada's auto surtax, alcohol delistings and dairy quota rules really are US-specific, and Section 338 really is on the books with a 50 percent ceiling. Whether tariffs are a legitimate instrument of statecraft, and how much economic pain is worth extracting concessions, the meter cannot decide.",
+  "weights": {
+    "factualAccuracy": 0.6,
+    "reasoningHonesty": 0.4
+  },
+  "verificationNote": "Claims were checked against primary documents first: the statute text at 19 U.S.C. 1338 (Cornell LII), the full text of Proclamations 11046, 11047, 11048 and the suspension proclamation via the Federal Register API, USTR's own 2023 press release on the USMCA dairy panel, and Canada Border Services Agency Customs Notice 25-15 on the vehicle surtax. Reporting was used only to corroborate, across Fox Business, RedState, Al Jazeera and PIIE. Several pages returned HTTP 403 and were not relied on: whitecase.com, congress.gov, senate.gov roll calls, EPI, The Hill, CBC. The federalregister.gov HTML pages redirect to a block page; the API raw-text endpoints were readable and are what is cited.",
+  "sources_consulted": [
+    "19 U.S.C. 1338 (Cornell Legal Information Institute)",
+    "Proclamation 11046 (Federal Register full text)",
+    "Proclamation 11047 (Federal Register full text)",
+    "Proclamation 11048 (Federal Register full text)",
+    "Proclamation 11056 (Federal Register full text)",
+    "Office of the U.S. Trade Representative",
+    "Canada Border Services Agency Customs Notice 25-15",
+    "Canada Gazette Part II",
+    "Fox Business",
+    "RedState",
+    "Al Jazeera",
+    "CNBC",
+    "ABC News",
+    "CBS News",
+    "CP24",
+    "Peterson Institute for International Economics",
+    "Global Trade Alert",
+    "Holland & Knight",
+    "Borden Ladner Gervais",
+    "Butzel Long",
+    "Reason (Volokh Conspiracy)",
+    "Anadolu Agency"
+  ],
+  "sides": {
+    "left": {
+      "label": "An unlawful tariff Americans will pay for",
+      "framing": "Trump reached past the trade laws Congress actually uses into a 1930 statute nobody has invoked in eighty years, imposed duties that override the USMCA the US itself negotiated, on goods far beyond the sectors he complains about — and the bill will land on American importers and shoppers, not on Ottawa.",
+      "factualAccuracy": 76,
+      "reasoningHonesty": 64,
+      "score": 71,
+      "strongestPoint": "The mismatch is documented in the administration's own papers: the proclamations quantify roughly $5.6 billion in lost vehicle exports and $581 million in alcohol, while the duties fall on $17.7–20 billion of imports at 50 percent — and the US already brought the dairy claim to a USMCA panel in 2023 and lost.",
+      "weakestPoint": "It downplays discrimination that is real and verifiable, and its constitutional objection is selective: the same coalition urged Biden to raise Section 301 tariffs to 100 percent by executive action in 2024 without a new vote in Congress."
+    },
+    "right": {
+      "label": "Canada discriminates; a statute on the books answers it",
+      "framing": "Canada slaps a 25 percent surtax on American cars it charges no one else, every province pulled American liquor off the shelves, and its dairy quotas let European retailers in while shutting Americans out. Congress wrote Section 338 for exactly this. Canada walked away from a generous deal; the tariffs are the consequence.",
+      "factualAccuracy": 65,
+      "reasoningHonesty": 55,
+      "score": 61,
+      "strongestPoint": "The discrimination findings check out against Canadian primary sources: CBSA Customs Notice 25-15 confirms a 25 percent surtax that 'only applies to motor vehicles that originate in the U.S.,' and Canada's dairy quota rules do grant retailer access under the EU agreement that USMCA importers are denied.",
+      "weakestPoint": "The conduct it calls discrimination is largely retaliation for US tariffs the Supreme Court struck down in February, the remedy is not calibrated to the harm the statute requires it to 'offset,' and the claim that Canada rather than Americans pays is contradicted by the pass-through evidence."
+    }
+  },
+  "facts": [
+    {
+      "claim": "Section 338 of the Tariff Act of 1930 lets the President impose additional duties of up to 50 percent ad valorem on a country found to discriminate against US commerce, by proclamation alone.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "The statute authorizes 'such new or additional rate or rates of duty as he shall determine will offset such burden or disadvantage, not to exceed 50 per centum ad valorem or its equivalent,' on a finding that a country 'discriminates in fact against the commerce of the United States, directly or indirectly, by law or administrative regulation.'",
+      "explanation": "The text is what the administration says it is: a 50 percent ceiling, a discrimination finding, no mandatory investigation on the statute's face. The rate chosen is the statutory maximum. The same text contains the constraint the critics press — duties must 'offset' the burden, which implies proportionality.",
+      "source": "19 U.S.C. § 1338 (Cornell Legal Information Institute)",
+      "url": "https://www.law.cornell.edu/uscode/text/19/1338",
+      "corroboration": []
+    },
+    {
+      "claim": "These are the first tariffs ever imposed under Section 338; the provision has no public record of use for duties since at least 1949.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Borden Ladner Gervais: 'there is no public record of tariffs actually imposed under the provision since at least 1949.' Holland & Knight describes the July 2026 proclamations as Section 338's 'first tariff application ever.'",
+      "explanation": "Two trade-law firms on opposite sides of the border agree, but both are stating a negative from the public record rather than an exhaustive archival search — hence medium confidence. The substantive point stands either way: this is a dormant authority being switched on.",
+      "source": "Borden Ladner Gervais, Section 338 tariffs target Canadian trade",
+      "url": "https://www.blg.com/en/insights/2026/07/smoot-hawley-revived-a-never-before-used-depression-era-law-is-invoked-against-canadian-trade",
+      "corroboration": [
+        {
+          "source": "Holland & Knight",
+          "url": "https://www.hklaw.com/en/insights/publications/2026/07/50-percent-opening-bid-canadian-imports-subject-to-section-338-tariffs"
+        },
+        {
+          "source": "Butzel Long",
+          "url": "https://www.butzel.com/alert-new-section-338-actions-against-canada-and-section-301-tariffs-on-60-trading-partners-and-brazil-key-considerations-for-us-importers"
+        }
+      ]
+    },
+    {
+      "claim": "Canada applies a 25 percent surtax to motor vehicles originating in the United States that it does not apply to vehicles from other countries.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "CBSA Customs Notice 25-15: 'Effective April 9, 2025, motor vehicles originating in the U.S. and imported into Canada are subject to a surtax in the amount of 25%,' and 'the surtax only applies to motor vehicles that originate in the U.S.'",
+      "explanation": "Confirmed in Canada's own customs guidance, not just the US proclamation — the strongest kind of corroboration. Context the right omits: Canada imposed it in April 2025 expressly as a counter-tariff to US duties on Canadian vehicles, and a remission order relieves CUSMA-originating vehicles for qualifying producers.",
+      "source": "Canada Border Services Agency, Customs Notice 25-15",
+      "url": "https://www.cbsa-asfc.gc.ca/publications/cn-ad/cn25-15-eng.html",
+      "corroboration": [
+        {
+          "source": "Proclamation 11048 (Federal Register full text)",
+          "url": "https://www.federalregister.gov/documents/full_text/text/2026/07/23/2026-14997.txt"
+        },
+        {
+          "source": "Canada Gazette Part II, Motor Vehicles Remission Order 2025",
+          "url": "https://gazette.gc.ca/rp-pr/p2/2025/2025-05-07/html/si-tr60-eng.html"
+        }
+      ]
+    },
+    {
+      "claim": "Canadian provinces halted sales of US alcoholic beverages, and Canadian imports of US alcohol fell about 81 percent in the year to February 2026.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Proclamation 11046: 'all Canadian provinces and territories halted the purchase, distribution, or retailing of U.S. alcoholic beverages,' and imports 'decreased by approximately 81 percent (from approximately $718 million to approximately $137 million).'",
+      "explanation": "The trade collapse is real and the measures are US-specific. But the primary record also shows why: Ontario pulled more than 3,600 American products on March 4, 2025 as an explicitly announced 'first round of retaliation' against Trump's tariffs. The discrimination is downstream of a US action.",
+      "source": "Proclamation 11046 (Federal Register full text)",
+      "url": "https://www.federalregister.gov/documents/full_text/text/2026/07/23/2026-14991.txt",
+      "corroboration": [
+        {
+          "source": "CP24",
+          "url": "https://www.cp24.com/local/toronto/2025/03/04/ontario-removing-us-alcohol-from-lcbo-as-first-round-of-retaliation-against-trumps-tariffs/"
+        }
+      ]
+    },
+    {
+      "claim": "The United States already brought a USMCA dispute over Canada's dairy quota allocation rules and lost.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "USTR's own November 24, 2023 release states the panel found 'Canada's measures are not inconsistent with the USMCA provisions cited by the United States,' while noting one panelist dissented on Canada's exclusion of retailers and food service operators.",
+      "explanation": "This is the strongest form of receipt: the losing party's own press release. An earlier 2021 panel did find Canada's prior allocation scheme inconsistent, so the grievance is not invented — but on the retailer-eligibility point now cited in Proclamation 11047, the US lost under the agreement's own machinery and is now acting outside it.",
+      "source": "Office of the U.S. Trade Representative",
+      "url": "https://ustr.gov/about-us/policy-offices/press-office/press-releases/2023/november/usmca-panel-releases-canada-dairy-report-biden-harris-administration-will-continue-seeking-full",
+      "corroboration": []
+    },
+    {
+      "claim": "The 50 percent duties apply to Canadian goods even when they qualify as USMCA-originating, contrary to US tariff commitments under the agreement.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Holland & Knight: 'USMCA origination does not exempt covered goods from the Section 338 duty.' BLG calls the duties 'flatly inconsistent with U.S. tariff commitments under CUSMA' and says they exceed US bound rates under GATT Article II.",
+      "explanation": "The factual half — that a valid certificate of origin buys no relief — is confirmed across US and Canadian trade counsel and is not disputed by the administration. The legal conclusion is contested and untested: no panel or court has ruled, and Canada had not filed a Section 338-specific USMCA panel request as of August 22.",
+      "source": "Holland & Knight",
+      "url": "https://www.hklaw.com/en/insights/publications/2026/07/50-percent-opening-bid-canadian-imports-subject-to-section-338-tariffs",
+      "corroboration": [
+        {
+          "source": "Borden Ladner Gervais",
+          "url": "https://www.blg.com/en/insights/2026/07/smoot-hawley-revived-a-never-before-used-depression-era-law-is-invoked-against-canadian-trade"
+        }
+      ]
+    },
+    {
+      "claim": "The duties are far larger than the harm the administration itself documented, and cover products unrelated to the sectors complained of.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Proclamation 11048 records US vehicle exports to Canada falling 'from approximately $25.9 billion to approximately $20.3 billion.' Global Trade Alert: 'the duty covers $17.7bn of Canadian goods, most of it at the full 50% rate.' Harrell and Hillman count roughly $10 billion in annual duties against $5.6 billion of claimed harm.",
+      "explanation": "The arithmetic holds: a $5.6 billion decline answered with duties on $17.7–20 billion of trade. The annexes reach hockey sticks, cement, furniture and textiles. Whether that violates the statute's 'offset' language is a legal question courts have not answered; the Harrell–Hillman figure is an estimate, not an official tally.",
+      "source": "Reason (Volokh Conspiracy), Prospective Legal Challenges to Trump's Section 338 Tariffs",
+      "url": "https://reason.com/volokh/2026/08/03/prospective-legal-challenges-to-trumps-section-338-tariffs-against-canada/",
+      "corroboration": [
+        {
+          "source": "Global Trade Alert",
+          "url": "https://globaltradealert.org/blog/section-338-canada-august-2026"
+        },
+        {
+          "source": "Proclamation 11048 (Federal Register full text)",
+          "url": "https://www.federalregister.gov/documents/full_text/text/2026/07/23/2026-14997.txt"
+        }
+      ]
+    },
+    {
+      "claim": "American importers and consumers, not Canada, bear most of the cost of the tariffs.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "PIIE's survey of 2026 research finds 'US buyers of imports—US consumers and firms together—bore about 90 percent of the tariff burden in 2025,' with one study finding complete pass-through to consumer prices about seven months after implementation.",
+      "explanation": "Multiple independent 2026 studies converge near-complete pass-through, matching the 2018–19 literature. The honest caveat: estimates vary on timing and completeness — Cavallo and co-authors find pass-through still incomplete six months in — and none of this study set covers these specific August 2026 duties.",
+      "source": "Peterson Institute for International Economics",
+      "url": "https://www.piie.com/blogs/realtime-economics/2026/who-pays-tariffs-insights-recent-research",
+      "corroboration": [
+        {
+          "source": "Federal Reserve, Detecting Tariff Effects on Consumer Prices in Real Time",
+          "url": "https://www.federalreserve.gov/econres/notes/feds-notes/detecting-tariff-effects-on-consumer-prices-in-real-time-part-II-20260408.html"
+        }
+      ]
+    },
+    {
+      "claim": "Canada walked away from a finalized trade deal, causing the talks to collapse.",
+      "side": "right",
+      "verdict": "unverifiable",
+      "confidence": "low",
+      "evidence": "USTR Greer: 'Canada declined to finalize the trade deal under the terms agreed earlier this week... new demands and walk backs of other commitments by Canada have upended the careful balance.' Carney: 'last-minute changes in the U.S. proposed terms were unfair, uneconomic, and called into question the reliability of any deal.'",
+      "explanation": "Two governments describe the same closed-door negotiation in flatly opposite terms and no text of the draft has been published. Neither account can be checked. Trump's August 18 pause proclamation cites Canada's 'commitment to remove the discriminations,' which fits either story.",
+      "source": "Fox Business",
+      "url": "https://www.foxbusiness.com/economy/us-canada-trade-negotiations-suspended-carney-vows-dollar-for-dollar-retaliation-against-trumps-50-tariffs",
+      "corroboration": [
+        {
+          "source": "Al Jazeera",
+          "url": "https://www.aljazeera.com/news/2026/8/22/us-imposes-50-tariffs-on-20bn-worth-of-canadian-goods-after-talks-fail"
+        },
+        {
+          "source": "RedState",
+          "url": "https://redstate.com/beccalower/2026/08/22/canada-us-trade-talks-tariffs-n2205938"
+        }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Strip out the party labels and the argument is not about tariffs — it is about whether a president may set them alone. Both coalitions have answered yes when their president was doing it and no when the other's was. The clean mirror is May 2024, when Biden used Section 301 to quadruple tariffs on Chinese electric vehicles to 100 percent by executive action, with no new vote in Congress and loud Democratic encouragement.",
+    "precedent": {
+      "case": "Biden's May 2024 Section 301 tariff increases on China",
+      "what": "On May 14, 2024 Biden raised tariffs on roughly $18 billion of Chinese imports — 100 percent on electric vehicles, 50 percent on semiconductors and solar cells — using a statute inherited from Trump and a USTR review, not a fresh act of Congress.",
+      "mirror": "A president invokes a broad delegated trade statute to set punitive rates unilaterally against a trading partner. In 2024 that was defended as overdue enforcement; in 2026 the same mechanism is described as lawless. The statutes differ in pedigree — Section 301 is routinely used, Section 338 has been dormant — but the constitutional structure is identical.",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/biden-to-announce-new-100-tariffs-on-chinese-evs/",
+      "corroboration": [
+        {
+          "source": "CNBC",
+          "url": "https://www.cnbc.com/2024/05/14/biden-raises-china-tariffs-on-evs-solar-panels-batteries-.html"
+        }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Senate Democrats (Sherrod Brown, Chuck Schumer, Tammy Baldwin, Bob Casey, John Fetterman, Gary Peters, Debbie Stabenow)",
+        "then": "Pressed Biden to maintain and raise Section 301 tariffs by executive action, and welcomed the 100 percent EV rate as protection for American workers.",
+        "now": "The party line is that unilateral presidential tariffs are an abuse of delegated power that Congress must claw back.",
+        "source": "CBS News",
+        "url": "https://www.cbsnews.com/news/biden-to-announce-new-100-tariffs-on-chinese-evs/"
+      },
+      {
+        "who": "Senate Republicans, and Chuck Grassley in particular",
+        "then": "In May 2019 Grassley, then Finance Committee chairman, called Trump's threatened Mexico tariffs 'a misuse of presidential tariff authority and counter to congressional intent,' adding 'I support nearly every one of President Trump's immigration policies, but this is not one of them.'",
+        "now": "No comparable Republican effort has been mounted to check the Section 338 duties, and the House blocked expedited consideration of resolutions terminating the Canada tariff emergency.",
+        "source": "ABC News",
+        "url": "https://abcnews.com/Politics/president-donald-trump-announces-tariff-goods-mexico/story?id=63388473"
+      },
+      {
+        "who": "Rand Paul, Susan Collins, Lisa Murkowski, Mitch McConnell",
+        "then": "Voted with Democrats 51–48 in April 2025 for S.J.Res.37, terminating the emergency underpinning the first round of Canada tariffs.",
+        "now": "The counter-example that keeps this from being a clean partisan story: a handful of Republicans have been consistent, and the resolution died in the House rather than in the Senate.",
+        "source": "Anadolu Agency",
+        "url": "https://www.aa.com.tr/en/americas/us-senate-passes-resolution-to-repeal-trump-tariffs-on-canada/3526799"
+      }
+    ],
+    "longRun": "Congress delegated tariff power in a series of statutes between 1930 and 1974 and has never taken it back. Each president finds the delegation useful, each opposition rediscovers Article I, and the delegation survives. When power changes hands, expect the current critics to keep Section 338 on the shelf rather than repeal it — the same way Section 301 survived three administrations and grew.",
+    "appliedToScore": "The flips cost both sides reasoning-honesty points and are recorded in each weakestPoint: the left's constitutional objection is worth less because it was not made in 2024, and the right's silence now is worth less because it was not silent in 2019. Neither moves the needle, which rests on the present-tense checkable facts about what Canada does, what the statute says, and who pays."
+  },
+  "pattern": {
+    "thesis": "Treating the Canada duties as a one-off trade spat misses the trend. The Supreme Court struck down the IEEPA tariffs on February 20, 2026, and the administration has since rebuilt a comparable tariff wall out of other statutes — one authority at a time, each with a different trigger and none requiring a vote. Section 338 is the newest brick, and Butzel Long calls it 'potentially the most powerful unilateral tariff authority that the President has left.'",
+    "campaigns": [
+      {
+        "where": "All trading partners",
+        "what": "A temporary global surcharge imposed under Section 122 of the Trade Act of 1974 after the IEEPA ruling; it lapsed on its own statutory clock on July 24, 2026.",
+        "authorization": "Section 122 — expired",
+        "source": "Butzel Long",
+        "url": "https://www.butzel.com/alert-new-section-338-actions-against-canada-and-section-301-tariffs-on-60-trading-partners-and-brazil-key-considerations-for-us-importers",
+        "corroboration": [
+          {
+            "source": "Global Trade Alert",
+            "url": "https://globaltradealert.org/blog/section-338-canada-august-2026"
+          }
+        ]
+      },
+      {
+        "where": "About 60 trading partners, plus Brazil",
+        "what": "Section 301 tariffs of 10 to 12.5 percent announced July 23 and effective July 24, 2026 on forced-labour grounds, covering roughly 99.4 percent of US imports; Brazil faces 37.5 percent.",
+        "authorization": "Section 301 — in force",
+        "source": "Butzel Long",
+        "url": "https://www.butzel.com/alert-new-section-338-actions-against-canada-and-section-301-tariffs-on-60-trading-partners-and-brazil-key-considerations-for-us-importers",
+        "corroboration": []
+      },
+      {
+        "where": "Canada",
+        "what": "50 percent Section 232 national-security duties on steel, aluminium and copper, covering some $30.8 billion of Canadian trade — separate from and stacked alongside the new Section 338 duties.",
+        "authorization": "Section 232 — in force",
+        "source": "Global Trade Alert",
+        "url": "https://globaltradealert.org/blog/section-338-canada-august-2026",
+        "corroboration": [
+          {
+            "source": "Borden Ladner Gervais",
+            "url": "https://www.blg.com/en/insights/2026/07/smoot-hawley-revived-a-never-before-used-depression-era-law-is-invoked-against-canadian-trade"
+          }
+        ]
+      },
+      {
+        "where": "Canada",
+        "what": "Proclamations 11046–11048 of July 20, 2026 imposing 50 percent duties on dairy, alcohol and a broad motor-vehicle annex; suspended three days, in force since 12:01 a.m. August 22.",
+        "authorization": "Section 338 — first use, in force",
+        "source": "Proclamation 11047 (Federal Register full text)",
+        "url": "https://www.federalregister.gov/documents/full_text/text/2026/07/23/2026-14992.txt",
+        "corroboration": [
+          {
+            "source": "Holland & Knight",
+            "url": "https://www.hklaw.com/en/insights/publications/2026/07/50-percent-opening-bid-canadian-imports-subject-to-section-338-tariffs"
+          }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is not whether any single tariff is justified but whether a court closing one delegated door does anything at all when several others stand open. Watch for the one-off tell: an argument that discusses these duties purely as a Canada dispute, without mentioning that the authority was chosen after the last one was struck down."
+  },
+  "notAdjudicable": [
+    "Whether tariffs are a legitimate instrument of statecraft, or an inherently coercive tax on one's own citizens, is a question about the proper relationship between the state and trade that no dataset settles.",
+    "How much economic pain Americans should accept to extract concessions from a trading partner is a values judgment about sacrifice and national interest, not a measurable quantity.",
+    "Whether Canada's dairy supply-management system is a defensible protection of rural livelihoods or an indefensible cartel depends on what one thinks a country owes its farmers.",
+    "Whether a president should be able to act on a broad statutory delegation Congress has declined to repeal, or should be held to what Congress plainly intended in 1930, is a dispute about constitutional structure.",
+    "Whether treaty commitments should bind a country when it believes the other party is cheating is a question about the value of keeping one's word under provocation."
+  ],
+  "biasWatch": "The bias doing the most work today is the last-move fallacy: each side starts the clock at whichever action makes the other look like the aggressor. The administration's proclamations date the grievance to Canada's April 2025 auto surtax and March 2025 liquor delistings — both of which Ontario announced, in terms, as retaliation for US tariffs that the Supreme Court later held unlawful. Canada's account starts in 2026 and skips its own quota rules that a USMCA panelist called a breach. The tell to watch for in yourself: if a commentary describes one country's tariff as a response and the other's as an attack, without conceding that both are both, it has picked a starting point rather than made an argument. Ask what happened the month before the date the story opens on."
+}
