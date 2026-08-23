@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sure of Absence — Experiment 069</title>
+<meta name="description" content="Bloom's 1970 filter: remember a set in a few thousand bits by keeping only the fingerprints. It can never miss a member, and it will sometimes swear to a stranger." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.36rem; margin: 8px 0 3px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .note b { color: #b0b0ff; font-weight: 600; }
+
+  input[type=text] {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: #e9e9f0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9rem; letter-spacing: 0.02em;
+    padding: 10px 12px;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: rgba(124,124,255,0.55); background: rgba(124,124,255,0.07); }
+  input[type=text]::placeholder { color: #5d5d74; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.72rem; line-height: 1.5; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .chartwrap {
+    padding: 10px 12px 8px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  }
+  .chartwrap .cap { font-size: 0.68rem; color: #7c7c94; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .chartwrap .cap em { font-style: normal; color: #b0b0ff; }
+  .chartwrap canvas { width: 100%; height: 72px; display: block; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 236px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 13px; height: 13px; border-radius: 4px; flex: none; display: block; }
+  .legend i.set { background: linear-gradient(120deg, #7c7cff, #a08cff); box-shadow: 0 0 8px rgba(124,124,255,0.5); }
+  .legend i.zero { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); }
+  .legend i.probe { background: rgba(255,124,195,0.22); border: 2px solid #ff7cc3; border-radius: 4px; }
+  .legend i.proof { background: transparent; border: 2px dashed rgba(255,255,255,0.85); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1040px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 640px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 56vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .controls { gap: 9px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Sure of Absence</h1>
+    <p class="sub">Experiment № 069 · August 23, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label for="q">Ask the filter <b id="qstate">—</b></label>
+        <input type="text" id="q" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a word…" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="add20">add 20 words</button>
+        <button class="btn pink" id="reset">start over</button>
+      </div>
+
+      <div class="row">
+        <label for="mSlider">bits in the filter <b id="mVal">512</b></label>
+        <input type="range" id="mSlider" min="64" max="1536" step="8" value="512" />
+      </div>
+
+      <div class="row">
+        <label for="kSlider">hashes per word <b id="kVal">3</b></label>
+        <input type="range" id="kSlider" min="1" max="8" step="1" value="3" />
+        <p class="note" id="kNote">Best for this load: <b>—</b></p>
+      </div>
+
+      <div class="readout">
+        <span class="k">words added</span><span class="v" id="rN">0</span>
+        <span class="k">bits flipped to 1</span><span class="v violet" id="rFill">0%</span>
+        <span class="k">memory per word</span><span class="v" id="rBpw">—</span>
+        <hr />
+        <span class="k">false positives, counted</span><span class="v pinkv" id="rFpM">0.0%</span>
+        <span class="k">false positives, textbook</span><span class="v" id="rFpT">0.0%</span>
+        <span class="k">false negatives, ever</span><span class="v good">0</span>
+        <p class="full" id="rBit">Hover a bit to see which words flipped it.</p>
+      </div>
+
+      <div class="chartwrap">
+        <div class="cap"><span>false-positive rate</span><em id="capNow">n = 0</em></div>
+        <canvas id="chart"></canvas>
+        <p class="note" style="margin-top:4px">Line: the formula. Dots: 2,000 real tries.</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="set"></i> a bit some word flipped to 1</div>
+    <div><i class="zero"></i> a bit still at 0</div>
+    <div><i class="probe"></i> the bits your word hashes to</div>
+    <div><i class="proof"></i> a zero — proof it was never added</div>
+  </div>
+
+  <p class="hint">type a word to <b>ask</b> · <b>Enter</b> to add it · hover a bit to see who flipped it · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 069 · The story</p>
+      <h2>Sure of Absence</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I keep coming back to Burton Bloom's 1970 paper because it does something that sounds like cheating: it remembers a set of words in less memory than the words take up, and it does that by refusing to store them at all. Sixty-eight experiments in, I'd built things that search, match, sample and sort — but nothing that asks what you're allowed to forget. A Bloom filter is the cleanest answer I know. It throws away the data and keeps only a handful of bit positions per item, and it is completely honest about the one kind of error that buys it.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Watching the field fill up. Early on every word lands on its own untouched bits and the answers are crisp; then the bits start being shared, and somewhere past half the array flipped, the filter begins swearing blind that it has seen a word nobody ever typed. Nothing in the code changed — only the crowding. I also like that the "hashes per word" slider argues with your instincts: more hashes make a word harder to fake and fill the array faster, so the best number is a compromise, and the panel works it out as <em>(m/n)·ln 2</em>. The panel counts the real thing rather than trusting the formula: two thousand strings nobody ever added, tried against the filter after every insert. The dots wander a percent either side of the curve instead of sitting on it, which is the honest result — the formula treats the k bits of a lookup as independent coins, and they are very nearly that and never exactly that.</p>
+
+      <h3>Something you might take away</h3>
+      <p>One-sided error is a design choice, not a defect. This filter can never miss something it has seen, so a "no" is a proof and a "yes" is only a lead — which is exactly the shape you want in front of an expensive lookup: cheap and certain when it says don't bother, cheap and occasionally wrong when it says go and check. Whenever something answers fast, it's worth asking which direction it's allowed to be wrong in, and whether that's the direction that costs you least.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    const typing = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+    if (!typing && e.key && e.key.toLowerCase() === 'h') toggleUi();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  function toggleUi() {
+    ui.classList.toggle('hidden');
+    showUi.classList.toggle('on', ui.classList.contains('hidden'));
+    document.getElementById('legend').classList.toggle('hidden', ui.classList.contains('hidden'));
+    layout();
+  }
+  document.getElementById('collapse').addEventListener('click', toggleUi);
+  showUi.addEventListener('click', toggleUi);
+
+  // ---- SURE OF ABSENCE — a Bloom filter you can watch fill up ----
+  (() => {
+    const WORDS = ('apple river stone lantern harbour meadow cinder pebble thistle marble ember willow copper anchor ' +
+      'bramble orchard tundra quartz cedar lagoon compass kettle satchel ribbon walnut furrow beacon cobble drizzle ' +
+      'gravel hazel lichen mantle nettle plover rafter saffron tallow verbena whittle bracken clover dagger fathom ' +
+      'gable harrow ingot jasper kindle lattice mortar nutmeg oyster parsley quiver rhubarb sable tinder umber ' +
+      'vellum wicker yarrow zephyr almond barley crimson dovetail elder fennel granite hollow indigo juniper ' +
+      'kestrel linden mallow narwhal obsidian pewter quince rosemary sorrel thimble upland violet wagtail yeoman ' +
+      'anvil bellows cistern damson eaves flint gorse heather iris kelp loam mica oak pine quay reed sedge thatch ' +
+      'urchin vane weir yew alder brook chalk dune fern glade heath inlet jetty knoll ledge marsh nook pier ridge ' +
+      'shoal trail vale wold acorn birch cobalt dusk ferry grove husk ivory jade kiln lark moss nave otter plume ' +
+      'quilt rook slate tide vine wren amber bolt crag drift ember forge glint haze isle jolt keel lull mist notch ' +
+      'onyx prow rill spur trove vault whorl arbor bight cove delta eddy fjord gulch hollow islet jag karst levee ' +
+      'mesa oasis playa reef steppe taiga upland valley wadi bay cape cliff down esker fen glen hill' ).split(/\s+/);
+
+    // ---------- hashing ----------
+    // FNV-1a, twice, with different offset bases. Kirsch–Mitzenmacher tells us
+    // two independent hashes can stand in for k of them:  h_i = h1 + i*h2 + i².
+    function fnv(str, basis) {
+      let h = basis >>> 0;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619) >>> 0;
+      }
+      return h >>> 0;
+    }
+    // A final avalanche, so that "m" being a round number can't leave a pattern
+    // in the low bits — without it every word lands on same-parity cells only.
+    function mix(x) {
+      x = x >>> 0;
+      x ^= x >>> 16; x = Math.imul(x, 0x7feb352d) >>> 0;
+      x ^= x >>> 15; x = Math.imul(x, 0x846ca68b) >>> 0;
+      x ^= x >>> 16;
+      return x >>> 0;
+    }
+    const pair = (s) => [fnv(s, 2166136261), (fnv(s, 3735928559) | 1) >>> 0];
+    function probes(pr, k, m, out) {
+      const [h1, h2] = pr;
+      for (let i = 0; i < k; i++) out[i] = mix((h1 + Math.imul(i, h2)) >>> 0) % m;
+      return out;
+    }
+
+    // ---------- state ----------
+    const S = {
+      m: 512, k: 3,
+      bits: new Uint8Array(512),
+      owners: [],                 // owners[bit] = [word, …]
+      added: [],                  // words actually inserted, in order
+      addedSet: new Set(),
+      pairs: new Map(),           // word -> [h1,h2]
+      history: [],                // {n, measured}
+      flash: new Float32Array(512),
+      queue: [],                  // words waiting to be inserted
+      motes: [],                  // travelling dots
+      query: '', qProbes: [], qVerdict: null,
+      hover: -1, pointer: null,
+      shuffled: WORDS.slice(),
+      cursor: 0,
+      lastFp: 0,
+    };
+
+    // a big pool of strings nobody will ever add — used to measure the real rate
+    const TEST = [];
+    (function buildTest() {
+      const cs = 'bcdfghjklmnprstvwz', vs = 'aeiouy';
+      let seed = 20260823;
+      const rnd = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
+      const seen = new Set(WORDS);
+      while (TEST.length < 2000) {
+        let w = '';
+        const syl = 2 + ((rnd() * 2) | 0);
+        for (let i = 0; i < syl; i++) {
+          w += cs[(rnd() * cs.length) | 0] + vs[(rnd() * vs.length) | 0];
+          if (rnd() < 0.35) w += cs[(rnd() * cs.length) | 0];
+        }
+        if (!seen.has(w)) { seen.add(w); TEST.push(pair(w)); }
+      }
+    })();
+
+    // deterministic shuffle of the insertion order
+    (function shuffle() {
+      let seed = 7770069;
+      const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296;
+      const a = S.shuffled;
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = (rnd() * (i + 1)) | 0;
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+    })();
+
+    const getPair = (w) => { let p = S.pairs.get(w); if (!p) { p = pair(w); S.pairs.set(w, p); } return p; };
+
+    function resizeFilter(m) {
+      S.m = m;
+      S.bits = new Uint8Array(m);
+      S.flash = new Float32Array(m);
+      S.owners = [];
+      for (const w of S.added) setBits(w, false);
+      S.history = [];
+      S.motes.length = 0;
+      recomputeStats(true);
+    }
+
+    function setBits(w, flash) {
+      const idx = probes(getPair(w), S.k, S.m, []);
+      for (const b of idx) {
+        S.bits[b] = 1;
+        (S.owners[b] || (S.owners[b] = [])).push(w);
+        if (flash) S.flash[b] = 1;
+      }
+      return idx;
+    }
+
+    function addWord(w, animate) {
+      w = w.trim().toLowerCase();
+      if (!w) return;
+      if (S.addedSet.has(w)) { pulseExisting(w); return; }
+      S.added.push(w); S.addedSet.add(w);
+      const idx = probes(getPair(w), S.k, S.m, []);
+      if (animate) {
+        const origin = chipPoint();
+        idx.forEach((b, i) => S.motes.push({
+          x0: origin.x, y0: origin.y, bit: b, t: -i * 0.14, word: w, dur: 0.55,
+        }));
+      } else {
+        for (const b of idx) { S.bits[b] = 1; (S.owners[b] || (S.owners[b] = [])).push(w); S.flash[b] = 1; }
+        recomputeStats();
+      }
+    }
+
+    function pulseExisting(w) {
+      for (const b of probes(getPair(w), S.k, S.m, [])) S.flash[b] = 1;
+    }
+
+    // ---------- statistics ----------
+    function theory(n, k, m) { return Math.pow(1 - Math.exp(-k * n / m), k); }
+
+    function measureFp() {
+      const idx = new Array(S.k);
+      let hits = 0;
+      for (let t = 0; t < TEST.length; t++) {
+        probes(TEST[t], S.k, S.m, idx);
+        let all = true;
+        for (let i = 0; i < S.k; i++) if (!S.bits[idx[i]]) { all = false; break; }
+        if (all) hits++;
+      }
+      return hits / TEST.length;
+    }
+
+    const el = (id) => document.getElementById(id);
+    function recomputeStats(skipHistory) {
+      const n = S.added.length;
+      let ones = 0;
+      for (let i = 0; i < S.m; i++) ones += S.bits[i];
+      const fp = measureFp();
+      S.lastFp = fp;
+      if (skipHistory) S.history = [{ n, fp }];
+      else {
+        const last = S.history[S.history.length - 1];
+        if (last && last.n === n) last.fp = fp; else S.history.push({ n, fp });
+      }
+
+      el('rN').textContent = n;
+      el('rFill').textContent = ((ones / S.m) * 100).toFixed(0) + '% · ' + ones + '/' + S.m;
+      el('rBpw').textContent = n ? (S.m / n).toFixed(1) + ' bits' : '—';
+      el('rFpM').textContent = (fp * 100).toFixed(1) + '%';
+      el('rFpT').textContent = (theory(n, S.k, S.m) * 100).toFixed(1) + '%';
+      el('capNow').textContent = 'n = ' + n;
+      const ideal = n ? Math.max(1, Math.round((S.m / n) * Math.LN2)) : 0;
+      const best = Math.min(8, ideal);
+      el('kNote').innerHTML = ideal
+        ? 'Best for this load: <b>' + best + (ideal > 8 ? '+' : '') + '</b> hash' + (best === 1 ? '' : 'es') + ' — ' + (S.k === best ? 'you are there.' : (S.k < best ? 'more would sharpen it.' : 'fewer would fill it slower.'))
+        : 'Best for this load: <b>—</b>';
+      drawChart();
+    }
+
+    // ---------- geometry ----------
+    const stage = document.getElementById('stage');
+    const cv = document.getElementById('c');
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, dpr = 1;
+    const G = { x: 0, y: 0, cell: 20, cols: 1, rows: 1, w: 0, h: 0, cx: 0, top: 0, bottom: 0, tight: false };
+
+    function layout() {
+      const r = stage.getBoundingClientRect();
+      // Side-by-side as soon as the panel leaves usable width beside it;
+      // below that the panel spans the top and the field sits underneath.
+      const wide = window.innerWidth > 760;
+      const hidden = ui.classList.contains('hidden');
+      const ur = ui.getBoundingClientRect();
+      let left = 16, top = 24, right = r.width - 16, bottom = r.height - 54;
+      if (!hidden) {
+        if (wide) left = ur.right + 34;
+        else top = ur.bottom + 14;
+        // keep clear of the legend, which sits bottom-right above 1040px
+        if (window.innerWidth > 1040) right = r.width - 262;
+      }
+      const boxW = Math.max(120, right - left);
+      const boxH = Math.max(120, bottom - top);
+      const tight = boxH < 330;
+      const chipH = tight ? 46 : 74, verdictH = tight ? 40 : 62;
+      const gw = boxW, gh = Math.max(80, boxH - chipH - verdictH);
+      const aspect = gw / gh;
+      let cols = Math.max(1, Math.round(Math.sqrt(S.m * aspect)));
+      let rows = Math.ceil(S.m / cols);
+      let cell = Math.min(gw / cols, gh / rows);
+      // try neighbouring column counts for a slightly bigger cell
+      for (let d = -6; d <= 6; d++) {
+        const c2 = cols + d;
+        if (c2 < 1 || c2 > S.m) continue;
+        const r2 = Math.ceil(S.m / c2);
+        const s2 = Math.min(gw / c2, gh / r2);
+        if (s2 > cell) { cell = s2; cols = c2; rows = r2; }
+      }
+      cell = Math.min(cell, 34);
+      rows = Math.ceil(S.m / cols);
+      G.cols = cols; G.rows = rows; G.cell = cell;
+      G.w = cols * cell; G.h = rows * cell;
+      G.x = left + (boxW - G.w) / 2;
+      G.y = top + chipH + (gh - G.h) / 2;
+      G.cx = left + boxW / 2;
+      G.tight = tight;
+      G.top = top + chipH;
+      G.bottom = G.y + G.h;
+    }
+    window.layout = layout;
+
+    function bitXY(b) {
+      const col = b % G.cols, row = (b / G.cols) | 0;
+      return { x: G.x + col * G.cell + G.cell / 2, y: G.y + row * G.cell + G.cell / 2 };
+    }
+    function chipPoint() { return { x: G.cx, y: Math.max(20, G.y - 34) }; }
+
+    function resize() {
+      const r = stage.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = r.width; H = r.height;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+      sizeChart();
+    }
+    window.addEventListener('resize', resize);
+
+    // ---------- query ----------
+    const qInput = el('q');
+    function updateQuery() {
+      const raw = qInput.value.trim().toLowerCase();
+      S.query = raw;
+      if (!raw) { S.qProbes = []; S.qVerdict = null; el('qstate').textContent = '—'; return; }
+      S.qProbes = probes(getPair(raw), S.k, S.m, []);
+      let zero = -1;
+      for (const b of S.qProbes) if (!S.bits[b]) { zero = b; break; }
+      const known = S.addedSet.has(raw);
+      const landing = S.motes.some((mo) => mo.word === raw) || S.queue.indexOf(raw) >= 0;
+      if (landing) { S.qVerdict = { kind: 'landing' }; el('qstate').textContent = 'flipping bits'; return; }
+      if (zero >= 0) S.qVerdict = { kind: 'absent', zero };
+      else if (known) S.qVerdict = { kind: 'present' };
+      else S.qVerdict = { kind: 'false' };
+      el('qstate').textContent = zero >= 0 ? 'definitely not' : (known ? 'really there' : 'false positive');
+    }
+    qInput.addEventListener('input', updateQuery);
+    qInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const w = qInput.value.trim().toLowerCase();
+        if (w) { addWord(w, true); qInput.select(); setTimeout(updateQuery, 700); }
+      }
+    });
+
+    el('add20').addEventListener('click', () => {
+      for (let i = 0; i < 20; i++) {
+        while (S.cursor < S.shuffled.length && S.addedSet.has(S.shuffled[S.cursor])) S.cursor++;
+        if (S.cursor >= S.shuffled.length) break;
+        S.queue.push(S.shuffled[S.cursor++]);
+      }
+    });
+    el('reset').addEventListener('click', () => {
+      S.added = []; S.addedSet = new Set(); S.owners = [];
+      S.bits = new Uint8Array(S.m); S.flash = new Float32Array(S.m);
+      S.queue.length = 0; S.motes.length = 0; S.cursor = 0; S.history = [];
+      recomputeStats(true); updateQuery();
+    });
+    el('mSlider').addEventListener('input', (e) => {
+      el('mVal').textContent = e.target.value;
+      resizeFilter(+e.target.value);
+      layout(); updateQuery();
+    });
+    el('kSlider').addEventListener('input', (e) => {
+      S.k = +e.target.value;
+      el('kVal').textContent = S.k;
+      resizeFilter(S.m);
+      updateQuery();
+    });
+
+    // hover
+    cv.addEventListener('pointermove', (e) => {
+      const r = cv.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      S.pointer = { x, y };
+      const col = Math.floor((x - G.x) / G.cell), row = Math.floor((y - G.y) / G.cell);
+      let b = -1;
+      if (col >= 0 && col < G.cols && row >= 0 && row < G.rows) {
+        const i = row * G.cols + col;
+        if (i < S.m) b = i;
+      }
+      if (b !== S.hover) { S.hover = b; describeBit(b); }
+    });
+    cv.addEventListener('pointerleave', () => { S.hover = -1; S.pointer = null; describeBit(-1); });
+
+    function describeBit(b) {
+      const box = el('rBit');
+      if (b < 0) { box.innerHTML = 'Hover a bit to see which words flipped it.'; return; }
+      const own = S.owners[b] || [];
+      if (!own.length) { box.innerHTML = 'Bit <b>#' + b + '</b> is still <b>0</b>. Any word that hashes here is <b class="v">definitely not</b> in the set.'; return; }
+      const shown = own.slice(0, 6).map((w) => '<b class="p">' + w + '</b>').join(', ');
+      box.innerHTML = 'Bit <b>#' + b + '</b> was flipped by ' + own.length + ' word' + (own.length === 1 ? '' : 's') + ': ' + shown + (own.length > 6 ? ' …' : '') + '.';
+    }
+
+    // ---------- chart ----------
+    const chart = el('chart');
+    const cctx = chart.getContext('2d');
+    let CW = 0, CH = 0;
+    function sizeChart() {
+      const r = chart.getBoundingClientRect();
+      CW = r.width; CH = r.height;
+      chart.width = Math.round(CW * dpr); chart.height = Math.round(CH * dpr);
+      cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawChart();
+    }
+    function drawChart() {
+      if (!CW) return;
+      cctx.clearRect(0, 0, CW, CH);
+      const pad = { l: 26, r: 4, t: 6, b: 14 };
+      const nMax = Math.max(60, Math.ceil((S.added.length + 6) * 1.4));
+      const yMax = Math.min(1, Math.max(0.04, theory(nMax, S.k, S.m) * 1.12));
+      const X = (n) => pad.l + (n / nMax) * (CW - pad.l - pad.r);
+      const Y = (v) => CH - pad.b - (Math.min(v, yMax) / yMax) * (CH - pad.t - pad.b);
+
+      // frame
+      cctx.strokeStyle = 'rgba(255,255,255,0.09)';
+      cctx.lineWidth = 1;
+      cctx.beginPath();
+      cctx.moveTo(pad.l, pad.t); cctx.lineTo(pad.l, CH - pad.b); cctx.lineTo(CW - pad.r, CH - pad.b);
+      cctx.stroke();
+      cctx.fillStyle = '#5f5f76';
+      cctx.font = '9px ui-monospace, Menlo, monospace';
+      cctx.textAlign = 'right'; cctx.textBaseline = 'middle';
+      cctx.fillText((yMax * 100).toFixed(0) + '%', pad.l - 4, pad.t + 3);
+      cctx.fillText('0', pad.l - 4, CH - pad.b);
+      cctx.textAlign = 'center'; cctx.textBaseline = 'top';
+      cctx.fillText(String(nMax) + ' words', (pad.l + CW - pad.r) / 2, CH - pad.b + 3);
+
+      // theory curve
+      cctx.beginPath();
+      for (let i = 0; i <= 120; i++) {
+        const n = (i / 120) * nMax;
+        const v = theory(n, S.k, S.m);
+        const x = X(n), y = Y(v);
+        i ? cctx.lineTo(x, y) : cctx.moveTo(x, y);
+      }
+      cctx.strokeStyle = 'rgba(124,124,255,0.85)';
+      cctx.lineWidth = 1.6;
+      cctx.stroke();
+
+      // measured points
+      cctx.fillStyle = 'rgba(255,124,195,0.9)';
+      for (const h of S.history) {
+        if (h.n > nMax) continue;
+        cctx.beginPath();
+        cctx.arc(X(h.n), Y(h.fp), 1.7, 0, Math.PI * 2);
+        cctx.fill();
+      }
+      // current marker
+      const n = S.added.length;
+      if (n) {
+        cctx.strokeStyle = 'rgba(255,255,255,0.22)';
+        cctx.setLineDash([2, 3]);
+        cctx.beginPath(); cctx.moveTo(X(n), pad.t); cctx.lineTo(X(n), CH - pad.b); cctx.stroke();
+        cctx.setLineDash([]);
+        cctx.fillStyle = '#ff7cc3';
+        cctx.beginPath(); cctx.arc(X(n), Y(S.lastFp), 3.2, 0, Math.PI * 2); cctx.fill();
+      }
+    }
+
+    // ---------- render ----------
+    let last = performance.now(), queueTimer = 0, t = 0;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+
+      // drip-feed the queue
+      if (S.queue.length) {
+        queueTimer -= dt;
+        if (queueTimer <= 0) { queueTimer = 0.085; addWord(S.queue.shift(), true); }
+      }
+
+      // motes
+      let landed = false;
+      for (let i = S.motes.length - 1; i >= 0; i--) {
+        const mo = S.motes[i];
+        mo.t += dt;
+        if (mo.t >= mo.dur) {
+          const b = mo.bit;
+          S.bits[b] = 1;
+          (S.owners[b] || (S.owners[b] = [])).push(mo.word);
+          S.flash[b] = 1;
+          S.motes.splice(i, 1);
+          landed = true;
+        }
+      }
+      if (landed) { recomputeStats(); updateQuery(); }
+
+      for (let i = 0; i < S.m; i++) if (S.flash[i] > 0) S.flash[i] = Math.max(0, S.flash[i] - dt * 1.7);
+
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // ambient wash
+      const g = ctx.createRadialGradient(G.cx, G.y + G.h / 2, 0, G.cx, G.y + G.h / 2, Math.max(G.w, G.h));
+      g.addColorStop(0, 'rgba(124,124,255,0.07)');
+      g.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+
+      const cell = G.cell, inset = Math.max(1, cell * 0.11), rad = Math.max(1.5, cell * 0.22);
+      const probeSet = new Set(S.qProbes);
+
+      for (let b = 0; b < S.m; b++) {
+        const col = b % G.cols, row = (b / G.cols) | 0;
+        const x = G.x + col * cell + inset, y = G.y + row * cell + inset;
+        const s = cell - inset * 2;
+        const on = S.bits[b] === 1;
+        const fl = S.flash[b];
+
+        if (on) {
+          const breathe = 0.62 + 0.1 * Math.sin(t * 1.5 + b * 0.37);
+          ctx.fillStyle = 'rgba(124,124,255,' + (breathe + fl * 0.38).toFixed(3) + ')';
+          roundRect(x, y, s, s, rad); ctx.fill();
+          if (cell > 9) {
+            ctx.fillStyle = 'rgba(190,190,255,' + (0.16 + fl * 0.6).toFixed(3) + ')';
+            roundRect(x + s * 0.22, y + s * 0.18, s * 0.34, s * 0.3, rad * 0.6); ctx.fill();
+          }
+          if (fl > 0.01) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(160,140,255,0.95)';
+            ctx.shadowBlur = 16 * fl;
+            ctx.fillStyle = 'rgba(255,255,255,' + (fl * 0.5).toFixed(3) + ')';
+            roundRect(x, y, s, s, rad); ctx.fill();
+            ctx.restore();
+          }
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.045)';
+          roundRect(x, y, s, s, rad); ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.055)';
+          ctx.lineWidth = 1;
+          roundRect(x, y, s, s, rad); ctx.stroke();
+        }
+
+        if (probeSet.has(b)) {
+          const zero = !on;
+          ctx.save();
+          ctx.lineWidth = Math.max(1.5, cell * 0.11);
+          if (zero) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+            ctx.setLineDash([Math.max(2, cell * 0.16), Math.max(2, cell * 0.14)]);
+          } else {
+            ctx.strokeStyle = 'rgba(255,124,195,0.95)';
+            ctx.shadowColor = 'rgba(255,124,195,0.6)';
+            ctx.shadowBlur = 10;
+          }
+          roundRect(x - inset * 0.6, y - inset * 0.6, s + inset * 1.2, s + inset * 1.2, rad * 1.3);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (b === S.hover) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+          ctx.lineWidth = 1.5;
+          roundRect(x - inset, y - inset, s + inset * 2, s + inset * 2, rad * 1.4);
+          ctx.stroke();
+        }
+      }
+
+      // probe threads from the word chip
+      const chip = chipPoint();
+      if (S.qProbes.length && cell > 4) {
+        for (const b of S.qProbes) {
+          const p = bitXY(b);
+          ctx.beginPath();
+          ctx.moveTo(chip.x, chip.y + 16);
+          ctx.quadraticCurveTo((chip.x + p.x) / 2, (chip.y + p.y) / 2 - 26, p.x, p.y);
+          ctx.strokeStyle = S.bits[b] ? 'rgba(255,124,195,0.28)' : 'rgba(255,255,255,0.32)';
+          ctx.lineWidth = 1.1;
+          ctx.stroke();
+        }
+      }
+
+      // travelling motes
+      for (const mo of S.motes) {
+        if (mo.t < 0) continue;
+        const u = Math.min(1, mo.t / mo.dur), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+        const p = bitXY(mo.bit);
+        const mx = (mo.x0 + p.x) / 2, my = (mo.y0 + p.y) / 2 - 40;
+        const x = (1 - e) * (1 - e) * mo.x0 + 2 * (1 - e) * e * mx + e * e * p.x;
+        const y = (1 - e) * (1 - e) * mo.y0 + 2 * (1 - e) * e * my + e * e * p.y;
+        ctx.save();
+        ctx.shadowColor = 'rgba(160,140,255,0.9)'; ctx.shadowBlur = 12;
+        ctx.fillStyle = 'rgba(226,220,255,0.95)';
+        ctx.beginPath(); ctx.arc(x, y, Math.max(2, cell * 0.16), 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      // the word chip
+      const label = S.query || (S.added.length ? S.added[S.added.length - 1] : 'type a word');
+      ctx.font = '600 ' + (window.innerWidth < 640 ? 16 : 20) + 'px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(label).width;
+      const cw = tw + 34, ch = 34;
+      ctx.fillStyle = 'rgba(20,20,34,0.8)';
+      roundRect(chip.x - cw / 2, chip.y - ch / 2, cw, ch, 12); ctx.fill();
+      ctx.strokeStyle = S.query ? 'rgba(255,124,195,0.55)' : 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      roundRect(chip.x - cw / 2, chip.y - ch / 2, cw, ch, 12); ctx.stroke();
+      ctx.fillStyle = S.query ? '#ffd6ec' : '#6f6f88';
+      ctx.fillText(label, chip.x, chip.y + 1);
+
+      // the verdict
+      const vy = G.bottom + (G.tight ? 24 : 32);
+      const narrow = window.innerWidth < 640;
+      ctx.font = '600 ' + (narrow ? 13 : 15) + 'px ui-sans-serif, system-ui, sans-serif';
+      let msg = '', col2 = '#6f6f88';
+      if (S.qVerdict) {
+        if (S.qVerdict.kind === 'landing') { msg = 'flipping its bits now…'; col2 = '#b0b0ff'; }
+        else if (S.qVerdict.kind === 'absent') { msg = (narrow ? 'definitely not — bit #' : 'definitely not in the set — bit #') + S.qVerdict.zero + ' is still 0'; col2 = '#8affc0'; }
+        else if (S.qVerdict.kind === 'present') { msg = narrow ? 'probably in — and it really is' : 'probably in the set — and it really is'; col2 = '#b0b0ff'; }
+        else { msg = narrow ? 'probably in — a false positive' : 'probably in the set — but it was never added. a false positive.'; col2 = '#ff7cc3'; }
+      } else {
+        msg = S.added.length
+          ? S.added.length + (narrow ? ' words in ' + S.m + ' bits — none stored' : ' words remembered in ' + S.m + ' bits — none of them stored')
+          : 'an empty filter: every answer is a certain no';
+      }
+      ctx.fillStyle = col2;
+      ctx.fillText(msg, G.cx, vy);
+    }
+
+    // ---------- go ----------
+    el('mSlider').value = 512; el('mVal').textContent = '512';
+    el('kSlider').value = 3; el('kVal').textContent = '3';
+    resize();
+    recomputeStats(true);
+    for (let i = 0; i < 9; i++) S.queue.push(S.shuffled[S.cursor++]);
+    requestAnimationFrame(frame);
+    if (window.innerWidth > 900) setTimeout(() => qInput.focus(), 400);
+  })();
+</script>
+</body>
+</html>
