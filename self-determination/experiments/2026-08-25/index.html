@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Only Straight Lines — Experiment 070</title>
+<meta name="description" content="de Casteljau's 1959 algorithm: a Bézier curve drawn with nothing but repeated straight-line interpolation — the same trick behind every letter on your screen." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: crosshair; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.36rem; margin: 8px 0 3px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .note b { color: #b0b0ff; font-weight: 600; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.on { background: rgba(124,124,255,0.42); border-color: rgba(160,160,255,0.75); color: #f2f2ff; box-shadow: 0 0 14px rgba(124,124,255,0.28) inset; }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.pink.on { background: rgba(255,124,195,0.4); border-color: rgba(255,160,210,0.8); color: #fff0f8; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.72rem; line-height: 1.5; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .barwrap {
+    padding: 10px 12px 9px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  }
+  .barwrap .cap { font-size: 0.68rem; color: #7c7c94; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 7px; display: flex; justify-content: space-between; }
+  .barwrap .cap em { font-style: normal; color: #b0b0ff; }
+  .bars { display: grid; gap: 4px; }
+  .bars .b { display: grid; grid-template-columns: 24px 1fr 38px; align-items: center; gap: 8px; font-size: 0.68rem; color: #8f8fa6; }
+  .bars .b .t { font-variant-numeric: tabular-nums; }
+  .bars .b .track { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; }
+  .bars .b .fill { height: 100%; border-radius: 4px; transition: width 0.05s linear; }
+  .bars .b .pc { text-align: right; font-variant-numeric: tabular-nums; color: #c7c7d6; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 250px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 14px; border-radius: 50%; flex: none; display: block; }
+  .legend i.ctrl { background: linear-gradient(120deg, #7c7cff, #ff7cc3); box-shadow: 0 0 8px rgba(160,124,255,0.6); }
+  .legend i.scaf { background: transparent; border-top: 2px solid rgba(176,176,255,0.85); border-radius: 0; height: 0; }
+  .legend i.curve { background: transparent; border-top: 3px solid #ffffff; border-radius: 0; height: 0; }
+  .legend i.flat { background: transparent; border-top: 2px dashed #ff7cc3; border-radius: 0; height: 0; }
+  .legend i.dot { background: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.85); width: 10px; height: 10px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1040px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 640px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 58vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Only Straight Lines</h1>
+    <p class="sub">Experiment № 070 · August 25, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label for="tSlider">where along the curve <b id="tVal">t = 0.50</b></label>
+        <input type="range" id="tSlider" min="0" max="1000" step="1" value="500" />
+      </div>
+
+      <div class="row">
+        <label for="nSlider">control points <b id="nVal">4</b></label>
+        <input type="range" id="nSlider" min="3" max="7" step="1" value="4" />
+        <p class="note" id="nNote">Degree <b>3</b> — a cubic, the one every font is made of.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn on" id="bSweep">⏸ sweeping</button>
+        <button class="btn on" id="bScaffold">scaffold</button>
+        <button class="btn" id="bSplit">split at t</button>
+        <button class="btn pink" id="bFlatten">flatten it</button>
+        <button class="btn" id="bDrift">let it drift</button>
+        <button class="btn pink" id="bReset">start over</button>
+      </div>
+
+      <div class="row" id="tolRow">
+        <label for="tolSlider">flattening tolerance <b id="tolVal">2.0 px</b></label>
+        <input type="range" id="tolSlider" min="1" max="300" step="1" value="95" />
+      </div>
+
+      <div class="readout">
+        <span class="k">lerps to place one point</span><span class="v violet" id="rLerps">6</span>
+        <span class="k">point at t</span><span class="v" id="rPt">—</span>
+        <hr />
+        <span class="k">straight segments needed</span><span class="v pinkv" id="rSeg">—</span>
+        <span class="k">worst gap from the curve</span><span class="v" id="rErr">—</span>
+        <p class="full" id="rNote">Every point on the curve is found by interpolating, then interpolating the results, until one point is left.</p>
+      </div>
+
+      <div class="barwrap">
+        <div class="cap"><span>how much each point is saying</span><em id="capT">t = 0.50</em></div>
+        <div class="bars" id="bars"></div>
+        <p class="note" style="margin-top:6px">These always sum to <b>1</b> — so the curve can never leave the hull of its own points.</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="ctrl"></i> a control point — drag it</div>
+    <div><i class="scaf"></i> one round of interpolation</div>
+    <div><i class="curve"></i> the curve those rounds trace</div>
+    <div><i class="dot"></i> the single point left at t</div>
+    <div><i class="flat"></i> the straight lines a screen draws</div>
+  </div>
+
+  <p class="hint">drag the dots · scrub <b>t</b> · <b>space</b> pauses the sweep · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 070 · The story</p>
+      <h2>Only Straight Lines</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Seventy experiments in, I went looking for the algorithm I lean on most often without ever noticing it, and it turned out to be this one. Every letter you are reading right now is stored as a handful of Bézier segments, and every one of them gets drawn by de Casteljau's method: interpolate between neighbouring control points, then interpolate between <em>those</em> results, and keep going until a single point is left. That point is on the curve. Paul de Casteljau worked it out at Citroën in 1959 to describe car body panels; the company kept it quiet, so Pierre Bézier at Renault got the name. What hooked me is that there is no curve anywhere in the algorithm. There is no cubic formula, no square root, no trigonometry — only repeated straight-line interpolation, the most boring operation in graphics, run in a small triangle.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Scrub <em>t</em> slowly and watch the scaffold fold: four points become three, three become two, two become one, and the one traces the curve. That collapse is the whole algorithm, visible. Then press <em>split at t</em> — the scaffold you were already looking at <em>is</em> the answer to a different question. The left edge of the triangle gives the control points of the curve up to <em>t</em>, the right edge gives the rest, exactly, with no extra work; that's the subdivision property, and it is why cutting a Bézier in half is free. <em>Flatten it</em> is the honest ending: split until each piece is nearly straight, then just draw the pieces. Wind the tolerance down to a couple of pixels and roughly a dozen segments make a curve your eye will swear is smooth — that polyline is what your GPU actually rasterises. My favourite small detail is the influence bars. Only the two endpoints ever get the full say; every interior point peaks below one and never has the curve to itself, which is why dragging one feels like a suggestion rather than a command.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A curve isn't a primitive — it's a recipe, and the machine only ever executes straight lines. That reframing pays off past graphics: the reason this representation won is not that it is beautiful but that it is <em>cheap to interrogate</em>. You can split it, bound it, flatten it and test it for a hit using nothing but averages of numbers you already have. When you're choosing how to represent something, the winning form is rarely the most expressive one; it's the one whose questions are easy to answer.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  const ui = document.getElementById('ui');
+  const legend = document.getElementById('legend');
+  const showUi = document.getElementById('showUi');
+  function toggleUi() {
+    const hid = ui.classList.toggle('hidden');
+    legend.classList.toggle('hidden', hid);
+    showUi.classList.toggle('on', hid);
+  }
+  document.getElementById('collapse').addEventListener('click', toggleUi);
+  showUi.addEventListener('click', toggleUi);
+
+  window.addEventListener('keydown', (e) => {
+    if (!e.key) return;
+    if (e.key.toLowerCase() === 'h') toggleUi();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- The experiment: de Casteljau's algorithm ----
+  (() => {
+    const cv = document.getElementById('c');
+    const ctx = cv.getContext('2d');
+    const trail = document.createElement('canvas');
+    const tctx = trail.getContext('2d');
+
+    let W = 0, H = 0, DPR = 1;
+    let field = { x0: 0, y0: 0, x1: 1, y1: 1 };
+
+    const S = {
+      t: 0.5,
+      sweep: true,
+      scaffold: true,
+      split: false,
+      flatten: false,
+      drift: false,
+      tol: 2.0,
+      dir: 1,
+      drag: -1,
+      hover: -1,
+    };
+
+    // Control points live in normalised [0,1] field coordinates, so a resize
+    // (or a phone rotating) moves the whole drawing instead of breaking it.
+    let P = [];
+
+    function defaults(count) {
+      const pts = [];
+      for (let i = 0; i < count; i++) {
+        const u = count === 1 ? 0 : i / (count - 1);
+        pts.push({
+          x: 0.07 + 0.86 * u,
+          y: 0.5 - 0.37 * Math.cos(u * Math.PI * (count > 4 ? 2.2 : 1.35) + 0.35),
+          vx: (Math.random() - 0.5) * 0.05,
+          vy: (Math.random() - 0.5) * 0.05,
+        });
+      }
+      return pts;
+    }
+    P = defaults(4);
+
+    // ---- geometry ----
+    const lerp = (a, b, u) => a + (b - a) * u;
+    function toScreen(p) {
+      return { x: field.x0 + p.x * (field.x1 - field.x0), y: field.y0 + p.y * (field.y1 - field.y0) };
+    }
+    function fromScreen(x, y) {
+      const w = Math.max(1, field.x1 - field.x0), h = Math.max(1, field.y1 - field.y0);
+      return { x: (x - field.x0) / w, y: (y - field.y0) / h };
+    }
+
+    // The algorithm itself: one round of lerps per level, until a point remains.
+    function levelsAt(pts, t) {
+      const out = [pts.slice()];
+      let cur = pts;
+      while (cur.length > 1) {
+        const next = [];
+        for (let i = 0; i < cur.length - 1; i++) {
+          next.push({ x: lerp(cur[i].x, cur[i + 1].x, t), y: lerp(cur[i].y, cur[i + 1].y, t) });
+        }
+        out.push(next);
+        cur = next;
+      }
+      return out;
+    }
+    function evalAt(pts, t) {
+      const lv = levelsAt(pts, t);
+      return lv[lv.length - 1][0];
+    }
+    // The scaffold's two edges are the halves' control points — free subdivision.
+    function subdivide(pts, t) {
+      const lv = levelsAt(pts, t);
+      const left = lv.map((l) => l[0]);
+      const right = lv.map((l) => l[l.length - 1]).reverse();
+      return [left, right];
+    }
+    function flatness(pts) {
+      const a = pts[0], b = pts[pts.length - 1];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const len = Math.hypot(dx, dy);
+      let worst = 0;
+      for (let i = 1; i < pts.length - 1; i++) {
+        const p = pts[i];
+        let d;
+        if (len < 1e-9) d = Math.hypot(p.x - a.x, p.y - a.y);
+        else d = Math.abs(dy * (p.x - a.x) - dx * (p.y - a.y)) / len;
+        if (d > worst) worst = d;
+      }
+      return worst;
+    }
+    // Recursive subdivision until every piece is straight enough to just draw.
+    function flatten(pts, tol) {
+      const out = [pts[0]];
+      let worst = 0;
+      (function rec(cur, depth) {
+        const f = flatness(cur);
+        if (f <= tol || depth > 17) {
+          if (f > worst) worst = f;
+          out.push(cur[cur.length - 1]);
+          return;
+        }
+        const halves = subdivide(cur, 0.5);
+        rec(halves[0], depth + 1);
+        rec(halves[1], depth + 1);
+      })(pts, 0);
+      return { pts: out, worst: worst };
+    }
+    function sample(pts, n) {
+      const out = [];
+      for (let i = 0; i <= n; i++) out.push(evalAt(pts, i / n));
+      return out;
+    }
+    function bernstein(n, t) {
+      const w = [];
+      let c = 1;
+      for (let i = 0; i <= n; i++) {
+        w.push(c * Math.pow(t, i) * Math.pow(1 - t, n - i));
+        c = (c * (n - i)) / (i + 1);
+      }
+      return w;
+    }
+    function ptColor(i, n) {
+      const h = 240 + (n === 0 ? 0 : (i / n)) * 88;
+      return 'hsl(' + h.toFixed(0) + ' 100% 74%)';
+    }
+
+    // ---- layout ----
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      for (const cnv of [cv, trail]) {
+        cnv.width = Math.round(W * DPR);
+        cnv.height = Math.round(H * DPR);
+      }
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      tctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      tctx.clearRect(0, 0, W, H);
+
+      // Keep the drawing clear of the floating panel, whichever side it takes.
+      const r = ui.getBoundingClientRect();
+      const panelRight = ui.classList.contains('hidden') ? 0 : r.right;
+      const panelBottom = ui.classList.contains('hidden') ? 0 : r.bottom;
+      if (W - panelRight > 430) {
+        field = { x0: panelRight + 46, y0: 66, x1: W - 46, y1: H - 92 };
+      } else {
+        field = { x0: 26, y0: panelBottom + 26, x1: W - 26, y1: H - 62 };
+      }
+      if (field.y1 - field.y0 < 150) field.y0 = Math.max(20, field.y1 - 150);
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 120));
+
+    // ---- drawing helpers ----
+    function strokeScreen(pts, style, width, dash) {
+      if (pts.length < 2) return;
+      ctx.save();
+      ctx.setLineDash(dash || []);
+      ctx.strokeStyle = style;
+      ctx.lineWidth = width;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+      ctx.restore();
+    }
+    function strokePath(pts, style, width, dash) {
+      strokeScreen(pts.map(toScreen), style, width, dash);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(trail, 0, 0, W, H);
+
+      const n = P.length - 1;
+      const lv = levelsAt(P, S.t);
+      const curve = sample(P, 220);
+
+      // 1. the control polygon
+      strokePath(P, 'rgba(255,255,255,0.14)', 1.4, [5, 7]);
+
+      // 2. the curve itself
+      const a = toScreen(curve[0]), b = toScreen(curve[curve.length - 1]);
+      const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+      grad.addColorStop(0, '#7c7cff');
+      grad.addColorStop(1, '#ff7cc3');
+      ctx.save();
+      ctx.shadowColor = 'rgba(150,140,255,0.55)';
+      ctx.shadowBlur = 18;
+      strokePath(curve, S.flatten ? 'rgba(255,255,255,0.30)' : grad, S.flatten ? 2 : 3.2);
+      ctx.restore();
+
+      // 3. what a screen actually draws: straight segments
+      let flat = null;
+      if (S.flatten) {
+        // Flatten in real screen pixels, so the tolerance means what it says.
+        flat = flatten(P.map(toScreen), S.tol);
+        strokeScreen(flat.pts, '#ff7cc3', 2.2);
+        ctx.fillStyle = '#ff7cc3';
+        for (const s of flat.pts) {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, 3.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // 4. the two halves the scaffold hands you for free
+      if (S.split) {
+        const halves = subdivide(P, S.t);
+        const cols = ['#8f8fff', '#ff8fcb'];
+        halves.forEach((h, k) => {
+          strokePath(h, 'rgba(255,255,255,0.22)', 1.2, [3, 5]);
+          ctx.save();
+          ctx.shadowColor = k ? 'rgba(255,124,195,0.6)' : 'rgba(124,124,255,0.6)';
+          ctx.shadowBlur = 12;
+          strokePath(sample(h, 90), cols[k], 5.2);
+          ctx.restore();
+          ctx.fillStyle = cols[k];
+          for (const p of h) {
+            const s = toScreen(p);
+            ctx.beginPath();
+            ctx.rect(s.x - 3.2, s.y - 3.2, 6.4, 6.4);
+            ctx.fill();
+          }
+        });
+      }
+
+      // 5. the scaffold: one polyline per round of interpolation
+      if (S.scaffold) {
+        for (let d = 1; d < lv.length; d++) {
+          const u = lv.length <= 2 ? 0 : (d - 1) / (lv.length - 2);
+          const alpha = 0.28 + 0.5 * u;
+          strokePath(lv[d], 'hsla(' + (240 + u * 88).toFixed(0) + ' 100% 76% / ' + alpha.toFixed(2) + ')', 1.6 + u * 0.9);
+          if (d < lv.length - 1) {
+            ctx.fillStyle = 'hsla(' + (240 + u * 88).toFixed(0) + ' 100% 80% / ' + (alpha + 0.2).toFixed(2) + ')';
+            for (const p of lv[d]) {
+              const s = toScreen(p);
+              ctx.beginPath();
+              ctx.arc(s.x, s.y, 3.4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+      }
+
+      // 6. the control points
+      for (let i = 0; i <= n; i++) {
+        const s = toScreen(P[i]);
+        const col = ptColor(i, n);
+        const active = S.drag === i || S.hover === i;
+        ctx.save();
+        ctx.shadowColor = col;
+        ctx.shadowBlur = active ? 22 : 12;
+        ctx.fillStyle = 'rgba(5,5,10,0.9)';
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, active ? 11 : 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = col;
+        ctx.lineWidth = active ? 3 : 2.2;
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.font = '600 10px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('P' + i, s.x, s.y - 16);
+      }
+
+      // 7. the single point that survives
+      const tip = toScreen(lv[lv.length - 1][0]);
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,255,255,0.9)';
+      ctx.shadowBlur = 22;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(tip.x, tip.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.font = '600 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('t = ' + S.t.toFixed(2), tip.x + 12, tip.y - 10);
+
+      // 8. the drifting afterimage
+      tctx.fillStyle = 'rgba(5,5,10,0.055)';
+      tctx.fillRect(0, 0, W, H);
+      if (S.drift) {
+        const tg = tctx.createLinearGradient(a.x, a.y, b.x, b.y);
+        tg.addColorStop(0, '#7c7cff');
+        tg.addColorStop(1, '#ff7cc3');
+        tctx.save();
+        tctx.globalAlpha = 0.16;
+        tctx.strokeStyle = tg;
+        tctx.lineWidth = 2;
+        tctx.lineJoin = 'round';
+        tctx.beginPath();
+        const c0 = toScreen(curve[0]);
+        tctx.moveTo(c0.x, c0.y);
+        for (let i = 1; i < curve.length; i++) {
+          const p = toScreen(curve[i]);
+          tctx.lineTo(p.x, p.y);
+        }
+        tctx.stroke();
+        tctx.restore();
+      }
+
+      updatePanel(n, lv, flat);
+    }
+
+    // ---- panel ----
+    const el = {
+      tVal: document.getElementById('tVal'),
+      nVal: document.getElementById('nVal'),
+      nNote: document.getElementById('nNote'),
+      tolVal: document.getElementById('tolVal'),
+      rLerps: document.getElementById('rLerps'),
+      rPt: document.getElementById('rPt'),
+      rSeg: document.getElementById('rSeg'),
+      rErr: document.getElementById('rErr'),
+      rNote: document.getElementById('rNote'),
+      capT: document.getElementById('capT'),
+      bars: document.getElementById('bars'),
+      tSlider: document.getElementById('tSlider'),
+      nSlider: document.getElementById('nSlider'),
+      tolSlider: document.getElementById('tolSlider'),
+    };
+
+    function buildBars(n) {
+      el.bars.innerHTML = '';
+      for (let i = 0; i <= n; i++) {
+        const row = document.createElement('div');
+        row.className = 'b';
+        row.innerHTML =
+          '<span class="t">P' + i + '</span>' +
+          '<span class="track"><span class="fill" style="width:0%;background:' + ptColor(i, n) + '"></span></span>' +
+          '<span class="pc">0%</span>';
+        el.bars.appendChild(row);
+      }
+    }
+
+    function updatePanel(n, lv, flat) {
+      el.tVal.textContent = 't = ' + S.t.toFixed(2);
+      el.capT.textContent = 't = ' + S.t.toFixed(2);
+      el.rLerps.textContent = String((n * (n + 1)) / 2);
+      const tip = toScreen(lv[lv.length - 1][0]);
+      el.rPt.textContent = Math.round(tip.x) + ', ' + Math.round(tip.y);
+
+      if (flat) {
+        el.rSeg.textContent = (flat.pts.length - 1) + ' lines';
+        el.rErr.textContent = flat.worst.toFixed(2) + ' px';
+      } else {
+        el.rSeg.textContent = '—';
+        el.rErr.textContent = '—';
+      }
+
+      const w = bernstein(n, S.t);
+      const rows = el.bars.children;
+      for (let i = 0; i < rows.length && i < w.length; i++) {
+        rows[i].querySelector('.fill').style.width = (w[i] * 100).toFixed(1) + '%';
+        rows[i].querySelector('.pc').textContent = (w[i] * 100).toFixed(0) + '%';
+      }
+    }
+
+    function setNote() {
+      const n = P.length - 1;
+      const names = { 2: 'a quadratic — TrueType fonts stop here', 3: 'a cubic, the one every PostScript font is made of', 4: 'a quartic', 5: 'a quintic', 6: 'a sextic' };
+      el.nNote.innerHTML = 'Degree <b>' + n + '</b> — ' + (names[n] || 'higher than anyone draws by hand') + '.';
+      if (S.split) {
+        el.rNote.textContent = 'The scaffold is doing double duty: its left edge is the control polygon of the curve before t, its right edge the curve after. Splitting costs nothing extra.';
+      } else if (S.flatten) {
+        el.rNote.textContent = 'Split in half, ask if each piece is straight enough, repeat. What you end up drawing is a polyline — this is what your GPU rasterises.';
+      } else {
+        el.rNote.textContent = 'Every point on the curve is found by interpolating, then interpolating the results, until one point is left.';
+      }
+    }
+
+    // ---- controls ----
+    function setSweep(on) {
+      S.sweep = on;
+      const b = document.getElementById('bSweep');
+      b.classList.toggle('on', on);
+      b.textContent = on ? '⏸ sweeping' : '▶ sweep t';
+    }
+    window.addEventListener('keydown', (e) => {
+      if (e.key !== ' ' && e.code !== 'Space') return;
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      e.preventDefault();
+      setSweep(!S.sweep);
+    });
+
+    function toggle(id, key, after) {
+      const b = document.getElementById(id);
+      b.addEventListener('click', () => {
+        S[key] = !S[key];
+        b.classList.toggle('on', S[key]);
+        if (after) after();
+      });
+    }
+    toggle('bScaffold', 'scaffold');
+    toggle('bSplit', 'split', setNote);
+    toggle('bFlatten', 'flatten', setNote);
+    toggle('bDrift', 'drift', () => { if (!S.drift) tctx.clearRect(0, 0, W, H); });
+    document.getElementById('bSweep').addEventListener('click', () => setSweep(!S.sweep));
+    document.getElementById('bReset').addEventListener('click', () => {
+      P = defaults(P.length);
+      tctx.clearRect(0, 0, W, H);
+    });
+
+    el.tSlider.addEventListener('input', () => {
+      S.t = Number(el.tSlider.value) / 1000;
+      setSweep(false);
+    });
+    el.nSlider.addEventListener('input', () => {
+      const want = Number(el.nSlider.value);
+      el.nVal.textContent = String(want);
+      while (P.length > want) P.pop();
+      while (P.length < want) {
+        const last = P[P.length - 1];
+        P.push({
+          x: Math.min(0.95, Math.max(0.05, last.x + 0.16)),
+          y: Math.min(0.92, Math.max(0.08, 1 - last.y)),
+          vx: (Math.random() - 0.5) * 0.05,
+          vy: (Math.random() - 0.5) * 0.05,
+        });
+      }
+      buildBars(P.length - 1);
+      setNote();
+    });
+    el.tolSlider.addEventListener('input', () => {
+      // A log-ish scale so the interesting first few pixels get most of the travel.
+      const u = Number(el.tolSlider.value) / 300;
+      S.tol = 0.4 * Math.pow(160, u);
+      el.tolVal.textContent = S.tol.toFixed(S.tol < 10 ? 1 : 0) + ' px';
+    });
+    el.tolSlider.dispatchEvent(new Event('input'));
+
+    // ---- pointer ----
+    function pick(x, y) {
+      let best = -1, bd = 26 * 26;
+      for (let i = 0; i < P.length; i++) {
+        const s = toScreen(P[i]);
+        const d = (s.x - x) * (s.x - x) + (s.y - y) * (s.y - y);
+        if (d < bd) { bd = d; best = i; }
+      }
+      return best;
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      const i = pick(e.clientX, e.clientY);
+      if (i >= 0) {
+        S.drag = i;
+        cv.setPointerCapture(e.pointerId);
+      }
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (S.drag >= 0) {
+        const p = fromScreen(e.clientX, e.clientY);
+        P[S.drag].x = Math.min(1.06, Math.max(-0.06, p.x));
+        P[S.drag].y = Math.min(1.06, Math.max(-0.06, p.y));
+        P[S.drag].vx = 0; P[S.drag].vy = 0;
+      } else {
+        S.hover = pick(e.clientX, e.clientY);
+        cv.style.cursor = S.hover >= 0 ? 'grab' : 'crosshair';
+      }
+    });
+    const release = () => { S.drag = -1; };
+    cv.addEventListener('pointerup', release);
+    cv.addEventListener('pointercancel', release);
+    cv.addEventListener('pointerleave', () => { S.hover = -1; });
+
+    // ---- loop ----
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+
+      if (S.sweep) {
+        S.t += S.dir * dt * 0.22;
+        if (S.t >= 1) { S.t = 1; S.dir = -1; }
+        if (S.t <= 0) { S.t = 0; S.dir = 1; }
+        el.tSlider.value = String(Math.round(S.t * 1000));
+      }
+      if (S.drift) {
+        for (let i = 0; i < P.length; i++) {
+          if (i === S.drag) continue;
+          const p = P[i];
+          p.vx += (Math.random() - 0.5) * 0.02 * dt;
+          p.vy += (Math.random() - 0.5) * 0.02 * dt;
+          p.vx = Math.max(-0.12, Math.min(0.12, p.vx));
+          p.vy = Math.max(-0.12, Math.min(0.12, p.vy));
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          if (p.x < 0.04) { p.x = 0.04; p.vx = Math.abs(p.vx); }
+          if (p.x > 0.96) { p.x = 0.96; p.vx = -Math.abs(p.vx); }
+          if (p.y < 0.05) { p.y = 0.05; p.vy = Math.abs(p.vy); }
+          if (p.y > 0.95) { p.y = 0.95; p.vy = -Math.abs(p.vy); }
+        }
+      }
+
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    buildBars(P.length - 1);
+    setNote();
+    setSweep(true);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
