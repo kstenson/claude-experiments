@@ -1,0 +1,296 @@
+{
+  "date": "2026-08-25",
+  "topic": "The Supreme Court's stay of the injunction against Trump's mail-voting order, and the USPS rule finalized three days earlier",
+  "question": "Did the Supreme Court's August 24 order authorize Trump's mail-voting restrictions for the midterms — and what does the finalized Postal Service rule actually do?",
+  "summary": "On March 31, 2026 President Trump signed Executive Order 14399, directing DHS to build State Citizenship Lists, the Attorney General to prioritize prosecuting election officials who issue ballots to ineligible voters, and the Postal Service to start a rulemaking on ballot mail. Twenty-three states and the District of Columbia sued four days later. Judge Indira Talwani enjoined sections 2 and 3 on June 25; the First Circuit refused a stay 2-1; a second, nationwide injunction followed on August 11 in a League of Women Voters case. On Friday August 21 the Postal Service made its final ballot-mail rule effective. On Monday August 24 the Supreme Court stayed the first injunction, 6-3.\n\nThe right says a jurisdictional error was corrected and that critics are describing a rule that does not exist. The left says a president is rewriting how ballots move through the mail eleven weeks before an election, and that the Court blessed the maneuver without touching its legality.\n\nBoth halves land. The per curiam decided standing and ripeness only and said so. The finalized rule is materially narrower than most descriptions of it. But the order's own text does direct the Postal Service not to transmit ballots from unenrolled individuals, the rule refuses non-compliant ballot mailings outright, and the fraud predicate is very thin. The needle leans slightly left.",
+  "needle": -9,
+  "verdict": "On this week's checkable facts the critics are somewhat better supported: the executive order says what they say it says, the rule really does let the Postal Service refuse a state's ballot mailing, and the fraud rationale is not carried by the data the right's own institution compiled. But the right is right about the thing the left most often gets wrong — the Supreme Court decided jurisdiction, not legality, and the final rule checks no one's citizenship, screens no returned ballots, and exempts primaries and overseas voters. Whether mail voting should be made more auditable at some cost in access is a values question the meter cannot decide.",
+  "weights": {
+    "factualAccuracy": 0.6,
+    "reasoningHonesty": 0.4
+  },
+  "verificationNote": "Primary documents first: the full text of Executive Order 14399 via the Federal Register raw-text endpoint, the slip opinion in Trump v. California (No. 26A124) including both dissents, and the 96-page Postal Service final rule from the Federal Register public-inspection PDF, from which the Domestic Mail Manual 705.24 provisions are quoted directly. Reporting was used only to corroborate, across Votebeat, Fox News, The Federalist, SCOTUSblog, CBS News and Brookings. Pages that returned HTTP 403 and are not relied on: supremecourt.gov, heritage.org, courthousenews.com, lawandcrime.com. The slip opinion was read from a copy posted by the Campaign Legal Center because the Court's own server blocked retrieval.",
+  "sources_consulted": [
+    "Executive Order 14399 (Federal Register full text)",
+    "Trump v. California, No. 26A124 (slip opinion)",
+    "USPS final rule, Ballot Mail for Federal Elections",
+    "Campaign Legal Center",
+    "Votebeat",
+    "SCOTUSblog",
+    "The Federalist",
+    "Fox News",
+    "Brookings Institution",
+    "Heritage Foundation",
+    "Brennan Center for Justice",
+    "Democracy Docket",
+    "CBS News",
+    "Elias Law Group",
+    "NPR",
+    "CNN",
+    "NBC News",
+    "Al Jazeera",
+    "The Hill",
+    "Washington Post",
+    "Bloomberg Law",
+    "Courthouse News Service",
+    "Law and Crime",
+    "The Epoch Times",
+    "National Conference of State Legislatures",
+    "U.S. Election Assistance Commission"
+  ],
+  "sides": {
+    "left": {
+      "label": "A president rewriting ballot delivery before an election",
+      "framing": "The Constitution gives the times, places and manner of federal elections to state legislatures and to Congress. Instead the President ordered the Postal Service to police ballot mail, threatened prosecutors at election officials, and pushed a rule into effect while two injunctions were live. The Supreme Court waved it through on a technicality without saying a word about whether any of it is lawful.",
+      "factualAccuracy": 78,
+      "reasoningHonesty": 66,
+      "score": 73,
+      "strongestPoint": "The order's own text carries the claim: section 3(b)(iii) directs that the Postal Service 'shall not transmit mail-in or absentee ballots from any individual unless those individuals have been enrolled' on a state list, and the finalized rule provides that non-compliant outbound ballot mailings 'will not be accepted and will be returned to the authorized ballot mailer.'",
+      "weakestPoint": "Much of the commentary describes a citizenship screen that the final rule does not contain, and the standing objection is selective: Democratic-aligned litigants won on precisely this jurisdictional ground in 2024 when Republican officials challenged Biden's election executive order."
+    },
+    "right": {
+      "label": "A jurisdictional error corrected, and a modest mail rule",
+      "framing": "An executive order is a directive from the President to his own subordinates. It commands no state to do anything, the citizenship lists are optional and conditioned on feasibility, and the Postal Service rule is a mailpiece and data standard, not a voter test. A district judge enjoined a rule that did not exist yet; six justices said so. Critics are litigating a hypothetical.",
+      "factualAccuracy": 68,
+      "reasoningHonesty": 58,
+      "score": 64,
+      "strongestPoint": "The finalized rule is verifiably narrower than its description: the Postal Service says it is 'not verifying addresses, names, voter eligibility, or citizenship status,' the verification section expressly 'does not apply to Return Federal Ballot Mail,' and primaries and military and overseas ballots are excluded.",
+      "weakestPoint": "The fraud predicate is not carried by the evidence, including the right's own database; the 'nothing has happened yet' defense sits awkwardly beside a final rule made effective on a Friday night while two injunctions were in force; and no court has yet upheld the order's legality."
+    }
+  },
+  "facts": [
+    {
+      "claim": "The Supreme Court's August 24 order rested on standing and ripeness and expressly took no position on whether the executive order is lawful.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Per curiam: 'The Court's disposition of this application does not mean that any measure taken by the Government to implement the Order will necessarily be lawful. On that score, time will tell. But the Order itself does not harm the States, so the District Court lacked jurisdiction.'",
+      "explanation": "Read directly in the slip opinion. Both sides misuse it: the order is not an endorsement of the order's legality, and it is also not a mere procedural footnote — it holds the states' theory of injury insufficient, which is a substantial obstacle for any pre-implementation challenge. Justices Sotomayor, Kagan and Jackson dissented.",
+      "source": "Trump v. California, No. 26A124 (per curiam, Aug. 24, 2026)",
+      "url": "https://campaignlegal.org/sites/default/files/2026-08/26A124%20Trump%20v.%20California%20%2808_24_2026%29.pdf",
+      "corroboration": [
+        {
+          "source": "Votebeat",
+          "url": "https://www.votebeat.org/national/2026/08/24/supreme-court-lifts-stay-trump-executive-order-on-elections-mail-ballot-restrictions/"
+        },
+        {
+          "source": "The Federalist",
+          "url": "https://thefederalist.com/2026/08/24/scotus-overturns-injunction-on-trumps-mail-in-voting-order/"
+        }
+      ]
+    },
+    {
+      "claim": "The ruling clears the way for Trump's mail-voting restrictions to apply to the November 3 midterm elections.",
+      "side": "both",
+      "verdict": "mostly-false",
+      "confidence": "high",
+      "evidence": "The Postal Service's own final rule states that 'given injunctions currently in place' in California v. Trump and League of Women Voters of Massachusetts v. Trump, it 'will not take actions to implement the rule specifically for the 2026 election unless and until the government obtains relief from those injunctions.'",
+      "explanation": "The Court lifted one of two injunctions. Judge Talwani's August 11 nationwide order in the League of Women Voters case still bars implementation, and the government has said it will not act until relieved of both. Celebration on one side and alarm on the other both overstate a stay that removed one of two locks.",
+      "source": "USPS final rule, Ballot Mail for Federal Elections (FR Doc. 2026-17238)",
+      "url": "https://public-inspection.federalregister.gov/2026-17238.pdf",
+      "corroboration": [
+        {
+          "source": "Votebeat",
+          "url": "https://www.votebeat.org/national/2026/08/12/trump-executive-order-mail-in-voting-postal-service-injunction/"
+        },
+        {
+          "source": "SCOTUSblog",
+          "url": "https://www.scotusblog.com/2026/08/the-latest-on-the-mail-in-voting-and-ballroom-battles/"
+        }
+      ]
+    },
+    {
+      "claim": "Executive Order 14399 directs the Postal Service not to transmit mail-in or absentee ballots from individuals who are not enrolled on a state-specific list.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Section 3(b)(iii) of the order: 'the USPS shall not transmit mail-in or absentee ballots from any individual unless those individuals have been enrolled on a State-specific list.' Justice Jackson quotes the same clause and adds that USPS 'can interdict and refuse to transmit mail-in ballots submitted by individuals who are not on the right list.'",
+      "explanation": "Confirmed in the order's own Federal Register text, not only in the dissent. The caveat the right presses is real: this is a proposed provision for a rulemaking, and the Postal Service did not carry it into the final rule's return-mail standards. The order's stated design and the rule as issued are not the same document.",
+      "source": "Executive Order 14399 (Federal Register full text)",
+      "url": "https://www.federalregister.gov/documents/full_text/text/2026/04/03/2026-06601.txt",
+      "corroboration": [
+        {
+          "source": "Trump v. California (Jackson, J., dissenting)",
+          "url": "https://campaignlegal.org/sites/default/files/2026-08/26A124%20Trump%20v.%20California%20%2808_24_2026%29.pdf"
+        }
+      ]
+    },
+    {
+      "claim": "The Postal Service's finalized rule performs no citizenship or eligibility check, does not screen ballots returned by voters, and exempts primaries and military and overseas voters.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "The rule states the Postal Service 'is not verifying addresses, names, voter eligibility, or citizenship status as part of this verification process,' that '705.24.5 does not apply to Return Federal Ballot Mail,' and that the definition of federal election 'does not include primary elections.' UOCAVA ballots are excluded by rule.",
+      "explanation": "Read directly in the final rule text. The Postal Service also declined commenters' requests to add citizenship verification, calling it outside its authority. One further correction that cuts the same way: the order set a 60-day list deadline, but the rule requires portal data only 30 days out 'to the extent practicable.'",
+      "source": "USPS final rule, Ballot Mail for Federal Elections (FR Doc. 2026-17238)",
+      "url": "https://public-inspection.federalregister.gov/2026-17238.pdf",
+      "corroboration": [
+        {
+          "source": "Fox News",
+          "url": "https://www.foxnews.com/politics/usps-publishes-rule-block-mail-in-ballots-states-dont-provide-voter-lists"
+        }
+      ]
+    },
+    {
+      "claim": "Under the finalized rule, a state that does not upload its mail-voter data to a federal portal will have its outbound ballot mailing refused by the Postal Service.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "DMM 705.24.5.3: 'Mailings that do not comply with 24.5.1 and 24.5.2 will not be accepted and will be returned to the authorized ballot mailer.' Enrollment requires a state official to submit each voter's name, address and outbound and return barcodes through the Postal Service Federal Ballot Mail Portal.",
+      "explanation": "This is the rule's operative leverage and it is in the regulatory text, not in advocacy. The rule's own disclaimer is genuine but limited: it says the Postal Service does not 'alter the eligibility of any individual to vote.' It does not deny that a state declining the portal cannot mail ballots through the mail.",
+      "source": "USPS final rule, Ballot Mail for Federal Elections (FR Doc. 2026-17238)",
+      "url": "https://public-inspection.federalregister.gov/2026-17238.pdf",
+      "corroboration": [
+        {
+          "source": "Fox News",
+          "url": "https://www.foxnews.com/politics/usps-publishes-rule-block-mail-in-ballots-states-dont-provide-voter-lists"
+        }
+      ]
+    },
+    {
+      "claim": "The Postal Service made the rule effective on August 21 while two injunctions barring implementation were in force.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "The rule's DATES line reads 'Effective August 21, 2026,' the document was 'Filed: 8/21/2026 9:00 pm' for publication on August 26, and its background section names both the June 25 California v. Trump injunction and the August 11 League of Women Voters injunction.",
+      "explanation": "The timing and the acknowledgment are both in the document. Whether it violated Judge Talwani's order is unresolved: plaintiffs moved for emergency relief over the weekend and the court ordered the government to respond by 8 a.m. Tuesday, August 25. The government's position is that finalizing without implementing complies.",
+      "source": "USPS final rule, Ballot Mail for Federal Elections (FR Doc. 2026-17238)",
+      "url": "https://public-inspection.federalregister.gov/2026-17238.pdf",
+      "corroboration": [
+        {
+          "source": "Votebeat",
+          "url": "https://www.votebeat.org/national/2026/08/24/supreme-court-lifts-stay-trump-executive-order-on-elections-mail-ballot-restrictions/"
+        }
+      ]
+    },
+    {
+      "claim": "Documented mail-ballot fraud is vanishingly rare — roughly four cases per ten million mail votes cast.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "Brookings, analyzing the 2016, 2018, 2020 and 2022 general elections: 'Cases of mail voting fraud were very rare, accounting for only 0.000043% of total mail ballots cast, or about four cases out of every 10 million mail votes,' with between six and 46 cases identified per general election.",
+      "explanation": "The strongest form of corroboration: the denominator is Brookings' but the numerator comes from the Heritage Foundation's own election-fraud database. The honest caveat is that this measures detected and prosecuted fraud, which is what a database can measure; it cannot by itself disprove undetected fraud, and Heritage says its list is not exhaustive.",
+      "source": "Brookings Institution",
+      "url": "https://www.brookings.edu/articles/mail-voting-in-the-us-data-points-to-very-low-fraud-and-significant-benefits-to-voters/",
+      "corroboration": [
+        {
+          "source": "Brennan Center for Justice",
+          "url": "https://www.brennancenter.org/our-work/research-reports/heritage-fraud-database-assessment"
+        }
+      ]
+    },
+    {
+      "claim": "Section 2(a) of the order does not require states to use the federal citizenship lists, and conditions their creation on feasibility and existing law.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Per curiam: 'States are not required to use the Lists, and the Secretary may compile and transmit them only \"[t]o the extent feasible and consistent with applicable law.\"' The Court records that the plaintiff states conceded the point in their own brief opposing the stay.",
+      "explanation": "Confirmed against the order's text as well as the opinion. The countervailing fact the majority sets aside: the government told the Court that a state's 'refusal to consider' a list 'could conceivably' be evidence of intent to violate the noncitizen-voting laws that section 2(b) directs the Attorney General to prioritize.",
+      "source": "Trump v. California, No. 26A124 (per curiam, Aug. 24, 2026)",
+      "url": "https://campaignlegal.org/sites/default/files/2026-08/26A124%20Trump%20v.%20California%20%2808_24_2026%29.pdf",
+      "corroboration": [
+        {
+          "source": "Executive Order 14399 (Federal Register full text)",
+          "url": "https://www.federalregister.gov/documents/full_text/text/2026/04/03/2026-06601.txt"
+        }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Strip the labels and the question is not mail voting but whether a president may direct election administration by executive order — and, just as importantly, whether the other party's officials may get into court to stop him. Both coalitions have answered both questions by who holds the pen. The mirror is Biden's Executive Order 14019 of March 2021, which directed federal agencies to promote voter registration and which Republican officials attacked in the same constitutional language Democratic states use today.",
+    "precedent": {
+      "case": "Biden's Executive Order 14019 and the Republican challenges to it, 2021-2024",
+      "what": "Republican secretaries of state in Missouri and Arkansas and 27 Pennsylvania GOP legislators sued, arguing a presidential election directive violated the Elections and Electors Clauses and the Tenth Amendment. They lost — a federal judge refused to enjoin the order on October 31, 2024 for want of demonstrated harm, and the Pennsylvania case was dismissed for lack of standing.",
+      "mirror": "A president issues an election executive order; the out-party's state officials sue on Elections Clause and federalism grounds; the courts dispose of it on injury and standing without reaching the merits. In 2024 that outcome protected a Democratic president. On August 24 the identical doctrine protected a Republican one. The disanalogy worth stating: 14019 asked agencies to hand out registration forms, while 14399 has produced a Postal Service rule that binds parties outside the executive branch.",
+      "source": "Democracy Docket",
+      "url": "https://www.democracydocket.com/news-alerts/missouri-secretary-of-state-challenges-bidens-voting-rights-executive-order/",
+      "corroboration": [
+        {
+          "source": "Fox News",
+          "url": "https://www.foxnews.com/politics/a-lawsuit-challenging-bidens-get-out-the-vote-executive-order-will-soon-head-to-the-supreme-court"
+        }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Republican state officials — Missouri's Jay Ashcroft, Arkansas's John Thurston, and the Pennsylvania Freedom Caucus legislators",
+        "then": "Argued that a presidential election order 'constitutes federal overreach and violates the principles of federalism enshrined in the Constitution,' and that it 'violates the Electors Clause, violates the Elections Clause.'",
+        "now": "Thirteen Republican attorneys general told the Postal Service the ballot-mail rule's burdens are 'plainly justified,' and a Republican-state coalition led by Alabama filed its own application asking the Supreme Court to stay the injunction.",
+        "source": "Fox News",
+        "url": "https://www.foxnews.com/politics/a-lawsuit-challenging-bidens-get-out-the-vote-executive-order-will-soon-head-to-the-supreme-court"
+      },
+      {
+        "who": "Democratic officials and allied voting-rights litigants",
+        "then": "Benefited from the rule that a state official cannot get into federal court over a presidential election directive absent concrete, demonstrated injury — the ground on which the Republican challenges to Executive Order 14019 failed in 2024.",
+        "now": "Twenty-three states and the District of Columbia argued that planning costs, resource diversion and the risk of prosecution are injury enough, and lost on the same doctrine.",
+        "source": "Democracy Docket",
+        "url": "https://www.democracydocket.com/news-alerts/missouri-secretary-of-state-challenges-bidens-voting-rights-executive-order/"
+      },
+      {
+        "who": "The courts themselves — the counter-example that keeps this from being a clean partisan story",
+        "then": "In July 2026 the D.C. Circuit denied the Democratic committees' injunction against this very order on ripeness grounds, while writing that the President is 'vested with no express authority over the conduct of elections.'",
+        "now": "Judge Kollar-Kotelly, a Clinton appointee, permanently blocked two sections of Trump's 2025 elections order on January 30, 2026 as inconsistent with the separation of powers — reaching the merits where she could and staying out where she could not.",
+        "source": "Elias Law Group",
+        "url": "https://elias.law/press-release/federal-court-permanently-blocks-additional-provisions-of-president-trumps-executive-order-on-elections/"
+      }
+    ],
+    "longRun": "Neither party wants a durable rule about presidential election directives; each wants the courthouse door open when it is out of power and shut when it is in. The doctrine that decided Monday's case — no standing until an agency actually acts — is now a template: issue the order, let the challenge fail as premature, finalize the rule, and litigate the merits after the election. When the White House changes hands, expect the incoming party to keep that template and the outgoing one to rediscover the Elections Clause.",
+    "appliedToScore": "Both flips cost reasoning-honesty points and are recorded in each weakestPoint: the left's Elections Clause objection is worth less because its allies benefited from the same jurisdictional shrug in 2024, and the right's federalism principle is worth less because it was loud in 2022 and silent now. Neither moves the needle, which rests on what the order says, what the rule does, and what the fraud data shows."
+  },
+  "pattern": {
+    "thesis": "Treating this as a single fight over ballot envelopes misses a three-year effort to move federal election administration into the executive branch by order, rule and lawsuit. Judged one instance at a time, each step looks minor and each challenge looks premature; judged together, the trajectory is the point.",
+    "campaigns": [
+      {
+        "where": "Nationwide",
+        "what": "Executive Order 14248 of March 25, 2025 directed proof-of-citizenship requirements on the federal voter registration form and at agencies distributing registration materials. Judge Kollar-Kotelly permanently enjoined sections 2(d) and 3(d) on January 30, 2026 as inconsistent with the separation of powers.",
+        "authorization": "Executive order — partly enjoined",
+        "source": "Elias Law Group",
+        "url": "https://elias.law/press-release/federal-court-permanently-blocks-additional-provisions-of-president-trumps-executive-order-on-elections/",
+        "corroboration": []
+      },
+      {
+        "where": "30 states and the District of Columbia",
+        "what": "The Justice Department demanded unredacted statewide voter registration lists including birthdates, partial Social Security numbers and driver's license numbers, then sued to compel them, citing the Help America Vote Act and the National Voter Registration Act.",
+        "authorization": "Litigation — 31 suits filed, 23 lost as of August 17",
+        "source": "CBS News",
+        "url": "https://www.cbsnews.com/news/trump-lawsuits-state-voter-rolls-justice-department/",
+        "corroboration": []
+      },
+      {
+        "where": "Nationwide",
+        "what": "Executive Order 14399 of March 31, 2026: DHS citizenship lists, prosecutorial priority against election officials, and a Postal Service ballot-mail rulemaking. Enjoined in 24 jurisdictions on June 25 and nationwide on August 11; the first injunction was stayed August 24.",
+        "authorization": "Executive order — one injunction stayed, one standing",
+        "source": "Executive Order 14399 (Federal Register full text)",
+        "url": "https://www.federalregister.gov/documents/full_text/text/2026/04/03/2026-06601.txt",
+        "corroboration": [
+          {
+            "source": "Votebeat",
+            "url": "https://www.votebeat.org/national/2026/08/12/trump-executive-order-mail-in-voting-postal-service-injunction/"
+          }
+        ]
+      },
+      {
+        "where": "All states using mail ballots",
+        "what": "The Postal Service final rule creating a Federal Ballot Mail Portal, mandatory envelope and barcode standards, and refusal of non-compliant outbound ballot mailings. Made effective August 21, 2026, publication scheduled for August 26.",
+        "authorization": "39 U.S.C. 401, 404 — final, implementation withheld for 2026",
+        "source": "USPS final rule, Ballot Mail for Federal Elections (FR Doc. 2026-17238)",
+        "url": "https://public-inspection.federalregister.gov/2026-17238.pdf",
+        "corroboration": [
+          {
+            "source": "Fox News",
+            "url": "https://www.foxnews.com/politics/usps-publishes-rule-block-mail-in-ballots-states-dont-provide-voter-lists"
+          }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is whether a legal system that will not review an order until an agency acts, and will not review an agency's action close to an election, leaves any window at all. Watch for the one-off tell: an argument that treats this rule purely as a mailpiece standard, without mentioning that it is the fourth attempt in eighteen months to set federal election procedure without a vote in Congress."
+  },
+  "notAdjudicable": [
+    "Whether the convenience of mail voting is worth whatever auditability it costs, or auditability worth whatever access it costs, is a tradeoff between two goods that no fraud statistic resolves.",
+    "Whether public confidence in elections is a legitimate reason to impose rules that the evidence does not independently require is a question about the value of perceived legitimacy, not a measurable quantity.",
+    "Whether federal uniformity in election administration is a safeguard against local manipulation or the very danger the Framers dispersed power to avoid is a structural judgment about which risk is worse.",
+    "Whether courts should stretch justiciability doctrines to reach election disputes early, or hold the line and accept that some harms go unremedied, is a dispute about the judicial role.",
+    "Whether an administration that finalizes a rule while enjoined is testing the limits of a court order or defying it is partly a question of institutional norms that no text settles."
+  ],
+  "biasWatch": "The bias doing the most work today is document substitution: nearly everyone is arguing about a text they have not read, and the three relevant texts say different things. The executive order proposes that the Postal Service refuse ballots from unenrolled individuals. The final rule does not do that — it screens outbound mailings from election officials, checks no one's citizenship, and exempts returned ballots and primaries. The Supreme Court's order addresses neither, only who may sue and when. The tell to watch for in yourself: if a commentary moves between 'the order,' 'the rule' and 'the ruling' as if they were one thing — celebrating or condemning all three on the strength of whichever is most convenient — it has substituted a summary for a source. Ask which document the sentence is actually about."
+}
