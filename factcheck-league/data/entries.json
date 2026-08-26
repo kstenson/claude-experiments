@@ -40,14 +40,69 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-08-25",
+    "lastUpdated": "2026-08-26",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-08-26",
+      "date": "2026-08-26",
+      "headline": true,
+      "topic": "Foreign nationals in social housing and the waiting list",
+      "claim": "There are now 1.3 million people waiting for social housing in Britain. The vast majority of them do not have jobs... less than half of households are in work and over half a million social homes are currently occupied by foreign nationals.",
+      "speaker": "Richard Tice",
+      "party": "Reform UK",
+      "role": "Deputy Leader of Reform UK",
+      "discussionScore": 80,
+      "discussionNote": "Reform's social housing plan led Monday's coverage across the BBC, LBC and GB News as the rival to Burnham's £39bn programme, drawing rebuttals from Shelter, Labour and the Conservatives.",
+      "score": 55,
+      "verdict": "Half True / Needs Context",
+      "explanation": "Four numbers, and they do not land together. The waiting list is real but mislabelled: 1,340,527 households sat on English council housing registers at 31 March 2025 — households, not people, and England alone, so the headcount is well above 1.3 million. On work Tice is right: only 40.7% of social renting households had a reference person in full- or part-time work in 2024-25. But 'the vast majority' of the list being jobless is unmeasured — no such statistic exists. And the headline figure is stretched. The English Housing Survey puts non-UK and Irish household reference persons at 11.5% of 4.07 million social rented homes, about 470,000, not 'over half a million'. That measure counts only the lead householder, so it misses foreign-national partners and treats naturalised Britons as British. Nine in ten new social lettings go to UK nationals.",
+      "evidence": [
+        "Tice launched Reform's social housing plan on 23-24 August 2026, promising priority for British-born workers under 35, veterans and married couples with children.",
+        "Local Authority Housing Statistics: 1,340,527 households were on English housing registers at 31 March 2025 — households, not people, and England only.",
+        "English Housing Survey 2024-25: 1.66 million of 4.07 million social renting households, or 40.7%, had a reference person in work.",
+        "The same survey puts non-UK and Ireland household reference persons at 11.5% of social renters — about 470,000 homes, below Reform's 540,000 estimate.",
+        "Nationality is recorded for the household reference person only, so naturalised Britons count as British and foreign-national partners are not counted.",
+        "Of 263,000 new social lettings in 2024/25, 89% went to UK-national lead tenants, 4% to EU nationals and 8% to non-EEA nationals.",
+        "No official figure exists for employment among waiting-list applicants; among new social lettings, 28% of lead tenants were in employment."
+      ],
+      "confidence": "High — register, tenure and lettings figures are accredited official statistics; the foreign-national count turns on a household-reference-person definition.",
+      "sources": [
+        {
+          "title": "MHCLG — Local Authority Housing Statistics data returns, 2024 to 2025",
+          "url": "https://www.gov.uk/government/statistical-data-sets/local-authority-housing-statistics-data-returns-for-2024-to-2025"
+        },
+        {
+          "title": "English Housing Survey 2024-25 — Profile of households and dwellings",
+          "url": "https://www.gov.uk/government/statistics/chapters-for-english-housing-survey-2024-to-2025-headline-findings-on-demographics-and-household-resilience/chapter-1-profile-of-households-and-dwellings"
+        },
+        {
+          "title": "MHCLG — Social housing lettings in England, tenants: 2024 to 2025",
+          "url": "https://www.gov.uk/government/statistics/social-housing-lettings-in-england-april-2024-to-march-2025/social-housing-lettings-in-england-tenants-april-2024-to-march-2025"
+        },
+        {
+          "title": "Commons Library — Allocating social housing (England)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn06397/"
+        },
+        {
+          "title": "LBC — Reform to prioritise British-born workers under 35 for social housing",
+          "url": "https://www.lbc.co.uk/article/reform-prioritise-british-workers-social-housing-5HjdgQF_2/"
+        },
+        {
+          "title": "PA — Reform would put foreign-born UK citizens lower on social housing list",
+          "url": "https://www.aol.co.uk/articles/reform-says-put-foreign-born-210042000.html"
+        },
+        {
+          "title": "BBC — Reform says it will prioritise British-born workers for social housing",
+          "url": "https://www.bbc.co.uk/news/articles/cvgjgyg1rngo"
+        }
+      ]
+    },
+    {
       "id": "2026-08-25",
       "date": "2026-08-25",
-      "headline": true,
+      "headline": false,
       "topic": "The first wave of the £39bn social housing programme",
       "claim": "Nearly £10 billion will go to councils and housing associations to build genuinely affordable homes, most of them for social rent, in the places where families are waiting longest.",
       "speaker": "Andy Burnham",
