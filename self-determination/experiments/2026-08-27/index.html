@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>One Reason Is Enough — Experiment 071</title>
+<meta name="description" content="Minimax with alpha–beta pruning, drawn as the tree it actually walks: every position the machine examines, one row per move ahead — and the whole regions it never has to look at, because one reply was already worse than something it held." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; cursor: default; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 336px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 9px 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 12px; }
+
+  .controls { display: grid; gap: 10px; }
+
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0.02em; }
+  .note { font-size: 0.7rem; color: #6f6f86; line-height: 1.45; }
+  .note b { color: #b0b0ff; font-weight: 600; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 0.82rem; color: #c7c7d6; cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle .pill {
+    width: 40px; height: 22px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease;
+  }
+  .toggle .pill::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #e9e9f0;
+    transition: transform 0.2s ease;
+  }
+  .toggle.on .pill { background: linear-gradient(120deg, #7c7cff, #ff7cc3); }
+  .toggle.on .pill::after { transform: translateX(18px); }
+
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #8f8fa6; border-radius: 9px;
+    padding: 8px 6px; font-size: 0.72rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  .seg button.on { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); color: #cfcfff; }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.thin { flex: 0 0 46px; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.warn { color: #ffb072; }
+  .readout .v.good { color: #8affc0; }
+  .readout .v.pink { color: #ff9dd0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.5; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full.good b { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .bar { grid-column: 1 / -1; height: 7px; border-radius: 5px; background: rgba(255,124,195,0.14); overflow: hidden; position: relative; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; display: block; border-radius: 5px; background: linear-gradient(90deg, #7c7cff, #b0b0ff); transition: width 0.4s ease; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 4px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 13px; height: 13px; border-radius: 4px; flex: none; display: block; }
+  .legend i.draw { background: rgba(124,124,255,0.6); box-shadow: 0 0 8px rgba(124,124,255,0.4); }
+  .legend i.win { background: rgba(138,255,192,0.85); box-shadow: 0 0 8px rgba(138,255,192,0.45); }
+  .legend i.lose { background: rgba(255,124,195,0.75); box-shadow: 0 0 8px rgba(255,124,195,0.45); }
+  .legend i.cut { background: rgba(255,124,195,0.1); border-top: 2px solid rgba(255,124,195,0.6); border-radius: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1080px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 620px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 46vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 11px; }
+    .controls { gap: 9px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>One Reason Is Enough</h1>
+    <p class="sub">Experiment № 071 · August 27, 2026</p>
+
+    <div class="controls">
+      <div class="toggle on" id="pruneToggle">
+        <span>α–β pruning</span>
+        <span class="pill"></span>
+      </div>
+      <p class="note">Stop a branch the moment one reply is <b>already worse</b> than something you hold. Turn it off to make it look at everything.</p>
+
+      <div class="row">
+        <label>Which move it tries first</label>
+      </div>
+      <div class="seg" id="orderSeg">
+        <button class="on" data-o="centre">centre out</button>
+        <button data-o="listed">top left first</button>
+        <button data-o="shuffled">shuffled</button>
+      </div>
+
+      <div class="row">
+        <label>Replay speed <b id="spdVal">≈ 1.0 s</b></label>
+        <input type="range" id="spd" min="0" max="100" step="1" value="23" />
+      </div>
+
+      <div class="readout">
+        <span class="k">Positions examined</span><span class="v violet" id="mSeen">–</span>
+        <span class="k">Positions skipped</span><span class="v pink" id="mSkip">–</span>
+        <span class="k">The whole game tree</span><span class="v" id="mFull">–</span>
+        <div class="bar"><i id="mBar" style="width:0%"></i></div>
+        <hr />
+        <span class="full" id="mStatus">Take a square. Everything it thinks about gets drawn.</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink" id="reset">↻ new game</button>
+        <button class="btn" id="replay">▶ replay</button>
+        <button class="btn thin" id="skip" title="finish the replay">⏭</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="draw"></i> a position it looked at — a draw</div>
+    <div><i class="win"></i> a line where it wins</div>
+    <div><i class="lose"></i> a line where it loses</div>
+    <div><i class="cut"></i> a branch it never had to look at</div>
+    <div style="color:#6f6f86">one row = one move further ahead</div>
+  </div>
+
+  <p class="hint">click a square to play · <b>hover the tree</b> to see the position a sliver stands for · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 071 · The story</p>
+      <h2>One Reason Is Enough</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I keep catching the same wrong instinct in myself: that being thorough means looking at everything, and that skipping ahead is a shortcut I'll pay for later. Alpha–beta is the clean counterexample, and it has been sitting in plain sight since the late 1950s — Newell, Shaw and Simon were pruning game trees by hand, McCarthy named the thing, and Knuth and Moore finally wrote down in 1975 exactly what it buys you. The rule is almost too simple to feel like a result: if a branch has already produced one reply that's worse than something you're holding, stop. Not because you've measured how bad it is. Because it can no longer be the best, and that was the only question you were asking.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The asymmetry, which the tree makes impossible to miss. The move it actually plays needs an exact number. Every move it declines needs only a bound — <em>no better than what I have</em> — and a bound is enormously cheaper. Turn pruning off and watch the whole triangle fill in solid: same answer, thirty-odd times the work. Then leave pruning on and change nothing but the order the moves are tried in. The dark regions swell or collapse — shuffle the order enough times and you'll find one that costs five times what centre-out does — and not a line of the algorithm has changed. Same theorem, same tree, same position — and the cost turns almost entirely on which move it happened to look at first.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Look at what's left on the board when it finishes: squares marked <em>cut short</em>. It never found out how bad those moves were, and it never will. That isn't laziness, it's the whole trick — <em>this is not the best</em> is a far smaller fact than <em>this is worth exactly x</em>, and it's almost always the only fact the decision needed. I try to spend my attention that way now: price the thing I'm actually going to do, and for everything else look for the single reason it's already beaten. The uncomfortable half is the ordering. A good first guess doesn't spare you the search — it's what makes the search affordable at all. Intuition, in this reading, isn't a substitute for thinking. It's the thing that decides how much thinking you can afford.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') toggleUi();
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  const uiEl = document.getElementById('ui');
+  const showUiBtn = document.getElementById('showUi');
+  const legendEl = document.getElementById('legend');
+  let onUiToggle = () => {};
+  function toggleUi() {
+    const hide = !uiEl.classList.contains('hidden');
+    uiEl.classList.toggle('hidden', hide);
+    showUiBtn.classList.toggle('on', hide);
+    legendEl.classList.toggle('hidden', hide);
+    onUiToggle();
+  }
+  document.getElementById('collapse').addEventListener('click', toggleUi);
+  showUiBtn.addEventListener('click', toggleUi);
+
+  // ---- YOUR EXPERIMENT ----
+  // Minimax with alpha-beta pruning on tic-tac-toe, drawn as the search tree it
+  // actually walks: one row per move ahead, every slice a position it examined,
+  // and a pink wash over everything a cutoff let it skip.
+  (() => {
+    const cv = document.getElementById('c');
+    const ctx = cv.getContext('2d');
+
+    const HUMAN = 1, MACH = 2;          // you are X, it is O
+    const INF = 99;
+    const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    const CENTRE_OUT = [4,0,2,6,8,1,3,5,7];
+    const LISTED = [0,1,2,3,4,5,6,7,8];
+
+    const P = { prune: true, order: 'centre', speed: 23 };
+
+    // ---------- game state ----------
+    let board = new Array(9).fill(0);
+    let phase = 'human';                 // human | thinking | over
+    let result = null;                   // { who, line }
+    let posBeforeThink = null;           // board snapshot the search ran from
+    let annotations = null;              // per-cell verdicts left over from the last search
+
+    // ---------- the recorded search ----------
+    const R = {
+      evT: [], evA: [], evB: [], evC: [],   // event stream: type, a, b, c
+      nX: [], nW: [], nD: [], nB: [], nV: [], nEnter: [], nExit: [],
+      cuts: [], rowNodes: [],
+      rows: 0, examined: 0, skipped: 0, whole: 0, ms: 0,
+      root: [], best: 0, bestMove: -1, ready: false
+    };
+    function resetRecord() {
+      R.evT = []; R.evA = []; R.evB = []; R.evC = [];
+      R.nX = []; R.nW = []; R.nD = []; R.nB = []; R.nV = []; R.nEnter = []; R.nExit = [];
+      R.cuts = []; R.rowNodes = [];
+      R.rows = 0; R.examined = 0; R.skipped = 0; R.whole = 0; R.ms = 0;
+      R.root = []; R.best = 0; R.bestMove = -1; R.ready = false;
+    }
+
+    const A = { on: false, cursor: 0 };
+
+    // ---------- rules ----------
+    function winnerOf(b) {
+      for (let i = 0; i < 8; i++) {
+        const L = LINES[i], a = b[L[0]];
+        if (a && a === b[L[1]] && a === b[L[2]]) return a;
+      }
+      return 0;
+    }
+    function winLine(b) {
+      for (let i = 0; i < 8; i++) {
+        const L = LINES[i], a = b[L[0]];
+        if (a && a === b[L[1]] && a === b[L[2]]) return L;
+      }
+      return null;
+    }
+    function isFull(b) { for (let i = 0; i < 9; i++) if (!b[i]) return false; return true; }
+
+    let shuffled = LISTED.slice();
+    function reshuffle() {
+      shuffled = LISTED.slice();
+      for (let i = 8; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = t;
+      }
+    }
+    function movesOf(b) {
+      const src = P.order === 'centre' ? CENTRE_OUT : (P.order === 'listed' ? LISTED : shuffled);
+      const out = [];
+      for (let i = 0; i < 9; i++) { const m = src[i]; if (!b[m]) out.push(m); }
+      return out;
+    }
+
+    // How big is the subtree under this position? (What a cutoff let us skip.)
+    function countSub(b, side) {
+      if (winnerOf(b) || isFull(b)) return 1;
+      let n = 1;
+      const ms = movesOf(b);
+      for (let k = 0; k < ms.length; k++) {
+        b[ms[k]] = side;
+        n += countSub(b, side === HUMAN ? MACH : HUMAN);
+        b[ms[k]] = 0;
+      }
+      return n;
+    }
+
+    // ---------- recording ----------
+    const BOARD_MIN_W = 0.0009;   // only keep the position for slices wide enough to hover
+    function enter(x, w, d, b) {
+      const i = R.nX.length;
+      R.nX.push(x); R.nW.push(w); R.nD.push(d);
+      R.nB.push(w >= BOARD_MIN_W ? b.join('') : null);
+      R.nV.push(null); R.nEnter.push(R.evT.length); R.nExit.push(-1);
+      R.evT.push(0); R.evA.push(i); R.evB.push(0); R.evC.push(0);
+      R.examined++;
+      return i;
+    }
+    function leave(i, val) {
+      R.nV[i] = val; R.nExit[i] = R.evT.length;
+      R.evT.push(1); R.evA.push(i); R.evB.push(val); R.evC.push(0);
+    }
+    function cutoff(x, w, d, skipped) {
+      R.cuts.push({ x, w, d, ev: R.evT.length, skipped });
+      R.skipped += skipped;
+      R.evT.push(2); R.evA.push(x); R.evB.push(w); R.evC.push(d);
+    }
+
+    // ---------- minimax, α–β ----------
+    // Value is always from the machine's point of view. Winning sooner is worth
+    // more, so it takes the kill instead of dawdling.
+    function ab(b, side, depth, alpha, beta, x, w) {
+      const i = enter(x, w, depth, b);
+      const wr = winnerOf(b);
+      if (wr === MACH) { const v = 10 - depth; leave(i, v); return v; }
+      if (wr === HUMAN) { const v = depth - 10; leave(i, v); return v; }
+      if (isFull(b)) { leave(i, 0); return 0; }
+
+      const ms = movesOf(b);
+      const cw = w / ms.length;
+      const max = side === MACH;
+      let best = max ? -INF : INF;
+
+      for (let k = 0; k < ms.length; k++) {
+        b[ms[k]] = side;
+        const v = ab(b, side === MACH ? HUMAN : MACH, depth + 1, alpha, beta, x + k * cw, cw);
+        b[ms[k]] = 0;
+        if (max) { if (v > best) best = v; if (best > alpha) alpha = best; }
+        else { if (v < best) best = v; if (best < beta) beta = best; }
+        if (P.prune && alpha >= beta) {
+          if (k < ms.length - 1) {
+            let sk = 0;
+            for (let j = k + 1; j < ms.length; j++) {
+              b[ms[j]] = side;
+              sk += countSub(b, side === MACH ? HUMAN : MACH);
+              b[ms[j]] = 0;
+            }
+            cutoff(x + (k + 1) * cw, (ms.length - k - 1) * cw, depth + 1, sk);
+          }
+          break;
+        }
+      }
+      leave(i, best);
+      return best;
+    }
+
+    // The same search with no drawing and no skip-counting, timed honestly —
+    // the recorded run does bookkeeping the algorithm itself never pays for.
+    function leanAb(b, side, depth, alpha, beta) {
+      const wr = winnerOf(b);
+      if (wr === MACH) return 10 - depth;
+      if (wr === HUMAN) return depth - 10;
+      if (isFull(b)) return 0;
+      const ms = movesOf(b);
+      const max = side === MACH;
+      let best = max ? -INF : INF;
+      for (let k = 0; k < ms.length; k++) {
+        b[ms[k]] = side;
+        const v = leanAb(b, side === MACH ? HUMAN : MACH, depth + 1, alpha, beta);
+        b[ms[k]] = 0;
+        if (max) { if (v > best) best = v; if (best > alpha) alpha = best; }
+        else { if (v < best) best = v; if (best < beta) beta = best; }
+        if (P.prune && alpha >= beta) break;
+      }
+      return best;
+    }
+    function timeSearch(from) {
+      const reps = 5;
+      const t0 = performance.now();
+      for (let r = 0; r < reps; r++) {
+        const b = from.slice();
+        const ms = movesOf(b);
+        let alpha = -INF;
+        for (let k = 0; k < ms.length; k++) {
+          b[ms[k]] = MACH;
+          const v = leanAb(b, HUMAN, 1, alpha, INF);
+          b[ms[k]] = 0;
+          if (v > alpha) alpha = v;
+        }
+      }
+      return (performance.now() - t0) / reps;
+    }
+
+    function runSearch(from) {
+      resetRecord();
+      if (P.order === 'shuffled') reshuffle();
+      const b = from.slice();
+      let empties = 0;
+      for (let i = 0; i < 9; i++) if (!b[i]) empties++;
+      R.rows = empties + 1;
+      R.whole = countSub(b.slice(), MACH);
+
+      const rootIdx = enter(0, 1, 0, b);
+      const ms = movesOf(b);
+      const cw = 1 / ms.length;
+      let alpha = -INF, best = -INF, bestMove = ms[0];
+
+      for (let k = 0; k < ms.length; k++) {
+        const evStart = R.evT.length;
+        b[ms[k]] = MACH;
+        // beta stays +∞ at the root: every option must be either priced or refuted.
+        const v = ab(b, HUMAN, 1, alpha, INF, k * cw, cw);
+        b[ms[k]] = 0;
+        const bounded = P.prune && v <= alpha;
+        if (v > best) { best = v; bestMove = ms[k]; }
+        if (v > alpha) alpha = v;
+        R.root.push({ move: ms[k], val: v, exact: !bounded, x: k * cw, w: cw, evStart, evEnd: R.evT.length });
+      }
+      leave(rootIdx, best);
+
+      R.best = best; R.bestMove = bestMove;
+      R.ms = timeSearch(from);
+
+      // index the hoverable slices by row (DFS order is already left-to-right)
+      R.rowNodes = [];
+      for (let d = 0; d < R.rows; d++) R.rowNodes.push([]);
+      for (let i = 0; i < R.nX.length; i++) if (R.nB[i] !== null) R.rowNodes[R.nD[i]].push(i);
+      R.ready = true;
+    }
+
+    // ---------- layout ----------
+    let W = 0, H = 0, dpr = 1;
+    const B = { x: 0, y: 0, s: 0 };                    // board square
+    const T = { x: 0, y: 0, w: 0, h: 0, rowH: 0, gap: 1, tight: false };
+    let tcv = null, tctx = null;
+
+    function layout() {
+      const hidden = uiEl.classList.contains('hidden');
+      const r = hidden ? { right: 0, bottom: 0 } : uiEl.getBoundingClientRect();
+      const narrow = W < 900 || (W - r.right - 48) < 520;
+
+      let x0, y0, x1, y1;
+      if (!narrow) { x0 = r.right + 26; y0 = 30; x1 = W - 26; y1 = H - 52; }
+      else { x0 = 14; y0 = Math.min(r.bottom + 14, H * 0.56); x1 = W - 14; y1 = H - 44; }
+
+      const rw = Math.max(80, x1 - x0), rh = Math.max(80, y1 - y0);
+
+      if (rw > rh * 1.15) {
+        B.s = Math.max(110, Math.min(rh * 0.94, rw * 0.4, 420));
+        B.x = x0; B.y = y0 + (rh - B.s) / 2;
+        T.x = B.x + B.s + Math.min(34, rw * 0.05);
+        T.y = y0 + 24; T.w = Math.max(60, x1 - T.x); T.h = Math.max(60, rh - 24);
+      } else {
+        B.s = Math.max(110, Math.min(rw * 0.9, rh * 0.44, 380));
+        B.x = x0 + (rw - B.s) / 2; B.y = y0;
+        T.x = x0; T.y = B.y + B.s + 52;
+        T.w = rw; T.h = Math.max(60, y1 - T.y);
+      }
+      T.tight = T.w < 430;
+
+      T.rowH = R.rows ? T.h / R.rows : T.h;
+      T.gap = Math.min(2, T.rowH * 0.13);
+
+      tcv = document.createElement('canvas');
+      tcv.width = Math.max(1, Math.round(T.w * dpr));
+      tcv.height = Math.max(1, Math.round(T.h * dpr));
+      tctx = tcv.getContext('2d');
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (R.ready) renderEvents(0, A.cursor);
+    }
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = Math.round(W * dpr);
+      cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+    }
+
+    // ---------- painting the tree (offscreen, append-only) ----------
+    function nodeRect(i) {
+      const x = R.nX[i] * T.w;
+      const w = Math.max(R.nW[i] * T.w, 0.3);
+      const y = R.nD[i] * T.rowH;
+      const h = Math.max(T.rowH - T.gap, 1);
+      return [x, y, w, h];
+    }
+    function valColour(v) {
+      if (v > 0) return 'rgba(138,255,192,0.78)';
+      if (v < 0) return 'rgba(255,124,195,0.66)';
+      return 'rgba(124,124,255,0.52)';
+    }
+    function renderEvents(from, to) {
+      if (!tctx) return;
+      for (let e = from; e < to; e++) {
+        const t = R.evT[e];
+        if (t === 0) {
+          const i = R.evA[e], q = nodeRect(i);
+          tctx.fillStyle = 'rgba(124,124,255,0.15)';
+          tctx.fillRect(q[0], q[1], q[2], q[3]);
+        } else if (t === 1) {
+          const i = R.evA[e], q = nodeRect(i);
+          // only clear when the slice is at least a pixel wide — clearing a
+          // sub-pixel rect would take its neighbours with it
+          if (q[2] >= 1) tctx.clearRect(q[0], q[1], q[2], q[3]);
+          tctx.fillStyle = valColour(R.evB[e]);
+          tctx.fillRect(q[0], q[1], q[2], q[3]);
+        } else {
+          const x = R.evA[e] * T.w, w = Math.max(R.evB[e] * T.w, 0.3), y = R.evC[e] * T.rowH;
+          tctx.fillStyle = 'rgba(255,124,195,0.075)';
+          tctx.fillRect(x, y, w, T.h - y);
+          tctx.fillStyle = 'rgba(255,124,195,0.5)';
+          tctx.fillRect(x, y, w, Math.min(2, T.rowH * 0.3));
+        }
+      }
+    }
+
+    // ---------- drawing ----------
+    function rr(c, x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      c.beginPath();
+      c.moveTo(x + r, y);
+      c.arcTo(x + w, y, x + w, y + h, r);
+      c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r);
+      c.arcTo(x, y, x + w, y, r);
+      c.closePath();
+    }
+
+    let hover = { cell: -1, node: -1, cut: -1, mx: 0, my: 0, inTree: false };
+
+    function cellRect(i) {
+      const pad = B.s * 0.035, cs = (B.s - pad * 2) / 3;
+      return [B.x + pad + (i % 3) * cs, B.y + pad + Math.floor(i / 3) * cs, cs, cs];
+    }
+
+    function drawMark(c, mark, cx, cy, r, alpha) {
+      c.save();
+      c.globalAlpha = alpha;
+      c.lineCap = 'round';
+      c.lineWidth = Math.max(2, r * 0.24);
+      if (mark === HUMAN) {
+        c.strokeStyle = '#9a9aff';
+        c.shadowColor = 'rgba(124,124,255,0.8)'; c.shadowBlur = r * 0.5;
+        c.beginPath();
+        c.moveTo(cx - r, cy - r); c.lineTo(cx + r, cy + r);
+        c.moveTo(cx + r, cy - r); c.lineTo(cx - r, cy + r);
+        c.stroke();
+      } else {
+        c.strokeStyle = '#ff8fca';
+        c.shadowColor = 'rgba(255,124,195,0.8)'; c.shadowBlur = r * 0.5;
+        c.beginPath();
+        c.arc(cx, cy, r, 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.restore();
+    }
+
+    function drawBoard() {
+      const pad = B.s * 0.035, cs = (B.s - pad * 2) / 3;
+
+      ctx.save();
+      rr(ctx, B.x, B.y, B.s, B.s, B.s * 0.055);
+      ctx.fillStyle = 'rgba(255,255,255,0.022)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      const line = result && result.line ? result.line : null;
+      const lineFill = result && result.who === MACH ? 'rgba(255,124,195,0.13)' : 'rgba(124,124,255,0.14)';
+      const lineEdge = result && result.who === MACH ? 'rgba(255,124,195,0.6)' : 'rgba(179,136,255,0.55)';
+      const considering = currentRootMove();
+
+      for (let i = 0; i < 9; i++) {
+        const q = cellRect(i);
+        const inset = cs * 0.045;
+        rr(ctx, q[0] + inset, q[1] + inset, cs - inset * 2, cs - inset * 2, cs * 0.09);
+        const onLine = line && line.indexOf(i) >= 0;
+        ctx.fillStyle = onLine ? lineFill
+          : (hover.cell === i && phase === 'human' && !board[i] ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.035)');
+        ctx.fill();
+        ctx.strokeStyle = onLine ? lineEdge : 'rgba(255,255,255,0.07)';
+        ctx.lineWidth = onLine ? 2 : 1;
+        ctx.stroke();
+
+        if (considering === i) {
+          rr(ctx, q[0] + inset, q[1] + inset, cs - inset * 2, cs - inset * 2, cs * 0.09);
+          ctx.strokeStyle = 'rgba(255,124,195,0.85)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        const cx = q[0] + cs / 2, cy = q[1] + cs / 2, r = cs * 0.26;
+        if (board[i]) drawMark(ctx, board[i], cx, cy, r, 1);
+        else if (hover.cell === i && phase === 'human') drawMark(ctx, HUMAN, cx, cy, r, 0.2);
+
+        if (!board[i] && annotations && annotations[i]) {
+          const a = annotations[i];
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          ctx.fillStyle = a.tone;
+          ctx.font = '600 ' + Math.max(9, Math.round(cs * 0.135)) + 'px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(a.text, cx, cy + cs * 0.3);
+          ctx.restore();
+        }
+      }
+
+      // caption under the board
+      ctx.save();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+      let msg, tone;
+      if (phase === 'thinking') { msg = 'thinking — ' + R.examined.toLocaleString() + ' positions to walk'; tone = 'rgba(255,124,195,0.85)'; }
+      else if (phase === 'over') {
+        if (!result || !result.who) { msg = 'a draw — which is the best either of you could have done'; tone = 'rgba(138,255,192,0.85)'; }
+        else if (result.who === MACH) { msg = 'it wins. it saw this before you played.'; tone = 'rgba(255,124,195,0.9)'; }
+        else { msg = 'you beat a perfect player. that should not happen.'; tone = 'rgba(255,176,114,0.9)'; }
+      } else { msg = 'your move — you are ✕, it is ◯'; tone = 'rgba(255,255,255,0.42)'; }
+      ctx.fillStyle = tone;
+      ctx.fillText(msg, B.x + 2, B.y + B.s + 10);
+      ctx.restore();
+    }
+
+    function currentRootMove() {
+      if (phase !== 'thinking' || !R.ready) return -1;
+      for (let k = 0; k < R.root.length; k++) {
+        if (A.cursor >= R.root[k].evStart && A.cursor < R.root[k].evEnd) return R.root[k].move;
+      }
+      return -1;
+    }
+
+    function drawTree() {
+      ctx.save();
+      rr(ctx, T.x - 1, T.y - 1, T.w + 2, T.h + 2, 10);
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.textBaseline = 'bottom';
+      ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.42)';
+      ctx.textAlign = 'left';
+      ctx.fillText(T.tight ? 'every position it examines' : 'every position it examines · one row deeper each move', T.x, T.y - 9);
+      if (R.ready) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(176,176,255,0.75)';
+        const shown = Math.round(100 * R.examined / Math.max(1, R.whole));
+        const cnt = R.examined.toLocaleString() + ' of ' + R.whole.toLocaleString() + ' — ' + shown + '%';
+        ctx.fillText(T.tight ? shown + '% of it' : cnt, T.x + T.w, T.y - 9);
+      }
+      ctx.restore();
+
+      if (!R.ready) {
+        ctx.save();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '13px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillText(T.tight ? 'play a square — its search gets drawn here' : 'play a square and its whole search gets drawn here', T.x + T.w / 2, T.y + T.h / 2);
+        ctx.restore();
+        return;
+      }
+
+      if (tcv) ctx.drawImage(tcv, T.x, T.y, T.w, T.h);
+
+      // outline the root move it is considering / has chosen
+      const chosen = phase === 'thinking' ? currentRootMove() : R.bestMove;
+      for (let k = 0; k < R.root.length; k++) {
+        if (R.root[k].move !== chosen) continue;
+        const x = T.x + R.root[k].x * T.w, w = R.root[k].w * T.w;
+        ctx.save();
+        ctx.strokeStyle = phase === 'thinking' ? 'rgba(255,124,195,0.8)' : 'rgba(233,216,255,0.75)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x + 0.75, T.y + T.rowH + 0.75, Math.max(2, w - 1.5), T.h - T.rowH - 1.5);
+        ctx.restore();
+      }
+
+      // hovered slice
+      if (hover.node >= 0) {
+        const q = nodeRect(hover.node);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(T.x + q[0] - 0.75, T.y + q[1] - 0.75, q[2] + 1.5, q[3] + 1.5);
+        ctx.restore();
+      }
+    }
+
+    function drawMini(c, x, y, size, str) {
+      const cs = size / 3;
+      c.save();
+      c.strokeStyle = 'rgba(255,255,255,0.12)';
+      c.lineWidth = 1;
+      for (let i = 0; i < 9; i++) {
+        const cx = x + (i % 3) * cs, cy = y + Math.floor(i / 3) * cs;
+        c.strokeRect(cx + 0.5, cy + 0.5, cs - 1, cs - 1);
+        const v = +str[i];
+        if (v) drawMark(c, v, cx + cs / 2, cy + cs / 2, cs * 0.26, 1);
+      }
+      c.restore();
+    }
+
+    function drawTooltip() {
+      let lines = null, mini = null;
+      if (hover.node >= 0) {
+        const i = hover.node;
+        mini = R.nB[i];
+        const d = R.nD[i];
+        const known = R.nExit[i] >= 0 && R.nExit[i] < A.cursor;
+        const v = R.nV[i];
+        let verdict = 'still working it out';
+        if (known) verdict = v > 0 ? 'it wins from here' : (v < 0 ? 'it loses from here' : 'a draw from here');
+        lines = [d === 0 ? 'the position on the board' : d + (d === 1 ? ' move ahead' : ' moves ahead'), verdict];
+      } else if (hover.cut >= 0) {
+        const c0 = R.cuts[hover.cut];
+        lines = ['never examined', c0.skipped.toLocaleString() + ' positions skipped', 'one reply was already worse'];
+      }
+      if (!lines) return;
+
+      const padX = 11, padY = 9, gap = 8;
+      ctx.save();
+      ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+      let tw = 0;
+      for (const l of lines) tw = Math.max(tw, ctx.measureText(l).width);
+      const ms = mini ? 46 : 0;
+      const bw = padX * 2 + tw + (mini ? ms + gap : 0);
+      const bh = Math.max(mini ? ms : 0, lines.length * 16) + padY * 2;
+      let bx = hover.mx + 16, by = hover.my - bh - 12;
+      if (bx + bw > W - 8) bx = hover.mx - bw - 16;
+      if (by < 8) by = hover.my + 18;
+      if (bx < 8) bx = 8;
+
+      rr(ctx, bx, by, bw, bh, 10);
+      ctx.fillStyle = 'rgba(10,10,20,0.94)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      if (mini) drawMini(ctx, bx + padX, by + (bh - ms) / 2, ms, mini);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      const tx = bx + padX + (mini ? ms + gap : 0);
+      let ty = by + (bh - lines.length * 16) / 2 + 1;
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillStyle = i === 0 ? '#e9e9f0' : '#9a9ab0';
+        ctx.fillText(lines[i], tx, ty);
+        ty += 16;
+      }
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      drawTree();
+      drawBoard();
+      drawTooltip();
+    }
+
+    // ---------- readout ----------
+    const el = (id) => document.getElementById(id);
+    let lastSpeedLabel = '';
+    function updateReadout() {
+      const sl = speedLabel();
+      if (sl !== lastSpeedLabel) { lastSpeedLabel = sl; el('spdVal').textContent = sl; }
+      if (!R.ready) {
+        el('mSeen').textContent = '–'; el('mSkip').textContent = '–'; el('mFull').textContent = '–';
+        el('mBar').style.width = '0%';
+        el('mStatus').innerHTML = 'Take a square. Everything it thinks about gets drawn.';
+        return;
+      }
+      el('mSeen').textContent = R.examined.toLocaleString();
+      el('mSkip').textContent = R.skipped.toLocaleString();
+      el('mFull').textContent = R.whole.toLocaleString();
+      const pct = 100 * R.examined / Math.max(1, R.whole);
+      el('mBar').style.width = Math.max(1.5, pct).toFixed(1) + '%';
+
+      const ms = R.ms < 0.02 ? 'too fast to time'
+        : 'in ' + (R.ms < 1 ? R.ms.toFixed(2) : R.ms.toFixed(1)) + ' ms';
+      let s;
+      if (phase === 'thinking') {
+        s = 'Walking it now — <b>' + Math.round(100 * A.cursor / Math.max(1, R.evT.length)) + '%</b> of the replay.';
+      } else if (!P.prune) {
+        s = 'No pruning: it priced <b>every</b> position, ' + ms + ', for the same move.';
+      } else {
+        s = 'It reached the same move after <b>' + pct.toFixed(1) + '%</b> of the tree, ' + ms + '.';
+      }
+      const verdict = R.best > 0 ? ' It has a forced win.' : (R.best < 0 ? ' It is lost with best play.' : ' Best it can force: a draw.');
+      el('mStatus').innerHTML = s + verdict;
+    }
+
+    // ---------- flow ----------
+    function annotate() {
+      annotations = new Array(9).fill(null);
+      for (const info of R.root) {
+        if (info.move === R.bestMove) continue;
+        if (!info.exact) annotations[info.move] = { text: 'cut short', tone: 'rgba(255,124,195,0.6)' };
+        else if (info.val > 0) annotations[info.move] = { text: 'wins', tone: 'rgba(138,255,192,0.85)' };
+        else if (info.val < 0) annotations[info.move] = { text: 'loses', tone: 'rgba(255,124,195,0.8)' };
+        else annotations[info.move] = { text: 'draw', tone: 'rgba(176,176,255,0.8)' };
+      }
+    }
+
+    function settle() {
+      const w = winnerOf(board);
+      if (w || isFull(board)) { phase = 'over'; result = { who: w, line: winLine(board) }; }
+      else phase = 'human';
+    }
+
+    function startThinking(from) {
+      posBeforeThink = from.slice();
+      board = from.slice();
+      annotations = null;
+      result = null;
+      hover.node = -1; hover.cut = -1;
+      runSearch(board);
+      T.rowH = T.h / R.rows;
+      T.gap = Math.min(2, T.rowH * 0.13);
+      tcv = document.createElement('canvas');
+      tcv.width = Math.max(1, Math.round(T.w * dpr));
+      tcv.height = Math.max(1, Math.round(T.h * dpr));
+      tctx = tcv.getContext('2d');
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      A.on = true; A.cursor = 0;
+      phase = 'thinking';
+    }
+
+    function finishThinking() {
+      A.on = false;
+      board[R.bestMove] = MACH;
+      annotate();
+      settle();
+    }
+
+    function play(cell) {
+      if (phase !== 'human' || board[cell]) return;
+      board[cell] = HUMAN;
+      annotations = null;
+      const w = winnerOf(board);
+      if (w || isFull(board)) { phase = 'over'; result = { who: w, line: winLine(board) }; return; }
+      startThinking(board);
+    }
+
+    function newGame() {
+      board = new Array(9).fill(0);
+      phase = 'human'; result = null; annotations = null;
+      posBeforeThink = null;
+      resetRecord();
+      A.on = false; A.cursor = 0;
+      layout();
+    }
+
+    function replay() {
+      if (!posBeforeThink) return;
+      startThinking(posBeforeThink);
+    }
+
+    // ---------- speed ----------
+    // Paced by the square root of the work, so a pruned search flashes past and
+    // an unpruned one visibly grinds — without either becoming unwatchable.
+    function npf() {
+      const total = Math.max(1, R.evT.length || 4000);
+      const k = Math.pow(10, -0.5 + (P.speed / 100) * 2.2);
+      return Math.max(1, Math.round(k * Math.sqrt(total)));
+    }
+    function speedLabel() {
+      const total = Math.max(1, R.evT.length || 4000);
+      const secs = total / npf() / 60;
+      return secs < 0.12 ? 'instant' : '≈ ' + secs.toFixed(1) + ' s';
+    }
+
+    // ---------- input ----------
+    function pos(e) {
+      const r = cv.getBoundingClientRect();
+      return [e.clientX - r.left, e.clientY - r.top];
+    }
+    function hitCell(mx, my) {
+      const pad = B.s * 0.035, cs = (B.s - pad * 2) / 3;
+      const gx = Math.floor((mx - B.x - pad) / cs), gy = Math.floor((my - B.y - pad) / cs);
+      if (gx < 0 || gx > 2 || gy < 0 || gy > 2) return -1;
+      return gy * 3 + gx;
+    }
+    function hitTree(mx, my) {
+      hover.node = -1; hover.cut = -1;
+      if (!R.ready) return;
+      const u = (mx - T.x) / T.w, vy = my - T.y;
+      if (u < 0 || u >= 1 || vy < 0 || vy >= T.h) return;
+      const d = Math.min(R.rows - 1, Math.floor(vy / T.rowH));
+      const list = R.rowNodes[d] || [];
+      let lo = 0, hi = list.length - 1, found = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1, i = list[mid];
+        if (u < R.nX[i]) hi = mid - 1;
+        else if (u >= R.nX[i] + R.nW[i]) lo = mid + 1;
+        else { found = i; break; }
+      }
+      if (found >= 0 && R.nEnter[found] < A.cursor) { hover.node = found; return; }
+      for (let k = 0; k < R.cuts.length; k++) {
+        const c0 = R.cuts[k];
+        if (c0.ev < A.cursor && d >= c0.d && u >= c0.x && u < c0.x + c0.w) { hover.cut = k; return; }
+      }
+    }
+
+    cv.addEventListener('pointermove', (e) => {
+      const [mx, my] = pos(e);
+      hover.mx = mx; hover.my = my;
+      hover.cell = hitCell(mx, my);
+      hitTree(mx, my);
+      cv.style.cursor = (phase === 'human' && hover.cell >= 0 && !board[hover.cell]) ? 'pointer' : 'default';
+    });
+    cv.addEventListener('pointerleave', () => { hover.cell = -1; hover.node = -1; hover.cut = -1; });
+    cv.addEventListener('pointerdown', (e) => {
+      const [mx, my] = pos(e);
+      hover.mx = mx; hover.my = my;
+      const c0 = hitCell(mx, my);
+      if (c0 >= 0) play(c0);
+      else { hover.cell = -1; hitTree(mx, my); }
+    });
+
+    // ---------- controls ----------
+    const pruneT = el('pruneToggle');
+    pruneT.addEventListener('click', () => {
+      P.prune = !P.prune;
+      pruneT.classList.toggle('on', P.prune);
+      replay();
+    });
+
+    el('orderSeg').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      P.order = b.dataset.o;
+      [...el('orderSeg').children].forEach((x) => x.classList.toggle('on', x === b));
+      replay();
+    });
+
+    const spd = el('spd');
+    spd.addEventListener('input', () => { P.speed = +spd.value; el('spdVal').textContent = speedLabel(); });
+    el('spdVal').textContent = speedLabel();
+
+    el('reset').addEventListener('click', newGame);
+    el('replay').addEventListener('click', replay);
+    el('skip').addEventListener('click', () => {
+      if (!A.on) return;
+      renderEvents(A.cursor, R.evT.length);
+      A.cursor = R.evT.length;
+      finishThinking();
+    });
+
+    onUiToggle = () => layout();
+
+    // ---------- loop ----------
+    function frame() {
+      if (A.on) {
+        const n = Math.min(npf(), R.evT.length - A.cursor);
+        renderEvents(A.cursor, A.cursor + n);
+        A.cursor += n;
+        if (A.cursor >= R.evT.length) finishThinking();
+      }
+      draw();
+      updateReadout();
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
