@@ -2,9 +2,9 @@
   "meta": {
     "title": "AI-Infrastructure Basket",
     "subtitle": "An equal-weighted basket of 15 'picks & shovels' AI-infra stocks (no Nvidia), vs the S&P 500.",
-    "generated": "2026-08-27T05:09:42+00:00",
+    "generated": "2026-08-28T05:09:33+00:00",
     "inception": "2026-01-02",
-    "asOf": "2026-08-26",
+    "asOf": "2026-08-27",
     "note": "Total-return (dividend-adjusted) closes from Yahoo Finance. SK Hynix (000660.KS) converted KRW\u2192USD daily. Indices based to 100 at inception."
   },
   "dates": [
@@ -170,7 +170,8 @@
     "2026-08-21",
     "2026-08-24",
     "2026-08-25",
-    "2026-08-26"
+    "2026-08-26",
+    "2026-08-27"
   ],
   "lines": {
     "buyhold": [
@@ -336,7 +337,8 @@
       182.475,
       176.514,
       180.25,
-      182.591
+      182.566,
+      183.915
     ],
     "active": [
       100.0,
@@ -501,7 +503,8 @@
       187.837,
       183.256,
       186.277,
-      188.391
+      188.376,
+      190.225
     ],
     "sp500": [
       100.0,
@@ -666,23 +669,24 @@
       111.896,
       111.583,
       111.939,
-      111.916
+      111.916,
+      112.722
     ]
   },
   "stats": {
     "buyhold": {
-      "indexLast": 182.59,
-      "retPct": 82.59
+      "indexLast": 183.92,
+      "retPct": 83.92
     },
     "active": {
-      "indexLast": 188.39,
-      "retPct": 88.39
+      "indexLast": 190.22,
+      "retPct": 90.22
     },
     "sp500": {
-      "indexLast": 111.92,
-      "retPct": 11.92
+      "indexLast": 112.72,
+      "retPct": 12.72
     },
-    "activeCashWeight": 0.0598
+    "activeCashWeight": 0.0592
   },
   "stocks": [
     {
@@ -690,139 +694,139 @@
       "name": "AMD",
       "layer": "Compute & chips",
       "currency": "USD",
-      "lastUSD": 480.93,
-      "ytdPct": 115.21,
-      "weightBuyhold": 0.0786,
-      "weightActive": 0.0557
+      "lastUSD": 476.67,
+      "ytdPct": 113.3,
+      "weightBuyhold": 0.0773,
+      "weightActive": 0.0547
     },
     {
       "ticker": "AVGO",
       "name": "Broadcom",
       "layer": "Compute & chips",
       "currency": "USD",
-      "lastUSD": 355.59,
-      "ytdPct": 2.67,
-      "weightBuyhold": 0.0375,
-      "weightActive": 0.077
+      "lastUSD": 371.54,
+      "ytdPct": 7.27,
+      "weightBuyhold": 0.0389,
+      "weightActive": 0.0797
     },
     {
       "ticker": "MRVL",
       "name": "Marvell",
       "layer": "Compute & chips",
       "currency": "USD",
-      "lastUSD": 245.11,
-      "ytdPct": 174.61,
-      "weightBuyhold": 0.1003,
-      "weightActive": 0.0516
+      "lastUSD": 241.45,
+      "ytdPct": 170.5,
+      "weightBuyhold": 0.0981,
+      "weightActive": 0.0503
     },
     {
       "ticker": "TSM",
       "name": "TSMC",
       "layer": "Manufacturing & equipment",
       "currency": "USD",
-      "lastUSD": 417.69,
-      "ytdPct": 31.36,
-      "weightBuyhold": 0.048,
-      "weightActive": 0.0895
+      "lastUSD": 427.3,
+      "ytdPct": 34.38,
+      "weightBuyhold": 0.0487,
+      "weightActive": 0.0906
     },
     {
       "ticker": "ASML",
       "name": "ASML",
       "layer": "Manufacturing & equipment",
       "currency": "USD",
-      "lastUSD": 1745.64,
-      "ytdPct": 50.72,
-      "weightBuyhold": 0.055,
-      "weightActive": 0.0592
+      "lastUSD": 1735.01,
+      "ytdPct": 49.8,
+      "weightBuyhold": 0.0543,
+      "weightActive": 0.0583
     },
     {
       "ticker": "AMAT",
       "name": "Applied Materials",
       "layer": "Manufacturing & equipment",
       "currency": "USD",
-      "lastUSD": 479.76,
-      "ytdPct": 79.07,
-      "weightBuyhold": 0.0654,
-      "weightActive": 0.0486
+      "lastUSD": 482.36,
+      "ytdPct": 80.04,
+      "weightBuyhold": 0.0653,
+      "weightActive": 0.0484
     },
     {
       "ticker": "MU",
       "name": "Micron",
       "layer": "Memory & storage",
       "currency": "USD",
-      "lastUSD": 938.4,
-      "ytdPct": 197.68,
-      "weightBuyhold": 0.1087,
-      "weightActive": 0.0677
+      "lastUSD": 935.39,
+      "ytdPct": 196.72,
+      "weightBuyhold": 0.1076,
+      "weightActive": 0.0669
     },
     {
       "ticker": "000660.KS",
       "name": "SK Hynix",
       "layer": "Memory & storage",
       "currency": "KRW",
-      "lastUSD": 1221.87,
-      "ytdPct": 161.08,
-      "weightBuyhold": 0.0953,
-      "weightActive": 0.0539
+      "lastUSD": 1250.19,
+      "ytdPct": 167.19,
+      "weightBuyhold": 0.0969,
+      "weightActive": 0.0546
     },
     {
       "ticker": "STX",
       "name": "Seagate",
       "layer": "Memory & storage",
       "currency": "USD",
-      "lastUSD": 846.37,
-      "ytdPct": 195.07,
-      "weightBuyhold": 0.1077,
-      "weightActive": 0.0397
+      "lastUSD": 847.2,
+      "ytdPct": 195.36,
+      "weightBuyhold": 0.1071,
+      "weightActive": 0.0394
     },
     {
       "ticker": "ANET",
       "name": "Arista",
       "layer": "Networking & optics",
       "currency": "USD",
-      "lastUSD": 202.25,
-      "ytdPct": 51.38,
-      "weightBuyhold": 0.0553,
-      "weightActive": 0.0748
+      "lastUSD": 201.09,
+      "ytdPct": 50.52,
+      "weightBuyhold": 0.0546,
+      "weightActive": 0.0737
     },
     {
       "ticker": "COHR",
       "name": "Coherent",
       "layer": "Networking & optics",
       "currency": "USD",
-      "lastUSD": 294.37,
-      "ytdPct": 51.48,
-      "weightBuyhold": 0.0553,
-      "weightActive": 0.0608
+      "lastUSD": 295.39,
+      "ytdPct": 52.0,
+      "weightBuyhold": 0.0551,
+      "weightActive": 0.0604
     },
     {
       "ticker": "CRDO",
       "name": "Credo",
       "layer": "Networking & optics",
       "currency": "USD",
-      "lastUSD": 226.49,
-      "ytdPct": 58.14,
-      "weightBuyhold": 0.0577,
-      "weightActive": 0.0441
+      "lastUSD": 240.24,
+      "ytdPct": 67.74,
+      "weightBuyhold": 0.0608,
+      "weightActive": 0.0463
     },
     {
       "ticker": "VRT",
       "name": "Vertiv",
       "layer": "Power, cooling & data centres",
       "currency": "USD",
-      "lastUSD": 263.81,
-      "ytdPct": 50.29,
-      "weightBuyhold": 0.0549,
-      "weightActive": 0.0703
+      "lastUSD": 269.28,
+      "ytdPct": 53.41,
+      "weightBuyhold": 0.0556,
+      "weightActive": 0.0711
     },
     {
       "ticker": "CEG",
       "name": "Constellation Energy",
       "layer": "Power, cooling & data centres",
       "currency": "USD",
-      "lastUSD": 279.52,
-      "ytdPct": -23.34,
-      "weightBuyhold": 0.028,
+      "lastUSD": 282.41,
+      "ytdPct": -22.55,
+      "weightBuyhold": 0.0281,
       "weightActive": 0.0766
     },
     {
@@ -830,10 +834,10 @@
       "name": "Equinix",
       "layer": "Power, cooling & data centres",
       "currency": "USD",
-      "lastUSD": 1079.61,
-      "ytdPct": 43.44,
-      "weightBuyhold": 0.0524,
-      "weightActive": 0.0707
+      "lastUSD": 1076.45,
+      "ytdPct": 43.02,
+      "weightBuyhold": 0.0518,
+      "weightActive": 0.0698
     }
   ],
   "decisions": [
