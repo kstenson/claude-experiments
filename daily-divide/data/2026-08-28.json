@@ -1,0 +1,253 @@
+{
+  "date": "2026-08-28",
+  "topic": "Are AI data centers driving up American electricity bills?",
+  "question": "Is the AI data center buildout the cause of rising household electricity bills — or a scapegoat for an aging grid and state energy policy?",
+  "summary": "Data centers are the loudest domestic fight of the late-summer campaign. New York imposed the first statewide moratorium on hyperscale projects on July 14. Texas Gov. Greg Abbott, who called his state the 'epicenter of AI development' last November, ordered every data center in the ERCOT interconnection queue audited on August 3 — a pause local outlets were still explaining yesterday. Candidates in both parties now run against the projects their governments courted.\n\nUnderneath the ads is a checkable question. The left says the grid's own independent monitor has answered it: record PJM capacity prices are driven primarily by data center load, and those charges land on household bills. The right says prices have climbed since 2021 on aging-grid capital spending, gas prices and plant retirements, that data centers pay full cost of service where regulators have looked, and that the states hosting the most of them have below-average increases.\n\nThis entry checks both against PJM's market monitor and auction releases, EIA's August 2026 outlook, Virginia's legislative watchdog, and polling. Both sides hold a real piece of the evidence — and both overclaim.",
+  "needle": -8,
+  "verdict": "A slight lean left, on one narrow point: PJM's independent market monitor — not an advocacy group — found that record capacity prices are primarily the result of data center load, which contradicts the administration's claim that data centers are 'not the cause' of rising prices. But the left's campaign version, that data centers explain your bill, does not survive the data either: prices rose fastest in 2022, before hyperscale AI load. The monitor blames market design alongside data centers. Neither side is arguing that.",
+  "weights": { "factualAccuracy": 0.6, "reasoningHonesty": 0.4 },
+  "verificationNote": "Load-bearing claims were read in primary documents: Monitoring Analytics' Analysis of the 2027/2028 RPM Base Residual Auction (Part B), PJM's July 14, 2026 auction news release, EIA's August 2026 Short-Term Energy Outlook (regional price tables read directly from the PDF), JLARC Report 598 on data centers in Virginia, Governor Abbott's audit directive and Governor Hochul's moratorium announcement. Reporting from Utility Dive, E&E News, TIME, Gallup, Annenberg, the Washington Examiner and Common Dreams corroborates the rest. Three limits: the $6.3 billion attribution is the monitor's estimate as reported by Utility Dive and was not found in the report I read; Secretary Wright's quotes were read only in secondary renderings; and the two documented position flips are sourced to left-of-center outlets, which is weaker corroboration than the rubric prefers.",
+  "sources_consulted": [
+    "Monitoring Analytics — 2027/2028 RPM Base Residual Auction, Part B",
+    "PJM Interconnection — 2028/2029 Base Residual Auction news release",
+    "PJM Inside Lines",
+    "U.S. EIA — August 2026 Short-Term Energy Outlook",
+    "U.S. EIA — Today in Energy",
+    "JLARC — Report 598, Data Centers in Virginia",
+    "Office of the Texas Governor",
+    "Office of the New York Governor",
+    "Utility Dive",
+    "E&E News / POLITICO",
+    "TIME",
+    "Philadelphia Inquirer",
+    "Washington Examiner",
+    "Common Dreams",
+    "Yahoo Finance / Benzinga",
+    "ZeroHedge",
+    "Gallup",
+    "Annenberg Public Policy Center",
+    "E3 (Energy and Environmental Economics)",
+    "Fortune",
+    "NBC News",
+    "CNBC",
+    "Axios (unreadable, 403)",
+    "The Hill (unreadable, 403)",
+    "SEPA (unreadable, 403)"
+  ],
+  "sides": {
+    "left": {
+      "label": "Make them pay, or pause them",
+      "framing": "The grid's own independent monitor says data center load is the primary driver of record capacity prices, and those charges flow to household bills. States handed the industry tax exemptions and fast interconnection; households got the invoice. Until large loads pay their full freight, new hyperscale projects should be paused or conditioned.",
+      "factualAccuracy": 72,
+      "reasoningHonesty": 60,
+      "score": 67,
+      "strongestPoint": "The central claim rests on PJM's independent market monitor, not an advocacy shop: a published report concludes record capacity prices were 'primarily the result of existing and forecast data center load,' and that failing to address large data center load 'is a direct cause of higher prices.' PJM's own CEO says demand is outrunning supply.",
+      "weakestPoint": "The campaign version outruns the evidence. Residential prices rose fastest in 2022, before hyperscale AI load. The region containing Texas is rising below the national average. Virginia's bipartisan watchdog found no historical cost shift. New York, first to impose a moratorium, has almost no data centers and some of the highest rates in the country. And the monitor blames PJM's market design in the same sentence — a point no ad mentions."
+    },
+    "right": {
+      "label": "Blame the policy, not the servers",
+      "framing": "Electricity prices have climbed since 2021 on aging-grid capital spending, gas price swings and state mandates that retired firm generation. Where regulators have actually studied it, data centers pay full cost of service, and two dozen states have written large-load tariffs to keep it that way. Killing the buildout cedes AI to China and shrinks the customer base that pays for the grid.",
+      "factualAccuracy": 62,
+      "reasoningHonesty": 55,
+      "score": 59,
+      "strongestPoint": "The cost-shift claim was tested in the state with the most data centers and failed: Virginia's bipartisan legislative commission found current rates 'appropriately allocate costs to the classes and customers responsible for incurring them, including data center customers.' Price increases also long predate the AI boom, and the most recent PJM auction cleared 2.5% lower than the last.",
+      "weakestPoint": "The administration's headline claims — that data centers are 'not the cause of rising electricity prices' and are 'the greatest tool we have right now to stop the rise' — are contradicted by PJM's own market monitor and CEO. Republican governors have conceded in practice: Abbott's directive orders regulators to document whether data centers 'are paying their own way,' which is not a question you ask about a settled matter."
+    }
+  },
+  "facts": [
+    {
+      "claim": "PJM's independent market monitor concluded that record capacity-auction prices are driven primarily by data center load.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Monitoring Analytics: 'The high clearing prices in 2027/2028 BRA were primarily the result of existing and forecast data center load and market design flaws.' And: 'the failure to recognize and address the role of large data center loads is a direct cause of higher prices and will continue to result in even higher prices unless the related issues are addressed.'",
+      "explanation": "Read in the monitor's own report. Two caveats the left's ads omit: the same sentence names market design flaws as a co-cause, and the monitor elsewhere warns that capacity prices 'can be significantly affected by forecast data center load that bears little known resemblance to reality' — so part of the price reflects PJM's forecast, not delivered demand.",
+      "source": "Monitoring Analytics, Analysis of the 2027/2028 RPM Base Residual Auction — Part B (July 9, 2026)",
+      "url": "https://www.monitoringanalytics.com/reports/reports/2026/IMM_Analysis_of_the_20272028_RPM_Base_Residual_Auction_Part_B_20260709.pdf",
+      "corroboration": [
+        { "source": "Utility Dive", "url": "https://www.utilitydive.com/news/data-centers-pjm-capacity-auction-imm-bowring/825626/" }
+      ]
+    },
+    {
+      "claim": "Data centers accounted for $6.3 billion, or 38%, of the $16.4 billion in charges from PJM's most recent capacity auction, and $29.4 billion of $63.6 billion across the last four.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Utility Dive, July 20, 2026: 'Data centers are responsible for $6.3 billion, or 38%, of the $16.4 billion in charges from the PJM Interconnection's just-held capacity auction.' PJM's July 14 release confirms the denominator: 'The cleared supply procured in the auction times the clearing price totals $16.4 billion.'",
+      "explanation": "The $16.4 billion is primary-sourced to PJM's 2028/2029 auction release. The $6.3 billion attribution is the monitor's estimate as relayed by Utility Dive; I could not locate it in the monitor's published report, hence medium. PJM adds a caveat both sides skip: the figure 'does not equate to the total cost to load' because hedged and self-supplied load is not exposed to the clearing price.",
+      "source": "Utility Dive (reporting Monitoring Analytics)",
+      "url": "https://www.utilitydive.com/news/data-centers-pjm-capacity-auction-imm-bowring/825626/",
+      "corroboration": [
+        { "source": "PJM Interconnection news release, July 14, 2026", "url": "https://www.pjm.com/-/media/DotCom/about-pjm/newsroom/2026-releases/20260714-pjm-capacity-auction-procures-138318-mw-of-generation-resources.pdf" },
+        { "source": "ZeroHedge", "url": "https://www.zerohedge.com/energy/data-centers-were-responsible-46-pjms-last-four-capacity-auction-costs" }
+      ]
+    },
+    {
+      "claim": "PJM's most recent capacity auction cleared lower than the one before it.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "PJM, July 14, 2026: 'The price came in at the FERC-approved cap, $325/MW-day (UCAP) for the entire PJM footprint, a 2.5% decrease from the 2027/2028 Base Residual Auction cap of $333.44/MW-day.'",
+      "explanation": "True, and it cuts against 'prices only spiral.' But the decline is a lower administrative cap, not a looser market: this was the third consecutive auction to clear at the cap, and the auction fell 6,831 MW short of PJM's reliability requirement, with a shortfall of roughly 6,500 MW in the prior one. PJM is seeking FERC approval for a September backstop procurement.",
+      "source": "PJM Interconnection — 2028/2029 Base Residual Auction news release",
+      "url": "https://www.pjm.com/-/media/DotCom/about-pjm/newsroom/2026-releases/20260714-pjm-capacity-auction-procures-138318-mw-of-generation-resources.pdf",
+      "corroboration": []
+    },
+    {
+      "claim": "In Virginia, the state with the most data centers, an independent study found data centers are paying full cost of service with no historical cost shift to households.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "JLARC Report 598: 'Data centers are currently paying full cost of service.' The commissioned study 'found that current rates appropriately allocate costs to the classes and customers responsible for incurring them, including data center customers,' a finding 'corroborated by SCC reviews of utility cost recoveries.'",
+      "explanation": "Read in the report. JLARC is Virginia's bipartisan legislative oversight commission — the strongest plank on the right. Three caveats: the finding is backward-looking; the same report projects a typical Dominion residential customer's generation and transmission costs rising 'an estimated $14 to $37 monthly in constant (or real) dollars by 2040'; and the cost study was performed by E3, which later wrote a Data Center Coalition-funded paper arguing the same.",
+      "source": "JLARC, Data Centers in Virginia (Report 598), December 9, 2024",
+      "url": "https://jlarc.virginia.gov/pdfs/reports/Rpt598-2.pdf",
+      "corroboration": [
+        { "source": "E3 whitepaper (Data Center Coalition-funded)", "url": "https://www.ethree.com/electricity-rate-drivers-data-center-role-2026/" }
+      ]
+    },
+    {
+      "claim": "Residential electricity prices have been rising since 2021, with the sharpest jump before the hyperscale AI buildout.",
+      "side": "right",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "EIA's August 2026 Short-Term Energy Outlook charts annual growth in nominal residential electricity prices at 3.8% (2021), 10.1% (2022), 6.4% (2023), 3.0% (2024), 5.0% (2025), 5.6% (2026) and 2.1% (2027). EIA elsewhere: utilities 'have increased capital investment to replace or upgrade aging generation and delivery infrastructure.'",
+      "explanation": "Read in the STEO PDF. The 2022 spike was a natural-gas shock, and the aging-grid capital cycle is real and predates AI load. This supports 'data centers are not the whole story.' It does not support the stronger administration claim that they are not a cause: 2026's 5.6% is the second-highest of the series, and EIA notes generation is rising to meet data center demand.",
+      "source": "U.S. EIA, August 2026 Short-Term Energy Outlook",
+      "url": "https://www.eia.gov/outlooks/steo/pdf/steo_full.pdf",
+      "corroboration": [
+        { "source": "EIA, Today in Energy (May 14, 2025)", "url": "https://www.eia.gov/todayinenergy/detail.php?id=65284" }
+      ]
+    },
+    {
+      "claim": "Energy Secretary Chris Wright's claim that data centers are 'not the cause of rising electricity prices' and are the best tool for lowering them.",
+      "side": "right",
+      "verdict": "mostly-false",
+      "confidence": "medium",
+      "evidence": "Wright on Fox Business, January 19, 2026: 'The Democrats and others are saying data centers are the cause of rising electricity prices… They're not the cause of rising electricity prices.' On Fox News in July: 'Data centers are the greatest tool we have right now to stop the rise of electricity prices and ultimately to bring them back down.'",
+      "explanation": "The first claim is contradicted by PJM's own market monitor and by PJM's CEO, who says demand growth is outrunning supply. The second has no support I could find in any grid or EIA document. Wright's supporting point — that states which retired coal fastest saw prices escalate — is arguable but unproven as stated. Confidence is medium: both quotes were read in secondary renderings, not transcripts.",
+      "source": "Benzinga via Yahoo Finance (January 21, 2026)",
+      "url": "https://www.yahoo.com/news/articles/energy-secretary-wright-defends-data-230120721.html",
+      "corroboration": [
+        { "source": "Common Dreams (July 15, 2026)", "url": "https://www.commondreams.org/news/chris-wright-data-centers" }
+      ]
+    },
+    {
+      "claim": "Electricity prices in the biggest data center states are rising more slowly than the national average.",
+      "side": "right",
+      "verdict": "mixed",
+      "confidence": "high",
+      "evidence": "EIA's August 2026 STEO regional residential price table: U.S. average 17.30¢/kWh in 2025 to 18.27¢ in 2026 (+5.6%); West South Central, containing Texas, 14.65¢ to 15.32¢ (+4.6%); South Atlantic, containing Virginia, 15.31¢ to 16.29¢ (+6.4%); Middle Atlantic 22.70¢ to 25.07¢ (+10.4%).",
+      "explanation": "Read directly from EIA's tables. Texas fits the industry's claim; Virginia, the largest data center market in the world, is running above the national rate, not below it. And the PJM-heavy Middle Atlantic is rising at nearly double the national pace. Census divisions are not grid regions, so this is suggestive on both sides rather than dispositive for either.",
+      "source": "U.S. EIA, August 2026 Short-Term Energy Outlook, regional retail price tables",
+      "url": "https://www.eia.gov/outlooks/steo/pdf/steo_full.pdf",
+      "corroboration": [
+        { "source": "E3 whitepaper", "url": "https://www.ethree.com/electricity-rate-drivers-data-center-role-2026/" }
+      ]
+    },
+    {
+      "claim": "Campaign claims that data centers are why household electricity bills are going up.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "medium",
+      "evidence": "E&E News, March 19, 2026: states with the highest demand growth from 2019 to 2024 saw rates decline, Virginia's prices stayed 'relatively flat' despite surging AI demand, and 'electricity prices have been going up the last five years, even before data centers really entered the scene, largely due to an aging grid.' It also warns 'the pattern in the future may be different.'",
+      "explanation": "The capacity-market channel is documented and real. The blanket causal claim is not: the historical correlation runs the wrong way, and the largest driver so far is distribution and transmission capital spending. New York, first to impose a moratorium on grounds that data centers 'threaten to hike up utility bills,' hosts very few of them. Confidence is medium because E&E's underlying state-by-state analysis was not read in full.",
+      "source": "E&E News / POLITICO",
+      "url": "https://www.eenews.net/articles/what-ai-data-centers-do-and-dont-do-to-electricity-prices/",
+      "corroboration": [
+        { "source": "U.S. EIA, August 2026 STEO", "url": "https://www.eia.gov/outlooks/steo/pdf/steo_full.pdf" }
+      ]
+    },
+    {
+      "claim": "Large majorities of Americans now oppose a data center being built in their area, and opposition is bipartisan and rising fast.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Gallup (March 2–18, 2026, n=1,000, ±4): 'Seven in 10 Americans oppose constructing data centers for artificial intelligence in their area, including nearly half, 48%, who are strongly opposed.' Annenberg (June 16–July 19, 2026, n=1,320): 61% oppose, up from 49% in the spring; Democrats 69%, Republicans 54%, independents 53%.",
+      "explanation": "Two independent surveys agree on direction and rough magnitude, and the Annenberg 12-point move is what TIME's account of the GOP scramble rests on. Note what this does not establish: opposition is not evidence that data centers raised anyone's bill, and Gallup found environmental worry a stronger predictor of opposition than energy-affordability worry.",
+      "source": "Gallup",
+      "url": "https://news.gallup.com/poll/709772/americans-oppose-data-centers-area.aspx",
+      "corroboration": [
+        { "source": "Annenberg Public Policy Center", "url": "https://www.annenbergpublicpolicycenter.org/opposition-to-local-data-centers-rises-sharply-annenberg-survey-finds/" }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "The usual power test — would you hold this view if the other party governed? — is unusually easy here, because both parties reversed inside twelve months, in public, while holding the same offices. Democrats and Republicans alike spent a decade competing to land data centers with tax exemptions and fast interconnection; both are now running against them. The role-reversed precedent is not a decade old. It is last November.",
+    "precedent": {
+      "case": "Virginia's data center sales tax exemption, 2010 to today",
+      "what": "'Since 2010, Virginia has offered an exemption to the state's retail sales and use tax to attract large-scale data centers,' extended under governors of both parties, with proposals to run it to 2050. The same commonwealth's legislative commission then produced the study now cited by both camps.",
+      "mirror": "The governments now investigating the industry's costs are the governments that bid for it. Whichever party is out of power gets to call the buildout a scandal; whichever is in power has a ribbon-cutting on the calendar.",
+      "source": "JLARC, Data Centers in Virginia (Report 598)",
+      "url": "https://jlarc.virginia.gov/pdfs/reports/Rpt598-2.pdf",
+      "corroboration": []
+    },
+    "flips": [
+      {
+        "who": "Texas Gov. Greg Abbott (R)",
+        "then": "Called Texas the 'epicenter of AI development' in November 2025.",
+        "now": "On August 3, 2026 directed the PUCT and ERCOT to audit every data center in the interconnection queue and to document 'the extent to which data centers are paying their own way or depending on the state for financial assistance' — and has called for ending data center sales tax breaks.",
+        "source": "Office of the Texas Governor (Abbott's own directive)",
+        "url": "https://gov.texas.gov/news/post/governor-abbott-directs-comprehensive-data-center-audit"
+      },
+      {
+        "who": "Pennsylvania Gov. Josh Shapiro (D)",
+        "then": "Courted data center investment as economic development for the state.",
+        "now": "Signed an executive order imposing new rules on data center authorization and began airing an ad attacking his Republican opponent as the 'number one fan of data centers.'",
+        "source": "Philadelphia Inquirer",
+        "url": "https://www.inquirer.com/politics/data-centers-ai-politics-votter-opposition-democrats-republicans-pivot-shapiro-20260823.html"
+      },
+      {
+        "who": "Rep. Byron Donalds (R-FL)",
+        "then": "Said of local data center bans: 'There ain't no bans coming.'",
+        "now": "Spent $2 million on primary ads promising to 'protect' Florida from data centers — while President Trump was telling communities that refusing one is 'making a mistake.'",
+        "source": "TIME",
+        "url": "https://time.com/article/2026/08/25/data-centers-republican-reset-midterms/"
+      }
+    ],
+    "longRun": "Strip out the jerseys and this is the oldest problem in utility regulation: a lumpy, fast-arriving industrial load on a shared grid, and who pays for the wires and generation it requires. That gets settled in rate cases and tariff design, not moratoria. When the AI capital cycle cools and the tax base needs the projects again, expect the same officials to compete for what they are now blocking — and whichever party is out of power to call that a betrayal.",
+    "appliedToScore": "Neither side earns a reasoning-honesty bonus for a principle it adopted this summer, and both carry the inconsistency in their weakest point. The needle rests only on the present-tense checkable claims: what the market monitor found, what EIA's tables show, what JLARC's study found, and whether the administration's headline claim survives them."
+  },
+  "pattern": {
+    "thesis": "Treated alone, this looks like an AI story. Treated with its siblings, it is a recurring American sequence: a state subsidizes a large industrial load, the grid costs arrive later and are spread across everyone, and the political system reaches for a moratorium rather than rate design. Isolating the story lets both sides argue about servers instead of about who pays for wires.",
+    "campaigns": [
+      {
+        "where": "Virginia — the sales tax exemption",
+        "what": "An exemption to the retail sales and use tax to attract large-scale data centers, running since 2010 and extended, with proposals to carry it to 2050. JLARC found data centers currently pay full cost of service, and projected a typical Dominion residential customer's generation and transmission costs rising $14 to $37 a month by 2040.",
+        "authorization": "State tax exemption — extended, under legislative review",
+        "source": "JLARC, Report 598",
+        "url": "https://jlarc.virginia.gov/pdfs/reports/Rpt598-2.pdf",
+        "corroboration": []
+      },
+      {
+        "where": "Texas — the interconnection audit",
+        "what": "On August 3, 2026 Abbott directed the PUCT and ERCOT to audit all data centers in the interconnection queue. ERCOT is reviewing roughly 474 GW of connection requests, more than five times the state's peak demand, about 90% of it from data centers. Projects failing compliance 'must be denied connection to the Texas grid.'",
+        "authorization": "Governor's directive — audit under way, projects paused",
+        "source": "Office of the Texas Governor",
+        "url": "https://gov.texas.gov/news/post/governor-abbott-directs-comprehensive-data-center-audit",
+        "corroboration": [
+          { "source": "Utility Dive", "url": "https://www.utilitydive.com/news/texas-hits-pause-data-center-interconnections/827046/" }
+        ]
+      },
+      {
+        "where": "New York — the first statewide moratorium",
+        "what": "Executive Order 62, signed July 14, 2026, pauses new hyperscale data centers drawing 50 MW or more for up to a year while regulators write standards. Hochul said development 'threatens to hike up utility bills, deplete our natural resources, and create uncertainty for New Yorkers.' New York hosts very few such facilities.",
+        "authorization": "Executive order — up to one year",
+        "source": "Office of Governor Kathy Hochul",
+        "url": "https://www.governor.ny.gov/news/first-statewide-moratorium-new-hyperscale-data-centers-launched-governor-kathy-hochul",
+        "corroboration": [
+          { "source": "CNBC", "url": "https://www.cnbc.com/2026/07/14/new-york-ai-data-center-ban.html" },
+          { "source": "Fortune", "url": "https://fortune.com/2026/07/14/new-york-data-center-moratorium-hochul/" }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is not whether AI gets built but who pays for the generation and transmission it needs — and whether that is decided in a rate case or at a press conference. The 'one-off' tell: any argument that treats this year's price spike as either wholly caused by data centers or wholly unrelated to them, when the grid's own monitor says it is load and market design together."
+  },
+  "notAdjudicable": [
+    "Whether AI capacity is worth what it costs a community in land, water, noise and skyline — a judgment about what a place is for, not a fact.",
+    "Whether staying ahead of China on AI justifies absorbing higher near-term energy costs at home — a ranking of values evidence cannot settle.",
+    "Whether neighbors should be able to veto a lawful private project — a question about local self-government, not about kilowatt-hours.",
+    "How much of a shared grid's cost the customers who trigger new construction should bear, versus everyone who benefits from a larger system — a fairness judgment inside rate design, not an empirical one."
+  ],
+  "biasWatch": "The distortion here is single-cause reasoning powered by the bill in your hand. Bills went up; enormous buildings full of servers went up; the mind fuses them, and every later fact gets sorted into the story. The tell is a number without a denominator. '$6.3 billion' means little until you ask what share of a household bill capacity charges are, over what territory, in which delivery year — and PJM itself says that figure 'does not equate to the total cost to load.' Run the same test rightward: 'prices were rising before data centers' is true and settles nothing about what is raising them now. If a claim you find persuasive has no denominator, no date and no counterfactual, you are being moved by the shape of the story rather than its size."
+}
