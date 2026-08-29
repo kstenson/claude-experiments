@@ -40,14 +40,69 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-08-28",
+    "lastUpdated": "2026-08-29",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-08-29",
+      "date": "2026-08-29",
+      "headline": true,
+      "topic": "Reform's VAT threshold rise and the 320,000 small businesses",
+      "claim": "Raising the VAT registration threshold from £90,000 to £150,000 would immediately benefit 320,000 small businesses, at an annual cost of £2.4 billion.",
+      "speaker": "Robert Jenrick",
+      "party": "Reform UK",
+      "role": "Reform UK Treasury spokesperson",
+      "discussionScore": 68,
+      "discussionNote": "Centrepiece of Reform's 'Contract with Small Businesses', launched 26 August and carried by City AM, GB News, HuffPost and The Register alongside the GDPR pledge.",
+      "score": 58,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The headcount is defensible; the cost, and the word 'benefit', are not. The last rise, £85,000 to £90,000 in April 2024, took 28,000 businesses out of VAT on the government's own figure; scaled across a £60,000 rise that lands in the low-to-mid hundreds of thousands, so 320,000 is a fair upper estimate. The OBR's mirror image — freezing the threshold keeps 169,000 extra firms inside VAT and raises about £1.4bn a year by 2027-28 — implies £2.4bn is if anything too low, since firms nearer £150,000 remit more VAT each than those just over the line. And nobody is pushed out: registration below the threshold is voluntary, and large numbers of B2B firms register precisely to reclaim input VAT. Reform's own June version of the same policy claimed 750,000 beneficiaries and £2.1bn.",
+      "evidence": [
+        "Jenrick launched Reform's 'Contract with Small Businesses' on 26 August; the VAT threshold rise from £90,000 to £150,000 is its centrepiece.",
+        "Spring Budget 2024 raised the threshold from £85,000 to £90,000; the government said that took 28,000 businesses out of paying VAT.",
+        "OBR: the freeze keeps 169,000 more firms inside VAT than RPI indexation would, raising about £1.4bn a year by 2027-28.",
+        "OBR also finds bunching worsening: 23,000 firms capping turnover in 2017-18, forecast 44,000 by 2025-26, and £350m of turnover forgone.",
+        "HMRC's 2024-25 VAT statistics count about 2.33 million traders, a large share of them voluntarily registered below the threshold.",
+        "Deregistration is optional, so 'benefit' overstates it: a B2B firm that leaves VAT loses input-tax recovery.",
+        "Reform's June 2026 version of the same policy put the gain at 750,000 businesses and the cost at £2.1bn."
+      ],
+      "confidence": "Medium-high — the scaling is derived from OBR and HMRC figures, not an official costing of a £150,000 threshold.",
+      "sources": [
+        {
+          "title": "OBR — The impact of the frozen VAT registration threshold",
+          "url": "https://obr.uk/box/the-impact-of-the-frozen-vat-registration-threshold/"
+        },
+        {
+          "title": "HMRC — Value Added Tax (VAT) annual statistics",
+          "url": "https://www.gov.uk/government/statistics/value-added-tax-vat-annual-statistics"
+        },
+        {
+          "title": "Commons Library — VAT registration (SN00963)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn00963/"
+        },
+        {
+          "title": "Accountancy Age — VAT threshold raised and business rates frozen",
+          "url": "https://accountancyage.com/2024/04/04/boost-for-small-businesses-as-vat-threshold-raised-and-business-rates-frozen/"
+        },
+        {
+          "title": "City AM — Jenrick pledges reform for small businesses",
+          "url": "https://www.cityam.com/jenrick-pledges-reform-for-small-businesses/"
+        },
+        {
+          "title": "City AM — Reform UK would raise VAT threshold to £150,000",
+          "url": "https://www.cityam.com/reform-uk-vows-to-raise-vat-threshold-to-150000/"
+        },
+        {
+          "title": "vatcalc — Reform UK to raise VAT registration threshold to £150,000",
+          "url": "https://www.vatcalc.com/united-kingdom/reform-uk-to-raise-vat-registration-threshold-to-150000/"
+        }
+      ]
+    },
+    {
       "id": "2026-08-28",
       "date": "2026-08-28",
-      "headline": true,
+      "headline": false,
       "topic": "Wandsworth's funding cut and the record council tax rise",
       "claim": "Wandsworth's financial crisis was made by Labour. The Government gave us the worst cash settlement in the country, slashing the council's funding by 40pc.",
       "speaker": "Peter Graham",
