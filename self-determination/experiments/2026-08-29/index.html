@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Only If It Joins Strangers — Experiment 073</title>
+<meta name="description" content="Kruskal, 1956: sort every possible link by length and take each one only if it joins two towns that aren't connected yet. Greedy, and provably the cheapest network there is." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1 1 auto;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; border-radius: 9px;
+    padding: 8px 8px; font-size: 0.75rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+  }
+  .seg button:hover { background: rgba(255,255,255,0.09); color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); color: #cfcfff; }
+  .seg.pink button.on { background: rgba(255,124,195,0.18); border-color: rgba(255,124,195,0.5); color: #ffd6ec; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,124,195,0.35); }
+  .toggle.on i::after { transform: translateX(13px); background: #ff9fd2; }
+  .toggle.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  #rNote { min-height: 4.3em; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one.
+     Sticky so it stays reachable when the panel has to scroll. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 252px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; flex: none; display: block; }
+  .legend i.kept { background: linear-gradient(120deg, #7c7cff, #ff7cc3); box-shadow: 0 0 8px rgba(124,124,255,0.5); }
+  .legend i.now { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.85); }
+  .legend i.miss { background: rgba(255,124,195,0.22); border: 2px solid #ff7cc3; }
+  .legend i.cut { background: transparent; border-top: 2px dashed #7a7a92; border-radius: 0; height: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1100px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 52vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 10px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Only If It Joins Strangers</h1>
+    <p class="sub">Experiment № 073 · August 29, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>which link to try next</label>
+        <div class="seg" id="modes">
+          <button data-m="kruskal" class="on">shortest first</button>
+          <button data-m="prim">grow from one town</button>
+          <button data-m="random">any order at all</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="towns">towns <b id="townsVal">60</b></label>
+        <input type="range" id="towns" min="12" max="160" step="1" value="60" />
+      </div>
+
+      <div class="row">
+        <label for="speed">speed <b id="speedVal">38 / sec</b></label>
+        <input type="range" id="speed" min="0" max="100" step="1" value="52" />
+      </div>
+
+      <div class="row">
+        <label for="clusters">then cut the longest links <b id="clustersVal">keep whole</b></label>
+        <input type="range" id="clusters" min="1" max="8" step="1" value="1" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="play">❚❚ pause</button>
+        <button class="btn" id="step">step ›</button>
+        <button class="btn" id="finish">run to the end ▸▸</button>
+        <button class="btn pink" id="reseed">new country</button>
+      </div>
+
+      <div class="toggle" id="ghosts"><i></i> keep every refusal on screen</div>
+
+      <div class="readout">
+        <span class="k">links kept</span><span class="v violet" id="rKept">0 / 59</span>
+        <span class="k">separate islands left</span><span class="v" id="rComps">60</span>
+        <span class="k">cable laid</span><span class="v good" id="rTotal">0 km</span>
+        <span class="k">links weighed · refused</span><span class="v pinkv" id="rSeen">0 · 0</span>
+        <hr />
+        <p class="full" id="rNote">Press play. Every link is offered once, and taken only if its two ends are strangers.</p>
+        <hr />
+        <p class="full" id="rVerdict">—</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="kept"></i> a link that joined two islands</div>
+    <div><i class="now"></i> the link being weighed right now</div>
+    <div><i class="miss"></i> refused — both ends already connected</div>
+    <div><i class="cut"></i> cut back out to split the clusters</div>
+  </div>
+
+  <p class="hint">click the map to <b>found a town</b> · <b>space</b> plays and pauses · <b>→</b> steps once · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 073 · The story</p>
+      <h2>Only If It Joins Strangers</h2>
+
+      <h3>Why I picked it</h3>
+      <p>A few weeks ago I built the travelling salesman as a lesson in why greedy fails — the tour that only ever improves stops dead in a tangle, and you have to allow yourself to get worse to get out. Kruskal's minimum spanning tree, published in 1956 in a paper of about two pages, is the exact opposite lesson, and I wanted the two sitting in the same collection. Sort every possible link by length. Walk the list from shortest to longest. Take a link only if its two ends aren't already connected to each other. That is the entire algorithm, it never reconsiders anything, and the network it leaves behind is provably the cheapest one that reaches every town. No annealing, no backtracking, no second pass. I find that combination — a rule a child could follow, and a guarantee you'd expect to need a search for — genuinely startling every time.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Watching the colours eat each other. Every town starts as its own island with its own hue, and each accepted link merges two islands into one, so the map spends its first seconds as confetti and then, quite suddenly, resolves into four or five territories that stare at each other across the gaps before the long links finally stitch them together. The bookkeeping underneath is a disjoint-set forest, and the only question it ever answers is <em>are these two already relatives?</em> Two other things I put in on purpose. Switch to <em>grow from one town</em> and you get Prim's algorithm — a completely different order of decisions, one spreading blot instead of scattered fragments, arriving at the same total to the kilometre, because both are obeying the same underlying fact: the cheapest link across any divide has to be in the answer. Then switch to <em>any order at all</em> — same union-find, same acceptance rule, sorting removed — and the same sixty towns cost five or six times the cable. The bookkeeping was never doing the work; the sort was.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Greedy isn't a personality, it's a bet on the shape of the problem, and here the bet is safe for a reason with a name: the cut property. Draw any line through the map, and whatever the cheapest link crossing that line is, no cheapest network can leave it out — so a rule that grabs short links can't paint itself into a corner. Almost nothing else you'll optimise has that structure, which is precisely why it's worth being able to recognise when it does. And then the slider at the bottom: cut the longest few links of the finished tree and what falls apart isn't arbitrary — those are the widest gaps in the whole map, so the pieces are the clusters. That's single-linkage clustering, which people usually meet as a statistics recipe with no obvious relation to laying cable. It's the same tree, read backwards.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Only If It Joins Strangers — Kruskal's minimum spanning tree ----
+  (() => {
+    const cv = document.getElementById('c');
+    const ctx = cv.getContext('2d');
+    const ui = document.getElementById('ui');
+
+    const WHITE = '#f2f2f8', PINK = '#ff7cc3', DIM = '#6a6a82';
+    // Component hues, kept inside the house family: blue → violet → pink.
+    const HUES = [246, 268, 292, 320, 338, 214, 258, 306, 228, 282];
+
+    let W = 0, H = 0, DPR = 1;
+    let field = { x: 0, y: 0, w: 1, h: 1 };
+
+    // ---------- state ----------
+    let n = 60;                 // towns
+    let mode = 'kruskal';
+    let seed = 20260829;
+    let pts = [];               // {nx, ny, hue, x, y}
+    let edges = [];             // {u, v, w}
+    let order = [];             // indices into edges (kruskal / random)
+    let mstTotal = 0;           // the optimum, for comparison
+    let mstKey = '';            // edge set of the true MST, to check Prim agrees
+    let dirty = true;           // readout needs rewriting
+
+    let S = null;               // the running simulation
+    let playing = true;
+    let speed = 30;
+    let acc = 0;
+    let cutCount = 1;           // clusters wanted
+    let showGhosts = false;
+    let hoverNode = -1;
+    let lastT = 0;
+
+    // ---------- rng ----------
+    function mulberry(a) {
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    // ---------- layout ----------
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      layout();
+    }
+
+    function layout() {
+      const wide = W > 780 && !ui.classList.contains('hidden');
+      const left = wide ? Math.min(ui.offsetWidth + 48, W * 0.45) : 26;
+      const top = (!wide && !ui.classList.contains('hidden')) ? Math.min(ui.offsetHeight + 28, H * 0.55) : 40;
+      field = {
+        x: left,
+        y: top,
+        w: Math.max(120, W - left - 34),
+        h: Math.max(120, H - top - 62)
+      };
+      for (const p of pts) { p.x = field.x + p.nx * field.w; p.y = field.y + p.ny * field.h; }
+      // Aspect drives the true distances; a big change means the answer changed.
+      if (S && Math.abs(Math.log((field.h / field.w) / S.aspect)) > 0.12) solve(true);
+    }
+
+    // ---------- the country ----------
+    function makeTowns() {
+      const rnd = mulberry(seed);
+      pts = [];
+      const blobs = Math.max(3, Math.min(7, Math.round(n / 13) + 2));
+      const bag = HUES.slice();
+      for (let i = bag.length - 1; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; const t = bag[i]; bag[i] = bag[j]; bag[j] = t; }
+      const centres = [];
+      for (let b = 0; b < blobs; b++) {
+        centres.push({ cx: 0.12 + rnd() * 0.76, cy: 0.12 + rnd() * 0.76, hue: bag[b % bag.length], bi: b });
+      }
+      const gauss = () => {
+        let u = 0, v = 0;
+        while (u === 0) u = rnd();
+        while (v === 0) v = rnd();
+        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      };
+      for (let i = 0; i < n; i++) {
+        let nx, ny, hue, bi, tries = 0;
+        do {
+          if (rnd() < 0.78) {
+            const c = centres[(rnd() * blobs) | 0];
+            nx = c.cx + gauss() * 0.075;
+            ny = c.cy + gauss() * 0.075;
+            hue = c.hue; bi = c.bi;
+          } else {
+            nx = 0.04 + rnd() * 0.92;
+            ny = 0.04 + rnd() * 0.92;
+            const c = centres[(rnd() * blobs) | 0];
+            hue = c.hue; bi = blobs;
+          }
+          nx = Math.max(0.025, Math.min(0.975, nx));
+          ny = Math.max(0.03, Math.min(0.97, ny));
+          tries++;
+        } while (tries < 24 && pts.some((q) => (q.nx - nx) ** 2 + (q.ny - ny) ** 2 < 0.00042));
+        pts.push({ nx, ny, hue, bi, x: 0, y: 0 });
+      }
+      // Group by region so island colours stay coherent as they merge: a
+      // cluster wears the colour of its lowest-numbered town.
+      pts.sort((a, b) => a.bi - b.bi || a.nx - b.nx);
+      layout();
+    }
+
+    // ---------- disjoint set ----------
+    function makeDsu(k) {
+      const parent = new Int32Array(k), size = new Int32Array(k).fill(1);
+      for (let i = 0; i < k; i++) parent[i] = i;
+      function find(i) {
+        let r = i;
+        while (parent[r] !== r) r = parent[r];
+        while (parent[i] !== r) { const nx = parent[i]; parent[i] = r; i = nx; }
+        return r;
+      }
+      return {
+        find,
+        union(a, b) {
+          a = find(a); b = find(b);
+          if (a === b) return false;
+          if (size[a] < size[b]) { const t = a; a = b; b = t; }
+          parent[b] = a; size[a] += size[b];
+          return true;
+        },
+        size
+      };
+    }
+
+    // ---------- build the problem ----------
+    function solve(keepProgress) {
+      const N = pts.length;
+      const aspect = field.h / field.w;
+      // Map coordinates: 1000 units across, aspect-scaled down the page.
+      const mx = new Float64Array(N), my = new Float64Array(N);
+      for (let i = 0; i < N; i++) { mx[i] = pts[i].nx * 1000; my[i] = pts[i].ny * 1000 * aspect; }
+
+      edges = [];
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const dx = mx[i] - mx[j], dy = my[i] - my[j];
+          edges.push({ u: i, v: j, w: Math.sqrt(dx * dx + dy * dy) });
+        }
+      }
+      const sorted = edges.map((_, i) => i).sort((a, b) => edges[a].w - edges[b].w);
+
+      // The true optimum, computed offline once, as the yardstick.
+      const ref = makeDsu(N);
+      mstTotal = 0;
+      const key = [];
+      for (const ei of sorted) {
+        const e = edges[ei];
+        if (ref.union(e.u, e.v)) { mstTotal += e.w; key.push(ei); }
+      }
+      mstKey = key.sort((a, b) => a - b).join(',');
+
+      if (mode === 'random') {
+        const rnd = mulberry(seed ^ 0x5f3a);
+        order = edges.map((_, i) => i);
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = (rnd() * (i + 1)) | 0;
+          const t = order[i]; order[i] = order[j]; order[j] = t;
+        }
+      } else {
+        order = sorted;
+      }
+
+      const prevIdx = keepProgress && S ? S.idx : 0;
+      S = {
+        aspect,
+        dsu: makeDsu(N),
+        inTree: new Uint8Array(N),
+        accepted: [],           // {u, v, w, ei}
+        refused: [],            // {u, v}
+        idx: 0,
+        seen: 0,
+        total: 0,
+        comps: N,
+        done: N <= 1,
+        last: null,             // last link weighed  {u,v,w,ok}
+        flashes: []
+      };
+      if (mode === 'prim') S.inTree[seedTown()] = 1;
+      if (keepProgress) { let g = 0; while (S.idx < prevIdx && !S.done && g++ < 200000) step(); }
+      updateReadout();
+    }
+
+    function seedTown() {
+      // Start Prim from the town nearest the middle of the map.
+      let best = 0, bd = Infinity;
+      for (let i = 0; i < pts.length; i++) {
+        const d = (pts[i].nx - 0.5) ** 2 + (pts[i].ny - 0.5) ** 2;
+        if (d < bd) { bd = d; best = i; }
+      }
+      return best;
+    }
+
+    // ---------- one decision ----------
+    function step() {
+      if (!S || S.done) return;
+      dirty = true;
+      const N = pts.length;
+
+      if (mode === 'prim') {
+        let best = -1, bw = Infinity, crossing = 0;
+        for (let i = 0; i < edges.length; i++) {
+          const e = edges[i];
+          if (S.inTree[e.u] === S.inTree[e.v]) continue;
+          crossing++;
+          if (e.w < bw) { bw = e.w; best = i; }
+        }
+        S.seen += crossing;
+        if (best < 0) { S.done = true; return; }
+        const e = edges[best];
+        S.inTree[e.u] = 1; S.inTree[e.v] = 1;
+        S.dsu.union(e.u, e.v);
+        accept(e, best);
+      } else {
+        if (S.idx >= order.length) { S.done = true; return; }
+        const ei = order[S.idx++];
+        const e = edges[ei];
+        S.seen++;
+        if (S.dsu.union(e.u, e.v)) accept(e, ei);
+        else {
+          S.refused.push({ u: e.u, v: e.v });
+          S.last = { u: e.u, v: e.v, w: e.w, ok: false };
+          S.flashes.push({ u: e.u, v: e.v, t: 0, ok: false });
+        }
+      }
+      if (S.accepted.length >= N - 1) S.done = true;
+      if (S.idx >= order.length && mode !== 'prim') S.done = true;
+    }
+
+    function accept(e, ei) {
+      S.accepted.push({ u: e.u, v: e.v, w: e.w, ei });
+      S.total += e.w;
+      S.comps--;
+      S.last = { u: e.u, v: e.v, w: e.w, ok: true };
+      S.flashes.push({ u: e.u, v: e.v, t: 0, ok: true });
+    }
+
+    // ---------- the view: clusters after cutting the longest links ----------
+    let view = { root: null, hue: null, cutSet: null, sizes: null };
+    function computeView() {
+      const N = pts.length;
+      const cut = new Set();
+      if (cutCount > 1 && S.accepted.length) {
+        const byLen = S.accepted.map((_, i) => i).sort((a, b) => S.accepted[b].w - S.accepted[a].w);
+        for (let i = 0; i < Math.min(cutCount - 1, byLen.length); i++) cut.add(byLen[i]);
+      }
+      const d = makeDsu(N);
+      for (let i = 0; i < S.accepted.length; i++) {
+        if (cut.has(i)) continue;
+        const a = S.accepted[i];
+        d.union(a.u, a.v);
+      }
+      // A cluster takes the hue of its lowest-index member — towns are ordered
+      // by their blob, so colours stay coherent while islands swallow islands.
+      const rep = new Int32Array(N).fill(-1);
+      for (let i = 0; i < N; i++) {
+        const r = d.find(i);
+        if (rep[r] < 0) rep[r] = i;
+      }
+      const root = new Int32Array(N), hue = new Float64Array(N), sizes = new Int32Array(N);
+      for (let i = 0; i < N; i++) {
+        const r = d.find(i);
+        root[i] = r; hue[i] = pts[rep[r]].hue; sizes[r]++;
+      }
+      view = { root, hue, cutSet: cut, sizes };
+    }
+
+    // ---------- drawing ----------
+    function hsl(h, s, l, a) { return `hsla(${h.toFixed(0)}, ${s}%, ${l}%, ${a})`; }
+
+    function draw(dt) {
+      ctx.clearRect(0, 0, W, H);
+
+      // backdrop
+      const g = ctx.createRadialGradient(field.x + field.w * 0.5, field.y + field.h * 0.5, 10,
+                                         field.x + field.w * 0.5, field.y + field.h * 0.5, Math.max(field.w, field.h) * 0.75);
+      g.addColorStop(0, 'rgba(30,26,60,0.42)');
+      g.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+
+      computeView();
+      const hoverRoot = hoverNode >= 0 ? view.root[hoverNode] : -1;
+
+      // every refusal, kept faintly on screen
+      if (showGhosts) {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255,124,195,0.085)';
+        ctx.beginPath();
+        for (const r of S.refused) {
+          ctx.moveTo(pts[r.u].x, pts[r.u].y);
+          ctx.lineTo(pts[r.v].x, pts[r.v].y);
+        }
+        ctx.stroke();
+      }
+
+      // links that were cut back out to make clusters
+      if (view.cutSet.size) {
+        ctx.save();
+        ctx.setLineDash([5, 7]);
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = 'rgba(150,150,180,0.5)';
+        ctx.beginPath();
+        for (const i of view.cutSet) {
+          const a = S.accepted[i];
+          ctx.moveTo(pts[a.u].x, pts[a.u].y);
+          ctx.lineTo(pts[a.v].x, pts[a.v].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // the kept network
+      ctx.lineCap = 'round';
+      for (let i = 0; i < S.accepted.length; i++) {
+        if (view.cutSet.has(i)) continue;
+        const a = S.accepted[i];
+        const p = pts[a.u], q = pts[a.v];
+        // Half the island's colour, half the colour of the ground it crosses —
+        // so merges are visible and the finished network keeps its regions.
+        const h = 0.3 * view.hue[a.u] + 0.35 * p.hue + 0.35 * q.hue;
+        const dim = hoverRoot >= 0 && view.root[a.u] !== hoverRoot;
+        const lit = hoverRoot >= 0 && !dim;
+        ctx.strokeStyle = hsl(h, 80, 66, dim ? 0.12 : (lit ? 0.85 : 0.5));
+        ctx.lineWidth = lit ? 2.4 : 1.7;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+        if (!dim) {
+          ctx.strokeStyle = hsl(h, 90, 74, 0.1);
+          ctx.lineWidth = 6;
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+        }
+      }
+
+      // flashes: the moment a link was taken or refused
+      for (let i = S.flashes.length - 1; i >= 0; i--) {
+        const f = S.flashes[i];
+        f.t += dt / (f.ok ? 0.55 : 0.75);
+        if (f.t >= 1) { S.flashes.splice(i, 1); continue; }
+        const p = pts[f.u], q = pts[f.v], k = 1 - f.t;
+        if (f.ok) {
+          ctx.strokeStyle = `rgba(255,255,255,${(0.75 * k * k).toFixed(3)})`;
+          ctx.lineWidth = 1 + 2.6 * k;
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+        } else {
+          ctx.save();
+          ctx.setLineDash([3, 4]);
+          ctx.strokeStyle = `rgba(255,124,195,${(0.6 * k).toFixed(3)})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+          ctx.restore();
+          const mxp = (p.x + q.x) / 2, myp = (p.y + q.y) / 2, s = 4 * k + 1.5;
+          ctx.strokeStyle = `rgba(255,124,195,${(0.75 * k).toFixed(3)})`;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(mxp - s, myp - s); ctx.lineTo(mxp + s, myp + s);
+          ctx.moveTo(mxp + s, myp - s); ctx.lineTo(mxp - s, myp + s);
+          ctx.stroke();
+        }
+      }
+
+      // the link on the table right now
+      if (S.last && !S.done) {
+        const p = pts[S.last.u], q = pts[S.last.v];
+        ctx.save();
+        ctx.setLineDash(S.last.ok ? [] : [4, 5]);
+        ctx.strokeStyle = S.last.ok ? 'rgba(255,255,255,0.9)' : 'rgba(255,124,195,0.9)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+        ctx.restore();
+        for (const e of [p, q]) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+          ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.arc(e.x, e.y, 8, 0, Math.PI * 2); ctx.stroke();
+        }
+        if (speed <= 24 || !playing) {
+          ctx.fillStyle = 'rgba(255,255,255,0.72)';
+          ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, monospace';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText(Math.round(S.last.w) + ' km', (p.x + q.x) / 2, (p.y + q.y) / 2 - 8);
+        }
+      }
+
+      // the towns
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        const h = view.hue[i];
+        const dim = hoverRoot >= 0 && view.root[i] !== hoverRoot;
+        const alone = view.sizes[view.root[i]] === 1;
+        const r = 3.4 + (alone ? 0 : 0.5);
+        ctx.fillStyle = hsl(h, 85, 72, dim ? 0.22 : 1);
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+        if (!dim) {
+          ctx.fillStyle = hsl(h, 90, 70, 0.16);
+          ctx.beginPath(); ctx.arc(p.x, p.y, r + 5, 0, Math.PI * 2); ctx.fill();
+        }
+        if (i === hoverNode) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.arc(p.x, p.y, r + 8, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+
+      // in Prim mode, show the frontier: the tree so far against everything else
+      if (mode === 'prim' && !S.done) {
+        ctx.strokeStyle = 'rgba(124,124,255,0.5)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < pts.length; i++) {
+          if (!S.inTree[i]) continue;
+          ctx.beginPath(); ctx.arc(pts[i].x, pts[i].y, 7.5, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+    }
+
+    // ---------- readout ----------
+    const el = (id) => document.getElementById(id);
+    function fmt(v) { return Math.round(v).toLocaleString('en-GB'); }
+
+    function updateReadout() {
+      if (!S) return;
+      const N = pts.length;
+      el('rKept').textContent = S.accepted.length + ' / ' + (N - 1);
+      el('rComps').textContent = S.comps;
+      el('rTotal').textContent = fmt(S.total) + ' km';
+      el('rSeen').textContent = fmt(S.seen) + ' · ' + fmt(S.refused.length);
+
+      let note;
+      if (S.done && S.comps === 1) {
+        note = 'One network. <b>' + (N - 1) + '</b> links for <b>' + N + '</b> towns — every town reachable, not a single loop anywhere. That is exactly the amount of connection with no slack left in it.';
+      } else if (!S.last) {
+        note = 'Every town is its own island. ' + fmt(edges.length) + ' links are possible; the tree needs exactly ' + (N - 1) + '.';
+      } else if (mode === 'prim') {
+        note = 'Cheapest link out of the blot so far: <b class="v">' + fmt(S.last.w) + ' km</b>. Prim never refuses anything — it only ever looks at links that leave the tree.';
+      } else if (S.last.ok) {
+        note = 'Took <b class="v">' + fmt(S.last.w) + ' km</b> — its two ends were strangers, so two islands became one.';
+      } else {
+        note = 'Refused <b class="p">' + fmt(S.last.w) + ' km</b> — both ends are already connected, so this link would only close a loop.';
+      }
+      el('rNote').innerHTML = note;
+
+      let verdict;
+      if (!S.done) {
+        verdict = mode === 'random'
+          ? 'No sorting: links are offered in a shuffled order. Still a tree — just not the cheap one.'
+          : 'Kruskal stops the moment ' + (N - 1) + ' links are in. Everything longer never gets looked at.';
+      } else {
+        const over = mstTotal > 0 ? (S.total / mstTotal - 1) * 100 : 0;
+        if (mode === 'random') {
+          verdict = 'A spanning tree, and <b class="p">' + over.toFixed(0) + '% longer</b> than it had to be. Same acceptance rule, same union-find — only the order was thrown away.';
+        } else {
+          const same = S.accepted.map((a) => a.ei).sort((a, b) => a - b).join(',') === mstKey;
+          verdict = mode === 'prim'
+            ? 'Done. <b class="g">' + fmt(S.total) + ' km</b> — ' + (same ? 'the identical set of links shortest-first chose' : 'the same total shortest-first reached') + ', found in a completely different order.'
+            : 'Done in <b class="v">' + fmt(S.seen) + '</b> of ' + fmt(edges.length) + ' possible links. No shorter network reaches every town — that is a theorem, not a hope.';
+        }
+      }
+      el('rVerdict').innerHTML = verdict;
+    }
+
+    // ---------- loop ----------
+    function frame(t) {
+      const dt = Math.min(0.05, (t - lastT) / 1000 || 0);
+      lastT = t;
+      if (playing && S && !S.done) {
+        acc += dt * speed;
+        let guard = 0;
+        while (acc >= 1 && !S.done && guard < 600) { step(); acc -= 1; guard++; }
+        if (S.done) { acc = 0; setPlay(false); }
+      } else acc = 0;
+      draw(dt);
+      if (dirty) { updateReadout(); dirty = false; }
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- controls ----------
+    function setPlay(v) {
+      playing = v;
+      el('play').textContent = playing ? '❚❚ pause' : '▶ play';
+    }
+    function restart() { solve(false); setPlay(true); }
+
+    el('play').addEventListener('click', () => {
+      if (S.done) solve(false);
+      setPlay(!playing);
+    });
+    el('step').addEventListener('click', () => { setPlay(false); step(); });
+    el('finish').addEventListener('click', () => {
+      setPlay(false);
+      let guard = 0;
+      while (S && !S.done && guard < 400000) { step(); guard++; }
+      S.flashes.length = 0; S.last = null;
+    });
+    el('reseed').addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; makeTowns(); restart(); });
+
+    const modesEl = el('modes');
+    modesEl.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      mode = b.dataset.m;
+      modesEl.classList.toggle('pink', mode === 'random');
+      [...modesEl.children].forEach((c) => c.classList.toggle('on', c === b));
+      restart();
+    });
+
+    const townsEl = el('towns');
+    townsEl.addEventListener('input', () => {
+      n = +townsEl.value;
+      el('townsVal').textContent = n;
+      makeTowns(); solve(false);
+    });
+    townsEl.addEventListener('change', () => setPlay(true));
+
+    const speedEl = el('speed');
+    function applySpeed() {
+      const t = +speedEl.value / 100;
+      speed = Math.round(Math.pow(10, 0.15 + t * 2.6) * 10) / 10;
+      el('speedVal').textContent = (speed >= 10 ? Math.round(speed) : speed) + ' / sec';
+    }
+    speedEl.addEventListener('input', applySpeed);
+
+    const clustersEl = el('clusters');
+    clustersEl.addEventListener('input', () => {
+      cutCount = +clustersEl.value;
+      el('clustersVal').textContent = cutCount === 1
+        ? 'keep whole'
+        : (cutCount - 1) + (cutCount === 2 ? ' link → 2 clusters' : ' links → ' + cutCount + ' clusters');
+    });
+
+    const ghostEl = el('ghosts');
+    ghostEl.addEventListener('click', () => {
+      showGhosts = !showGhosts;
+      ghostEl.classList.toggle('on', showGhosts);
+    });
+
+    // panel show / hide
+    const showUi = el('showUi');
+    function toggleUi() {
+      const hid = ui.classList.toggle('hidden');
+      showUi.classList.toggle('on', hid);
+      el('legend').classList.toggle('hidden', hid);
+      setTimeout(layout, 60);
+    }
+    el('collapse').addEventListener('click', toggleUi);
+    showUi.addEventListener('click', toggleUi);
+
+    window.addEventListener('keydown', (e) => {
+      const typing = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+      if (typing && e.key !== 'Escape') return;
+      const k = e.key ? e.key.toLowerCase() : '';
+      if (k === 'h') toggleUi();
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (e.key === ' ') { e.preventDefault(); if (S.done) solve(false); setPlay(!playing); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); setPlay(false); step(); }
+    });
+
+    // ---------- pointer: hover a town to light its island, click to found one ----------
+    function nearest(x, y) {
+      let best = -1, bd = 22 * 22;
+      for (let i = 0; i < pts.length; i++) {
+        const d = (pts[i].x - x) ** 2 + (pts[i].y - y) ** 2;
+        if (d < bd) { bd = d; best = i; }
+      }
+      return best;
+    }
+    cv.addEventListener('mousemove', (e) => {
+      const r = cv.getBoundingClientRect();
+      hoverNode = nearest(e.clientX - r.left, e.clientY - r.top);
+      cv.style.cursor = hoverNode >= 0 ? 'pointer' : 'crosshair';
+    });
+    cv.addEventListener('mouseleave', () => { hoverNode = -1; });
+    cv.addEventListener('click', (e) => {
+      const r = cv.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (nearest(x, y) >= 0) return;                 // clicking a town just inspects it
+      const nx = (x - field.x) / field.w, ny = (y - field.y) / field.h;
+      if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return;
+      if (pts.length >= 200) return;
+      pts.push({ nx, ny, hue: HUES[(pts.length * 3) % HUES.length], bi: 99, x, y });
+      n = pts.length;
+      townsEl.value = Math.min(160, n);
+      el('townsVal').textContent = n;
+      solve(false); setPlay(true);
+    });
+    cv.addEventListener('touchstart', (e) => {
+      if (!e.touches[0]) return;
+      const r = cv.getBoundingClientRect();
+      hoverNode = nearest(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
+    }, { passive: true });
+
+    window.addEventListener('resize', () => { resize(); });
+    if (window.ResizeObserver) new ResizeObserver(() => layout()).observe(ui);
+
+    applySpeed();
+    resize();
+    makeTowns();
+    solve(false);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
