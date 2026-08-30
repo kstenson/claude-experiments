@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nothing but Left Turns — Experiment 074</title>
+<meta name="description" content="Graham's 1972 scan: sort the points once, walk them in order, and back out of every right turn. What's left is the convex hull — the rubber band around the cloud." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1 1 auto;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; border-radius: 9px;
+    padding: 8px 8px; font-size: 0.75rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+  }
+  .seg button:hover { background: rgba(255,255,255,0.09); color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); color: #cfcfff; }
+  .seg.pink button.on { background: rgba(255,124,195,0.18); border-color: rgba(255,124,195,0.5); color: #ffd6ec; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,124,195,0.35); }
+  .toggle.on i::after { transform: translateX(13px); background: #ff9fd2; }
+  .toggle.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  #rNote { min-height: 4.3em; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one.
+     Sticky so it stays reachable when the panel has to scroll. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 256px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; flex: none; display: block; }
+  .legend i.kept { background: linear-gradient(120deg, #7c7cff, #ff7cc3); box-shadow: 0 0 8px rgba(124,124,255,0.5); }
+  .legend i.now { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.85); }
+  .legend i.left { background: rgba(138,255,192,0.2); border: 2px solid #8affc0; }
+  .legend i.right { background: rgba(255,124,195,0.22); border: 2px solid #ff7cc3; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1100px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 52vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 10px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Nothing but Left Turns</h1>
+    <p class="sub">Experiment № 074 · August 30, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>how to find the corners</label>
+        <div class="seg" id="modes">
+          <button data-m="graham" class="on">graham scan</button>
+          <button data-m="mono">monotone chain</button>
+          <button data-m="jarvis">gift wrapping</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>shape of the cloud</label>
+        <div class="seg pink" id="shapes">
+          <button data-s="scatter" class="on">scatter</button>
+          <button data-s="disc">disc</button>
+          <button data-s="blobs">blobs</button>
+          <button data-s="ring">ring</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="count">points <b id="countVal">90</b></label>
+        <input type="range" id="count" min="5" max="600" step="1" value="90" />
+      </div>
+
+      <div class="row">
+        <label for="speed">speed <b id="speedVal">— / sec</b></label>
+        <input type="range" id="speed" min="0" max="100" step="1" value="42" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="play">❚❚ pause</button>
+        <button class="btn" id="step">step ›</button>
+        <button class="btn" id="finish">run to the end ▸▸</button>
+        <button class="btn pink" id="reseed">new cloud</button>
+      </div>
+
+      <div class="toggle on" id="showWork"><i></i> draw the turn being tested</div>
+
+      <div class="readout">
+        <span class="k">points · corners</span><span class="v violet" id="rN">90 · —</span>
+        <span class="k">turn tests</span><span class="v" id="rTests">0</span>
+        <span class="k">sort comparisons</span><span class="v pinkv" id="rCmp">0</span>
+        <span class="k">pushed · popped</span><span class="v good" id="rStack">0 · 0</span>
+        <hr />
+        <p class="full" id="rNote">Press play. Every point gets pushed once; a right turn takes the middle one back off.</p>
+        <hr />
+        <p class="full" id="rVerdict">—</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="kept"></i> the chain of corners kept so far</div>
+    <div><i class="now"></i> the point being considered now</div>
+    <div><i class="left"></i> a left turn — keep it, for now</div>
+    <div><i class="right"></i> a right turn — pop the middle point</div>
+  </div>
+
+  <p class="hint">click the cloud to <b>add a point</b> · <b>space</b> plays and pauses · <b>→</b> steps once · <b>r</b> new cloud · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 074 · The story</p>
+      <h2>Nothing but Left Turns</h2>
+
+      <h3>Why I picked it</h3>
+      <p>The convex hull is the first thing anyone builds in computational geometry, and it's the quiet dependency under half of what I've already made here — Voronoi cells, Delaunay-ish triangulations, collision shapes, the bounding box you throw away and regret. I'd been putting it off because "rubber band around some dots" sounds too obvious to be worth a day. Then I reread Ronald Graham's 1972 note. It is one page. The entire algorithm is the sign of a single number: <code>(b−a) × (c−b)</code>, positive if you turned left, negative if you turned right. Sort the points once around the lowest one, walk them in order, and every time you turn right, take the middle point back off. What's left is provably the hull. No trigonometry — even the sort is done with the same cross product — and no special cases. I wanted to watch that on screen rather than believe it on paper.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The popping. Watch the scan push a point that clearly looks like a corner, keep it for three or four more steps, and then suddenly back out over it as the chain straightens. That "for now" is where the whole proof lives, and it's also where the running time hides: the inner <code>while</code> loop looks like it could run forever, but every point is pushed exactly once and can be popped at most once, so the entire scan is linear no matter what the cloud looks like. All the <code>n log n</code> is in the sort, and nowhere else. The other joy is switching to gift wrapping and dragging the cloud from a disc to a thin ring. Same points, same answer, and its cost goes from the cheapest method on the panel to hundreds of times the worst — because it pays per corner it finds, and a ring is nothing but corners.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Two things, and the second one has saved me more often. First: a loop nested inside a loop is not automatically quadratic. Count how many times the inner body can happen <em>in total</em>, not how long it might run once, and a scary-looking scan collapses to linear. Second: an algorithm's cost can depend on its answer, not just its input. Gift wrapping is <code>O(n·h)</code> — free when the hull is a triangle, brutal when everything is a corner. Output-sensitive algorithms are the ones worth remembering, because they let you pick based on the shape of the answer you expect rather than the size of the pile you started with.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Nothing but Left Turns — the convex hull, three ways ----
+  (() => {
+    const cv = document.getElementById('c');
+    const ctx = cv.getContext('2d');
+    const ui = document.getElementById('ui');
+
+    const WHITE = '#f2f2f8', PINK = '#ff7cc3', VIOLET = '#7c7cff', GREEN = '#8affc0';
+
+    let W = 0, H = 0, DPR = 1;
+    let field = { x: 0, y: 0, w: 1, h: 1 };
+
+    // ---------- state ----------
+    let n = 90;
+    let shape = 'scatter';
+    let method = 'graham';
+    let seed = 20260830;
+    let pts = [];              // {nx, ny, x, y}
+    let S = null;              // the running scan
+    let stats = null;          // headless cost of all three methods
+    let playing = true;
+    let speedV = 42;
+    let acc = 0, lastT = 0;
+    let showWork = true;
+    let flashes = [];          // popped points, fading out
+
+    // ---------- rng ----------
+    function mulberry(a) {
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    // ---------- layout ----------
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      layout();
+    }
+
+    function layout() {
+      const wide = W > 780 && !ui.classList.contains('hidden');
+      const left = wide ? Math.min(ui.offsetWidth + 48, W * 0.45) : 26;
+      const top = (!wide && !ui.classList.contains('hidden')) ? Math.min(ui.offsetHeight + 28, H * 0.55) : 40;
+      field = {
+        x: left,
+        y: top,
+        w: Math.max(120, W - left - 34),
+        h: Math.max(120, H - top - 64)
+      };
+      place();
+    }
+
+    // Normalised coords are y-up so "left turn" means what it says.
+    function place() {
+      for (const p of pts) {
+        p.x = field.x + p.nx * field.w;
+        p.y = field.y + (1 - p.ny) * field.h;
+      }
+    }
+    function toWorld(sx, sy) {
+      return { nx: (sx - field.x) / field.w, ny: 1 - (sy - field.y) / field.h };
+    }
+
+    // ---------- the cloud ----------
+    function makeCloud() {
+      const rnd = mulberry(seed);
+      pts = [];
+      if (shape === 'blobs') {
+        const k = 3;
+        const cs = [];
+        for (let i = 0; i < k; i++) cs.push({ x: 0.22 + rnd() * 0.56, y: 0.22 + rnd() * 0.56, s: 0.06 + rnd() * 0.07 });
+        for (let i = 0; i < n; i++) {
+          const c = cs[i % k];
+          const a = rnd() * Math.PI * 2, r = Math.sqrt(-2 * Math.log(1 - rnd() * 0.999)) * c.s;
+          pts.push(pt(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r));
+        }
+      } else if (shape === 'disc' || shape === 'ring') {
+        const thin = shape === 'ring';
+        for (let i = 0; i < n; i++) {
+          const a = rnd() * Math.PI * 2;
+          const r = thin ? 0.442 + rnd() * 0.018 : 0.46 * Math.sqrt(rnd());
+          pts.push(pt(0.5 + Math.cos(a) * r, 0.5 + Math.sin(a) * r));
+        }
+      } else {
+        for (let i = 0; i < n; i++) pts.push(pt(0.045 + rnd() * 0.91, 0.045 + rnd() * 0.91));
+      }
+      place();
+      restart();
+    }
+    function pt(nx, ny) {
+      const c = (v) => Math.max(0.012, Math.min(0.988, v));
+      return { nx: c(nx), ny: c(ny), x: 0, y: 0 };
+    }
+
+    // ---------- geometry ----------
+    // Positive when a→b→c turns left (counter-clockwise), in y-up coords.
+    function cross(a, b, c) {
+      return (b.nx - a.nx) * (c.ny - a.ny) - (b.ny - a.ny) * (c.nx - a.nx);
+    }
+    function d2(a, b) {
+      const dx = a.nx - b.nx, dy = a.ny - b.ny;
+      return dx * dx + dy * dy;
+    }
+
+    // Order the points the way the chosen method wants to see them.
+    function buildOrder(P, m, counter) {
+      const idx = P.map((_, i) => i);
+      if (m === 'mono' || m === 'jarvis') {
+        idx.sort((i, j) => {
+          counter.cmp++;
+          return (P[i].nx - P[j].nx) || (P[i].ny - P[j].ny);
+        });
+        return { order: idx, pivot: -1 };
+      }
+      // Graham: pivot is the lowest point, then sort the rest around it —
+      // with the very same cross product, so there is no trigonometry anywhere.
+      let piv = 0;
+      for (let i = 1; i < P.length; i++) {
+        if (P[i].ny < P[piv].ny || (P[i].ny === P[piv].ny && P[i].nx < P[piv].nx)) piv = i;
+      }
+      const rest = idx.filter((i) => i !== piv);
+      rest.sort((i, j) => {
+        counter.cmp++;
+        const c = cross(P[piv], P[i], P[j]);
+        if (c > 0) return -1;
+        if (c < 0) return 1;
+        return d2(P[piv], P[i]) - d2(P[piv], P[j]);
+      });
+      return { order: [piv].concat(rest), pivot: piv };
+    }
+
+    // ---------- the run (one visible step at a time) ----------
+    function restart() {
+      flashes = [];
+      const counter = { cmp: 0 };
+      const P = pts;
+      S = {
+        method, P, done: false,
+        tests: 0, cmp: 0, pushes: 0, pops: 0,
+        stack: [], lower: null, chain: 0, i: 0,
+        order: [], pivot: -1,
+        cur: -1, cand: -1, scanAt: 0, start: -1, wrap: [],
+        wedge: null, note: null, hull: null
+      };
+      if (P.length < 3) { S.done = true; S.hull = P.map((_, i) => i); recomputeStats(); return; }
+
+      if (method === 'jarvis') {
+        let s = 0;
+        for (let i = 1; i < P.length; i++) if (P[i].nx < P[s].nx || (P[i].nx === P[s].nx && P[i].ny < P[s].ny)) s = i;
+        S.start = s; S.cur = s; S.wrap = [s];
+        S.cand = (s === 0) ? 1 : 0;
+        S.scanAt = 0;
+      } else {
+        const built = buildOrder(P, method, counter);
+        S.order = built.order; S.pivot = built.pivot;
+        S.cmp = counter.cmp;
+      }
+      recomputeStats();
+    }
+
+    function stackTurn() {
+      // Shared by graham and monotone chain: push, or back out of a right turn.
+      const P = S.P, st = S.stack;
+      if (S.i >= S.order.length) return finishChain();
+      const p = P[S.order[S.i]];
+      if (st.length >= 2) {
+        const a = P[st[st.length - 2]], b = P[st[st.length - 1]];
+        const c = cross(a, b, p);
+        S.tests++;
+        S.wedge = { a: st[st.length - 2], b: st[st.length - 1], c: S.order[S.i], left: c > 0 };
+        if (c <= 0) {
+          const gone = st.pop(); S.pops++;
+          flashes.push({ x: P[gone].x, y: P[gone].y, t: 0 });
+          S.note = 'right turn — <b class="p">popped</b> the middle point; it was never a corner';
+          return;
+        }
+      } else {
+        S.wedge = null;
+      }
+      st.push(S.order[S.i]); S.i++; S.pushes++;
+      S.note = st.length >= 3
+        ? 'left turn — <b class="g">kept</b>, for now'
+        : 'seeding the chain';
+    }
+
+    function finishChain() {
+      if (S.method === 'mono' && S.chain === 0) {
+        S.lower = S.stack.slice();
+        S.order = S.order.slice().reverse();
+        S.stack = []; S.i = 0; S.chain = 1;
+        S.wedge = null;
+        S.note = 'lower chain done — now the same walk back the other way';
+        return;
+      }
+      if (S.method === 'mono') {
+        S.hull = S.lower.slice(0, -1).concat(S.stack.slice(0, -1));
+      } else {
+        S.hull = S.stack.slice();
+      }
+      S.done = true; S.wedge = null;
+      S.note = 'done — every remaining turn is a left turn';
+    }
+
+    function jarvisStep() {
+      const P = S.P;
+      while (S.scanAt < P.length && (S.scanAt === S.cur || S.scanAt === S.cand)) S.scanAt++;
+      if (S.scanAt < P.length) {
+        const r = S.scanAt;
+        const c = cross(P[S.cur], P[S.cand], P[r]);
+        S.tests++;
+        S.wedge = { a: S.cur, b: S.cand, c: r, left: c >= 0 };
+        if (c < 0) {
+          S.cand = r;
+          S.note = 'that point sits <b class="p">to the right</b> of the arm — swing out to it';
+        } else {
+          S.note = 'inside the arm — <b class="g">ignored</b>';
+        }
+        S.scanAt++;
+        return;
+      }
+      // A full sweep with nothing to the right: this really is the next corner.
+      S.wrap.push(S.cand); S.pushes++;
+      if (S.cand === S.start) {
+        S.hull = S.wrap.slice(0, -1);
+        S.done = true; S.wedge = null;
+        S.note = 'back at the start — the wrapping is closed';
+        return;
+      }
+      S.cur = S.cand;
+      S.cand = (S.cur === 0) ? 1 : 0;
+      S.scanAt = 0;
+      S.note = 'corner nailed down — <b class="v">n more tests</b> to find the next one';
+    }
+
+    function step() {
+      if (!S || S.done) return;
+      if (S.method === 'jarvis') jarvisStep(); else stackTurn();
+      if (S.done) recomputeStats();
+    }
+
+    function runToEnd() {
+      let guard = 4000000;
+      while (S && !S.done && guard-- > 0) step();
+      flashes = [];
+    }
+
+    // ---------- headless cost of all three, for the verdict ----------
+    function hullOf(P) {
+      if (P.length < 3) return P.map((_, i) => i);
+      const c = { cmp: 0 };
+      const ord = buildOrder(P, 'mono', c).order;
+      const half = (list) => {
+        const st = [];
+        for (const i of list) {
+          while (st.length >= 2 && cross(P[st[st.length - 2]], P[st[st.length - 1]], P[i]) <= 0) st.pop();
+          st.push(i);
+        }
+        return st;
+      };
+      const lo = half(ord), up = half(ord.slice().reverse());
+      return lo.slice(0, -1).concat(up.slice(0, -1));
+    }
+
+    function recomputeStats() {
+      const P = pts;
+      if (P.length < 3) { stats = { h: P.length, jarvis: 0, gCmp: 0, gTests: 0, mCmp: 0, mTests: 0 }; return; }
+      const h = hullOf(P).length;
+
+      // gift wrapping: a full sweep of the points per corner found
+      let jt = 0;
+      {
+        let s = 0;
+        for (let i = 1; i < P.length; i++) if (P[i].nx < P[s].nx || (P[i].nx === P[s].nx && P[i].ny < P[s].ny)) s = i;
+        let cur = s, guard = P.length + 4;
+        do {
+          let cand = (cur === 0) ? 1 : 0;
+          for (let r = 0; r < P.length; r++) {
+            if (r === cur || r === cand) continue;
+            jt++;
+            if (cross(P[cur], P[cand], P[r]) < 0) cand = r;
+          }
+          cur = cand;
+        } while (cur !== s && guard-- > 0);
+      }
+
+      const scanCost = (m) => {
+        const c = { cmp: 0 };
+        const built = buildOrder(P, m, c);
+        let tests = 0;
+        const walk = (list) => {
+          const st = [];
+          for (const i of list) {
+            while (st.length >= 2) {
+              tests++;
+              if (cross(P[st[st.length - 2]], P[st[st.length - 1]], P[i]) > 0) break;
+              st.pop();
+            }
+            st.push(i);
+          }
+          return st;
+        };
+        if (m === 'mono') { walk(built.order); walk(built.order.slice().reverse()); }
+        else walk(built.order);
+        return { cmp: c.cmp, tests };
+      };
+
+      const g = scanCost('graham'), m = scanCost('mono');
+      stats = { h, jarvis: jt, gCmp: g.cmp, gTests: g.tests, mCmp: m.cmp, mTests: m.tests };
+    }
+
+    // ---------- drawing ----------
+    function hullGradient(list) {
+      const P = S.P;
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const i of list) {
+        x0 = Math.min(x0, P[i].x); x1 = Math.max(x1, P[i].x);
+        y0 = Math.min(y0, P[i].y); y1 = Math.max(y1, P[i].y);
+      }
+      if (!isFinite(x0)) return VIOLET;
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, VIOLET); g.addColorStop(1, PINK);
+      return g;
+    }
+
+    function chainPath(list, close) {
+      const P = S.P;
+      ctx.beginPath();
+      list.forEach((i, k) => { k ? ctx.lineTo(P[i].x, P[i].y) : ctx.moveTo(P[i].x, P[i].y); });
+      if (close) ctx.closePath();
+    }
+
+    function draw(dt) {
+      ctx.clearRect(0, 0, W, H);
+      if (!S) return;
+      const P = S.P;
+
+      // faint hint of the order the method walks in
+      if (!S.done && S.method !== 'jarvis' && S.order.length) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.055)';
+        ctx.lineWidth = 1;
+        if (S.method === 'graham') {
+          const pv = P[S.pivot];
+          ctx.beginPath();
+          for (const i of S.order) { ctx.moveTo(pv.x, pv.y); ctx.lineTo(P[i].x, P[i].y); }
+          ctx.stroke();
+        } else {
+          chainPath(S.order, false);
+          ctx.stroke();
+        }
+      }
+
+      // finished hull gets a soft fill
+      const done = S.done && S.hull && S.hull.length >= 3;
+      if (done) {
+        ctx.save();
+        chainPath(S.hull, true);
+        ctx.fillStyle = 'rgba(124,124,255,0.07)';
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // the chain of corners so far
+      const live = S.done ? (S.hull || []) : (S.method === 'jarvis' ? S.wrap : S.stack);
+      const drawChain = (list, closed) => {
+        if (list.length < 2) return;
+        ctx.save();
+        ctx.strokeStyle = hullGradient(list);
+        ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.shadowColor = 'rgba(124,124,255,0.55)'; ctx.shadowBlur = 14;
+        chainPath(list, closed);
+        ctx.stroke();
+        ctx.restore();
+      };
+      if (S.method === 'mono' && !S.done && S.lower) drawChain(S.lower, false);
+      drawChain(live, done);
+
+      // the turn being tested right now
+      if (showWork && S.wedge && !S.done) {
+        const a = P[S.wedge.a], b = P[S.wedge.b], c = P[S.wedge.c];
+        const col = S.wedge.left ? GREEN : PINK;
+        ctx.save();
+        ctx.strokeStyle = col; ctx.lineWidth = 1.6;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 0.16;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.closePath();
+        ctx.fillStyle = col; ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, Math.PI * 2);
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+      }
+
+      // the points
+      const onHull = new Set(live);
+      if (S.method === 'mono' && !S.done && S.lower) for (const i of S.lower) onHull.add(i);
+      ctx.save();
+      for (let i = 0; i < P.length; i++) {
+        const p = P[i];
+        const isCorner = onHull.has(i);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, isCorner ? 3.6 : 2.1, 0, Math.PI * 2);
+        if (isCorner) {
+          ctx.fillStyle = '#dcdcff';
+          ctx.shadowColor = 'rgba(124,124,255,0.8)'; ctx.shadowBlur = 10;
+        } else {
+          ctx.fillStyle = 'rgba(235,235,250,0.30)';
+          ctx.shadowBlur = 0;
+        }
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // gift wrapping: the arm, plus the point under test
+      if (S.method === 'jarvis' && !S.done && S.cur >= 0 && S.cand >= 0) {
+        const a = P[S.cur], b = P[S.cand];
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(a.x + dx / len * (len + 900), a.y + dy / len * (len + 900));
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(a.x, a.y, 6, 0, Math.PI * 2);
+        ctx.strokeStyle = WHITE; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+      }
+
+      // the point currently being considered by the scan
+      if (!S.done && S.method !== 'jarvis' && S.i < S.order.length) {
+        const p = P[S.order[S.i]];
+        ctx.save();
+        ctx.beginPath(); ctx.arc(p.x, p.y, 6.5, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+      }
+
+      // pops, fading
+      ctx.save();
+      for (const f of flashes) {
+        const a = 1 - f.t / 0.55;
+        if (a <= 0) continue;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 4 + (1 - a) * 18, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,124,195,' + (a * 0.75).toFixed(3) + ')';
+        ctx.lineWidth = 2; ctx.stroke();
+      }
+      ctx.restore();
+      for (const f of flashes) f.t += dt;
+      if (flashes.length) flashes = flashes.filter((f) => f.t < 0.55);
+    }
+
+    // ---------- readout ----------
+    const el = (id) => document.getElementById(id);
+    const fmt = (v) => v.toLocaleString('en-US');
+
+    function paintReadout() {
+      if (!S) return;
+      const h = S.done && S.hull ? S.hull.length : (stats ? stats.h : 0);
+      el('rN').textContent = fmt(pts.length) + ' · ' + (S.done ? fmt(h) : '?');
+      el('rTests').textContent = fmt(S.tests);
+      el('rCmp').textContent = fmt(S.cmp);
+      el('rStack').textContent = fmt(S.pushes) + ' · ' + fmt(S.pops);
+      el('rNote').innerHTML = S.note || 'Press play. Every point gets pushed once; a right turn takes the middle one back off.';
+
+      if (!stats) { el('rVerdict').innerHTML = '—'; return; }
+      const s = stats;
+      const g = s.gCmp + s.gTests, m = s.mCmp + s.mTests;
+      const best = Math.min(g, m);
+      const ratio = best > 0 ? (s.jarvis / best) : 0;
+      let v = 'Same answer, three prices: gift wrapping <b class="p">' + fmt(s.jarvis) + '</b> turn tests, ' +
+              'graham <b class="v">' + fmt(s.gCmp) + '</b> comparisons + <b class="v">' + fmt(s.gTests) + '</b> tests, ' +
+              'monotone chain <b class="g">' + fmt(s.mCmp) + '</b> + <b class="g">' + fmt(s.mTests) + '</b>.';
+      if (s.h && pts.length >= 3) {
+        v += ' <b>' + fmt(s.h) + '</b> of ' + fmt(pts.length) + ' points are corners';
+        if (ratio >= 3) v += ', so wrapping pays about <b class="p">' + ratio.toFixed(1) + '×</b> for it.';
+        else v += ' — few enough that wrapping is still cheap.';
+      }
+      el('rVerdict').innerHTML = v;
+    }
+
+    // ---------- loop ----------
+    function stepsPerSecond() {
+      if (speedV <= 0) return 0;
+      return Math.max(1, Math.round(Math.pow(speedV / 100, 2.6) * 900));
+    }
+
+    function frame(t) {
+      const dt = Math.min(0.05, lastT ? (t - lastT) / 1000 : 0);
+      lastT = t;
+      const sps = stepsPerSecond();
+      if (playing && S && !S.done && sps > 0) {
+        acc += dt * sps;
+        let budget = 30000;
+        while (acc >= 1 && S && !S.done && budget-- > 0) { step(); acc -= 1; }
+        if (acc > 1) acc = 0;
+      }
+      draw(dt);
+      paintReadout();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- controls ----------
+    el('modes').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      [...e.currentTarget.children].forEach((x) => x.classList.toggle('on', x === b));
+      method = b.dataset.m;
+      restart();
+    });
+    el('shapes').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      [...e.currentTarget.children].forEach((x) => x.classList.toggle('on', x === b));
+      shape = b.dataset.s;
+      makeCloud();
+    });
+    el('count').addEventListener('input', (e) => {
+      n = +e.target.value;
+      el('countVal').textContent = n;
+      makeCloud();
+    });
+    function paintSpeed() {
+      const sps = stepsPerSecond();
+      el('speedVal').textContent = sps === 0 ? 'held' : fmt(sps) + ' / sec';
+    }
+    el('speed').addEventListener('input', (e) => { speedV = +e.target.value; paintSpeed(); });
+    el('play').addEventListener('click', () => setPlaying(!playing));
+    el('step').addEventListener('click', () => { setPlaying(false); step(); });
+    el('finish').addEventListener('click', () => runToEnd());
+    el('reseed').addEventListener('click', () => { seed = (seed * 1103515245 + 12345) >>> 0; makeCloud(); });
+    el('showWork').addEventListener('click', (e) => {
+      showWork = !showWork;
+      e.currentTarget.classList.toggle('on', showWork);
+    });
+
+    function setPlaying(v) {
+      playing = v;
+      el('play').textContent = v ? '❚❚ pause' : '▶ play';
+      if (v && S && S.done) restart();
+    }
+
+    function setPanel(hidden) {
+      ui.classList.toggle('hidden', hidden);
+      el('showUi').classList.toggle('on', hidden);
+      el('legend').classList.toggle('hidden', hidden);
+      layout();
+    }
+    el('collapse').addEventListener('click', () => setPanel(true));
+    el('showUi').addEventListener('click', () => setPanel(false));
+
+    cv.addEventListener('pointerdown', (e) => {
+      const w = toWorld(e.clientX, e.clientY);
+      if (w.nx < -0.02 || w.nx > 1.02 || w.ny < -0.02 || w.ny > 1.02) return;
+      pts.push(pt(w.nx, w.ny));
+      n = pts.length;
+      el('count').value = Math.min(600, n);
+      el('countVal').textContent = n;
+      place();
+      restart();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'h') { setPanel(!ui.classList.contains('hidden')); return; }
+      if (e.key === 'Escape') { story.classList.remove('open'); return; }
+      if (e.key === ' ') { e.preventDefault(); setPlaying(!playing); return; }
+      if (e.key === 'ArrowRight') { e.preventDefault(); setPlaying(false); step(); return; }
+      if (k === 'r') { seed = (seed * 1103515245 + 12345) >>> 0; makeCloud(); }
+    });
+
+    window.addEventListener('resize', resize);
+
+    // ---------- go ----------
+    resize();
+    paintSpeed();
+    makeCloud();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
