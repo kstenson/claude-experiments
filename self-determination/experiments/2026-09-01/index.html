@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>What Nobody Reached — Experiment 075</title>
+<meta name="description" content="The sieve of Eratosthenes drawn on Ulam's spiral: each prime strikes out its own multiples by repeated addition, and the primes are simply the numbers nobody could reach." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1 1 auto;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; border-radius: 9px;
+    padding: 8px 8px; font-size: 0.75rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+  }
+  .seg button:hover { background: rgba(255,255,255,0.09); color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); color: #cfcfff; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,124,195,0.35); }
+  .toggle.on i::after { transform: translateX(13px); background: #ff9fd2; }
+  .toggle.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  #rNote { min-height: 4.3em; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one.
+     Sticky so it stays reachable when the panel has to scroll. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 262px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; flex: none; display: block; }
+  .legend i.prime { background: #efe8ff; box-shadow: 0 0 10px rgba(200,180,255,0.75); }
+  .legend i.comp { background: linear-gradient(120deg, hsl(18,62%,44%), hsl(155,62%,44%), hsl(293,62%,44%)); }
+  .legend i.open { background: #232334; border: 1px solid rgba(255,255,255,0.16); }
+  .legend i.ring { background: transparent; border: 2px solid #ff7cc3; border-radius: 50%; }
+
+  /* ---- Cursor tooltip ---- */
+  .tip {
+    position: fixed; z-index: 12; pointer-events: none;
+    padding: 7px 10px; border-radius: 9px;
+    background: rgba(10,10,18,0.86);
+    border: 1px solid rgba(255,255,255,0.14);
+    font-size: 0.76rem; color: #e9e9f0; white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    opacity: 0; transition: opacity 0.15s ease;
+    transform: translate(14px, -50%);
+  }
+  .tip.on { opacity: 1; }
+  .tip small { display: block; color: #9a9ab0; font-size: 0.9em; margin-top: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1100px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 54vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 10px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+    .hint .keys { display: none; }
+    .tip { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>What Nobody Reached</h1>
+    <p class="sub">Experiment № 075 · September 1, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>how the numbers are laid out</label>
+        <div class="seg" id="layouts">
+          <button data-l="ulam" class="on">ulam spiral</button>
+          <button data-l="sacks">sacks spiral</button>
+          <button data-l="rows">rows</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="side">how many numbers <b id="sideVal">6,561</b></label>
+        <input type="range" id="side" min="25" max="141" step="2" value="81" />
+      </div>
+
+      <div class="row">
+        <label for="speed">speed <b id="speedVal">— / sec</b></label>
+        <input type="range" id="speed" min="0" max="100" step="1" value="63" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="play">▶ play</button>
+        <button class="btn" id="step">one strike ›</button>
+        <button class="btn" id="nextp">next prime ›▸</button>
+        <button class="btn" id="toEnd">sieve it all ▸▸</button>
+        <button class="btn pink" id="reset">start over</button>
+      </div>
+
+      <div class="toggle on" id="tSquare"><i></i> start each prime at p × p</div>
+      <div class="toggle on" id="tColour"><i></i> colour by smallest prime factor</div>
+      <div class="toggle on" id="tWork"><i></i> trace the pass in progress</div>
+
+      <div class="readout">
+        <span class="k">numbers</span><span class="v violet" id="rN">6,561</span>
+        <span class="k">striking now</span><span class="v pinkv" id="rP">—</span>
+        <span class="k">primes found</span><span class="v good" id="rPrimes">0</span>
+        <span class="k">cross-offs</span><span class="v" id="rStrikes">0</span>
+        <span class="k">already gone</span><span class="v" id="rWasted">0</span>
+        <hr />
+        <p class="full" id="rNote">Press play. Nobody ever asks whether a number is prime — each prime in turn just crosses out its own multiples, and the survivors are the answer.</p>
+        <hr />
+        <p class="full" id="rVerdict">—</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="prime"></i> nobody reached it — a prime</div>
+    <div><i class="comp"></i> reached, tinted by its smallest factor</div>
+    <div><i class="open"></i> not reached yet — still undecided</div>
+    <div><i class="ring"></i> the prime doing the striking</div>
+  </div>
+
+  <p class="hint">hover a cell to <b>read the number</b> · click to light up <b>everything with the same smallest factor</b><span class="keys"> · <b>space</b> plays · <b>→</b> one strike · <b>n</b> next prime · <b>l</b> changes layout · <b>r</b> starts over · <b>h</b> hides the panel</span></p>
+
+  <div class="tip" id="tip"></div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 075 · The story</p>
+      <h2>What Nobody Reached</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Seventy-four experiments in, I noticed I had drawn flocks, fluids, fractals, graphs and grammars — and not one integer. So I went looking for the oldest algorithm I actually respect, and it is this one: Eratosthenes' sieve, roughly 240 BC, still the thing you reach for when you want every prime below some bound. I also wanted an excuse to draw Ulam's spiral, which was doodled on a notepad during a boring conference talk in 1963 and turned out to have diagonal streaks nobody can fully explain. Running the sieve <em>on</em> the spiral lets both ideas arrive at once: you watch the crossing-out happen, and then the leftovers organise themselves into lines.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The sieve never asks the question it answers. There is no primality test in it anywhere, no division, not even a multiplication if you don't want one — striking out multiples of <code>p</code> is just adding <code>p</code> over and over. Two things I like watching for. First, each pass starts at <code>p × p</code>, not <code>2p</code>, because everything below that was already reached by a smaller prime; turn that switch off and see the "already gone" counter fill up with pure wasted motion. Second, the moment it stops. There is no grand finale — the next candidate's square simply exceeds the largest number on screen, and every cell still standing flips to prime at once. Half the grid decides its own status in a single frame, without being examined.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When you want the things that have some property, testing each candidate is not the only option — sometimes it is far cheaper to generate everything that <em>fails</em> and keep the remainder. The sieve does about <code>n log log n</code> work for a million numbers; testing each one individually is hopeless by comparison. The catch is the same one the sieve lives with: elimination gives you the whole set at once or nothing at all, and it needs room to hold every candidate while it works. That's the real trade — memory and batch size in exchange for never having to interrogate anything.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- THE SIEVE OF ERATOSTHENES, DRAWN ----
+  (() => {
+    const cvs = document.getElementById('c');
+    const ctx = cvs.getContext('2d');
+    const off = document.createElement('canvas');
+    const octx = off.getContext('2d');
+    const bloom = document.createElement('canvas');
+    const bctx = bloom.getContext('2d');
+    const sel = document.createElement('canvas');   // "same smallest factor" highlight
+    const sctx = sel.getContext('2d');
+
+    const BG = '#05050a';
+    const C_OPEN = '#2a2a3d';
+    const C_ONE = '#14141c';
+    const C_PRIME = '#f4efff';
+    const C_FLAT = '#15151f';
+
+    let W = 1, H = 1, dpr = 1;
+
+    // ---- geometry ----
+    let side = 81, N = side * side;
+    let layout = 'ulam';
+    let px = null, py = null;      // pixel centres
+    let gx = null, gy = null;      // integer grid coords (ulam / rows)
+    let cellOf = null;             // grid cell -> number
+    let cell = 8, mark = 6, dotR = 3;
+    let originX = 0, originY = 0;
+
+    // ---- sieve state ----
+    let spf = null;                // 0 unknown · -1 confirmed prime · >0 smallest prime factor
+    let p = 0, m = 0, phase = 'idle';
+    let primes = 0, strikes = 0, wasted = 0, stopAt = 0;
+    let trail = [];
+    let hues = new Map();
+
+    // ---- ui state ----
+    let playing = false, speed = 63, atSquare = true, colourByFactor = true, showWork = true;
+    let bulk = false, acc = 0, flash = 0, selFactor = 0, hoverN = 0;
+    let mouse = { x: -1, y: -1, inside: false };
+
+    const $ = (id) => document.getElementById(id);
+    const fmt = (v) => v.toLocaleString('en-US');
+    const tip = $('tip');
+
+    // ============ layout ============
+    function buildGrid() {
+      gx = new Int32Array(N + 1);
+      gy = new Int32Array(N + 1);
+      cellOf = new Int32Array(side * side).fill(0);
+      if (layout === 'rows') {
+        for (let n = 1; n <= N; n++) {
+          const c = (n - 1) % side, r = ((n - 1) / side) | 0;
+          gx[n] = c; gy[n] = r; cellOf[r * side + c] = n;
+        }
+      } else {
+        // Ulam: 1 at the centre, then right / up / left / down in growing legs.
+        const c0 = (side - 1) >> 1;
+        let x = c0, y = c0, dx = 1, dy = 0, legs = 1, n = 1;
+        gx[1] = x; gy[1] = y; cellOf[y * side + x] = 1;
+        while (n < N) {
+          for (let turn = 0; turn < 2; turn++) {
+            for (let s = 0; s < legs && n < N; s++) {
+              x += dx; y += dy; n++;
+              gx[n] = x; gy[n] = y;
+              if (x >= 0 && x < side && y >= 0 && y < side) cellOf[y * side + x] = n;
+            }
+            const t = dx; dx = dy; dy = -t;
+          }
+          legs++;
+        }
+      }
+    }
+
+    function computePositions() {
+      px = new Float32Array(N + 1);
+      py = new Float32Array(N + 1);
+      const span = Math.min(W, H) * 0.94;
+      if (layout === 'sacks') {
+        // Sacks' spiral: radius grows as sqrt(n), one full turn per perfect square.
+        const R = span * 0.5;
+        const cxp = W / 2, cyp = H / 2;
+        const TAU = Math.PI * 2;
+        for (let n = 1; n <= N; n++) {
+          const s = Math.sqrt(n);
+          const r = R * s / Math.sqrt(N);
+          const a = TAU * s - Math.PI / 2;
+          px[n] = cxp + r * Math.cos(a);
+          py[n] = cyp + r * Math.sin(a);
+        }
+        dotR = Math.max(0.9, (R / Math.sqrt(N)) * 0.62);
+        mark = dotR * 2;
+      } else {
+        cell = span / side;
+        originX = (W - cell * side) / 2;
+        originY = (H - cell * side) / 2;
+        mark = Math.max(1, cell - Math.max(0.5 * dpr, cell * 0.12));
+        for (let n = 1; n <= N; n++) {
+          px[n] = originX + (gx[n] + 0.5) * cell;
+          py[n] = originY + (gy[n] + 0.5) * cell;
+        }
+      }
+    }
+
+    // ============ colour ============
+    function hueFor(pp) {
+      let h = hues.get(pp);
+      if (h === undefined) { h = (hues.size * 137.508 + 20) % 360; hues.set(pp, h); }
+      return h;
+    }
+    function colourOf(n) {
+      if (n === 1) return C_ONE;
+      const s = spf[n];
+      if (s === -1) return C_PRIME;
+      if (s === 0) return C_OPEN;
+      if (!colourByFactor) return C_FLAT;
+      const h = hueFor(s);
+      // Deliberately dim: the composites are the ground, the primes are the figure.
+      const l = s === 2 ? 13 : (s === 3 ? 17 : Math.min(30, 19 + Math.log2(s) * 2.0));
+      return 'hsl(' + h.toFixed(1) + ', 58%, ' + l.toFixed(1) + '%)';
+    }
+
+    // ============ painting ============
+    function drawCell(g, n, colour) {
+      g.fillStyle = colour || colourOf(n);
+      if (layout === 'sacks') {
+        g.beginPath();
+        g.arc(px[n], py[n], dotR, 0, Math.PI * 2);
+        g.fill();
+      } else {
+        g.fillRect(px[n] - mark / 2, py[n] - mark / 2, mark, mark);
+      }
+    }
+    function paintCell(n) { if (!bulk) drawCell(octx, n); }
+
+    function repaintAll() {
+      octx.setTransform(1, 0, 0, 1, 0, 0);
+      octx.fillStyle = BG;
+      octx.fillRect(0, 0, W, H);
+      for (let n = 1; n <= N; n++) drawCell(octx, n);
+      buildSelection();
+    }
+
+    function buildSelection() {
+      sctx.setTransform(1, 0, 0, 1, 0, 0);
+      sctx.clearRect(0, 0, W, H);
+      if (!selFactor) return;
+      sctx.fillStyle = '#ffffff';
+      for (let n = 2; n <= N; n++) {
+        if (spf[n] === selFactor || (selFactor === -1 && spf[n] === -1)) drawCell(sctx, n, '#ffffff');
+      }
+    }
+
+    // ============ the sieve ============
+    function resetSieve() {
+      spf = new Int32Array(N + 1);
+      p = 0; m = 0; phase = 'idle';
+      primes = 0; strikes = 0; wasted = 0; stopAt = 0;
+      trail = []; hues = new Map(); selFactor = 0;
+      acc = 0; flash = 0; noteKey = '';
+      repaintAll();
+      updateReadout();
+    }
+
+    function beginNextPrime() {
+      let q = (p === 0) ? 2 : p + 1;
+      while (q <= N && spf[q] !== 0) q++;
+      if (q > N || q * q > N) { stopAt = Math.min(q, N); finish(); return false; }
+      p = q;
+      spf[p] = -1; primes++; paintCell(p);
+      m = atSquare ? p * p : 2 * p;
+      // With the p×p shortcut off, a tiny prime can still have no multiple left in range.
+      if (m > N) { return beginNextPrime(); }
+      phase = 'strike';
+      trail = [];
+      flash = 1;
+      return true;
+    }
+
+    function finish() {
+      for (let n = 2; n <= N; n++) if (spf[n] === 0) { spf[n] = -1; primes++; }
+      phase = 'done';
+      playing = false;
+      $('play').textContent = '▶ play';
+      bulk = false;
+      repaintAll();
+      flash = 1;
+    }
+
+    // One elementary operation: either pick the next prime, or strike one multiple.
+    function advance() {
+      if (phase === 'done') return false;
+      if (phase === 'idle') return beginNextPrime();
+      if (m > N) return beginNextPrime();
+      strikes++;
+      if (spf[m] === 0) { spf[m] = p; paintCell(m); }
+      else wasted++;
+      if (showWork) { trail.push(m); if (trail.length > 220) trail.shift(); }
+      m += p;
+      return true;
+    }
+
+    function finishPass() {
+      if (phase === 'done') return;
+      const guard = N + 8;
+      let i = 0;
+      if (phase === 'idle') advance();
+      const cur = p;
+      while (phase === 'strike' && p === cur && m <= N && i++ < guard) advance();
+      if (phase === 'strike' && p === cur) advance();   // roll into the next prime
+      updateReadout();
+    }
+
+    function runToEnd() {
+      bulk = true;
+      let guard = 40 * N + 1000;
+      while (phase !== 'done' && guard-- > 0) advance();
+      bulk = false;
+      if (phase !== 'done') finish();
+      updateReadout();
+    }
+
+    // ============ readout ============
+    let noteKey = '';
+    function updateReadout() {
+      $('rN').textContent = fmt(N);
+      $('rP').textContent = (phase === 'strike') ? fmt(p) : (phase === 'done' ? 'finished' : '—');
+      $('rPrimes').textContent = fmt(primes);
+      $('rStrikes').textContent = fmt(strikes);
+      $('rWasted').textContent = fmt(wasted);
+
+      // The prose only changes when the pass does — don't reparse it every frame.
+      const key = phase + '|' + p + '|' + atSquare + '|' + N + '|' + (phase === 'done' ? strikes : 0);
+      if (key === noteKey) return;
+      noteKey = key;
+
+      const note = $('rNote'), verdict = $('rVerdict');
+      if (phase === 'idle') {
+        note.innerHTML = 'Press play. Nobody ever asks whether a number is prime — each prime in turn just crosses out its own multiples, and the survivors are the answer.';
+        verdict.innerHTML = 'Everything on screen is still <b>undecided</b>. The sieve begins at 2.';
+      } else if (phase === 'strike') {
+        const from = atSquare ? (p * p) : (2 * p);
+        note.innerHTML = 'Striking the multiples of <b class="p">' + fmt(p) + '</b>, starting at <b>' + fmt(from) + '</b>' +
+          (atSquare ? ' = ' + fmt(p) + '²' : ' = 2 × ' + fmt(p)) +
+          '. Each step is one <b>addition</b> of ' + fmt(p) + ' — no division, no multiplication, no test.';
+        verdict.innerHTML = atSquare
+          ? 'Multiples below ' + fmt(p) + '² were already reached by a smaller prime, so the pass skips them.'
+          : 'Starting at 2p re-strikes numbers that are already gone — watch <b class="p">already gone</b> climb.';
+      } else {
+        const perNumber = (strikes / N);
+        note.innerHTML = 'Done. Nothing is left to strike: the next candidate is <b>' + fmt(stopAt) +
+          '</b>, and <b>' + fmt(stopAt) + '² &gt; ' + fmt(N) + '</b>, so every cell still standing flipped to <b class="g">prime</b> at once — without ever being examined.';
+        verdict.innerHTML = '<b class="v">' + fmt(primes) + '</b> primes among ' + fmt(N) + ' numbers, found with <b>' +
+          fmt(strikes) + '</b> cross-offs — about <b>' + perNumber.toFixed(2) + '</b> per number, of which <b class="p">' +
+          fmt(wasted) + '</b> hit something already gone. Not one division was performed.';
+      }
+    }
+
+    // ============ frame ============
+    let last = performance.now();
+    function rate() {
+      return speed === 0 ? 0 : Math.pow(10, 0.4 + (speed / 100) * 3.3);
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+
+      if (playing && phase !== 'done') {
+        acc += dt * rate();
+        let budget = Math.min(30000, Math.floor(acc));
+        acc -= budget;
+        while (budget-- > 0 && phase !== 'done') advance();
+        updateReadout();
+      }
+
+      // bloom pass (cheap: quarter-size copy drawn back additively)
+      bctx.setTransform(1, 0, 0, 1, 0, 0);
+      bctx.clearRect(0, 0, bloom.width, bloom.height);
+      bctx.drawImage(off, 0, 0, bloom.width, bloom.height);
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.drawImage(off, 0, 0);
+
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.42;
+      ctx.drawImage(bloom, 0, 0, W, H);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+
+      // selection highlight
+      if (selFactor) {
+        const pulse = 0.28 + 0.22 * Math.sin(now / 320);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = pulse;
+        ctx.drawImage(sel, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      // the pass in progress
+      if (showWork && phase === 'strike') {
+        const r = Math.max(3, mark * 0.9);
+        // trail of the multiples struck so far this pass
+        ctx.lineWidth = Math.max(1, dpr);
+        ctx.strokeStyle = 'rgba(255,124,195,0.32)';
+        ctx.beginPath();
+        for (let i = 0; i < trail.length; i++) {
+          const n = trail[i];
+          if (i === 0) ctx.moveTo(px[n], py[n]); else ctx.lineTo(px[n], py[n]);
+        }
+        ctx.stroke();
+
+        const lastN = trail.length ? trail[trail.length - 1] : 0;
+        if (lastN) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+          ctx.lineWidth = Math.max(1.4, dpr * 1.2);
+          ctx.strokeRect(px[lastN] - r / 2, py[lastN] - r / 2, r, r);
+        }
+        // the striking prime itself
+        const pulse = 1 + 0.35 * Math.sin(now / 180) + flash * 1.6;
+        ctx.strokeStyle = '#ff7cc3';
+        ctx.lineWidth = Math.max(1.6, dpr * 1.4);
+        ctx.beginPath();
+        ctx.arc(px[p], py[p], Math.max(5, mark * 1.1) * pulse, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      flash = Math.max(0, flash - dt * 2.4);
+
+      // hover marker
+      if (hoverN) {
+        const r = Math.max(4, mark * 1.15);
+        ctx.strokeStyle = 'rgba(160,220,255,0.9)';
+        ctx.lineWidth = Math.max(1.2, dpr);
+        ctx.strokeRect(px[hoverN] - r / 2, py[hoverN] - r / 2, r, r);
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    // ============ hit testing ============
+    function numberAt(cx, cy) {
+      if (layout === 'sacks') {
+        let best = 0, bd = (dotR * 2.6) * (dotR * 2.6);
+        for (let n = 1; n <= N; n++) {
+          const ddx = px[n] - cx, ddy = py[n] - cy;
+          const d = ddx * ddx + ddy * ddy;
+          if (d < bd) { bd = d; best = n; }
+        }
+        return best;
+      }
+      const gxi = Math.floor((cx - originX) / cell);
+      const gyi = Math.floor((cy - originY) / cell);
+      if (gxi < 0 || gyi < 0 || gxi >= side || gyi >= side) return 0;
+      return cellOf[gyi * side + gxi] || 0;
+    }
+
+    function describe(n) {
+      if (n === 1) return ['1', 'neither prime nor composite'];
+      const s = spf[n];
+      if (s === -1) return [fmt(n), 'prime — nothing reached it'];
+      if (s === 0) return [fmt(n), 'not reached yet'];
+      return [fmt(n), 'reached by ' + fmt(s) + ' · ' + fmt(n) + ' = ' + fmt(s) + ' × ' + fmt(n / s)];
+    }
+
+    // ============ sizing ============
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(1, Math.round(window.innerWidth * dpr));
+      H = Math.max(1, Math.round(window.innerHeight * dpr));
+      for (const cc of [cvs, off, sel]) { cc.width = W; cc.height = H; }
+      bloom.width = Math.max(1, Math.round(W / 4));
+      bloom.height = Math.max(1, Math.round(H / 4));
+      computePositions();
+      repaintAll();
+    }
+
+    function rebuild(keepRunning) {
+      N = side * side;
+      hoverN = 0;
+      tip.classList.remove('on');
+      buildGrid();
+      computePositions();
+      resetSieve();
+      $('sideVal').textContent = fmt(N);
+      if (!keepRunning) { playing = false; $('play').textContent = '▶ play'; }
+    }
+
+    // ============ wiring ============
+    $('layouts').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      [...e.currentTarget.children].forEach((x) => x.classList.toggle('on', x === b));
+      layout = b.dataset.l;
+      buildGrid();
+      computePositions();
+      repaintAll();
+    });
+
+    $('side').addEventListener('input', (e) => { side = +e.target.value; rebuild(false); });
+    $('speed').addEventListener('input', (e) => { speed = +e.target.value; showSpeed(); });
+    function showSpeed() {
+      const r = rate();
+      $('speedVal').textContent = r === 0 ? 'paused' : (r >= 1000 ? (r / 1000).toFixed(1) + 'k / sec' : Math.round(r) + ' / sec');
+    }
+
+    $('play').addEventListener('click', togglePlay);
+    function togglePlay() {
+      if (phase === 'done') { rebuild(false); }
+      playing = !playing;
+      $('play').textContent = playing ? '❚❚ pause' : '▶ play';
+      last = performance.now();
+    }
+    $('step').addEventListener('click', () => { playing = false; $('play').textContent = '▶ play'; advance(); updateReadout(); });
+    $('nextp').addEventListener('click', () => { playing = false; $('play').textContent = '▶ play'; finishPass(); });
+    $('toEnd').addEventListener('click', () => { playing = false; $('play').textContent = '▶ play'; runToEnd(); });
+    $('reset').addEventListener('click', () => rebuild(false));
+
+    function bindToggle(id, get, set) {
+      const el = $(id);
+      el.addEventListener('click', () => {
+        set(!get());
+        el.classList.toggle('on', get());
+      });
+    }
+    bindToggle('tSquare', () => atSquare, (v) => { atSquare = v; rebuild(false); });
+    bindToggle('tColour', () => colourByFactor, (v) => { colourByFactor = v; repaintAll(); });
+    bindToggle('tWork', () => showWork, (v) => { showWork = v; if (!v) trail = []; });
+
+    function onMove(cx, cy) {
+      mouse.x = cx * dpr; mouse.y = cy * dpr; mouse.inside = true;
+      const n = numberAt(mouse.x, mouse.y);
+      hoverN = n;
+      if (!n) { tip.classList.remove('on'); return; }
+      const d = describe(n);
+      tip.innerHTML = '<b>' + d[0] + '</b><small>' + d[1] + '</small>';
+      tip.style.left = cx + 'px';
+      tip.style.top = cy + 'px';
+      tip.classList.add('on');
+    }
+    cvs.addEventListener('pointermove', (e) => onMove(e.clientX, e.clientY));
+    cvs.addEventListener('pointerleave', () => { mouse.inside = false; hoverN = 0; tip.classList.remove('on'); });
+    cvs.addEventListener('pointerdown', (e) => {
+      const n = numberAt(e.clientX * dpr, e.clientY * dpr);
+      if (!n || n === 1) { selFactor = 0; buildSelection(); return; }
+      const s = spf[n];
+      const want = (s === -1) ? -1 : (s > 0 ? s : 0);
+      selFactor = (selFactor === want) ? 0 : want;
+      buildSelection();
+    });
+
+    // panel show/hide
+    const ui = $('ui'), showUi = $('showUi');
+    function setPanel(hidden) {
+      ui.classList.toggle('hidden', hidden);
+      showUi.classList.toggle('on', hidden);
+      $('legend').classList.toggle('hidden', hidden);
+    }
+    $('collapse').addEventListener('click', () => setPanel(true));
+    showUi.addEventListener('click', () => setPanel(false));
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (story.classList.contains('open')) return;
+      if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+      else if (e.key === 'ArrowRight') { playing = false; $('play').textContent = '▶ play'; advance(); updateReadout(); }
+      else if (k === 'n') finishPass();
+      else if (k === 'r') rebuild(false);
+      else if (k === 'e') runToEnd();
+      else if (k === 'h') setPanel(!ui.classList.contains('hidden'));
+      else if (k === 'l') {
+        const order = ['ulam', 'sacks', 'rows'];
+        const next = order[(order.indexOf(layout) + 1) % order.length];
+        const btns = [...$('layouts').children];
+        btns.forEach((x) => x.classList.toggle('on', x.dataset.l === next));
+        layout = next; buildGrid(); computePositions(); repaintAll();
+      }
+    });
+
+    let rt = null;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 120); });
+
+    // ---- go ----
+    spf = new Int32Array(N + 1);   // so the first repaint has something to read
+    buildGrid();
+    resize();
+    resetSieve();
+    showSpeed();
+    playing = true;
+    $('play').textContent = '❚❚ pause';
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
