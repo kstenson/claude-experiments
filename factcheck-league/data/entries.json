@@ -40,14 +40,64 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-08-30",
+    "lastUpdated": "2026-09-01",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
     {
+      "id": "2026-09-01",
+      "date": "2026-09-01",
+      "headline": true,
+      "topic": "The £45 electricity VAT cut and October bills",
+      "claim": "We're taking immediate action to cut taxes on energy bills, put more money in people's pockets — around £45 off the yearly Ofgem price cap in October.",
+      "speaker": "Andy Burnham",
+      "party": "Labour",
+      "role": "Prime Minister",
+      "discussionScore": 82,
+      "discussionNote": "Burnham's first Commons statement as PM today put the cost of living centre stage, and the VAT cut was among the summer policies MPs grilled him on — six days after Ofgem's cap rise.",
+      "score": 62,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The £45 is real, and the regulator confirms it: Ofgem says the October cap would have been about £45 higher without the VAT cut. But bills are not falling. The same announcement raises the typical dual-fuel cap 4%, or £60, to £1,723 — the highest in three years. The tax cut softens the rise; it does not reverse it. And \"a year\" oversells a six-month measure: the zero rate runs only to 31 March 2027, so a household keeps nearer £22.50. Accurate about the price cap; not about what people pay.",
+      "evidence": [
+        "GOV.UK, 21 July 2026: VAT on domestic electricity cut from 5% to 0%, taking \"around £45 off the yearly Ofgem price cap in October\".",
+        "Ofgem, 26 August 2026: without the government's VAT intervention the October cap would have been around £45 higher.",
+        "Same announcement: the cap rises 4%, or £60, to £1,723 for 1 October to 31 December — the highest in three years.",
+        "Gas bills rise 8% while electricity stays broadly flat; adjusted for inflation the cap is 7% above the same period in 2025.",
+        "The zero rate applies only from 1 October 2026 to 31 March 2027, so the saving is roughly £22.50, not £45.",
+        "Cost about £850 million in 2026-27, funded by cancelling the Digital ID programme, budgeted at £1.8 billion over three years."
+      ],
+      "confidence": "High — both the £45 counterfactual and the £60 rise come from Ofgem's own 26 August announcement.",
+      "sources": [
+        {
+          "title": "GOV.UK — New PM cuts tax on household electricity bills",
+          "url": "https://www.gov.uk/government/news/new-pm-cuts-tax-on-household-electricity-bills-to-give-breathing-space-on-cost-of-living"
+        },
+        {
+          "title": "Ofgem — Energy price cap will rise by 4% from October 2026",
+          "url": "https://www.ofgem.gov.uk/press-release/energy-price-cap-will-rise-4-october-2026"
+        },
+        {
+          "title": "MoneySavingExpert — Electricity VAT scrapped for six months from 1 October",
+          "url": "https://www.moneysavingexpert.com/news/2026/07/electricity-bills-vat-cut-martin-lewis-analysis/"
+        },
+        {
+          "title": "Uswitch — Burnham to cut VAT on electricity to save £45 a year",
+          "url": "https://www.uswitch.com/gas-electricity/news/andy-burnham-to-cut-vat-on-electricity-bills/"
+        },
+        {
+          "title": "HuffPost UK — Price cap rise wipes out Burnham's electricity cut",
+          "url": "https://www.huffingtonpost.co.uk/entry/blow-for-burnham-as-energy-price-cap-rise-wipes-out-his-cut-to-electricity-bills_uk_6a8e802be4b0bc51108cde5e"
+        },
+        {
+          "title": "PA — More public ownership is only way to grow UK economy",
+          "url": "https://www.aol.co.uk/articles/burnham-tell-commons-more-public-181331000.html"
+        }
+      ]
+    },
+    {
       "id": "2026-08-30",
       "date": "2026-08-30",
-      "headline": true,
+      "headline": false,
       "topic": "Postal voting and who it is for",
       "claim": "If you want to vote in our elections, you need to do it in person. That is a traditional principle. The postal vote is an exception awarded to people who are literally unable to get there.",
       "speaker": "Danny Kruger",
