@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Where You Cut — Experiment 076</title>
+<meta name="description" content="Hoare's 1961 quicksort, one partition at a time: draw a line at the pivot's height, sweep everything below it to the left, and the pivot is home for good. Choose the pivot yourself and watch the call tree stand up or topple over." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1 1 auto;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; border-radius: 9px;
+    padding: 8px 8px; font-size: 0.75rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+  }
+  .seg button:hover { background: rgba(255,255,255,0.09); color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); color: #cfcfff; }
+  .seg.pink button.on { background: rgba(255,124,195,0.18); border-color: rgba(255,124,195,0.5); color: #ffd6ec; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,124,195,0.35); }
+  .toggle.on i::after { transform: translateX(13px); background: #ff9fd2; }
+  .toggle.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  #rNote { min-height: 3.2em; }
+  #rVerdict { min-height: 3.2em; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one.
+     Sticky so it stays reachable when the panel has to scroll. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 268px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; flex: none; display: block; }
+  .legend i.live { background: linear-gradient(120deg, #7c7cff, #ff7cc3); box-shadow: 0 0 8px rgba(124,124,255,0.5); }
+  .legend i.rest { background: rgba(124,124,255,0.22); }
+  .legend i.piv { background: rgba(255,124,195,0.2); border: 2px solid #ff7cc3; }
+  .legend i.set { background: rgba(138,255,192,0.2); border: 2px solid #8affc0; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1100px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 54vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 10px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Where You Cut</h1>
+    <p class="sub">Experiment № 076 · September 3, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>which bar becomes the pivot</label>
+        <div class="seg" id="pivots">
+          <button data-p="first" class="on">first</button>
+          <button data-p="middle">middle</button>
+          <button data-p="random">random</button>
+          <button data-p="median3">median of three</button>
+          <button data-p="manual">you choose</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>how the array starts</label>
+        <div class="seg pink" id="shapes">
+          <button data-s="shuffled" class="on">shuffled</button>
+          <button data-s="sorted">already sorted</button>
+          <button data-s="reversed">reversed</button>
+          <button data-s="few">few values</button>
+          <button data-s="organ">organ pipe</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>how the partition is done</label>
+        <div class="seg" id="schemes">
+          <button data-m="lomuto" class="on">lomuto</button>
+          <button data-m="hoare">hoare</button>
+          <button data-m="three">three-way</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="count">bars <b id="countVal">96</b></label>
+        <input type="range" id="count" min="8" max="240" step="1" value="96" />
+      </div>
+
+      <div class="row">
+        <label for="speed">speed <b id="speedVal">— / sec</b></label>
+        <input type="range" id="speed" min="0" max="100" step="1" value="46" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="play">❚❚ pause</button>
+        <button class="btn" id="step">step ›</button>
+        <button class="btn" id="finish">run to the end ▸▸</button>
+        <button class="btn pink" id="reseed">new array</button>
+      </div>
+
+      <div class="toggle on" id="showLine"><i></i> draw the line at the pivot's height</div>
+
+      <div class="readout">
+        <span class="k">bars · settled</span><span class="v violet" id="rN">96 · 0</span>
+        <span class="k">comparisons</span><span class="v" id="rCmp">0</span>
+        <span class="k">swaps</span><span class="v pinkv" id="rSwaps">0</span>
+        <span class="k">deepest nesting</span><span class="v good" id="rDepth">0</span>
+        <hr />
+        <p class="full" id="rNote">Press play. Every cut sends the small bars left, the big ones right, and settles at least one bar for good.</p>
+        <hr />
+        <p class="full" id="rAlt">—</p>
+        <hr />
+        <p class="full" id="rVerdict">—</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="live"></i> the range being partitioned now</div>
+    <div><i class="piv"></i> the pivot — the line is its height</div>
+    <div><i class="set"></i> settled: in its final place for good</div>
+    <div><i class="rest"></i> waiting its turn on the call stack</div>
+  </div>
+
+  <p class="hint">in <b>you choose</b> mode, click a bar to <b>pick the pivot</b> · <b>space</b> plays and pauses · <b>→</b> steps once · <b>r</b> new array · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 076 · The story</p>
+      <h2>Where You Cut</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Seventy-five experiments in and I had never done a sort — the most-executed family of algorithms on earth, and I'd skipped it because animated bars feel like a first-week exercise. What changed my mind was remembering what quicksort actually is. Tony Hoare invented it in 1960 as a graduate student in Moscow, trying to sort words for a Russian–English translation machine, and the idea is one sentence: pick any element, put everything smaller to its left and everything bigger to its right, then do the same to each side. There is no clever merging afterwards. There is no afterwards at all — once the two sides exist, they never speak to each other again. And that one sentence contains both the fastest general-purpose sort in practice and a way to spend <code>n²/2</code> comparisons on an array that was already sorted. Same code. The only difference is where you cut.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The dashed pink line. Partitioning is usually explained with index arithmetic, but on screen it's just a horizontal line at the pivot's height: everything under the line is going left, everything over it is going right, and the sweep is only carrying out that sentence. Then there's the call tree at the bottom, which is where the drama is. With a random pivot it grows fat and shallow — twenty levels of nothing much. Ask for <em>first</em> and hand it an <em>already sorted</em> array and the tree topples over into a staircase: one bar peeled off per level, the nesting as deep as the array is long, the comparison counter grinding through half of <code>n²</code> to accomplish precisely nothing. My other favourite is switching the scheme to <em>three-way</em> with <em>few values</em>: the equal block settles wholesale, and a run that took thousands of comparisons finishes in a few hundred. And in <em>you choose</em> mode I dare you to beat the machine — you'll find that aiming near the middle of the <em>heights</em>, not the middle of the row, is the entire skill.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Two things. First, work is conserved between splitting and joining: merge sort splits carelessly down the middle and pays for it in the merge; quicksort pays everything up front in the partition and gets to skip the merge entirely. When you're designing anything recursive, ask which end you'd rather pay at — but don't expect a free lunch at both. Second, and this is the one I actually use: randomising the pivot doesn't make quicksort faster on average by even a single comparison. What it does is move the worst case out of the input and into the dice. Sorted and nearly-sorted data is not some rare adversarial edge case — it is the most common shape real data arrives in, so a deterministic pivot fails exactly when you'd least like it to. Trading a worst case that the world can hand you for one that requires bad luck is often the whole point of adding randomness to a program.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Where You Cut — quicksort, one partition at a time ----
+  (() => {
+    const cv = document.getElementById('c');
+    const ctx = cv.getContext('2d');
+    const ui = document.getElementById('ui');
+
+    const VIOLET = '#7c7cff', PINK = '#ff7cc3', GREEN = '#8affc0', WHITE = '#f2f2f8';
+
+    let W = 0, H = 0, DPR = 1;
+    let field = { x: 0, y: 0, w: 1, h: 1 };
+    let barsR = { x: 0, y: 0, w: 1, h: 1 };
+    let treeR = { x: 0, y: 0, w: 1, h: 1 };
+
+    // ---------- state ----------
+    let n = 96;
+    let shape = 'shuffled';
+    let pivotMode = 'first';
+    let scheme = 'lomuto';
+    let seed = 20260903;
+
+    let arr = [];            // the live array being sorted
+    let base = [];           // the starting order, kept for the headless comparisons
+    let settled = [];        // settled[i] — index i holds its final value for good
+    let maxVal = 1;
+
+    let gen = null, cur = null, finished = false, waiting = null, pendingPivot;
+    let stats = { cmp: 0, swaps: 0, depth: 0, settledN: 0 };
+    let calls = [];          // {lo, hi, d, live} — one per partition call, the call tree
+    let callStack = [];
+    let flashes = [];        // {i, t} — a bar settling
+
+    let playing = true, speedV = 46, acc = 0, lastT = 0;
+    let showLine = true;
+    let alt = null;
+    let noteText = '';
+    let lastDom = '';
+
+    // ---------- rng ----------
+    function mulberry(a) {
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    // ---------- the array ----------
+    function makeArray(count, kind, rnd) {
+      const a = new Array(count);
+      if (kind === 'few') {
+        const levels = [0.22, 0.45, 0.68, 0.92];
+        for (let i = 0; i < count; i++) a[i] = Math.round(levels[Math.floor(rnd() * levels.length)] * count);
+        return a;
+      }
+      if (kind === 'organ') {
+        // rises to the middle, falls back — a shape that flatters nobody
+        for (let i = 0; i < count; i++) a[i] = i < count / 2 ? 2 * i + 1 : 2 * (count - i);
+        return a;
+      }
+      for (let i = 0; i < count; i++) a[i] = i + 1;
+      if (kind === 'sorted') return a;
+      if (kind === 'reversed') return a.reverse();
+      for (let i = count - 1; i > 0; i--) {           // Fisher–Yates
+        const j = Math.floor(rnd() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
+    // ---------- pivot choice, shared by the live run and the headless counts ----------
+    function pickPivot(a, lo, hi, mode, rnd, addCmp) {
+      if (mode === 'middle') return (lo + hi) >> 1;
+      if (mode === 'random') return lo + Math.floor(rnd() * (hi - lo + 1));
+      if (mode === 'median3') {
+        const mid = (lo + hi) >> 1;
+        addCmp(3);
+        const x = a[lo], y = a[mid], z = a[hi];
+        if ((x <= y && y <= z) || (z <= y && y <= x)) return mid;
+        if ((y <= x && x <= z) || (z <= x && x <= y)) return lo;
+        return hi;
+      }
+      return lo;                                       // 'first', and the fallback for 'you choose'
+    }
+
+    // ---------- the live run: a generator that yields one event per step ----------
+    // The array itself is the state; each event says what the run is looking at.
+    function* sortGen(a, cfg, st, done) {
+      const rnd = cfg.rnd;
+      const addCmp = (k) => { st.cmp += k; };
+
+      const swap = (i, j) => { const t = a[i]; a[i] = a[j]; a[j] = t; st.swaps++; };
+      const settle = (i) => { if (!done[i]) { done[i] = true; st.settledN++; } };
+      const settleRange = (lo, hi) => { for (let i = lo; i <= hi; i++) settle(i); };
+
+      function* choose(lo, hi, d) {
+        if (cfg.pivot === 'manual') {
+          const k = yield { t: 'need', lo, hi, d };
+          return (typeof k === 'number' && k >= lo && k <= hi) ? k : lo;
+        }
+        const k = pickPivot(a, lo, hi, cfg.pivot, rnd, addCmp);
+        if (cfg.pivot === 'median3') yield { t: 'peek', lo, hi, d, k };
+        return k;
+      }
+
+      function* qs(lo, hi, d) {
+        if (d > st.depth) st.depth = d;
+        if (lo >= hi) {
+          if (lo === hi) { settle(lo); flashes.push({ i: lo, t: 1 }); }
+          yield { t: 'leaf', lo, hi, d };
+          return;
+        }
+        yield { t: 'enter', lo, hi, d };
+
+        if (cfg.scheme === 'lomuto') {
+          const p = yield* choose(lo, hi, d);
+          if (p !== hi) { swap(p, hi); yield { t: 'park', lo, hi, d, i: p, j: hi, piv: hi, pv: a[hi] }; }
+          const pv = a[hi];
+          let i = lo;
+          for (let j = lo; j < hi; j++) {
+            addCmp(1);
+            yield { t: 'cmp', lo, hi, d, i, j, piv: hi, pv };
+            if (a[j] <= pv) {
+              if (i !== j) { swap(i, j); yield { t: 'swap', lo, hi, d, i, j, piv: hi, pv }; }
+              i++;
+            }
+          }
+          if (i !== hi) swap(i, hi);
+          settle(i); flashes.push({ i, t: 1 });
+          yield { t: 'place', lo, hi, d, k: i, pv };
+          yield* qs(lo, i - 1, d + 1);
+          yield* qs(i + 1, hi, d + 1);
+
+        } else if (cfg.scheme === 'hoare') {
+          const p = yield* choose(lo, hi, d);
+          if (p !== lo) { swap(p, lo); yield { t: 'park', lo, hi, d, i: p, j: lo, piv: lo, pv: a[lo] }; }
+          const pv = a[lo];
+          let i = lo - 1, j = hi + 1;
+          for (;;) {
+            do {
+              i++; addCmp(1);
+              yield { t: 'cmp', lo, hi, d, i, j: Math.min(j, hi), piv: lo, pv };
+            } while (a[i] < pv);
+            do {
+              j--; addCmp(1);
+              yield { t: 'cmp', lo, hi, d, i, j, piv: lo, pv };
+            } while (a[j] > pv);
+            if (i >= j) break;
+            swap(i, j);
+            yield { t: 'swap', lo, hi, d, i, j, piv: lo, pv };
+          }
+          yield { t: 'split', lo, hi, d, k: j, pv };
+          yield* qs(lo, j, d + 1);
+          yield* qs(j + 1, hi, d + 1);
+
+        } else {
+          const p = yield* choose(lo, hi, d);
+          if (p !== lo) { swap(p, lo); yield { t: 'park', lo, hi, d, i: p, j: lo, piv: lo, pv: a[lo] }; }
+          const pv = a[lo];
+          let lt = lo, i = lo + 1, gt = hi;
+          while (i <= gt) {
+            addCmp(1);
+            yield { t: 'cmp', lo, hi, d, i, j: gt, piv: lt, pv };
+            if (a[i] < pv) { swap(lt, i); lt++; i++; }
+            else if (a[i] > pv) { swap(i, gt); gt--; }
+            else i++;
+          }
+          for (let k = lt; k <= gt; k++) { settle(k); flashes.push({ i: k, t: 1 }); }
+          yield { t: 'place', lo, hi, d, k: lt, k2: gt, pv };
+          yield* qs(lo, lt - 1, d + 1);
+          yield* qs(gt + 1, hi, d + 1);
+        }
+
+        settleRange(lo, hi);
+        yield { t: 'exit', lo, hi, d };
+      }
+
+      yield* qs(0, a.length - 1, 0);
+      yield { t: 'done' };
+    }
+
+    // ---------- the same sort, headless and fast, purely to count ----------
+    // Used to price the pivot strategies you are not currently running.
+    function headless(src, schemeK, mode, seedv) {
+      const a = src.slice(), rnd = mulberry(seedv);
+      let cmp = 0, swaps = 0, depth = 0;
+      const addCmp = (k) => { cmp += k; };
+      const swap = (i, j) => { const t = a[i]; a[i] = a[j]; a[j] = t; swaps++; };
+      const stack = [[0, a.length - 1, 0]];
+      let guard = 0;
+      while (stack.length) {
+        if (guard++ > 4000000) break;
+        const [lo, hi, d] = stack.pop();
+        if (d > depth) depth = d;
+        if (lo >= hi) continue;
+        if (schemeK === 'lomuto') {
+          const p = pickPivot(a, lo, hi, mode, rnd, addCmp);
+          if (p !== hi) swap(p, hi);
+          const pv = a[hi];
+          let i = lo;
+          for (let j = lo; j < hi; j++) { cmp++; if (a[j] <= pv) { if (i !== j) swap(i, j); i++; } }
+          if (i !== hi) swap(i, hi);
+          stack.push([lo, i - 1, d + 1], [i + 1, hi, d + 1]);
+        } else if (schemeK === 'hoare') {
+          const p = pickPivot(a, lo, hi, mode, rnd, addCmp);
+          if (p !== lo) swap(p, lo);
+          const pv = a[lo];
+          let i = lo - 1, j = hi + 1;
+          for (;;) {
+            do { i++; cmp++; } while (a[i] < pv);
+            do { j--; cmp++; } while (a[j] > pv);
+            if (i >= j) break;
+            swap(i, j);
+          }
+          stack.push([lo, j, d + 1], [j + 1, hi, d + 1]);
+        } else {
+          const p = pickPivot(a, lo, hi, mode, rnd, addCmp);
+          if (p !== lo) swap(p, lo);
+          const pv = a[lo];
+          let lt = lo, i = lo + 1, gt = hi;
+          while (i <= gt) {
+            cmp++;
+            if (a[i] < pv) { swap(lt, i); lt++; i++; }
+            else if (a[i] > pv) { swap(i, gt); gt--; }
+            else i++;
+          }
+          stack.push([lo, lt - 1, d + 1], [gt + 1, hi, d + 1]);
+        }
+      }
+      return { cmp, swaps, depth, sorted: a };
+    }
+
+    // ---------- layout ----------
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      layout();
+    }
+
+    function layout() {
+      const wide = W > 780 && !ui.classList.contains('hidden');
+      const left = wide ? Math.min(ui.offsetWidth + 48, W * 0.46) : 22;
+      const top = (!wide && !ui.classList.contains('hidden')) ? Math.min(ui.offsetHeight + 26, H * 0.58) : 34;
+      field = { x: left, y: top, w: Math.max(120, W - left - 26), h: Math.max(140, H - top - 62) };
+      const treeH = Math.min(Math.max(field.h * 0.3, 74), 210);
+      barsR = { x: field.x, y: field.y, w: field.w, h: Math.max(60, field.h - treeH - 48) };
+      treeR = { x: field.x, y: field.y + barsR.h + 48, w: field.w, h: treeH };
+    }
+
+    // ---------- colours ----------
+    function colFor(v, alpha) {
+      const t = Math.max(0, Math.min(1, v / maxVal));
+      const r = Math.round(124 + t * (255 - 124));
+      const g = Math.round(124 + t * (124 - 124));
+      const b = Math.round(255 + t * (195 - 255));
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    }
+
+    // ---------- reset ----------
+    function reset(newSeed) {
+      if (newSeed) seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      base = makeArray(n, shape, mulberry(seed));
+      arr = base.slice();
+      maxVal = Math.max.apply(null, base);
+      settled = new Array(n).fill(false);
+      stats = { cmp: 0, swaps: 0, depth: 0, settledN: 0 };
+      calls = []; callStack = []; flashes = [];
+      finished = false; waiting = null; cur = null; pendingPivot = undefined;
+      acc = 0;
+      gen = sortGen(arr, { scheme, pivot: pivotMode, rnd: mulberry(seed ^ 0x9e3779b9) }, stats, settled);
+      alt = {
+        first: headless(base, scheme, 'first', seed ^ 0x9e3779b9).cmp,
+        middle: headless(base, scheme, 'middle', seed ^ 0x9e3779b9).cmp,
+        random: headless(base, scheme, 'random', seed ^ 0x9e3779b9).cmp,
+        median3: headless(base, scheme, 'median3', seed ^ 0x9e3779b9).cmp
+      };
+      noteText = pivotMode === 'manual'
+        ? 'Your call. When the run asks, click a bar inside the lit range to make it the pivot.'
+        : 'Every cut sends the small bars left, the big ones right, and settles at least one bar for good.';
+      lastDom = '';
+    }
+
+    // ---------- driving the run ----------
+    function advance() {
+      if (finished || waiting || !gen) return false;
+      let r;
+      try {
+        r = gen.next(pendingPivot);
+      } catch (err) {
+        finished = true; return false;
+      }
+      pendingPivot = undefined;
+      if (r.done) { finished = true; return false; }
+      const ev = r.value;
+      cur = ev;
+      handle(ev);
+      return true;
+    }
+
+    function handle(ev) {
+      if (ev.t === 'enter') {
+        const c = { lo: ev.lo, hi: ev.hi, d: ev.d, live: true };
+        calls.push(c); callStack.push(c);
+        noteText = 'A run of <b>' + (ev.hi - ev.lo + 1) + '</b> bars at nesting level <b>' + ev.d + '</b>. Pick a pivot and split it.';
+      } else if (ev.t === 'leaf') {
+        if (ev.lo === ev.hi) calls.push({ lo: ev.lo, hi: ev.hi, d: ev.d, live: false });
+      } else if (ev.t === 'exit') {
+        const c = callStack.pop();
+        if (c) c.live = false;
+      } else if (ev.t === 'need') {
+        waiting = { lo: ev.lo, hi: ev.hi };
+        playing = false; syncPlay();
+        noteText = 'Your call: click any bar between <b>' + (ev.lo + 1) + '</b> and <b>' + (ev.hi + 1) + '</b> to use it as the pivot.';
+      } else if (ev.t === 'place') {
+        const many = ev.k2 !== undefined && ev.k2 > ev.k;
+        noteText = many
+          ? 'Everything equal to <b>' + ev.pv + '</b> — <b>' + (ev.k2 - ev.k + 1) + '</b> bars — is home in one go.'
+          : 'The pivot <b>' + ev.pv + '</b> is home for good. Nothing will ever compare against it again.';
+      } else if (ev.t === 'split') {
+        noteText = 'Hoare’s scheme splits at <b>' + (ev.k + 1) + '</b> without promising any bar its final place — that comes later.';
+      } else if (ev.t === 'peek') {
+        noteText = 'Median of three: first, middle and last, and the middle-sized one becomes the pivot.';
+      }
+    }
+
+    function finishRun() {
+      let guard = 0;
+      while (!finished && !waiting && guard++ < 3000000) advance();
+    }
+
+    // ---------- drawing ----------
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      drawBars();
+      drawTree();
+      updateReadout();
+    }
+
+    function drawBars() {
+      const bw = barsR.w / n;
+      const gap = bw > 5 ? 1.5 : (bw > 2.5 ? 0.7 : 0);
+      const lo = cur && cur.lo !== undefined ? cur.lo : -1;
+      const hi = cur && cur.hi !== undefined ? cur.hi : -2;
+      const active = !finished && lo >= 0 && hi >= lo;
+
+      // the lit range behind the bars
+      if (active) {
+        const x = barsR.x + lo * bw, w = (hi - lo + 1) * bw;
+        const grad = ctx.createLinearGradient(0, barsR.y, 0, barsR.y + barsR.h);
+        grad.addColorStop(0, 'rgba(124,124,255,0.10)');
+        grad.addColorStop(1, 'rgba(124,124,255,0.02)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, barsR.y - 8, w, barsR.h + 12);
+      }
+
+      // baseline
+      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(barsR.x, barsR.y + barsR.h + 0.5);
+      ctx.lineTo(barsR.x + barsR.w, barsR.y + barsR.h + 0.5);
+      ctx.stroke();
+
+      for (let i = 0; i < n; i++) {
+        const v = arr[i];
+        const h = Math.max(2, (v / maxVal) * barsR.h);
+        const x = barsR.x + i * bw;
+        const y = barsR.y + barsR.h - h;
+        const w = Math.max(1, bw - gap);
+        const inRange = active && i >= lo && i <= hi;
+        let a = 0.30;
+        if (settled[i]) a = 0.62;
+        if (inRange) a = 0.95;
+        ctx.fillStyle = colFor(v, a);
+        ctx.fillRect(x, y, w, h);
+        if (settled[i]) {
+          ctx.fillStyle = 'rgba(138,255,192,0.85)';
+          ctx.fillRect(x, y - 2, w, 2);
+        }
+      }
+
+      // the pivot: a bar outlined in pink, and the line at its height
+      if (active && cur && cur.piv !== undefined && cur.pv !== undefined) {
+        const py = barsR.y + barsR.h - (cur.pv / maxVal) * barsR.h;
+        if (showLine) {
+          ctx.save();
+          ctx.setLineDash([6, 5]);
+          ctx.strokeStyle = 'rgba(255,124,195,0.75)';
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(barsR.x + lo * bw - 6, py);
+          ctx.lineTo(barsR.x + (hi + 1) * bw + 6, py);
+          ctx.stroke();
+          ctx.restore();
+          ctx.fillStyle = 'rgba(255,124,195,0.8)';
+          ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+          const lx = barsR.x + (hi + 1) * bw + 10;
+          if (lx < W - 66) {
+            ctx.textAlign = 'left';
+            ctx.fillText('pivot ' + cur.pv, lx, py + 4);
+          } else {
+            ctx.textAlign = 'right';
+            ctx.fillText('pivot ' + cur.pv, barsR.x + (hi + 1) * bw - 4, py - 6);
+          }
+        }
+        const px = barsR.x + cur.piv * bw;
+        const ph = Math.max(2, (arr[cur.piv] / maxVal) * barsR.h);
+        ctx.strokeStyle = PINK;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(px - 1, barsR.y + barsR.h - ph - 1, Math.max(2, bw - gap) + 2, ph + 2);
+      }
+
+      // the scanning fingers
+      if (active && cur && (cur.t === 'cmp' || cur.t === 'swap')) {
+        marker(cur.i, bw, VIOLET, 'i');
+        if (cur.j !== undefined && cur.j !== cur.i) marker(cur.j, bw, GREEN, 'j');
+      }
+
+      // settling flashes
+      for (let k = flashes.length - 1; k >= 0; k--) {
+        const f = flashes[k];
+        f.t -= 0.045;
+        if (f.t <= 0) { flashes.splice(k, 1); continue; }
+        const v = arr[f.i];
+        const h = Math.max(2, (v / maxVal) * barsR.h);
+        const x = barsR.x + f.i * bw;
+        ctx.strokeStyle = 'rgba(138,255,192,' + (f.t * 0.9).toFixed(3) + ')';
+        ctx.lineWidth = 1.5;
+        const pad = (1 - f.t) * 7;
+        ctx.strokeRect(x - pad, barsR.y + barsR.h - h - pad, Math.max(2, bw - gap) + pad * 2, h + pad * 2);
+      }
+      if (flashes.length > 400) flashes.splice(0, flashes.length - 400);
+
+      // waiting for a click
+      if (waiting) {
+        const x = barsR.x + waiting.lo * bw, w = (waiting.hi - waiting.lo + 1) * bw;
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(x - 2, barsR.y - 10, w + 4, barsR.h + 12);
+        ctx.restore();
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        const cx = Math.max(barsR.x + 90, Math.min(barsR.x + barsR.w - 90, x + w / 2));
+        ctx.fillText('click a bar in here to make it the pivot', cx, Math.max(15, barsR.y - 16));
+      }
+    }
+
+    function marker(idx, bw, colour, label) {
+      if (idx < 0 || idx >= n) return;
+      const x = barsR.x + idx * bw + Math.max(1, bw - 1) / 2;
+      const y = barsR.y + barsR.h + 4;
+      ctx.fillStyle = colour;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 4.5, y + 8);
+      ctx.lineTo(x + 4.5, y + 8);
+      ctx.closePath();
+      ctx.fill();
+      if (bw > 7) {
+        ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, x, y + 19);
+      }
+    }
+
+    function drawTree() {
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.38)';
+      ctx.fillText('the call tree — one bar per partition, one row per level of nesting', treeR.x, treeR.y - 12);
+
+      const ideal = Math.max(1, Math.ceil(Math.log2(Math.max(2, n))));
+      const rows = Math.max(stats.depth + 1, ideal + 2);
+      const rowH = Math.max(2.2, Math.min(13, treeR.h / rows));
+      const u = treeR.w / n;
+
+      // the depth a balanced split would need
+      const iy = treeR.y + ideal * rowH;
+      if (iy < treeR.y + treeR.h) {
+        ctx.save();
+        ctx.setLineDash([3, 5]);
+        ctx.strokeStyle = 'rgba(138,255,192,0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(treeR.x, iy + 0.5);
+        ctx.lineTo(treeR.x + treeR.w, iy + 0.5);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = 'rgba(138,255,192,0.55)';
+        ctx.textAlign = 'right';
+        ctx.fillText('log₂ n = ' + ideal, treeR.x + treeR.w, iy - 3);
+      }
+
+      for (let k = 0; k < calls.length; k++) {
+        const c = calls[k];
+        const y = treeR.y + c.d * rowH;
+        if (y > treeR.y + treeR.h) continue;
+        const x = treeR.x + c.lo * u;
+        const w = Math.max(1.2, (c.hi - c.lo + 1) * u - 0.8);
+        const h = Math.max(1.6, rowH - 1.8);
+        const t = Math.min(1, c.d / Math.max(4, stats.depth));
+        if (c.live) {
+          ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        } else {
+          const r = Math.round(124 + t * (255 - 124));
+          const b = Math.round(255 + t * (195 - 255));
+          ctx.fillStyle = 'rgba(' + r + ',124,' + b + ',0.5)';
+        }
+        ctx.fillRect(x, y, w, h);
+      }
+    }
+
+    // ---------- readout ----------
+    const el = (id) => document.getElementById(id);
+    function fmt(x) { return x.toLocaleString('en-US'); }
+
+    function updateReadout() {
+      const ideal = Math.max(1, Math.round(n * Math.log2(Math.max(2, n))));
+      const ratio = stats.cmp / ideal;
+      const key = [n, stats.cmp, stats.swaps, stats.depth, stats.settledN, finished ? 1 : 0, noteText].join('|');
+      if (key === lastDom) return;
+      lastDom = key;
+      el('rN').textContent = n + ' · ' + stats.settledN;
+      el('rCmp').textContent = fmt(stats.cmp) + '  (' + ratio.toFixed(2) + '× n log₂ n)';
+      el('rSwaps').textContent = fmt(stats.swaps);
+      el('rDepth').textContent = stats.depth + ' / ' + Math.ceil(Math.log2(Math.max(2, n)));
+      el('rNote').innerHTML = noteText;
+      if (alt) {
+        el('rAlt').innerHTML = 'Same array, same scheme, other pivots: first <b class="v">' + fmt(alt.first) +
+          '</b> · middle <b class="v">' + fmt(alt.middle) + '</b> · random <b class="v">' + fmt(alt.random) +
+          '</b> · median-of-3 <b class="g">' + fmt(alt.median3) + '</b> comparisons.';
+      }
+      el('rVerdict').innerHTML = verdict(ratio);
+    }
+
+    function verdict(ratio) {
+      const log2n = Math.ceil(Math.log2(Math.max(2, n)));
+      if (finished) {
+        const bad = stats.depth > log2n * 2.4;
+        return 'Sorted in <b>' + fmt(stats.cmp) + '</b> comparisons, <b class="p">' + ratio.toFixed(2) +
+          '×</b> the <b>n log₂ n</b> ideal, nesting <b>' + stats.depth + '</b> deep against a possible <b>' + log2n + '</b>. ' +
+          (bad ? 'That is the staircase: each cut peeled off one bar and handed the rest straight back.'
+               : 'Splits near the middle, so the tree stayed shallow and the cost stayed close to the ideal.');
+      }
+      if (stats.depth > log2n * 2.4) {
+        return 'The nesting is running away — <b class="p">' + stats.depth + '</b> levels where <b>' + log2n +
+          '</b> would do. Each cut is peeling off one bar instead of halving the work.';
+      }
+      if (pivotMode === 'first' && shape === 'sorted') {
+        return 'A sorted array and the first bar as pivot: the worst case quicksort has, reached by the tidiest input there is.';
+      }
+      return 'Watch the call tree grow. Wide and shallow is a good pivot; a staircase down the left edge is a bad one.';
+    }
+
+    // ---------- controls ----------
+    function syncPlay() { el('play').textContent = playing ? '❚❚ pause' : '▶ play'; }
+
+    function segment(id, attr, apply) {
+      const box = el(id);
+      box.addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        [...box.querySelectorAll('button')].forEach((x) => x.classList.toggle('on', x === b));
+        apply(b.getAttribute(attr));
+      });
+    }
+
+    segment('pivots', 'data-p', (v) => { pivotMode = v; reset(false); });
+    segment('shapes', 'data-s', (v) => { shape = v; reset(false); });
+    segment('schemes', 'data-m', (v) => { scheme = v; reset(false); });
+
+    el('count').addEventListener('input', (e) => {
+      n = +e.target.value;
+      el('countVal').textContent = n;
+      reset(false);
+    });
+
+    function rateOf(v) { return 1.4 * Math.pow(1.076, v); }
+    el('speed').addEventListener('input', (e) => {
+      speedV = +e.target.value;
+      el('speedVal').textContent = Math.round(rateOf(speedV)) + ' / sec';
+    });
+    el('speedVal').textContent = Math.round(rateOf(speedV)) + ' / sec';
+
+    el('play').addEventListener('click', () => { playing = !playing; syncPlay(); });
+    el('step').addEventListener('click', () => { playing = false; syncPlay(); advance(); });
+    el('finish').addEventListener('click', () => { finishRun(); });
+    el('reseed').addEventListener('click', () => { reset(true); playing = true; syncPlay(); });
+    el('showLine').addEventListener('click', () => {
+      showLine = !showLine;
+      el('showLine').classList.toggle('on', showLine);
+    });
+
+    el('collapse').addEventListener('click', () => hidePanel(true));
+    el('showUi').addEventListener('click', () => hidePanel(false));
+    function hidePanel(hide) {
+      ui.classList.toggle('hidden', hide);
+      el('showUi').classList.toggle('on', hide);
+      el('legend').classList.toggle('hidden', hide);
+      layout();
+    }
+
+    // click a bar to choose the pivot
+    function pickAt(clientX, clientY) {
+      if (!waiting) return;
+      const bw = barsR.w / n;
+      let idx = Math.floor((clientX - barsR.x) / bw);
+      idx = Math.max(waiting.lo, Math.min(waiting.hi, idx));
+      pendingPivot = idx;
+      waiting = null;
+      advance();
+      playing = true; syncPlay();
+    }
+    cv.addEventListener('pointerdown', (e) => pickAt(e.clientX, e.clientY));
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'h') { hidePanel(!ui.classList.contains('hidden')); }
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (e.key === ' ') { e.preventDefault(); playing = !playing; syncPlay(); }
+      if (e.key === 'ArrowRight') { playing = false; syncPlay(); advance(); }
+      if (k === 'r') { reset(true); playing = true; syncPlay(); }
+    });
+
+    window.addEventListener('resize', resize);
+
+    // ---------- loop ----------
+    function frame(t) {
+      if (!lastT) lastT = t;
+      const dt = Math.min(0.1, (t - lastT) / 1000);
+      lastT = t;
+      if (playing && !finished && !waiting) {
+        acc += dt * rateOf(speedV);
+        let guard = 0;
+        while (acc >= 1 && !finished && !waiting && guard++ < 20000) { acc--; advance(); }
+        if (acc > 50) acc = 0;
+      }
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    reset(false);
+    syncPlay();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
