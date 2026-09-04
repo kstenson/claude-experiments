@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Whoever Points at You — Experiment 077</title>
+<meta name="description" content="Brin and Page's PageRank, 1998: a page's score is the sum of the scores of whatever points at it, split between that page's links. Circular by definition, so you guess and iterate — or just let a random surfer wander and count where it lands." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1 1 auto;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; border-radius: 9px;
+    padding: 8px 8px; font-size: 0.75rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+  }
+  .seg button:hover { background: rgba(255,255,255,0.09); color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); color: #cfcfff; }
+  .seg.pink button.on { background: rgba(255,124,195,0.18); border-color: rgba(255,124,195,0.5); color: #ffd6ec; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,124,195,0.35); }
+  .toggle.on i::after { transform: translateX(13px); background: #ff9fd2; }
+  .toggle.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .v.amber { color: #ffcf7c; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  #rNote { min-height: 3.2em; }
+  #rAlt { min-height: 2.4em; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout .full b.a { color: #ffcf7c; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one.
+     Sticky so it stays reachable when the panel has to scroll. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; top: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 262px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; flex: none; display: block; }
+  .legend i.page { border-radius: 50%; background: radial-gradient(circle at 35% 30%, #b0b0ff, #4a4ac8); box-shadow: 0 0 8px rgba(124,124,255,0.5); }
+  .legend i.flow { height: 5px; border-radius: 3px; background: linear-gradient(90deg, rgba(124,124,255,0.25), #7c7cff); }
+  .legend i.inn { background: rgba(138,255,192,0.25); border: 2px solid #8affc0; }
+  .legend i.outt { background: rgba(255,124,195,0.2); border: 2px solid #ff7cc3; }
+  .legend i.tele { height: 5px; border-radius: 3px; background: repeating-linear-gradient(90deg, #ffcf7c 0 4px, transparent 4px 8px); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1100px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 54vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 10px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Whoever Points at You</h1>
+    <p class="sub">Experiment № 077 · September 4, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>how the score is found</label>
+        <div class="seg" id="engines">
+          <button data-e="power" class="on">iterate the whole web</button>
+          <button data-e="surfer">follow one random surfer</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>the shape of the web</label>
+        <div class="seg pink" id="presets">
+          <button data-p="web" class="on">grown web</button>
+          <button data-p="hub">one big hub</button>
+          <button data-p="ring">a plain ring</button>
+          <button data-p="sink">rank sink</button>
+          <button data-p="farm">link farm</button>
+          <button data-p="dead">dead ends</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="damp">damping — chance of following a link <b id="dampVal">0.85</b></label>
+        <input type="range" id="damp" min="0.05" max="1" step="0.01" value="0.85" />
+      </div>
+
+      <div class="row">
+        <label for="count">pages <b id="countVal">14</b></label>
+        <input type="range" id="count" min="10" max="26" step="1" value="14" />
+      </div>
+
+      <div class="row">
+        <label for="speed">speed <b id="speedVal">—</b></label>
+        <input type="range" id="speed" min="0" max="100" step="1" value="46" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="play">❚❚ pause</button>
+        <button class="btn" id="step">step ›</button>
+        <button class="btn" id="finish">settle it ▸▸</button>
+        <button class="btn pink" id="reseed">new web</button>
+      </div>
+
+      <div class="toggle on" id="showFlow"><i></i> thicker link = more score flowing</div>
+
+      <div class="readout">
+        <span class="k">pages · links</span><span class="v violet" id="rSize">14 · 0</span>
+        <span class="k" id="kProgress">passes</span><span class="v" id="rProgress">0</span>
+        <span class="k" id="kErr">still moving by</span><span class="v pinkv" id="rErr">—</span>
+        <span class="k">top page</span><span class="v good" id="rTop">—</span>
+        <hr />
+        <p class="full" id="rNote">Every page starts with the same score. Press play and watch each one hand what it has to whatever it links to.</p>
+        <hr />
+        <p class="full" id="rAlt">—</p>
+        <hr />
+        <p class="full" id="rVerdict">—</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="page"></i> a page, sized by its score</div>
+    <div><i class="flow"></i> score flowing along a link</div>
+    <div><i class="inn"></i> links pointing in (hover a page)</div>
+    <div><i class="outt"></i> links pointing out</div>
+    <div><i class="tele"></i> the surfer giving up and jumping</div>
+  </div>
+
+  <p class="hint">drag from one page to another to <b>add or remove a link</b> · click a page to see <b>where its score comes from</b> · <b>space</b> plays · <b>→</b> steps · <b>r</b> new web · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 077 · The story</p>
+      <h2>Whoever Points at You</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I have spent seventy-six days on algorithms that mostly nobody argues about, and then realised I had skipped the one that quietly decided what a generation of people read. Brin and Page published PageRank in 1998 with a definition that shouldn't work: a page's importance is the sum of the importance of every page pointing at it, each divided by how many links that page hands out. Read it again — the answer appears on both sides. You need every score to compute any score. The fix is almost insultingly simple. Give every page the same score, apply the rule once, apply it again, and keep going until the numbers stop moving. They always stop moving, and they always stop in the same place no matter what you guessed. I wanted to watch that happen rather than take it on faith.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Two completely different-looking things converge on the same numbers. <em>Iterate the whole web</em> is the linear algebra: every page pushes its score down its out-links, all at once, and the whole vector settles in about twenty passes. <em>Follow one random surfer</em> throws that away and just wanders — click a link, click a link, occasionally get bored and jump somewhere random — and the fraction of time it spends on each page creeps toward exactly the same answer, one hop at a time. Watching the bars agree is the moment the abstraction lands. My favourite thing to do, though, is the <em>link farm</em>: a client page and a stack of junk pages that exist only to point at it. It collects more inbound links than anything else on the board and still finishes fourth or fifth, because the pages voting for it have nothing to give. The pink tick on every bar shows where crude link-counting would have put that page, and above the client it towers over the bar by a factor of three. Then try <em>rank sink</em> and drag damping up towards 1.00: a small clique with no way out slowly swallows every point on the board, and the moment you pull damping back, the score floods out again.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The damping factor is the interesting part, and it is not a fudge. Fifteen percent of the time the surfer abandons the link graph entirely and teleports to a random page, and that single concession does three jobs at once: it rescues pages with no outgoing links, it stops closed cliques hoarding the whole score, and it is what guarantees there is one answer to converge to at all. It also sets the speed — each pass shrinks the remaining error by roughly the damping factor, which is why 0.85 needs about twenty passes and 0.99 needs hundreds. More generally: this is the difference between counting votes and weighing them. Anyone can manufacture a thousand pages that link to you; nobody can manufacture a thousand pages that <em>matter</em>, because mattering is defined recursively in terms of everyone else. Any time you need a reputation number that is expensive to fake, that recursion — importance is borrowed from whoever already has some — is the trick worth stealing.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Whoever Points at You — PageRank, two ways ----
+  (() => {
+    const cv = document.getElementById('c');
+    const ctx = cv.getContext('2d');
+    const ui = document.getElementById('ui');
+    const el = (id) => document.getElementById(id);
+
+    const VIOLET = '#7c7cff', PINK = '#ff7cc3', GREEN = '#8affc0', AMBER = '#ffcf7c';
+    const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    let W = 0, H = 0, DPR = 1;
+    let graphR = { x: 0, y: 0, w: 1, h: 1 };
+    let chartR = { x: 0, y: 0, w: 1, h: 1 };
+
+    // ---------- deterministic rng ----------
+    let rngState = 1;
+    const srand = (s) => { rngState = (s >>> 0) || 1; };
+    function rnd() {
+      rngState = (Math.imul(rngState, 1664525) + 1013904223) >>> 0;
+      return rngState / 4294967296;
+    }
+    const ri = (n) => Math.min(n - 1, Math.floor(rnd() * n));
+
+    // ---------- state ----------
+    let N = 14;
+    let preset = 'web';
+    let engine = 'power';
+    let damping = 0.85;
+    let seed = 20260904;
+
+    let edges = [];              // [a, b] — a links to b
+    let edgeSet = new Set();
+    let outAdj = [], inAdj = [], indeg = [];
+    let farmTarget = -1;         // the page the link farm is paid to promote
+
+    let px = [], py = [];        // raw coords from the relaxation
+    let ax = [], ay = [];        // animated pixel positions
+    let tx = [], ty = [];        // target pixel positions
+    let minSep = 60;             // closest pair on screen — caps the disc size
+
+    let rank = [], exact = [], visits = [], view = [];
+    let iter = 0, delta = 1, prevDelta = 1, converged = false;
+    let hops = 0, walker = 0, walkPrev = 0, walkT = 1, walkTele = false, teleFade = 0;
+
+    let selected = -1, hovered = -1;
+    let dragFrom = -1, dragX = 0, dragY = 0, dragMoved = false;
+
+    let playing = true, speedV = 46, acc = 0, lastT = 0, showFlow = true;
+    let readoutTick = 0, lastUiH = -1;
+
+    // ---------- graph plumbing ----------
+    const ekey = (a, b) => a * 64 + b;
+
+    function addEdge(a, b) {
+      if (a === b || a < 0 || b < 0 || a >= N || b >= N) return false;
+      const k = ekey(a, b);
+      if (edgeSet.has(k)) return false;
+      edgeSet.add(k);
+      edges.push([a, b]);
+      return true;
+    }
+
+    function hasEdge(a, b) { return edgeSet.has(ekey(a, b)); }
+
+    function removeEdge(a, b) {
+      const k = ekey(a, b);
+      if (!edgeSet.has(k)) return false;
+      edgeSet.delete(k);
+      edges = edges.filter((e) => !(e[0] === a && e[1] === b));
+      return true;
+    }
+
+    function rebuildAdj() {
+      outAdj = []; inAdj = []; indeg = new Array(N).fill(0);
+      for (let i = 0; i < N; i++) { outAdj.push([]); inAdj.push([]); }
+      for (const [a, b] of edges) { outAdj[a].push(b); inAdj[b].push(a); indeg[b]++; }
+    }
+
+    // ---------- the webs ----------
+    // A grown web over pages 0..count-1: each new page links to earlier ones
+    // in proportion to how linked-to they already are (preferential attachment).
+    function buildWeb(count) {
+      const n = count === undefined ? N : count;
+      const deg = new Array(n).fill(0);
+      const pick = (upto) => {
+        let total = 0;
+        for (let j = 0; j < upto; j++) total += deg[j] + 1;
+        let r = rnd() * total;
+        for (let j = 0; j < upto; j++) { r -= deg[j] + 1; if (r <= 0) return j; }
+        return upto - 1;
+      };
+      const link = (a, b) => { if (addEdge(a, b)) deg[b]++; };
+      link(0, 1); link(1, 2); link(2, 0); link(1, 0);
+      for (let i = 3; i < n; i++) {
+        const k = 1 + ri(2);
+        for (let t = 0; t < k; t++) link(i, pick(i));
+      }
+      // a few more links: half to whoever is already popular, half at random,
+      // so the tail isn't left with nothing pointing at it at all
+      const extra = Math.round(n * 0.7);
+      for (let t = 0; t < extra; t++) link(ri(n), rnd() < 0.45 ? pick(n) : ri(n));
+    }
+
+    function buildGraph() {
+      edgeSet = new Set(); edges = [];
+      srand(seed + N * 7919 + preset.length * 104729);
+
+      if (preset === 'web' || preset === 'dead') {
+        buildWeb();
+      } else if (preset === 'hub') {
+        for (let i = 1; i < N; i++) addEdge(i, 0);
+        for (let i = 1; i < Math.min(N, 5); i++) addEdge(0, i);
+        for (let i = 1; i < N; i++) if (rnd() < 0.4) addEdge(i, 1 + ((i) % (N - 1)));
+      } else if (preset === 'ring') {
+        for (let i = 0; i < N; i++) addEdge(i, (i + 1) % N);
+      } else if (preset === 'sink') {
+        const k = Math.max(3, Math.round(N * 0.62));   // the open web
+        for (let i = 0; i < k; i++) {
+          addEdge(i, (i + 1) % k);
+          if (rnd() < 0.55) addEdge(i, ri(k));
+        }
+        const m = N - k;                                // the trap: links only inward
+        for (let i = 0; i < m; i++) {
+          addEdge(k + i, k + ((i + 1) % m));
+          if (m > 2 && rnd() < 0.5) addEdge(k + i, k + ri(m));
+        }
+        addEdge(1 % k, k);                              // two doorways in, none out
+        addEdge(Math.min(k - 1, 3), k + (m > 1 ? 1 : 0));
+      } else if (preset === 'farm') {
+        // an honest web on pages 0..h-1, one client page, and a farm of junk
+        // pages nobody links to — each pointing at the client, plus a real
+        // link or two for cover.
+        const h = Math.min(Math.max(4, Math.round(N * 0.42)), N - 5);
+        buildWeb(h);
+        farmTarget = h;                                  // the page buying links
+        addEdge(farmTarget, ri(h));                      // it links out like anyone else
+        addEdge(farmTarget, ri(h));
+        for (let i = h + 1; i < N; i++) {
+          addEdge(i, farmTarget);
+          addEdge(i, ri(h));
+          if (rnd() < 0.5) addEdge(i, ri(h));
+        }
+        // make sure the bought links really do out-count the honest web's best
+        rebuildAdj();
+        let hub = 0;
+        for (let i = 1; i < h; i++) if (indeg[i] > indeg[hub]) hub = i;
+        let guard = 0;
+        while (indeg[hub] >= indeg[farmTarget] && inAdj[hub].length && guard++ < 40) {
+          removeEdge(inAdj[hub][inAdj[hub].length - 1], hub);
+          rebuildAdj();
+          hub = 0;
+          for (let i = 1; i < h; i++) if (indeg[i] > indeg[hub]) hub = i;
+        }
+      }
+      if (preset !== 'farm') farmTarget = -1;
+
+      if (preset === 'dead') {
+        const doomed = new Set();
+        for (let i = 2; i < N; i += 3) doomed.add(i);
+        const keep = edges.filter(([a]) => !doomed.has(a));
+        edgeSet = new Set(); edges = [];
+        for (const [a, b] of keep) addEdge(a, b);
+      }
+
+      rebuildAdj();
+    }
+
+    // ---------- layout (a headless relaxation, then frozen) ----------
+    function relayout() {
+      srand(seed ^ 0x9e3779b9);
+      px = []; py = [];
+      for (let i = 0; i < N; i++) {
+        const a = (i / N) * Math.PI * 2;
+        px.push(Math.cos(a) + (rnd() - 0.5) * 0.2);
+        py.push(Math.sin(a) + (rnd() - 0.5) * 0.2);
+      }
+      const k = 2.7 / Math.sqrt(N);
+      const steps = 620;
+      const fx = new Array(N).fill(0), fy = new Array(N).fill(0);
+      for (let s = 0; s < steps; s++) {
+        const heat = 0.10 * (1 - s / steps) + 0.004;
+        fx.fill(0); fy.fill(0);
+        for (let i = 0; i < N; i++) {
+          for (let j = i + 1; j < N; j++) {
+            let dx = px[i] - px[j], dy = py[i] - py[j];
+            let d2 = dx * dx + dy * dy;
+            if (d2 < 1e-7) { dx = (rnd() - 0.5) * 0.02; dy = (rnd() - 0.5) * 0.02; d2 = dx * dx + dy * dy + 1e-7; }
+            const d = Math.sqrt(d2);
+            const f = (k * k) / d2;
+            fx[i] += (dx / d) * f; fy[i] += (dy / d) * f;
+            fx[j] -= (dx / d) * f; fy[j] -= (dy / d) * f;
+          }
+        }
+        for (const [a, b] of edges) {
+          const dx = px[a] - px[b], dy = py[a] - py[b];
+          const d = Math.hypot(dx, dy) + 1e-6;
+          const f = (d * d) / k * 0.40;
+          fx[a] -= (dx / d) * f; fy[a] -= (dy / d) * f;
+          fx[b] += (dx / d) * f; fy[b] += (dy / d) * f;
+        }
+        for (let i = 0; i < N; i++) {
+          fx[i] -= px[i] * 0.16; fy[i] -= py[i] * 0.16;   // gentle gravity
+          const m = Math.hypot(fx[i], fy[i]) || 1;
+          const cap = Math.min(m, 2.5);
+          px[i] += (fx[i] / m) * cap * heat;
+          py[i] += (fy[i] / m) * cap * heat;
+        }
+      }
+      fitLayout();
+      ax = tx.slice(); ay = ty.slice();
+    }
+
+    function fitLayout() {
+      if (!px.length) return;
+      let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+      for (let i = 0; i < N; i++) {
+        minx = Math.min(minx, px[i]); maxx = Math.max(maxx, px[i]);
+        miny = Math.min(miny, py[i]); maxy = Math.max(maxy, py[i]);
+      }
+      const bw = Math.max(maxx - minx, 1e-3), bh = Math.max(maxy - miny, 1e-3);
+      const pad = Math.min(Math.min(graphR.w, graphR.h) * 0.09 + 16, 46);
+      const aw = Math.max(40, graphR.w - pad * 2), ah = Math.max(40, graphR.h - pad * 2);
+      const s = Math.min(aw / bw, ah / bh);
+      const cx = graphR.x + graphR.w / 2, cy = graphR.y + graphR.h / 2;
+      const mx = (minx + maxx) / 2, my = (miny + maxy) / 2;
+      tx = []; ty = [];
+      for (let i = 0; i < N; i++) {
+        tx.push(cx + (px[i] - mx) * s);
+        ty.push(cy + (py[i] - my) * s);
+      }
+      // how close the tightest pair ends up — discs are sized to never collide
+      minSep = Infinity;
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          minSep = Math.min(minSep, Math.hypot(tx[i] - tx[j], ty[i] - ty[j]));
+        }
+      }
+      if (!isFinite(minSep)) minSep = 60;
+      if (ax.length !== N) { ax = tx.slice(); ay = ty.slice(); }
+    }
+
+    // ---------- the algorithm ----------
+    function powerOnce(r) {
+      let dangling = 0;
+      for (let i = 0; i < N; i++) if (outAdj[i].length === 0) dangling += r[i];
+      const base = (1 - damping) / N + (damping * dangling) / N;
+      const nr = new Array(N).fill(base);
+      for (let i = 0; i < N; i++) {
+        const o = outAdj[i];
+        if (!o.length) continue;
+        const share = (damping * r[i]) / o.length;
+        for (let t = 0; t < o.length; t++) nr[o[t]] += share;
+      }
+      return nr;
+    }
+
+    function computeExact() {
+      let r = new Array(N).fill(1 / N);
+      for (let s = 0; s < 600; s++) {
+        const nr = powerOnce(r);
+        let d = 0;
+        for (let i = 0; i < N; i++) d += Math.abs(nr[i] - r[i]);
+        r = nr;
+        if (d < 1e-14) break;
+      }
+      exact = r;
+    }
+
+    function powerStep() {
+      if (converged) return;
+      const nr = powerOnce(rank);
+      let d = 0;
+      for (let i = 0; i < N; i++) d += Math.abs(nr[i] - rank[i]);
+      prevDelta = delta; delta = d; rank = nr; iter++;
+      if (d < 1e-11) converged = true;
+    }
+
+    function surferStep() {
+      visits[walker]++;
+      hops++;
+      const o = outAdj[walker];
+      let next, tele = false;
+      if (o.length === 0 || rnd() > damping) { next = ri(N); tele = true; }
+      else next = o[ri(o.length)];
+      walkPrev = walker; walker = next; walkTele = tele; walkT = 0;
+      if (tele) teleFade = 1;
+    }
+
+    function advance() {
+      if (engine === 'power') powerStep(); else surferStep();
+    }
+
+    function currentView() {
+      if (engine === 'power') return rank;
+      if (hops === 0) return new Array(N).fill(1 / N);
+      const v = new Array(N);
+      for (let i = 0; i < N; i++) v[i] = visits[i] / hops;
+      return v;
+    }
+
+    function resetRanks() {
+      rank = new Array(N).fill(1 / N);
+      visits = new Array(N).fill(0);
+      iter = 0; hops = 0; delta = 1; prevDelta = 1; converged = false;
+      walker = 0; walkPrev = 0; walkT = 1; walkTele = false; teleFade = 0;
+      acc = 0;
+      view = currentView();
+    }
+
+    function reset(newSeed) {
+      if (newSeed) seed = (Math.random() * 2147483647) | 0;
+      selected = -1; hovered = -1; dragFrom = -1;
+      buildGraph();
+      relayout();
+      computeExact();
+      resetRanks();
+    }
+
+    function graphChanged() {
+      rebuildAdj();
+      computeExact();
+      converged = false;
+      delta = Math.max(delta, 1e-3);
+      if (engine === 'surfer') { visits = new Array(N).fill(0); hops = 0; }
+    }
+
+    // ---------- geometry ----------
+    function nodeRadius(i, v) {
+      const base = Math.min(graphR.w, graphR.h);
+      const rmax = Math.max(8, Math.min(base * 0.075, 34, minSep * 0.42));
+      const rmin = rmax * 0.42;
+      const mx = Math.max(...v) || 1;
+      return rmin + (rmax - rmin) * Math.sqrt(Math.max(0, v[i]) / mx);
+    }
+
+    function edgeGeom(a, b) {
+      const x1 = ax[a], y1 = ay[a], x2 = ax[b], y2 = ay[b];
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const ox = -dy / len, oy = dx / len;
+      const bend = Math.min(46, len * 0.17);
+      return { x1, y1, x2, y2, cx: (x1 + x2) / 2 + ox * bend, cy: (y1 + y2) / 2 + oy * bend };
+    }
+
+    function bez(g, t) {
+      const u = 1 - t;
+      return {
+        x: u * u * g.x1 + 2 * u * t * g.cx + t * t * g.x2,
+        y: u * u * g.y1 + 2 * u * t * g.cy + t * t * g.y2,
+      };
+    }
+
+    function trimT(g, cxp, cyp, r, fromStart) {
+      // walk along the curve until we are clear of a node's disc
+      for (let s = 0; s <= 34; s++) {
+        const t = fromStart ? s / 34 : 1 - s / 34;
+        const p = bez(g, t);
+        if (Math.hypot(p.x - cxp, p.y - cyp) > r + 3) return t;
+      }
+      return fromStart ? 0.35 : 0.65;
+    }
+
+    // ---------- drawing ----------
+    function draw() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      const v = view;
+      const radii = new Array(N);
+      for (let i = 0; i < N; i++) radii[i] = nodeRadius(i, v);
+
+      // score flowing down each link
+      let fmax = 1e-9;
+      const flow = edges.map(([a]) => {
+        const f = outAdj[a].length ? v[a] / outAdj[a].length : 0;
+        if (f > fmax) fmax = f;
+        return f;
+      });
+
+      const focus = hovered >= 0 ? hovered : selected;
+
+      // ---- links ----
+      for (let e = 0; e < edges.length; e++) {
+        const [a, b] = edges[e];
+        const g = edgeGeom(a, b);
+        const t0 = trimT(g, ax[a], ay[a], radii[a], true);
+        const t1 = trimT(g, ax[b], ay[b], radii[b], false);
+        if (t1 <= t0) continue;
+
+        const rel = Math.pow(flow[e] / fmax, 0.65);
+        let col = VIOLET, alpha = 0.16 + 0.5 * rel, wid = showFlow ? 0.7 + 3.6 * rel : 1.3;
+        if (focus >= 0) {
+          if (b === focus) { col = GREEN; alpha = 0.95; wid += 1.1; }
+          else if (a === focus) { col = PINK; alpha = 0.8; wid += 0.7; }
+          else { alpha *= 0.28; }
+        }
+
+        ctx.strokeStyle = col;
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = wid;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        for (let s = 0; s <= 22; s++) {
+          const p = bez(g, t0 + (t1 - t0) * (s / 22));
+          if (s === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+
+        // arrowhead
+        const pe = bez(g, t1), pb = bez(g, Math.max(t0, t1 - 0.05));
+        const ang = Math.atan2(pe.y - pb.y, pe.x - pb.x);
+        const hl = 5 + wid * 1.2;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(pe.x, pe.y);
+        ctx.lineTo(pe.x - hl * Math.cos(ang - 0.42), pe.y - hl * Math.sin(ang - 0.42));
+        ctx.lineTo(pe.x - hl * Math.cos(ang + 0.42), pe.y - hl * Math.sin(ang + 0.42));
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // ---- the surfer's last teleport ----
+      if (engine === 'surfer' && teleFade > 0.01 && walkPrev !== walker) {
+        ctx.save();
+        ctx.strokeStyle = AMBER;
+        ctx.globalAlpha = 0.55 * teleFade;
+        ctx.setLineDash([5, 6]);
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(ax[walkPrev], ay[walkPrev]);
+        ctx.lineTo(ax[walker], ay[walker]);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // ---- the link being dragged ----
+      if (dragFrom >= 0 && dragMoved) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.setLineDash([4, 5]);
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(ax[dragFrom], ay[dragFrom]);
+        ctx.lineTo(dragX, dragY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // ---- pages ----
+      for (let i = 0; i < N; i++) {
+        const r = radii[i];
+        const dim = focus >= 0 && i !== focus && !hasEdge(i, focus) && !hasEdge(focus, i);
+        ctx.globalAlpha = dim ? 0.4 : 1;
+
+        const gr = ctx.createRadialGradient(ax[i] - r * 0.3, ay[i] - r * 0.35, r * 0.12, ax[i], ay[i], r);
+        gr.addColorStop(0, '#c3c3ff');
+        gr.addColorStop(0.55, '#7c7cff');
+        gr.addColorStop(1, '#3b3b9c');
+        ctx.fillStyle = gr;
+        ctx.shadowColor = 'rgba(124,124,255,0.55)';
+        ctx.shadowBlur = 14;
+        ctx.beginPath(); ctx.arc(ax[i], ay[i], r, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (outAdj[i].length === 0) {           // a dead end
+          ctx.strokeStyle = AMBER; ctx.lineWidth = 2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.arc(ax[i], ay[i], r + 3, 0, Math.PI * 2); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        if (i === selected) {
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(ax[i], ay[i], r + 5, 0, Math.PI * 2); ctx.stroke();
+        }
+        if (i === dragFrom) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(ax[i], ay[i], r + 8, 0, Math.PI * 2); ctx.stroke();
+        }
+
+        ctx.fillStyle = '#0a0a14';
+        ctx.font = '700 ' + Math.round(Math.min(r * 1.05, 17)) + 'px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(LETTERS[i], ax[i], ay[i] + 0.5);
+
+        const pct = (v[i] * 100).toFixed(1) + '%';
+        const pf = Math.max(8, Math.min(10.5, minSep * 0.13));
+        ctx.font = '600 ' + pf.toFixed(1) + 'px ui-sans-serif, system-ui, sans-serif';
+        ctx.textBaseline = 'top';
+        const tw = ctx.measureText(pct).width;
+        ctx.fillStyle = 'rgba(5,5,10,0.82)';         // keep it readable over links
+        roundRect(ax[i] - tw / 2 - 3, ay[i] + r + 3, tw + 6, pf + 3.5, 4);
+        ctx.fill();
+        ctx.fillStyle = i === focus ? '#e9e9f0' : '#9a9ab0';
+        ctx.fillText(pct, ax[i], ay[i] + r + 5);
+      }
+      ctx.globalAlpha = 1;
+
+      // ---- the surfer ----
+      if (engine === 'surfer' && hops > 0) {
+        let p;
+        if (walkTele || !hasEdge(walkPrev, walker)) {
+          p = { x: ax[walkPrev] + (ax[walker] - ax[walkPrev]) * walkT, y: ay[walkPrev] + (ay[walker] - ay[walkPrev]) * walkT };
+        } else {
+          p = bez(edgeGeom(walkPrev, walker), walkT);
+        }
+        ctx.fillStyle = walkTele ? AMBER : PINK;
+        ctx.shadowColor = walkTele ? 'rgba(255,207,124,0.9)' : 'rgba(255,124,195,0.9)';
+        ctx.shadowBlur = 18;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      drawChart(v);
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawChart(v) {
+      const R = chartR;
+      if (R.h < 54) return;
+
+      ctx.fillStyle = 'rgba(255,255,255,0.028)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.lineWidth = 1;
+      roundRect(R.x, R.y, R.w, R.h, 12);
+      ctx.fill(); ctx.stroke();
+
+      const totalLinks = Math.max(1, edges.length);
+      const naive = new Array(N);
+      for (let i = 0; i < N; i++) naive[i] = indeg[i] / totalLinks;
+
+      const order = [];
+      for (let i = 0; i < N; i++) order.push(i);
+      order.sort((a, b) => v[b] - v[a]);
+
+      let mx = 1e-9;
+      for (let i = 0; i < N; i++) mx = Math.max(mx, v[i], naive[i]);
+
+      const padX = 14, headY = 20;
+      const baseY = R.y + R.h - 17;
+      const topY = R.y + headY + 8;
+      const areaH = Math.max(18, baseY - topY);
+      const slot = (R.w - padX * 2) / N;
+      const bw = Math.min(slot * 0.62, 30);
+
+      // header
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.font = '600 10.5px ui-sans-serif, system-ui, sans-serif';
+      const lead = engine === 'power' ? 'score after ' + iter + ' passes' : 'share of the surfer’s time';
+      const tail = R.w > 640 ? 'where counting links alone would put it' : 'link count';
+      ctx.fillStyle = VIOLET;
+      ctx.fillRect(R.x + padX, R.y + headY / 2 + 1, 9, 9);
+      ctx.fillStyle = '#9a9ab0';
+      ctx.fillText(lead, R.x + padX + 15, R.y + headY / 2 + 6);
+      const w1 = ctx.measureText(lead).width;
+      if (R.w > 300 + w1) {
+        ctx.strokeStyle = PINK; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(R.x + padX + 30 + w1, R.y + headY / 2 + 6);
+        ctx.lineTo(R.x + padX + 42 + w1, R.y + headY / 2 + 6);
+        ctx.stroke();
+        ctx.fillStyle = '#9a9ab0';
+        ctx.fillText(tail, R.x + padX + 48 + w1, R.y + headY / 2 + 6);
+      }
+
+      // equal-share guide
+      const eqY = baseY - (1 / N / mx) * areaH;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(R.x + padX, eqY); ctx.lineTo(R.x + R.w - padX, eqY); ctx.stroke();
+      ctx.restore();
+
+      ctx.textAlign = 'center';
+      for (let s = 0; s < N; s++) {
+        const i = order[s];
+        const cx = R.x + padX + slot * (s + 0.5);
+        const h = Math.max(1, (v[i] / mx) * areaH);
+        const focus = hovered >= 0 ? hovered : selected;
+        const on = focus === i;
+
+        const g = ctx.createLinearGradient(0, baseY - h, 0, baseY);
+        g.addColorStop(0, on ? '#d6d6ff' : '#8f8fff');
+        g.addColorStop(1, on ? '#7c7cff' : 'rgba(124,124,255,0.35)');
+        ctx.fillStyle = g;
+        roundRect(cx - bw / 2, baseY - h, bw, h, Math.min(3, bw / 2));
+        ctx.fill();
+
+        // where crude link-counting would put it
+        const nh = (naive[i] / mx) * areaH;
+        ctx.strokeStyle = PINK; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - bw / 2 - 2, baseY - nh);
+        ctx.lineTo(cx + bw / 2 + 2, baseY - nh);
+        ctx.stroke();
+
+        ctx.fillStyle = on ? '#e9e9f0' : '#7e7e94';
+        ctx.font = (on ? '700 ' : '500 ') + '10.5px ui-sans-serif, system-ui, sans-serif';
+        ctx.textBaseline = 'top';
+        ctx.fillText(LETTERS[i], cx, baseY + 4);
+      }
+    }
+
+    // ---------- readout ----------
+    function fmtPct(x) { return (x * 100).toFixed(1) + '%'; }
+
+    function updateReadout() {
+      const v = view;
+      let top = 0, naiveTop = 0;
+      for (let i = 1; i < N; i++) {
+        if (v[i] > v[top]) top = i;
+        if (indeg[i] > indeg[naiveTop]) naiveTop = i;
+      }
+      let dead = 0;
+      for (let i = 0; i < N; i++) if (outAdj[i].length === 0) dead++;
+
+      el('rSize').textContent = N + ' · ' + edges.length;
+      el('kProgress').textContent = engine === 'power' ? 'passes' : 'hops';
+      el('rProgress').textContent = engine === 'power' ? String(iter) : hops.toLocaleString();
+
+      if (engine === 'power') {
+        el('kErr').textContent = 'still moving by';
+        const pe = el('rErr');
+        if (converged) { pe.textContent = 'settled'; pe.className = 'v good'; }
+        else { pe.textContent = iter === 0 ? '—' : (delta * 100).toFixed(delta > 0.001 ? 2 : 4) + ' pts'; pe.className = 'v pinkv'; }
+      } else {
+        el('kErr').textContent = 'off the exact answer';
+        let tv = 0;
+        for (let i = 0; i < N; i++) tv += Math.abs(v[i] - exact[i]);
+        const pe = el('rErr');
+        pe.textContent = hops === 0 ? '—' : (tv * 50).toFixed(2) + ' pts';
+        pe.className = tv * 50 < 0.5 ? 'v good' : 'v pinkv';
+      }
+      el('rTop').textContent = LETTERS[top] + ' · ' + fmtPct(v[top]);
+
+      // where the selected page's score comes from
+      if (selected >= 0) {
+        const givers = inAdj[selected]
+          .map((i) => ({ i, amt: damping * v[i] / Math.max(1, outAdj[i].length) }))
+          .sort((a, b) => b.amt - a.amt);
+        const teleport = (1 - damping) / N;
+        let s = '<b class="v">' + LETTERS[selected] + '</b> holds <b>' + fmtPct(v[selected]) + '</b>. ';
+        if (!givers.length) {
+          s += 'Nothing points at it, so all it ever gets is the <b class="a">' + fmtPct(teleport) + '</b> the random jump hands every page.';
+        } else {
+          const parts = givers.slice(0, 3).map((g) => {
+            const k = outAdj[g.i].length;
+            const how = k === 1 ? 'its whole ' + fmtPct(v[g.i]) : 'its ' + fmtPct(v[g.i]) + ' split ' + k + ' ways';
+            return '<b class="g">' + LETTERS[g.i] + '</b> ' + fmtPct(g.amt) + ' (' + how + ')';
+          });
+          s += 'It is given ' + parts.join(', ');
+          if (givers.length > 3) s += ', and ' + (givers.length - 3) + ' more';
+          s += ' — plus <b class="a">' + fmtPct(teleport) + '</b> from the random jump.';
+        }
+        el('rNote').innerHTML = s;
+      } else if (engine === 'power') {
+        el('rNote').innerHTML = iter === 0
+          ? 'Every page starts on <b>' + fmtPct(1 / N) + '</b>. One pass = every page hands its score to whatever it links to, split evenly. Press play.'
+          : 'Pass <b>' + iter + '</b>: each page just gave away everything it had and took back whatever pointed at it. <b>Click a page</b> to see exactly who paid for it.';
+      } else {
+        el('rNote').innerHTML = hops === 0
+          ? 'One surfer, no arithmetic: click a link, click a link, and <b class="a">' + Math.round((1 - damping) * 100) + '%</b> of the time give up and jump somewhere random. The bars are just where it has been.'
+          : 'The surfer is on <b class="v">' + LETTERS[walker] + '</b> after <b>' + hops.toLocaleString() + '</b> hops. It computes nothing — the score is simply the fraction of its life spent on each page.';
+      }
+
+      // counting links vs weighing them
+      const byRank = [];
+      for (let i = 0; i < N; i++) byRank.push(i);
+      byRank.sort((a, b) => v[b] - v[a]);
+      const place = byRank.indexOf(naiveTop) + 1;
+      if (naiveTop !== top) {
+        el('rAlt').innerHTML = 'Most linked-to is <b class="p">' + LETTERS[naiveTop] + '</b> with <b>' + indeg[naiveTop] +
+          '</b> links pointing in — and it only ranks <b>#' + place + '</b>. The pink ticks are what crude link-counting would say; the bars are what the links are worth.';
+      } else {
+        el('rAlt').innerHTML = '<b class="v">' + LETTERS[top] + '</b> both collects the most links (<b>' + indeg[top] +
+          '</b>) and ranks first, so counting and weighing agree here. Try the <b>link farm</b> to pull them apart.';
+      }
+
+      // what damping is doing
+      let s2 = 'At d = <b>' + damping.toFixed(2) + '</b> the surfer follows a link <b>' + Math.round(damping * 100) +
+        '%</b> of the time and jumps to a random page the rest.';
+      if (dead > 0) s2 += ' <b class="a">' + dead + '</b> page' + (dead === 1 ? ' has' : 's have') + ' no way out (dashed ring) — without the jump they would swallow the score and never give it back.';
+      else if (damping > 0.97) s2 += ' That barely ever happens now, so any closed corner of this web hoards almost everything and convergence crawls.';
+      else if (engine === 'power' && iter > 1 && prevDelta > 0) s2 += ' Each pass shrinks what is left to move by about <b>×' + (delta / prevDelta).toFixed(2) + '</b> — which is d. That is why d sets the speed as well as the answer.';
+      else if (engine === 'surfer') s2 += ' The estimate closes on the truth like <b>1/√hops</b>: ten times the accuracy costs a hundred times the walking.';
+      el('rVerdict').innerHTML = s2;
+    }
+
+    // ---------- interaction ----------
+    function hitNode(x, y) {
+      let best = -1, bd = Infinity;
+      for (let i = 0; i < N; i++) {
+        const r = nodeRadius(i, view) + 8;
+        const d = Math.hypot(x - ax[i], y - ay[i]);
+        if (d < r && d < bd) { bd = d; best = i; }
+      }
+      return best;
+    }
+
+    cv.addEventListener('pointerdown', (e) => {
+      const i = hitNode(e.clientX, e.clientY);
+      dragX = e.clientX; dragY = e.clientY; dragMoved = false;
+      if (i >= 0) { dragFrom = i; }
+      else { dragFrom = -1; selected = -1; updateReadout(); }
+    });
+
+    cv.addEventListener('pointermove', (e) => {
+      dragX = e.clientX; dragY = e.clientY;
+      hovered = hitNode(e.clientX, e.clientY);
+      cv.style.cursor = hovered >= 0 ? 'pointer' : 'default';
+      if (dragFrom >= 0 && Math.hypot(e.clientX - ax[dragFrom], e.clientY - ay[dragFrom]) > 12) dragMoved = true;
+    });
+
+    function endDrag(e) {
+      if (dragFrom >= 0) {
+        const j = hitNode(e.clientX, e.clientY);
+        if (dragMoved && j >= 0 && j !== dragFrom) {
+          if (hasEdge(dragFrom, j)) removeEdge(dragFrom, j); else addEdge(dragFrom, j);
+          graphChanged();
+        } else if (!dragMoved) {
+          selected = selected === dragFrom ? -1 : dragFrom;
+        }
+      }
+      dragFrom = -1; dragMoved = false;
+      updateReadout();
+    }
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', () => { dragFrom = -1; dragMoved = false; });
+    cv.addEventListener('pointerleave', () => { hovered = -1; });
+
+    function segment(id, attr, fn) {
+      const box = el(id);
+      box.addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        [...box.querySelectorAll('button')].forEach((x) => x.classList.toggle('on', x === b));
+        fn(b.getAttribute(attr));
+      });
+    }
+
+    segment('engines', 'data-e', (val) => {
+      engine = val;
+      resetRanks();
+      syncSpeedLabel();
+      updateReadout();
+    });
+    segment('presets', 'data-p', (val) => { preset = val; reset(false); updateReadout(); });
+
+    el('damp').addEventListener('input', (e) => {
+      damping = +e.target.value;
+      el('dampVal').textContent = damping.toFixed(2);
+      computeExact();
+      converged = false;
+      delta = Math.max(delta, 1e-3);
+      if (engine === 'surfer') { visits = new Array(N).fill(0); hops = 0; }
+      updateReadout();
+    });
+
+    el('count').addEventListener('input', (e) => {
+      N = +e.target.value;
+      el('countVal').textContent = N;
+      reset(false);
+      updateReadout();
+    });
+
+    function rateOf(v) {
+      return engine === 'power' ? 0.5 * Math.pow(1.048, v) : 2 * Math.pow(1.085, v);
+    }
+    function syncSpeedLabel() {
+      const r = rateOf(speedV);
+      el('speedVal').textContent = (r < 10 ? r.toFixed(1) : Math.round(r).toLocaleString()) + (engine === 'power' ? ' passes / sec' : ' hops / sec');
+    }
+    el('speed').addEventListener('input', (e) => { speedV = +e.target.value; syncSpeedLabel(); });
+
+    function syncPlay() { el('play').textContent = playing ? '❚❚ pause' : '▶ play'; }
+    el('play').addEventListener('click', () => { playing = !playing; syncPlay(); });
+    el('step').addEventListener('click', () => { playing = false; syncPlay(); advance(); view = currentView(); updateReadout(); });
+    el('finish').addEventListener('click', () => {
+      if (engine === 'power') { let g = 0; while (!converged && g++ < 4000) powerStep(); }
+      else { for (let g = 0; g < 250000; g++) surferStep(); walkT = 1; }
+      view = currentView();
+      updateReadout();
+    });
+    el('reseed').addEventListener('click', () => { reset(true); playing = true; syncPlay(); updateReadout(); });
+    el('showFlow').addEventListener('click', () => {
+      showFlow = !showFlow;
+      el('showFlow').classList.toggle('on', showFlow);
+    });
+
+    el('collapse').addEventListener('click', () => hidePanel(true));
+    el('showUi').addEventListener('click', () => hidePanel(false));
+    function hidePanel(hide) {
+      ui.classList.toggle('hidden', hide);
+      el('showUi').classList.toggle('on', hide);
+      el('legend').classList.toggle('hidden', hide);
+      layout();
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'h') hidePanel(!ui.classList.contains('hidden'));
+      if (e.key === 'Escape') { story.classList.remove('open'); selected = -1; }
+      if (e.key === ' ') { e.preventDefault(); playing = !playing; syncPlay(); }
+      if (e.key === 'ArrowRight') { playing = false; syncPlay(); advance(); view = currentView(); updateReadout(); }
+      if (k === 'r') { reset(true); playing = true; syncPlay(); updateReadout(); }
+    });
+
+    // ---------- layout / resize ----------
+    function layout() {
+      const wide = W > 780 && !ui.classList.contains('hidden');
+      const left = wide ? Math.min(ui.offsetWidth + 48, W * 0.46) : 20;
+      const top = (!wide && !ui.classList.contains('hidden')) ? Math.min(ui.offsetHeight + 26, H * 0.58) : 30;
+      // keep the legend (top right, wide screens only) clear of the graph
+      const legendOn = W > 1100 && !ui.classList.contains('hidden');
+      const right = 24 + (legendOn ? el('legend').offsetWidth + 20 : 0);
+      const bottom = 58;
+      const fh = Math.max(160, H - top - bottom);
+      const chartH = Math.min(Math.max(fh * 0.26, 74), 150);
+      graphR = { x: left, y: top, w: Math.max(140, W - left - right), h: Math.max(90, fh - chartH - 14) };
+      chartR = { x: graphR.x, y: graphR.y + graphR.h + 14, w: graphR.w, h: chartH };
+      fitLayout();
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      layout();
+      ax = tx.slice(); ay = ty.slice();   // a reflow moves pages at once, not by gliding
+    }
+    window.addEventListener('resize', resize);
+
+    // ---------- loop ----------
+    function frame(t) {
+      if (!lastT) lastT = t;
+      const dt = Math.min(0.1, (t - lastT) / 1000);
+      lastT = t;
+
+      // the panel's size settles a beat after load (and again on any reflow)
+      if (window.innerWidth !== W || window.innerHeight !== H || Math.abs(ui.offsetHeight - lastUiH) > 6) {
+        lastUiH = ui.offsetHeight;
+        resize();
+      }
+
+      const rate = rateOf(speedV);
+      if (playing && !(engine === 'power' && converged)) {
+        acc += dt * rate;
+        let guard = 0;
+        while (acc >= 1 && guard++ < 40000) { acc--; advance(); }
+        if (acc > 50) acc = 0;
+      }
+      if (rate > 14) walkT = 1; else walkT = Math.min(1, walkT + dt * Math.max(1.2, rate));
+      teleFade = Math.max(0, teleFade - dt * 1.6);
+
+      for (let i = 0; i < N; i++) {
+        ax[i] += (tx[i] - ax[i]) * Math.min(1, dt * 9);
+        ay[i] += (ty[i] - ay[i]) * Math.min(1, dt * 9);
+      }
+
+      view = currentView();
+      draw();
+      if (++readoutTick % 6 === 0) updateReadout();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- go ----------
+    resize();
+    reset(false);
+    syncPlay();
+    syncSpeedLabel();
+    updateReadout();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
