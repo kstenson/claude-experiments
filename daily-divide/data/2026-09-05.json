@@ -1,0 +1,259 @@
+{
+  "date": "2026-09-05",
+  "topic": "The August jobs report — 162,000 jobs, triple the forecast, and a record-low labor share underneath it",
+  "question": "Does the August 2026 employment report show a labor market working for American workers, or a strong month inside a weak trend?",
+  "summary": "The Bureau of Labor Statistics reported on September 4 that payrolls grew 162,000 in August, roughly three times the 53,000-56,000 forecasters expected, with unemployment steady at 4.1% and June and July revised up by a combined 55,000. The White House called it a 'blockbuster' and claimed more than a million private-sector jobs in Trump's second term. Democrats answered with the numbers underneath: payroll growth has averaged 31,000 a month over the prior year, labor force participation is down half a point since January, and Rep. Bobby Scott said workers are taking a smaller share of the economy than at any time in seventy years. Almost every figure either side cited is accurate. What separates them is the baseline each chose, and whether one month or twelve is the honest unit of measurement. Sitting behind both is a two-year argument over whether the agency producing the numbers can still be trusted — an argument the president started in 2025, when a weak report cost the commissioner her job.",
+  "needle": -1,
+  "verdict": "This is close to dead even, and unusually so. The administration's checkable claims held up better than expected — the million private-sector jobs, the 3.7% weekly earnings gain and the manufacturing figures all verify against BLS data. Its weakness is reasoning: it never names a baseline that would complicate the story, asserts causation without a counterfactual, and celebrates an agency whose commissioner it fired for producing a weak number. The critics have the stronger structural facts — the 31,000 monthly trend and a labor share at its lowest since 1947 — but their headline claim that wages are losing to inflation is only half true on the BLS's own real-earnings release.",
+  "weights": { "factualAccuracy": 0.6, "reasoningHonesty": 0.4 },
+  "verificationNote": "Every payroll, wage and price figure was read directly in the BLS releases (Employment Situation for August 2026, Real Earnings and CPI for July 2026) rather than from either side's characterization. Employment levels for private, government and manufacturing payrolls, average weekly earnings and the nonfarm business labor share were pulled as raw BLS series from FRED and the arithmetic done here, so the term-to-date comparisons are ours, not a commentator's. The White House and Casten letter figures were read on their own sites. CNN returned HTTP 451, CNBC and the Labor Department 403, and NPR and U.S. News timed out; NPR's Commerce reporting was read on a member-station mirror instead. Forecast consensus differs by survey house (53,000 via Dow Jones, 56,000 via LSEG) and is reported as a range.",
+  "sources_consulted": [
+    "U.S. Bureau of Labor Statistics — Employment Situation, August 2026",
+    "U.S. Bureau of Labor Statistics — Real Earnings, July 2026",
+    "U.S. Bureau of Labor Statistics — CPI news release, July 2026",
+    "FRED (BLS series USPRIV, PAYEMS, USGOVT, MANEMP, CES0500000011, PRS85006173)",
+    "The White House — August jobs report release",
+    "Fox Business",
+    "NBC News",
+    "RedState",
+    "PJ Media",
+    "FactCheck.org",
+    "Rep. Sean Casten — letter to BLS, Dec. 17, 2025",
+    "House Democratic Leader Hakeem Jeffries — Sept. 1, 2023 statement",
+    "House Budget Committee Republicans — Aug. 2, 2024 release",
+    "KPBS/NPR — Commerce scientific integrity reporting",
+    "The Hill",
+    "U.S. News (timed out)",
+    "CNN (unreadable, 451)",
+    "CNBC (unreadable, 403)",
+    "U.S. Department of Labor (unreadable, 403)",
+    "NPR (unreadable, 403)"
+  ],
+  "sides": {
+    "left": {
+      "label": "A good month inside a stalled market, and a record-low share for workers",
+      "framing": "One month does not undo a year. Hiring has averaged 31,000 a month over the past twelve months, participation is down half a point since January, and real hourly pay is slightly below where it was a year ago. The deeper number is the one nobody in the administration cites: labor's share of the nonfarm business economy is the lowest in the seventy-nine years BLS has measured it. Jobs exist; the return to working for a living is shrinking.",
+      "factualAccuracy": 76,
+      "reasoningHonesty": 64,
+      "score": 71,
+      "strongestPoint": "The structural claim is right and is being ignored. The BLS labor share index closed the second quarter of 2026 at 93.4, below every reading since the series began in 1947. The 31,000 twelve-month average is not a Democratic talking point either — it is the comparison sentence in the BLS release itself, printed directly beside the 162,000.",
+      "weakestPoint": "The most-repeated claim of the day is half wrong. BLS's own Real Earnings release shows real average hourly earnings down 0.2% over the year but real average weekly earnings up 0.1% — pay is roughly flat, not clearly losing. And the party response largely declined to engage with a report that beat forecasts threefold and revised two prior months upward, which is the same evasion Democrats condemned when the roles were reversed."
+    },
+    "right": {
+      "label": "A blowout report that tripled the forecasts",
+      "framing": "Payrolls grew 162,000 against expectations near 55,000 — the second-largest monthly gain of the term — with unemployment at 4.1%, participation up, and June and July revised up by 55,000 combined. Manufacturers added 16,000 jobs, their best month in three years and 58,000 this year. More than a million private-sector jobs have been created this term while the federal workforce shrank. Weekly earnings are up 3.7% over the year. The reindustrialization agenda is producing the hiring its critics said it would kill.",
+      "factualAccuracy": 80,
+      "reasoningHonesty": 55,
+      "score": 70,
+      "strongestPoint": "The numbers survive checking, including the ones that sounded like spin. Private payrolls did rise 1,041,000 from January 2025 to August 2026, average weekly earnings did rise 3.7% ($1,252.40 to $1,298.60), and manufacturing did add 16,000 in August and 58,000 since December. Each figure was verified in the BLS series rather than taken from the release.",
+      "weakestPoint": "No baseline is ever named that would complicate the picture. Manufacturing is up 58,000 'this year' and down 35,000 since January 2025; private employment is up a million while total employment is up 807,000 because government shed 234,000. And the president has never retracted his August 2025 claim that this agency faked its numbers — he fired its commissioner over a weak print and is now citing the same methodology as proof."
+    }
+  },
+  "facts": [
+    {
+      "claim": "The economy added 162,000 nonfarm jobs in August 2026, roughly three times the forecast, and unemployment held at 4.1%.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "BLS: 'Total nonfarm payroll employment rose by 162,000 in August, higher than the average monthly gain of 31,000 over the prior 12 months,' and 'The unemployment rate was unchanged at 4.1 percent in August, and the number of unemployed people changed little at 7.0 million.'",
+      "explanation": "Read directly in the primary release. The consensus varies by survey house — 53,000 in the Dow Jones poll, 56,000 per LSEG — so 'triple' fits the low end and 'nearly triple' the high end; the White House used both. Gains were concentrated in food services and drinking places and local government education; the information industry lost jobs.",
+      "source": "U.S. Bureau of Labor Statistics, Employment Situation — August 2026",
+      "url": "https://www.bls.gov/news.release/empsit.nr0.htm",
+      "corroboration": [
+        { "source": "Fox Business", "url": "https://www.foxbusiness.com/economy/us-jobs-report-august-2026" },
+        { "source": "NBC News", "url": "https://www.nbcnews.com/business/economy/august-jobs-report-trump-inflation-rcna595974" }
+      ]
+    },
+    {
+      "claim": "June and July payrolls were revised up, leaving those two months a combined 55,000 higher than first reported; July flipped from a 23,000 loss to a 21,000 gain.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "BLS: 'The change in total nonfarm payroll employment for June was revised up by 11,000, from +20,000 to +31,000, and the change for July was revised up by 44,000, from -23,000 to +21,000. With these revisions, employment in June and July combined is 55,000 higher than previously reported.'",
+      "explanation": "Primary text. The caveat that cuts the other way: the same revision machinery has been brutal in this cycle. On the current BLS series, total nonfarm employment rose about 116,000 across all of calendar 2025 — from 158,316,000 in December 2024 to 158,432,000 in December 2025 — far below what the real-time monthly prints suggested at the time.",
+      "source": "U.S. Bureau of Labor Statistics, Employment Situation — August 2026",
+      "url": "https://www.bls.gov/news.release/empsit.nr0.htm",
+      "corroboration": [
+        { "source": "FRED (BLS series PAYEMS)", "url": "https://fred.stlouisfed.org/series/PAYEMS" }
+      ]
+    },
+    {
+      "claim": "Payroll growth has averaged only 31,000 a month over the prior twelve months, and labor force participation is down half a percentage point since January.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "BLS: gains were 'higher than the average monthly gain of 31,000 over the prior 12 months'; 'The labor force participation rate edged up to 61.6 percent in August but is down by 0.5 percentage point since January'; 'The employment-population ratio, at 59.1 percent, changed little over the month and since January.'",
+      "explanation": "Both sentences are the BLS's own, printed in the same release the White House is quoting. A 4.1% unemployment rate resting on a shrinking labor force is weaker than the same rate on a growing one. The contrary point is fair: participation rose in August, and the administration is right that the monthly direction was up.",
+      "source": "U.S. Bureau of Labor Statistics, Employment Situation — August 2026",
+      "url": "https://www.bls.gov/news.release/empsit.nr0.htm",
+      "corroboration": [
+        { "source": "PJ Media (right-leaning, reporting the 61.4% to 61.6% move)", "url": "https://pjmedia.com/matt-margolis/2026/09/04/huge-jobs-report-for-august-democrats-most-hurt-n4956886" }
+      ]
+    },
+    {
+      "claim": "More than one million private-sector jobs have been created in President Trump's second term.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "BLS total private employment, seasonally adjusted, stood at 134,711,000 in January 2025 and 135,752,000 in August 2026 — a gain of 1,041,000. Measured from February 2025, the first full month, the gain is 1,001,000.",
+      "explanation": "The arithmetic was done here on the BLS series and holds on either baseline. The context the claim omits: total nonfarm employment rose only 807,000 over the same nineteen months, about 42,000 a month, because government employment fell 234,000 (23,557,000 to 23,323,000). The private number exceeds the whole-economy number precisely because of public-sector job losses.",
+      "source": "FRED, BLS series USPRIV (all employees, total private)",
+      "url": "https://fred.stlouisfed.org/series/USPRIV",
+      "corroboration": [
+        { "source": "The White House", "url": "https://www.whitehouse.gov/releases/2026/09/made-in-america-manufacturing-private-hiring-power-explosive-august-jobs-report/" },
+        { "source": "RedState (right-leaning)", "url": "https://redstate.com/nick-arama/2026/09/04/the-august-jobs-report-is-making-economists-say-wow-n2206500" }
+      ]
+    },
+    {
+      "claim": "The reindustrialization agenda is driving manufacturing job growth — manufacturers added 16,000 jobs in August and 58,000 this year.",
+      "side": "right",
+      "verdict": "mixed",
+      "confidence": "high",
+      "evidence": "BLS: 'In August, employment in manufacturing continued its upward trend (+16,000) and is up by 58,000 since a recent low in December 2025.' The White House release says 'manufacturers added 16,000 jobs last month — the strongest monthly gain in three years — and 58,000 jobs this year.'",
+      "explanation": "Both figures verify and the baseline is stated honestly as this year. But manufacturing employment is still below where the term began: 12,673,000 in January 2025 against 12,638,000 in August 2026, a net loss of 35,000. The rebound is from a December 2025 low reached during this term. The causal attribution to the agenda is asserted, not demonstrated.",
+      "source": "U.S. Bureau of Labor Statistics, Employment Situation — August 2026",
+      "url": "https://www.bls.gov/news.release/empsit.nr0.htm",
+      "corroboration": [
+        { "source": "FRED (BLS series MANEMP)", "url": "https://fred.stlouisfed.org/series/MANEMP" },
+        { "source": "The White House", "url": "https://www.whitehouse.gov/releases/2026/09/made-in-america-manufacturing-private-hiring-power-explosive-august-jobs-report/" }
+      ]
+    },
+    {
+      "claim": "Inflation has outpaced wage growth, leaving workers behind.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "high",
+      "evidence": "BLS Real Earnings, July 2026: real average hourly earnings 'decreased 0.2 percent' over twelve months, while the release reports a '0.1-percent increase in real average weekly earnings.' Average hourly earnings rose 3.1% over the year to August; CPI rose 3.4% over the year to July.",
+      "explanation": "True for hourly pay, not for weekly pay — longer hours closed the gap. The White House's '3.7% over the year' refers to average weekly earnings, which the BLS series confirms ($1,252.40 in August 2025 to $1,298.60 in August 2026). Both sides are quoting a real BLS number and omitting its twin. Real pay is close to flat, not clearly falling or clearly rising.",
+      "source": "U.S. Bureau of Labor Statistics, Real Earnings — July 2026",
+      "url": "https://www.bls.gov/news.release/realer.nr0.htm",
+      "corroboration": [
+        { "source": "BLS CPI news release, July 2026", "url": "https://www.bls.gov/news.release/cpi.nr0.htm" },
+        { "source": "FRED (BLS series CES0500000011, average weekly earnings)", "url": "https://fred.stlouisfed.org/series/CES0500000011" }
+      ]
+    },
+    {
+      "claim": "American workers are taking home a smaller slice of the economic pie than at any time in the past seventy years.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "The BLS nonfarm business sector labor share index (2017=100) read 93.446 in the second quarter of 2026 — the lowest value in the entire series, which begins at 115.996 in the first quarter of 1947 and had not previously fallen below 96.2.",
+      "explanation": "The claim understates the case: the reading is the lowest in seventy-nine years of data, verified by sorting the full series. The essential caveat is that this decline is decades long and spans administrations of both parties — the index was already at 96.7 in mid-2024 — so the record is real but is not by itself evidence about any one presidency's policies.",
+      "source": "FRED, BLS series PRS85006173 (nonfarm business sector: labor share)",
+      "url": "https://fred.stlouisfed.org/series/PRS85006173",
+      "corroboration": [
+        { "source": "Fox Business (right-leaning, reporting Rep. Scott's claim)", "url": "https://www.foxbusiness.com/economy/us-jobs-report-august-2026" }
+      ]
+    },
+    {
+      "claim": "The president has never withdrawn his claim that this agency faked its jobs numbers, and fired its commissioner over a weak report in August 2025.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "FactCheck.org: Trump announced Commissioner Erika McEntarfer's immediate firing on August 1, 2025, hours after a weak report, writing that she had 'faked the Jobs Numbers before the Election to try and boost Kamala's chances of Victory.' FactCheck found the administration 'hasn't produced any evidence for Trump's claims.'",
+      "explanation": "Load-bearing because the same agency, methodology and career staff produced the number now cited as vindication. Former commissioners note the data are locked in before a commissioner sees them. Trump's replacement pick, Heritage economist E.J. Antoni, was withdrawn on September 30, 2025 amid Senate resistance. No evidence of manipulation in either direction has been produced by anyone.",
+      "source": "FactCheck.org, August 2025",
+      "url": "https://www.factcheck.org/2025/08/no-evidence-for-trumps-claims-of-rigged-or-phony-job-numbers/",
+      "corroboration": [
+        { "source": "Fox Business (right-leaning, on the Antoni withdrawal)", "url": "https://www.foxbusiness.com/politics/white-house-pulls-nomination-ej-antoni-head-bureau-labor-statistics" }
+      ]
+    },
+    {
+      "claim": "The federal statistical agencies producing these numbers are under measurable strain.",
+      "side": "neither",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Rep. Sean Casten and 23 House Democrats, December 17, 2025: employment survey response rates have fallen from 'around 60% between 2009-2019' to 'less than 45%'; BLS stopped publishing 350 producer price indexes in May and cut CPI collection in three metro areas entirely and by 15% in 72 others in July; 'BLS has lost 12 of its 35 senior leaders in recent months.'",
+      "explanation": "Confidence is capped at medium because the figures come from a party document written by one side, and the response-rate slide is long-running and predates this administration. The independent corroboration is narrower: NPR reported that an unannounced revision dated August 19, 2026 removed language barring political interference from the Commerce Department's scientific integrity policy, which covers Census and the Bureau of Economic Analysis.",
+      "source": "Rep. Sean Casten, letter to the Bureau of Labor Statistics",
+      "url": "https://casten.house.gov/media/press-releases/casten-demands-bls-ensure-high-quality-non-partisan-economic-data",
+      "corroboration": [
+        { "source": "KPBS / NPR", "url": "https://www.kpbs.org/news/politics/2026/08/31/trump-officials-cut-political-interference-ban-after-unusual-census-bureau-report" }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "The power test here is almost embarrassingly clean, because the same document arrives every month and the only thing that changes is who is in the White House. Ask whether either party would make today's argument if the other held power, and the answer is on file in their own press releases: the incumbent's party leads with the headline number, and the opposition leads with revisions, participation and the twelve-month average. Both parties have played both roles inside the last three years, using nearly identical sentences.",
+    "precedent": {
+      "case": "March 10, 2017 — 'phony in the past, but it's very real now'",
+      "what": "Hours after BLS reported 235,000 jobs and unemployment at 4.7%, press secretary Sean Spicer told reporters he had spoken to the president, who asked to be quoted 'very clearly': 'They may have been phony in the past, but it's very real now.' Neither the data nor the methodology had changed; only the occupant had.",
+      "mirror": "Nine years later the sequence repeated with higher stakes: a weak July 2025 report cost Commissioner McEntarfer her job on the allegation the numbers were faked, and a strong August 2026 report from the same bureau is presented as proof the agenda works.",
+      "source": "The Hill",
+      "url": "https://thehill.com/policy/finance/323425-spicer-quoting-trump-jobs-reports-may-have-been-phony-in-the-past-but-theyre/",
+      "corroboration": [
+        { "source": "FactCheck.org", "url": "https://www.factcheck.org/2025/08/no-evidence-for-trumps-claims-of-rigged-or-phony-job-numbers/" }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Congressional Republicans",
+        "then": "House Budget Committee Republicans, August 2, 2024, on the July 2024 report: they led with '114,000 jobs added in July, down 65,000 from June,' that 'jobs gains in May and June were revised down,' and that participation at 62.7% remained below the pre-pandemic 63.3% — the exact three arguments Democrats made yesterday.",
+        "now": "The same measures are treated as noise. The administration's release cites August's participation rise but not that participation is down 0.5 points since January; it cites upward revisions this month after a year in which revisions ran heavily the other way.",
+        "source": "House Committee on the Budget (Republican) — the right's own document",
+        "url": "https://budget.house.gov/press-release/july-jobs-report-unemployment-rate-rises-for-fourth-consecutive-month"
+      },
+      {
+        "who": "Congressional Democrats",
+        "then": "House Democratic Leader Hakeem Jeffries, September 1, 2023: 'Today's jobs report represents another tremendous step towards a healthy American economy... Wages are up, unemployment remains near historic lows and over 13 million jobs have been created during President Biden's first term' — a cumulative-total, headline-first framing indistinguishable from the White House's today.",
+        "now": "Democrats now lead with the twelve-month average, the participation rate and the labor share, and treat the cumulative private-jobs total as a misleading denominator — the objection Republicans raised to their own cumulative claims in 2023 and 2024.",
+        "source": "Office of the House Democratic Leader — the left's own document",
+        "url": "https://democraticleader.house.gov/media/press-releases/leader-jeffries-statement-august-jobs-report"
+      }
+    ],
+    "longRun": "The through-line is structural rather than partisan: whoever holds the White House owns the headline print and the opposition owns the subcomponents, because the release contains enough true numbers to furnish both. What is new, and what will outlast this presidency, is the escalation from disputing the interpretation to disputing the producer — firing a commissioner, nominating a critic, cutting collection. When power changes hands, the incoming party will inherit both a weakened statistical system and a precedent for blaming it.",
+    "appliedToScore": "Neither side earns a reasoning-honesty bonus for its stated principle about how jobs data should be read; both have argued the opposite within three years, and that is recorded in each side's weakest point. The needle rests only on what the August release, the CPI and real-earnings releases and the BLS series actually show today."
+  },
+  "pattern": {
+    "thesis": "Treated in isolation, September 4 is a good month for the administration and an awkward one for its critics. Treated as one print inside a two-year contest over the machinery that produces the print, it looks different: this is the first genuinely strong report since the president fired the official who signed a weak one, and it lands while the agencies producing federal statistics are visibly losing capacity and legal insulation. Judging the number without asking how it was made keeps the argument permanently downstream.",
+    "campaigns": [
+      {
+        "where": "August 1, 2025 — the Bureau of Labor Statistics",
+        "what": "Trump fired Commissioner Erika McEntarfer hours after a weak July report, alleging she 'faked the Jobs Numbers.' No evidence was produced then or since.",
+        "status": "personnel",
+        "source": "FactCheck.org",
+        "url": "https://www.factcheck.org/2025/08/no-evidence-for-trumps-claims-of-rigged-or-phony-job-numbers/",
+        "corroboration": [
+          { "source": "Fox Business", "url": "https://www.foxbusiness.com/politics/white-house-pulls-nomination-ej-antoni-head-bureau-labor-statistics" }
+        ]
+      },
+      {
+        "where": "August–September 2025 — the replacement",
+        "what": "Heritage Foundation economist E.J. Antoni, a longstanding critic of BLS methodology, was nominated to run the bureau; the White House withdrew the nomination on September 30, 2025 after Republican senators declined to meet him.",
+        "status": "withdrawn",
+        "source": "Fox Business (right-leaning)",
+        "url": "https://www.foxbusiness.com/politics/white-house-pulls-nomination-ej-antoni-head-bureau-labor-statistics",
+        "corroboration": [
+          { "source": "The Hill", "url": "https://thehill.com/business/5530292-ej-antoni-nomination-withdrawal/" }
+        ]
+      },
+      {
+        "where": "2025 — collection capacity",
+        "what": "BLS discontinued 350 producer price indexes, suspended CPI collection in three metropolitan areas and cut it 15% in 72 others, and lost 12 of 35 senior leaders; employment survey response rates fell below 45%.",
+        "status": "capacity",
+        "source": "Rep. Sean Casten and 23 House Democrats, Dec. 17, 2025",
+        "url": "https://casten.house.gov/media/press-releases/casten-demands-bls-ensure-high-quality-non-partisan-economic-data",
+        "corroboration": [
+          { "source": "KPBS / NPR", "url": "https://www.kpbs.org/news/politics/2026/08/31/trump-officials-cut-political-interference-ban-after-unusual-census-bureau-report" }
+        ]
+      },
+      {
+        "where": "August 19, 2026 — the Commerce Department",
+        "what": "An unannounced revision removed the requirement that scientific findings not be 'suppressed, delayed, or altered for political purposes,' covering the Census Bureau, NOAA and the Bureau of Economic Analysis — the agency that publishes GDP.",
+        "status": "policy change",
+        "source": "KPBS / NPR",
+        "url": "https://www.kpbs.org/news/politics/2026/08/31/trump-officials-cut-political-interference-ban-after-unusual-census-bureau-report",
+        "corroboration": [
+          { "source": "NPR", "url": "https://www.npr.org/2026/08/31/nx-s1-5948057/department-commerce-census-bureau-scientific-integrity" }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is whether the statistics both parties are fighting over will still be produced to a standard that makes the fight worth having. The one-off tell: an argument about a monthly print — from either side — that never asks who collected it, at what response rate, and under what protection from the people it flatters or embarrasses."
+  },
+  "notAdjudicable": [
+    "Whether a president should be able to remove the official who certifies economic statistics at will — a question about the design of accountable institutions, not about any number in the release.",
+    "Whether an economy producing jobs while labor's share of output falls to a record low is 'working' — that depends on what you believe an economy is for, which no data series can settle.",
+    "Whether flat real wages call for tariffs and immigration restriction or for public investment and stronger bargaining power — competing theories with competing values underneath, not a factual dispute.",
+    "How much weight a voter should give one strong month against a twelve-month trend — a judgment about risk and time horizon that the statistics themselves cannot make."
+  ],
+  "biasWatch": "The bias doing the most work today is denominator neglect: a true number is presented without the start date that makes it true, and the listener supplies a flattering one. Every headline figure in this fight passes verification — over a million private-sector jobs (since January 2025), 58,000 manufacturing jobs (since December 2025), 31,000 a month (the prior twelve), the lowest labor share on record (since 1947). None of them is false and none of them was chosen at random. The tell works on both sides and takes one second: when someone gives you a jobs number, ask what date they are counting from, and notice whether they told you before you asked. If the baseline appears only when a critic drags it out, the number was selected to produce a feeling rather than to describe a trend."
+}
