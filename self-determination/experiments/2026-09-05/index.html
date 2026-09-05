@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fair Without Remembering — Experiment 078</title>
+<meta name="description" content="Reservoir sampling — Vitter's Algorithm R, 1985. Take a perfectly uniform sample of k items from a stream of unknown length, in one pass, holding nothing but the k. Keep each arrival with chance k/i, evict a survivor at random, and watch the histogram come out flat." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row.dim { opacity: 0.42; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1 1 auto;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; border-radius: 9px;
+    padding: 8px 8px; font-size: 0.75rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+  }
+  .seg button:hover { background: rgba(255,255,255,0.09); color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.2); border-color: rgba(124,124,255,0.5); color: #cfcfff; }
+  .seg.pink button.on { background: rgba(255,124,195,0.18); border-color: rgba(255,124,195,0.5); color: #ffd6ec; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,124,195,0.35); }
+  .toggle.on i::after { transform: translateX(13px); background: #ff9fd2; }
+  .toggle.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .v.amber { color: #ffcf7c; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  #rNote { min-height: 3.2em; }
+  #rVerdict { min-height: 2.4em; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout .full b.a { color: #ffcf7c; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  /* The story button — prominent on purpose, every page has one.
+     Sticky so it stays reachable when the panel has to scroll. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; top: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 262px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; flex: none; display: block; }
+  .legend i.early { background: #7c7cff; box-shadow: 0 0 8px rgba(124,124,255,0.5); }
+  .legend i.late { background: #ff7cc3; box-shadow: 0 0 8px rgba(255,124,195,0.5); }
+  .legend i.gate { border-radius: 50%; background: conic-gradient(#7c7cff 0 25%, rgba(255,255,255,0.1) 25% 100%); }
+  .legend i.fair { height: 0; border: 0; border-top: 2px dashed #8affc0; border-radius: 0; }
+  .legend i.held { background: rgba(138,255,192,0.25); border: 2px solid #8affc0; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 10;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1100px) {
+    .legend { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 46vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .sub { margin-bottom: 10px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Fair Without Remembering</h1>
+    <p class="sub">Experiment № 078 · September 5, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>how the sample is chosen</label>
+        <div class="seg" id="strats">
+          <button data-s="r" class="on">algorithm R</button>
+          <button data-s="coin">a fixed coin flip</button>
+          <button data-s="first">keep the first k</button>
+          <button data-s="last">keep the last k</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="k">reservoir — how many we keep <b id="kVal">5</b></label>
+        <input type="range" id="k" min="1" max="10" step="1" value="5" />
+      </div>
+
+      <div class="row">
+        <label for="n">stream length <b id="nVal">60</b></label>
+        <input type="range" id="n" min="20" max="160" step="1" value="60" />
+      </div>
+
+      <div class="row dim" id="pRow">
+        <label for="p">coin-flip chance <b id="pVal">0.50</b></label>
+        <input type="range" id="p" min="0.02" max="0.9" step="0.01" value="0.5" />
+      </div>
+
+      <div class="row">
+        <label for="speed">speed <b id="speedVal">—</b></label>
+        <input type="range" id="speed" min="0" max="100" step="1" value="52" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="play">❚❚ pause</button>
+        <button class="btn" id="step">step ›</button>
+        <button class="btn" id="sprint">+2,000 runs ▸▸</button>
+        <button class="btn pink" id="reset">clear the tally</button>
+      </div>
+
+      <div class="toggle on" id="showFair"><i></i> mark the fair share, k/n</div>
+
+      <div class="readout">
+        <span class="k">seen so far</span><span class="v violet" id="rSeen">0 of 60</span>
+        <span class="k">chance this one is kept</span><span class="v pinkv" id="rChance">—</span>
+        <span class="k">runs tallied</span><span class="v" id="rRuns">0</span>
+        <span class="k">last third of the stream</span><span class="v good" id="rTail">—</span>
+        <hr />
+        <p class="full" id="rNote">Every arrival is kept with chance k ÷ (how many we have seen), and pushes out one survivor at random. Press play.</p>
+        <hr />
+        <p class="full" id="rVerdict">—</p>
+        <hr />
+        <p class="full" id="rWatch">Click a bar in the histogram to follow one position through every run.</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="early"></i> early in the stream</div>
+    <div><i class="late"></i> late in the stream</div>
+    <div><i class="gate"></i> the gate — keep with chance k/i</div>
+    <div><i class="held"></i> in the reservoir right now</div>
+    <div><i class="fair"></i> a fair share of the sample</div>
+  </div>
+
+  <p class="hint">click a bar to <b>follow one position</b> · <b>space</b> plays · <b>→</b> steps one item · <b>s</b> adds 2,000 runs · <b>r</b> clears the tally · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 078 · The story</p>
+      <h2>Fair Without Remembering</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Somebody once described reservoir sampling to me as a party trick, and I have never quite stopped being annoyed that it works. Here is the claim: a stream of items goes past you exactly once. You may not rewind it, you are not told how long it is, and you may hold on to only <em>k</em> of them at a time. When the stream ends — whenever that is — hand me a sample of size <em>k</em> in which every item that ever went past was equally likely to be chosen. That should be impossible. Uniformity feels like something you can only build once you know the size of the thing you are sampling from, and here the size is exactly what you are denied. The whole method fits in two lines: keep the first <em>k</em>; after that, keep item number <em>i</em> with probability <em>k/i</em>, and if you keep it, throw out one of your survivors at random. Vitter named it Algorithm R in 1985 and it was already folklore then. I have read the induction proof more than once and still not really believed it, so I built the thing that lets me check.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The gate is the part worth watching. Early on it swallows almost everything; by item 500 it lets one in a hundred through, and the sector shrinks towards nothing while the stream keeps pouring past. It looks like a machine that is getting steadily less interested — and yet the histogram underneath comes out flat, because the two effects cancel exactly. An early item had a wonderful chance of getting in and then had to survive hundreds of chances to be evicted; a late item barely got in but had almost no time left to be thrown out. Neither advantage is free. The best way to feel that is to switch strategies. <em>A fixed coin flip</em> is the sensible-looking mistake: keep each arrival with probability 0.5 regardless of position. Run a few thousand and the histogram is a wall leaning hard to the right — an item near the end is dozens of times likelier to be in your sample than an item near the start, and nothing in the code announces that. <em>Keep the first k</em> is the same bias wearing an honest face; it is what "we looked at the first ten thousand rows" really means. Then click any bar to follow a single position across every run and watch its frequency creep towards <em>k/n</em> and stay there.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Notice what the algorithm never touches: <em>n</em>. The stream length appears in the answer — every position ends up with probability exactly <em>k/n</em> — but it appears nowhere in the code, because the running count <em>i</em> is standing in for it the whole way. Fairness did not require knowing how big the population was; it required the acceptance rate to decay at exactly the right speed. That is worth stealing whenever you are sampling something that will not sit still to be counted: log lines, events, rows arriving from a query you cannot afford to buffer, an infinite feed. And it is worth remembering in the other direction too, as a smell test. Any time a sample was taken from a stream, ask what the keep-rate was as a function of position. If it did not fall off as the stream ran, the sample is not of the stream — it is of the end of the stream, and every conclusion drawn from it quietly means "lately".</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Panel show/hide ----
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  function toggleUi(force) {
+    const hide = force === undefined ? !ui.classList.contains('hidden') : force;
+    ui.classList.toggle('hidden', hide);
+    showUi.classList.toggle('on', hide);
+    document.getElementById('legend').classList.toggle('hidden', hide);
+  }
+  document.getElementById('collapse').addEventListener('click', () => toggleUi(true));
+  showUi.addEventListener('click', () => toggleUi(false));
+
+  // ---- RESERVOIR SAMPLING — Vitter's Algorithm R (1985) ----
+  (() => {
+    const cvs = document.getElementById('c');
+    const ctx = cvs.getContext('2d');
+    let W = 0, H = 0;
+
+    const S = {
+      k: 5, n: 60, p: 0.5, speed: 52,
+      strategy: 'r',
+      playing: true,
+      showFair: true,
+      i: 0, t: 0,
+      slots: new Array(5).fill(0),
+      counts: new Float64Array(62),
+      runs: 0, kept: 0, letGo: 0,
+      flyers: [],
+      last: null,
+      survivors: null,
+      runPause: 0,
+      watch: null,
+      yMax: 0.2,
+      pulse: 0,
+    };
+
+    // ---------- geometry ----------
+    let L = {};
+    function layout() {
+      const narrow = W < 820;
+      const hidden = ui.classList.contains('hidden');
+      const padL = narrow ? 14 : (hidden ? 24 : 400);
+      const padR = narrow ? 14 : 24;
+      const padB = narrow ? 92 : 78;
+      const padT = narrow
+        ? (hidden ? 26 : Math.min(H * 0.6, ui.getBoundingClientRect().bottom + 16))
+        : 30;
+      const regionL = padL;
+      const regionR = Math.max(padL + 220, W - padR);
+      const laneR = W >= 1100 && !hidden ? Math.max(regionL + 220, W - 300) : regionR;
+
+      const gap = 30;
+      const avail = Math.max(200, H - padT - padB - gap);
+      let streamH = Math.max(148, Math.min(255, avail * 0.45));
+      let histH = avail - streamH;
+      if (histH < 110) { histH = Math.max(88, avail * 0.44); streamH = avail - histH; }
+      const streamTop = padT;
+      const streamBottom = streamTop + streamH;
+      const histTop = streamBottom + gap;
+      const histBottom = histTop + histH;
+      const gateR = Math.min(28, Math.max(15, streamH * 0.16));
+      const laneY = streamTop + gateR + 20;
+      const gateX = regionL + gateR + 32;
+
+      const k = S.k;
+      const slotGap = 9;
+      let slotW = Math.min(66, Math.max(24, (regionR - regionL - slotGap * (k - 1)) / k));
+      const slotH = Math.max(22, Math.min(slotW * 0.78, (streamBottom - laneY) * 0.42));
+      const rowW = slotW * k + slotGap * (k - 1);
+      const slotX0 = regionL + Math.max(0, (regionR - regionL - rowW) / 2);
+      const slotY = Math.max(laneY + gateR + 14, Math.min(streamBottom - slotH - 40, laneY + (streamBottom - laneY) * 0.42));
+      const binOK = streamBottom - (slotY + slotH) >= 34;
+
+      const spacing = Math.max(20, Math.min(46, (laneR - gateX) / 15));
+
+      L = {
+        narrow, regionL, regionR, laneR, laneY, gateX, gateR, spacing,
+        slotX0, slotY, slotW, slotH, slotGap,
+        streamTop, streamBottom,
+        histTop, histBottom, histL: regionL, histR: regionR, binOK,
+        dropX: binOK ? gateX : regionL + 6,
+        dropY: binOK ? streamBottom - 18 : slotY + slotH / 2,
+      };
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = cvs.clientWidth; H = cvs.clientHeight;
+      cvs.width = Math.round(W * dpr);
+      cvs.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+    }
+    window.addEventListener('resize', resize);
+
+    // ---------- colour ----------
+    function posColor(pos, a) {
+      const u = S.n > 1 ? Math.min(1, Math.max(0, (pos - 1) / (S.n - 1))) : 0;
+      const r = Math.round(124 + (255 - 124) * u);
+      const g = 124;
+      const b = Math.round(255 + (195 - 255) * u);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + (a === undefined ? 1 : a) + ')';
+    }
+
+    function rrect(x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+
+    // ---------- the algorithm ----------
+    function decide(i) {
+      const k = S.k;
+      if (S.strategy === 'first') return i <= k ? { accept: true, slot: i - 1 } : { accept: false };
+      if (S.strategy === 'last') return { accept: true, slot: (i - 1) % k };
+      if (S.strategy === 'coin') {
+        if (i <= k) return { accept: true, slot: i - 1 };
+        if (Math.random() < S.p) return { accept: true, slot: (Math.random() * k) | 0 };
+        return { accept: false };
+      }
+      // Algorithm R
+      if (i <= k) return { accept: true, slot: i - 1 };
+      const j = (Math.random() * i) | 0;
+      return j < k ? { accept: true, slot: j } : { accept: false };
+    }
+
+    function chanceOf(i) {
+      const k = S.k;
+      if (i > S.n) return 0;
+      if (S.strategy === 'last') return 1;
+      if (i <= k) return 1;
+      if (S.strategy === 'first') return 0;
+      if (S.strategy === 'coin') return S.p;
+      return k / i;
+    }
+
+    function fastRun() {
+      const k = S.k, n = S.n;
+      const slots = new Array(k).fill(0);
+      for (let i = 1; i <= n; i++) {
+        const d = decide(i);
+        if (d.accept) slots[d.slot] = i;
+      }
+      for (let s = 0; s < k; s++) if (slots[s]) S.counts[slots[s]]++;
+      S.runs++;
+    }
+
+    function startRun() {
+      S.i = 0; S.t = 0;
+      S.slots = new Array(S.k).fill(0);
+      S.flyers.length = 0;
+      S.last = null; S.survivors = null; S.runPause = 0;
+    }
+
+    function clearTally() {
+      S.counts = new Float64Array(S.n + 2);
+      S.runs = 0; S.kept = 0; S.letGo = 0;
+      S.watch = null;
+      S.yMax = Math.max(0.05, (S.k / S.n) * 2);
+      startRun();
+      refresh();
+    }
+
+    function slotPos(s) {
+      return [L.slotX0 + s * (L.slotW + L.slotGap) + L.slotW / 2, L.slotY + L.slotH / 2];
+    }
+    function addFlyer(from, to, pos, kind) {
+      S.flyers.push({ x0: from[0], y0: from[1], x1: to[0], y1: to[1], pos, kind, t: 0, dur: kind === 'accept' ? 0.42 : 0.6 });
+    }
+
+    function commitNext() {
+      if (S.i >= S.n) return;
+      const i = S.i + 1;
+      const ch = chanceOf(i);
+      const d = decide(i);
+      const evicted = d.accept ? S.slots[d.slot] : 0;
+      S.last = { i: i, accept: d.accept, slot: d.accept ? d.slot : -1, evicted: evicted, chance: ch };
+      if (d.accept) {
+        if (evicted) addFlyer(slotPos(d.slot), [L.dropX, L.dropY], evicted, 'evict');
+        S.slots[d.slot] = i;
+        S.kept++;
+        addFlyer([L.gateX, L.laneY], slotPos(d.slot), i, 'accept');
+      } else {
+        S.letGo++;
+        addFlyer([L.gateX, L.laneY], [L.dropX, L.dropY], i, 'reject');
+      }
+      S.pulse = 1;
+      S.i = i;
+      if (S.i >= S.n) finishRun();
+    }
+
+    function finishRun() {
+      for (const pos of S.slots) if (pos) S.counts[pos]++;
+      S.runs++;
+      S.survivors = S.slots.slice();
+      S.runPause = Math.max(0.14, Math.min(0.9, 9 / itemsPerSec()));
+      refresh();
+    }
+
+    function itemsPerSec() { return 0.7 * Math.pow(52, S.speed / 100); }
+
+    // ---------- update ----------
+    function update(dt) {
+      S.pulse = Math.max(0, S.pulse - dt * 3.2);
+      for (const f of S.flyers) f.t += dt / f.dur;
+      if (S.flyers.length) S.flyers = S.flyers.filter((f) => f.t < 1.45);
+
+      if (S.runPause > 0) {
+        S.runPause -= dt;
+        if (S.runPause <= 0) startRun();
+        return;
+      }
+      if (!S.playing) return;
+      S.t += dt * itemsPerSec();
+      let guard = 0;
+      while (S.t >= 1 && guard++ < 400) {
+        S.t -= 1;
+        commitNext();
+        if (S.runPause > 0) { S.t = 0; break; }
+      }
+    }
+
+    // ---------- drawing ----------
+    function drawToken(x, y, w, h, pos, alpha, ring) {
+      ctx.globalAlpha = alpha;
+      rrect(x - w / 2, y - h / 2, w, h, Math.min(7, h / 3));
+      ctx.fillStyle = posColor(pos, 0.92);
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.stroke();
+      if (ring) {
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = ring;
+        ctx.stroke();
+      }
+      if (w >= 22 && h >= 16) {
+        ctx.fillStyle = 'rgba(8,8,16,0.85)';
+        ctx.font = '700 ' + Math.min(13, Math.round(h * 0.55)) + 'px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(pos), x, y + 0.5);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function label(text, x, y, color, size, align) {
+      ctx.fillStyle = color;
+      ctx.font = '600 ' + (size || 11) + 'px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = align || 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(text, x, y);
+    }
+
+    function drawStream() {
+      const y = L.laneY;
+      // lane
+      const grad = ctx.createLinearGradient(L.gateX, 0, L.laneR, 0);
+      grad.addColorStop(0, 'rgba(255,255,255,0.16)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.01)');
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 5]);
+      ctx.beginPath();
+      ctx.moveTo(L.gateX, y + L.gateR + 12);
+      ctx.lineTo(L.laneR, y + L.gateR + 12);
+      ctx.moveTo(L.gateX, y - L.gateR - 12);
+      ctx.lineTo(L.laneR, y - L.gateR - 12);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      label('← the stream, one pass only', L.gateX + L.gateR + 16, y - L.gateR - 20, 'rgba(255,255,255,0.32)', 11);
+      label(L.narrow ? 'length unknown' : 'length unknown to the algorithm', L.laneR, y - L.gateR - 20, 'rgba(255,255,255,0.22)', 10, 'right');
+
+      // upcoming items
+      const iF = S.i + (S.runPause > 0 ? 1 : S.t);
+      const tw = Math.min(34, L.spacing - 8);
+      const th = Math.min(24, tw * 0.74);
+      const span = L.laneR - L.gateX;
+      for (let m = S.i + 1; m <= S.n; m++) {
+        const x = L.gateX + (m - iF) * L.spacing;
+        if (x > L.laneR + 20) break;
+        if (x < L.gateX - 4) continue;
+        const fade = Math.max(0, Math.min(1, 1 - (x - L.gateX) / Math.max(1, span) * 1.05));
+        drawToken(x, y, tw, th, m, 0.25 + 0.7 * fade);
+      }
+    }
+
+    function drawGate() {
+      const x = L.gateX, y = L.laneY, r = L.gateR;
+      const ch = S.i >= S.n ? chanceOf(S.n) : chanceOf(S.i + 1);
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(10,10,22,0.85)';
+      ctx.fill();
+      // the sector that gets through
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.arc(x, y, r - 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.001, ch));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(124,124,255,0.4)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.lineWidth = 1.5 + S.pulse * 2;
+      ctx.strokeStyle = 'rgba(179,136,255,' + (0.45 + S.pulse * 0.5) + ')';
+      ctx.stroke();
+
+      const pct = (ch * 100).toFixed(ch < 0.1 ? 1 : 0) + '%';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#e9d8ff';
+      ctx.font = '700 ' + Math.round(r * 0.52) + 'px ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pct, x, y);
+      ctx.textBaseline = 'alphabetic';
+      label('the gate', x, y - r - 10, 'rgba(255,255,255,0.4)', 11, 'center');
+    }
+
+    function drawReservoir() {
+      const holding = S.runPause > 0 && S.survivors;
+      for (let s = 0; s < S.k; s++) {
+        const x = L.slotX0 + s * (L.slotW + L.slotGap);
+        const pos = S.slots[s];
+        rrect(x, L.slotY, L.slotW, L.slotH, 9);
+        if (pos) {
+          ctx.fillStyle = posColor(pos, 0.9);
+          ctx.fill();
+          ctx.lineWidth = holding ? 2 : 1;
+          ctx.strokeStyle = holding ? 'rgba(138,255,192,0.9)' : 'rgba(255,255,255,0.3)';
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(8,8,16,0.88)';
+          ctx.font = '700 ' + Math.min(16, Math.round(L.slotH * 0.5)) + 'px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(pos), x + L.slotW / 2, L.slotY + L.slotH / 2);
+          ctx.textBaseline = 'alphabetic';
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.025)';
+          ctx.fill();
+          ctx.setLineDash([4, 4]);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+      label(L.narrow ? 'the reservoir' : 'the reservoir — everything we are allowed to remember', L.regionL, L.slotY - 11, 'rgba(255,255,255,0.4)', 11);
+
+      // the bin rejected and evicted items fall into
+      if (L.binOK) {
+        ctx.setLineDash([3, 4]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+        rrect(L.dropX - 19, L.dropY - 13, 38, 26, 8);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        label('let go — ' + S.letGo.toLocaleString(), L.dropX + 27, L.dropY + 4, 'rgba(255,255,255,0.28)', 11);
+      } else {
+        label('let go — ' + S.letGo.toLocaleString(), L.regionR, L.slotY - 11, 'rgba(255,255,255,0.28)', 11, 'right');
+      }
+    }
+
+    function drawFlyers() {
+      for (const f of S.flyers) {
+        const t = Math.min(1, f.t);
+        const e = t * t * (3 - 2 * t);
+        const mx = (f.x0 + f.x1) / 2;
+        const my = Math.min(f.y0, f.y1) - (f.kind === 'accept' ? 34 : 8);
+        const u = 1 - e;
+        const x = u * u * f.x0 + 2 * u * e * mx + e * e * f.x1;
+        let y = u * u * f.y0 + 2 * u * e * my + e * e * f.y1;
+        let a = 1;
+        if (f.kind !== 'accept') {
+          const over = Math.max(0, f.t - 1);
+          y += over * 40;
+          a = Math.max(0, 1 - over * 2.4);
+        } else if (f.t > 1) continue;
+        drawToken(x, y, 26, 20, f.pos, a, f.kind === 'accept' ? 'rgba(138,255,192,0.85)' : null);
+      }
+    }
+
+    function drawHistogram() {
+      const x0 = L.histL, x1 = L.histR, yb = L.histBottom, yt = L.histTop;
+      const n = S.n, cw = (x1 - x0) / n;
+      const target = S.k / n;
+
+      // axis
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x0, yb + 0.5);
+      ctx.lineTo(x1, yb + 0.5);
+      ctx.stroke();
+
+      let maxF = target;
+      if (S.runs > 0) for (let p = 1; p <= n; p++) { const f = S.counts[p] / S.runs; if (f > maxF) maxF = f; }
+      const want = Math.max(target * 1.7, maxF * 1.12, 0.02);
+      S.yMax += (want - S.yMax) * 0.12;
+      const scale = (yb - yt) / S.yMax;
+
+      // bars
+      for (let p = 1; p <= n; p++) {
+        const f = S.runs > 0 ? S.counts[p] / S.runs : 0;
+        const h = Math.min(yb - yt, f * scale);
+        const bx = x0 + (p - 1) * cw;
+        const bw = Math.max(1, cw - (cw > 5 ? 1.5 : 0.4));
+        if (h > 0.6) {
+          rrect(bx, yb - h, bw, h, Math.min(3, bw / 2));
+          ctx.fillStyle = posColor(p, S.watch === p ? 1 : 0.72);
+          ctx.fill();
+        }
+        if (S.watch === p) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 1.2;
+          rrect(bx - 0.5, yb - Math.max(h, 4) - 0.5, bw + 1, Math.max(h, 4) + 1, 3);
+          ctx.stroke();
+        }
+      }
+
+      // fair-share line
+      if (S.showFair) {
+        const y = yb - target * scale;
+        ctx.setLineDash([6, 5]);
+        ctx.strokeStyle = 'rgba(138,255,192,0.75)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x0, y);
+        ctx.lineTo(x1, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        label('fair share  k/n = ' + (target * 100).toFixed(1) + '%', x1, y - 6, 'rgba(138,255,192,0.8)', 11, 'right');
+      }
+
+      // items currently held
+      for (const pos of S.slots) {
+        if (!pos) continue;
+        const bx = x0 + (pos - 0.5) * cw;
+        ctx.beginPath();
+        ctx.moveTo(bx, yb + 3);
+        ctx.lineTo(bx - 3.5, yb + 9);
+        ctx.lineTo(bx + 3.5, yb + 9);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(138,255,192,0.9)';
+        ctx.fill();
+      }
+
+      label('how often each position ends up in the sample', x0, yt - 10, 'rgba(255,255,255,0.4)', 11);
+      label(L.narrow ? 'position 1' : 'position 1 — first through the gate', x0, yb + 19, 'rgba(255,255,255,0.28)', 10);
+      label(L.narrow ? 'position ' + n : 'position ' + n + ' — last', x1, yb + 19, 'rgba(255,255,255,0.28)', 10, 'right');
+      if (S.runs === 0) {
+        label('no runs tallied yet', (x0 + x1) / 2, yt + 26, 'rgba(255,255,255,0.22)', 12, 'center');
+      }
+    }
+
+    function draw() {
+      layout();
+      ctx.clearRect(0, 0, W, H);
+      drawStream();
+      drawReservoir();
+      drawGate();
+      drawFlyers();
+      drawHistogram();
+    }
+
+    // ---------- readout ----------
+    const el = (id) => document.getElementById(id);
+    const notes = {
+      r: 'Every arrival is kept with chance <b class="v">k ÷ i</b> — <em>i</em> being how many have gone past, not how many there are — and whatever gets in pushes out one survivor at random. The gate closes steadily and the result still comes out level.',
+      coin: 'A fixed chance takes no notice of how much stream has already gone by. Late items get the same shot as early ones and then have almost no time left in which to be evicted.',
+      first: 'Fill the reservoir and stop looking. Nothing past position k can ever be sampled — this is what "we took the first ten thousand rows" means, said out loud.',
+      last: 'A sliding window: every arrival is kept and the oldest survivor is dropped. Perfectly good if you wanted <em>recent</em>; a disaster if you told anyone it was random.',
+    };
+
+    function refresh() {
+      const n = S.n, k = S.k;
+      el('rSeen').textContent = S.i.toLocaleString() + ' of ' + n.toLocaleString();
+      const ch = S.i >= n ? 0 : chanceOf(S.i + 1);
+      el('rChance').textContent = S.i >= n ? '—' : (S.strategy === 'r' && S.i + 1 > k
+        ? k + '/' + (S.i + 1) + ' = ' + (ch * 100).toFixed(1) + '%'
+        : (ch * 100).toFixed(ch < 0.1 ? 1 : 0) + '%');
+      el('rRuns').textContent = S.runs.toLocaleString();
+
+      const total = S.runs * k;
+      const cut = Math.floor((2 * n) / 3);
+      let tail = 0;
+      for (let p = cut + 1; p <= n; p++) tail += S.counts[p];
+      const fairTail = (n - cut) / n;
+      const tailEl = el('rTail');
+      if (total > 0) {
+        const share = tail / total;
+        tailEl.textContent = (share * 100).toFixed(1) + '% of the sample';
+        const off = Math.abs(share - fairTail);
+        tailEl.className = 'v ' + (S.runs < 40 ? 'violet' : off < 0.03 ? 'good' : off < 0.08 ? 'amber' : 'pinkv');
+      } else {
+        tailEl.textContent = '—';
+        tailEl.className = 'v violet';
+      }
+
+      el('rNote').innerHTML = notes[S.strategy];
+
+      // verdict: worst-off position
+      let verdict = 'Run a few hundred and the shape of the bias — or the lack of one — settles down.';
+      if (S.runs >= 30) {
+        const target = k / n;
+        let worstP = 1, worstD = 0;
+        for (let p = 1; p <= n; p++) {
+          const d = S.counts[p] / S.runs - target;
+          if (Math.abs(d) > Math.abs(worstD)) { worstD = d; worstP = p; }
+        }
+        const rel = (worstD / target) * 100;
+        // How far out the worst of n independent positions can wander on noise
+        // alone: one standard error, times the expected maximum of n normals.
+        const noise = 100 * Math.sqrt((1 - target) / (target * S.runs)) * (Math.sqrt(2 * Math.log(Math.max(2, n))) + 0.8);
+        if (S.strategy === 'r') {
+          verdict = Math.abs(rel) < Math.max(noise, 9)
+            ? 'Flat. The furthest-out position is <b class="g">#' + worstP + '</b>, ' + (rel >= 0 ? '+' : '') + rel.toFixed(1) + '% from its fair share — inside what ' + S.runs.toLocaleString() + ' runs of noise can explain. Add more runs and it flattens further.'
+            : 'Position <b class="a">#' + worstP + '</b> is ' + (rel >= 0 ? '+' : '') + rel.toFixed(1) + '% off fair, but only <b>' + S.runs.toLocaleString() + '</b> runs are in. Sprint a few thousand more before believing it.';
+        } else {
+          verdict = 'Worst offender: position <b class="p">#' + worstP + '</b>, ' + (rel >= 0 ? '+' : '') + rel.toFixed(0) + '% away from its fair share of the sample. More runs will not fix this — the bias is in the rule, not the noise.';
+        }
+      }
+      el('rVerdict').innerHTML = verdict;
+
+      const w = el('rWatch');
+      if (S.watch && S.runs > 0) {
+        const f = S.counts[S.watch] / S.runs;
+        const target = k / n;
+        w.innerHTML = 'Position <b>#' + S.watch + '</b> survived <b class="v">' + (f * 100).toFixed(2) + '%</b> of ' + S.runs.toLocaleString() +
+          ' runs · fair share is <b class="g">' + (target * 100).toFixed(2) + '%</b> · ' +
+          '<b class="' + (Math.abs(f - target) < target * 0.12 ? 'g' : 'p') + '">' + (f >= target ? '+' : '') + ((f / target - 1) * 100).toFixed(1) + '%</b>.';
+      } else if (S.watch) {
+        w.innerHTML = 'Following position <b>#' + S.watch + '</b> — no runs tallied yet.';
+      } else {
+        w.textContent = 'Click a bar in the histogram to follow one position through every run.';
+      }
+    }
+
+    // ---------- controls ----------
+    document.querySelectorAll('#strats button').forEach((b) => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('#strats button').forEach((o) => o.classList.toggle('on', o === b));
+        S.strategy = b.dataset.s;
+        el('pRow').classList.toggle('dim', S.strategy !== 'coin');
+        clearTally();
+      });
+    });
+
+    el('k').addEventListener('input', (e) => {
+      S.k = +e.target.value;
+      el('kVal').textContent = S.k;
+      layout(); clearTally();
+    });
+    el('n').addEventListener('input', (e) => {
+      S.n = +e.target.value;
+      el('nVal').textContent = S.n;
+      clearTally();
+    });
+    el('p').addEventListener('input', (e) => {
+      S.p = +e.target.value;
+      el('pVal').textContent = S.p.toFixed(2);
+      if (S.strategy === 'coin') clearTally();
+    });
+    el('speed').addEventListener('input', (e) => {
+      S.speed = +e.target.value;
+      el('speedVal').textContent = itemsPerSec().toFixed(itemsPerSec() < 10 ? 1 : 0) + '/s';
+    });
+
+    const playBtn = el('play');
+    function setPlaying(v) {
+      S.playing = v;
+      playBtn.textContent = v ? '❚❚ pause' : '▶ play';
+    }
+    playBtn.addEventListener('click', () => setPlaying(!S.playing));
+    el('step').addEventListener('click', () => {
+      setPlaying(false);
+      if (S.runPause > 0) startRun(); else commitNext();
+      refresh();
+    });
+    el('sprint').addEventListener('click', () => {
+      for (let r = 0; r < 2000; r++) fastRun();
+      refresh();
+    });
+    el('reset').addEventListener('click', clearTally);
+    const fairT = el('showFair');
+    fairT.addEventListener('click', () => {
+      S.showFair = !S.showFair;
+      fairT.classList.toggle('on', S.showFair);
+    });
+
+    cvs.addEventListener('pointerdown', (e) => {
+      const r = cvs.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (y >= L.histTop - 12 && y <= L.histBottom + 14 && x >= L.histL && x <= L.histR) {
+        const cw = (L.histR - L.histL) / S.n;
+        const p = Math.min(S.n, Math.max(1, Math.floor((x - L.histL) / cw) + 1));
+        S.watch = S.watch === p ? null : p;
+      } else {
+        S.watch = null;
+      }
+      refresh();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const key = (e.key || '').toLowerCase();
+      if (key === 'escape') story.classList.remove('open');
+      if (story.classList.contains('open')) return;
+      if (e.key === ' ') { e.preventDefault(); setPlaying(!S.playing); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); el('step').click(); }
+      if (key === 's') el('sprint').click();
+      if (key === 'r') clearTally();
+      if (key === 'h') toggleUi();
+    });
+
+    // ---------- go ----------
+    resize();
+    el('speedVal').textContent = itemsPerSec().toFixed(1) + '/s';
+    clearTally();
+
+    let prev = performance.now();
+    let acc = 0;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - prev) / 1000);
+      prev = now;
+      update(dt);
+      draw();
+      acc += dt;
+      if (acc > 0.12) { acc = 0; refresh(); }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
