@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Balanced by Accident — Experiment 080</title>
+<meta name="description" content="Skip lists — William Pugh, 1990. A sorted linked list where every value flips coins to decide how many express lanes it stands in. No rotations, no rebalancing: the logarithm comes out of the coin." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.58);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,124,195,0.35); }
+  .toggle.on i::after { transform: translateX(13px); background: #ff9fd2; }
+  .toggle.on { color: #ffd6ec; }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  #rNote { min-height: 3.1em; }
+
+  /* The story button — prominent on purpose, every page has one. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Cost panel (bottom right) ---- */
+  .cost {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    width: 252px;
+    padding: 12px 14px 13px; border-radius: 13px;
+    background: rgba(10,10,18,0.52);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.72rem; color: #9a9ab0;
+    transition: opacity 0.4s ease;
+  }
+  .cost.hidden { opacity: 0; pointer-events: none; }
+  .cost h4 { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8f8fa6; font-weight: 600; margin-bottom: 10px; }
+  .crow { display: grid; grid-template-columns: 1fr; gap: 4px; margin-bottom: 9px; }
+  .crow .cl { display: flex; justify-content: space-between; gap: 8px; }
+  .crow .cl b { color: #cfcfe6; font-variant-numeric: tabular-nums; }
+  .cbar { height: 9px; border-radius: 5px; background: rgba(255,255,255,0.07); overflow: hidden; position: relative; }
+  .cbar span {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; width: 0;
+    background: linear-gradient(90deg, #7c7cff, #b48aff);
+    transition: width 0.45s ease;
+  }
+  .cbar span.pinkbar { background: linear-gradient(90deg, #ff7cc3, #ff9d7c); }
+  .cost .foot { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07); line-height: 1.5; color: #8f8fa6; }
+  .cost .foot b { color: #e9e9f0; }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; top: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 236px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; flex: none; display: block; }
+  .legend i.tower { width: 7px; height: 18px; border-radius: 3px; background: linear-gradient(180deg, #ff7cc3, #7c7cff); }
+  .legend i.lane { height: 3px; border-radius: 2px; background: #a481ff; }
+  .legend i.walk { height: 4px; border-radius: 2px; background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8); }
+  .legend i.rej { border-radius: 50%; background: transparent; border: 2px solid #ffcf7c; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1180px) {
+    .legend { display: none; }
+  }
+  @media (max-width: 900px) {
+    .cost { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 42vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Balanced by Accident</h1>
+    <p class="sub">Experiment № 080 · September 7, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label for="pSlider">coin: chance of one more lane <b id="pVal">0.50</b></label>
+        <input type="range" id="pSlider" min="0.1" max="0.75" step="0.01" value="0.5" />
+      </div>
+
+      <div class="row">
+        <label for="nSlider">values in the list <b id="nVal">64</b></label>
+        <input type="range" id="nSlider" min="8" max="128" step="1" value="64" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="searchBtn">search a value</button>
+        <button class="btn pink" id="insertBtn">+ insert one</button>
+      </div>
+
+      <div class="toggle violet on" id="autoT"><i></i> keep searching by itself</div>
+      <div class="toggle" id="flatT"><i></i> express lanes off — scan level 0</div>
+
+      <div class="row">
+        <label for="speed">walking pace <b id="spVal">steady</b></label>
+        <input type="range" id="speed" min="0" max="9" step="1" value="5" />
+      </div>
+
+      <div class="readout">
+        <span class="k">lanes in use</span><span class="v violet" id="rLevels">—</span>
+        <span class="k">pointers per value</span><span class="v" id="rPtr">—</span>
+        <span class="k">expected, 1/(1−p)</span><span class="v" id="rPtrE">—</span>
+        <span class="k">comparisons, this search</span><span class="v pinkv" id="rCmp">—</span>
+        <span class="k">average, every value</span><span class="v good" id="rAvg">—</span>
+        <hr />
+        <p class="full" id="rNote">Every value flipped a coin to decide how tall to stand. Nothing here is ever rebalanced.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="reflip">reflip every coin</button>
+        <button class="btn" id="resetAll">start over</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="tower"></i> a value, as tall as its coins</div>
+    <div><i class="lane"></i> an express lane at that height</div>
+    <div><i class="walk"></i> where the search has walked</div>
+    <div><i class="rej"></i> the value that was too big</div>
+  </div>
+
+  <div class="cost" id="cost">
+    <h4>comparisons per search</h4>
+    <div class="crow">
+      <span class="cl">with express lanes <b id="vLane">—</b></span>
+      <div class="cbar"><span id="barLane"></span></div>
+    </div>
+    <div class="crow">
+      <span class="cl">level 0 only <b id="vFlat">—</b></span>
+      <div class="cbar"><span id="barFlat" class="pinkbar"></span></div>
+    </div>
+    <p class="foot" id="costFoot">Averaged over one search for every value in the list.</p>
+  </div>
+
+  <p class="hint">click the skyline to <b>search that value</b> · <b>s</b> search · <b>i</b> insert · <b>f</b> lanes off · <b>r</b> reflip · <b>h</b> hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 080 · The story</p>
+      <h2>Balanced by Accident</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I wanted the counterexample to something I half-believe: that fast lookup has to be paid for with careful bookkeeping. A red–black tree earns its logarithm through rotations, colour rules and a page of case analysis I have never once held in my head all at the same time. In 1990 William Pugh published a structure with the same expected performance and no balancing code whatsoever. A value arrives, flips a coin until it comes up tails, and stands that many lanes tall. That's the entire design. Nothing is ever rebalanced, because nothing was balanced on purpose.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Watching a search fall down the skyline. It starts on the top lane, where three or four towers span the whole list, runs right until the next value would overshoot, drops one level, and repeats — each drop roughly halving what is left to look at. And I like that the whole design collapses into one dial. At <code>p = 0.5</code> each value costs two pointers and a search touches about <code>2·log₂n</code> of them; drag the coin down to 0.25 and the memory falls towards 1.33 pointers per value while the comparisons climb. You get to watch the trade instead of reading about it. Then switch the lanes off, and the same search crawls the ground floor past every value in turn — which is precisely what all that coin-flipping bought.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The guarantee here is an expectation, not a worst case: an unlucky run of flips can build a list of stumps, and then the search really is a scan. What makes that bearable is <em>where</em> the randomness lives. It is in the structure, not in the data — so unlike a quicksort that can be fed a pathological input, nobody can craft a sequence of values that makes this list slow, because the list never consulted the values when it decided their heights. When being careful is expensive, it is sometimes enough to be unpredictable. It is also much easier to get right.</p>
+
+      <button class="close" id="closeStory">Back to the skyline</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Skip lists — William Pugh, "Skip Lists: A Probabilistic Alternative
+  //      to Balanced Trees", CACM 33(6), 1990. ----
+  //
+  // A sorted linked list where each node also appears in a tower of "express
+  // lanes". A node's height is decided by flipping a biased coin: keep going
+  // with probability p, stop otherwise, so heights are geometric and about a
+  // fraction p of the nodes reach each successive lane.
+  //
+  // Search starts on the highest lane and walks right while the next value is
+  // still smaller than the target; when it would overshoot it drops a level and
+  // carries on. Expected cost is O(log n) — the same as a balanced tree — but
+  // there is no balancing code at all. The randomness is in the structure, not
+  // in the data, so no adversarial input can degrade it.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    const MAXL = 14;          // hard ceiling on tower height
+    const LVLC = ['#7c7cff', '#8d86ff', '#a081ff', '#b57cfb', '#ca7ced',
+                  '#dd7cdb', '#ee7cca', '#ff7cc3', '#ff8fae', '#ffa79b',
+                  '#ffbe8c', '#ffd07f', '#ffe07c', '#fff09a'];
+    const lvlColor = (l) => LVLC[Math.min(l, LVLC.length - 1)];
+
+    // ---- Small seeded RNG (mulberry32) — every coin in the page comes from here ----
+    let rngState = (Math.random() * 4294967296) >>> 0;
+    function rnd() {
+      rngState |= 0; rngState = (rngState + 0x6D2B79F5) | 0;
+      let t = Math.imul(rngState ^ (rngState >>> 15), 1 | rngState);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+
+    // ---- State ----
+    let p = 0.5;
+    let targetN = 64;
+    let flat = false;         // search is only allowed to use level 0
+    let auto = true;
+    let stepMs = 156;
+
+    let head = null;          // sentinel, value −∞, always full height
+    let nodes = [];           // level-0 order, left to right
+    let levels = 1;           // lanes currently in use
+    let avgLane = 0, avgFlat = 0, avgPtr = 0;
+
+    let walk = null;          // { steps, i, cmp, target, found, t }
+    let nextAutoAt = 0;
+    let hoverX = -1;
+    let flashUntil = 0, flashNode = null;
+    let noteOverride = null;   // one-off message that survives the next repaint
+
+    // ---- The coin ----
+    function randomHeight() {
+      let h = 1;
+      while (rnd() < p && h < MAXL) h++;
+      return h;
+    }
+
+    function freshList() {
+      head = { v: -Infinity, h: MAXL, next: new Array(MAXL).fill(null), x: 0, tx: 0, head: true };
+      nodes = [];
+      levels = 1;
+    }
+
+    // Classic insert: remember, for every lane, the last node you stood on
+    // before dropping. Those are exactly the nodes whose pointers must change.
+    function insert(v) {
+      const update = new Array(MAXL).fill(head);
+      let x = head;
+      for (let lvl = levels - 1; lvl >= 0; lvl--) {
+        while (x.next[lvl] && x.next[lvl].v < v) x = x.next[lvl];
+        update[lvl] = x;
+      }
+      if (x.next[0] && x.next[0].v === v) return null;   // already present
+
+      const h = randomHeight();
+      if (h > levels) levels = h;
+      const node = { v, h, next: new Array(h).fill(null), x: 0, tx: 0, born: performance.now() };
+      for (let lvl = 0; lvl < h; lvl++) {
+        node.next[lvl] = update[lvl].next[lvl] || null;
+        update[lvl].next[lvl] = node;
+      }
+      return node;
+    }
+
+    function relist() {
+      nodes = [];
+      for (let x = head.next[0]; x; x = x.next[0]) nodes.push(x);
+    }
+
+    function randomValue() {
+      return 1 + Math.floor(rnd() * 999);
+    }
+
+    function build(n) {
+      noteOverride = null;
+      freshList();
+      let guard = 0;
+      while (nodes.length < n && guard++ < n * 40) {
+        const node = insert(randomValue());
+        if (node) relist();
+      }
+      relist();
+      layout(true);
+      measure();
+      walk = null;
+      nextAutoAt = performance.now() + 700;
+    }
+
+    // Re-run every coin without touching the values: same data, new skyline.
+    function reflip() {
+      noteOverride = null;
+      const vals = nodes.map((n) => n.v);
+      freshList();
+      for (const v of vals) insert(v);
+      relist();
+      layout(true);
+      measure();
+      walk = null;
+      nextAutoAt = performance.now() + 500;
+    }
+
+    // ---- Search. Returns the walk, step by step, and an honest count of the
+    //      value comparisons it took. ----
+    function search(target, topLevel) {
+      const steps = [];
+      let cmp = 0;
+      let x = head;
+      const top = Math.max(1, Math.min(topLevel, levels));
+      for (let lvl = top - 1; lvl >= 0; lvl--) {
+        let reject = null;
+        while (true) {
+          const nx = x.next[lvl];
+          if (!nx) break;                 // end of the lane costs nothing
+          cmp++;
+          if (nx.v < target) { steps.push({ kind: 'hop', from: x, to: nx, lvl }); x = nx; }
+          else { reject = nx; break; }
+        }
+        if (lvl > 0) steps.push({ kind: 'drop', from: x, lvl, reject });
+        else steps.push({ kind: 'land', from: x, lvl, reject });
+      }
+      const nx = x.next[0];
+      let found = false;
+      if (nx) { cmp++; found = nx.v === target; }
+      steps.push({ kind: found ? 'found' : 'miss', from: x, to: nx, lvl: 0 });
+      return { steps, cmp, found, node: found ? nx : null, target };
+    }
+
+    function avgComparisons(topLevel) {
+      if (!nodes.length) return 0;
+      let total = 0;
+      for (const n of nodes) total += search(n.v, topLevel).cmp;
+      return total / nodes.length;
+    }
+
+    function measure() {
+      avgLane = avgComparisons(levels);
+      avgFlat = avgComparisons(1);
+      avgPtr = nodes.length ? nodes.reduce((s, n) => s + n.h, 0) / nodes.length : 0;
+      paintPanel();
+    }
+
+    function startSearch(target, keepNote) {
+      if (!keepNote) noteOverride = null;
+      walk = search(target, flat ? 1 : levels);
+      walk.i = 0;
+      walk.t = performance.now();
+      walk.done = false;
+      paintPanel();
+    }
+
+    function searchRandom() {
+      if (!nodes.length) return;
+      // Mostly hunt for something that is there; occasionally miss, because a
+      // miss is the same walk and it is worth seeing it end on nothing.
+      const target = rnd() < 0.85
+        ? nodes[Math.floor(rnd() * nodes.length)].v
+        : randomValue();
+      startSearch(target);
+    }
+
+    // ---- Layout ----
+    let W = 0, H = 0, dpr = 1;
+    let plot = { x0: 0, x1: 0, y0: 0, y1: 0, gap: 40, base: 0, headX: 0, spacing: 10, tw: 8 };
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout(true);
+    }
+
+    function layout(snap) {
+      if (!head) return;
+      const wide = W >= 700;
+      plot.x0 = wide ? 404 : 20;
+      plot.x1 = W >= 900 ? W - 292 : W - 20;
+      plot.y0 = wide ? 56 : Math.max(150, H * 0.46);
+      plot.y1 = H - (W >= 900 ? 64 : 54);
+      if (plot.x1 - plot.x0 < 240) plot.x0 = Math.max(16, plot.x1 - 240);
+
+      plot.headX = plot.x0 + 16;
+      const laneStart = plot.headX + 26;
+      const n = Math.max(nodes.length, 1);
+      plot.spacing = (plot.x1 - laneStart) / n;
+      plot.tw = Math.max(2.6, Math.min(13, plot.spacing * 0.52));
+
+      const shown = Math.max(levels, 3);
+      const room = plot.y1 - plot.y0 - 34;
+      plot.gap = Math.max(20, Math.min(54, room / shown));
+      // sit the skyline in the middle of the free space rather than on the floor
+      const stack = (shown - 1) * plot.gap;
+      plot.base = Math.min(plot.y1 - 22, (plot.y0 + plot.y1) / 2 + stack / 2);
+
+      for (let i = 0; i < nodes.length; i++) {
+        nodes[i].tx = laneStart + (i + 0.5) * plot.spacing;
+        if (snap || !nodes[i].x) nodes[i].x = nodes[i].tx;
+      }
+      head.x = head.tx = plot.headX;
+    }
+
+    const yOf = (lvl) => plot.base - lvl * plot.gap;
+    const xOf = (node) => (node ? node.x : plot.x1 + 14);
+
+    // ---- Drawing ----
+    function rr(x, y, w, h, r) {
+      const rad = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rad, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rad);
+      ctx.arcTo(x + w, y + h, x, y + h, rad);
+      ctx.arcTo(x, y + h, x, y, rad);
+      ctx.arcTo(x, y, x + w, y, rad);
+      ctx.closePath();
+    }
+
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+      if (!head) return;
+
+      // lane labels + rails
+      ctx.textBaseline = 'middle';
+      for (let lvl = 0; lvl < levels; lvl++) {
+        const y = yOf(lvl);
+        const dead = flat && lvl > 0;
+        ctx.strokeStyle = dead ? 'rgba(255,255,255,0.045)' : 'rgba(255,255,255,0.07)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(plot.headX - 8, y);
+        ctx.lineTo(plot.x1 + 8, y);
+        ctx.stroke();
+        if (plot.gap > 22) {
+          ctx.font = '600 9px ui-monospace, SFMono-Regular, Menlo, monospace';
+          ctx.textAlign = 'right';
+          ctx.fillStyle = dead ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.3)';
+          ctx.fillText('L' + lvl, plot.headX - 13, y);
+        }
+      }
+
+      // express lanes: link every consecutive pair of nodes tall enough for it
+      for (let lvl = levels - 1; lvl >= 0; lvl--) {
+        const y = yOf(lvl);
+        const dead = flat && lvl > 0;
+        ctx.strokeStyle = dead ? 'rgba(150,150,175,0.16)' : lvlColor(lvl);
+        ctx.globalAlpha = dead ? 1 : (lvl === 0 ? 0.42 : 0.72);
+        ctx.lineWidth = lvl === 0 ? 1.2 : 1.8;
+        let prev = head;
+        for (let x = head.next[lvl]; x; x = x.next[lvl]) {
+          ctx.beginPath();
+          ctx.moveTo(xOf(prev), y);
+          ctx.lineTo(xOf(x), y);
+          ctx.stroke();
+          prev = x;
+        }
+        if (prev !== head || lvl === 0) {
+          ctx.globalAlpha = (dead ? 0.5 : 0.3);
+          ctx.beginPath();
+          ctx.moveTo(xOf(prev), y);
+          ctx.lineTo(plot.x1 + 8, y);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      // the head sentinel
+      const headTop = yOf(Math.max(levels - 1, 0));
+      ctx.fillStyle = 'rgba(255,255,255,0.16)';
+      rr(plot.headX - 3, headTop - 6, 6, plot.base - headTop + 12, 3);
+      ctx.fill();
+      ctx.font = '600 10px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,0.34)';
+      ctx.fillText('−∞', plot.headX, plot.base + 16);
+
+      // the towers
+      const showLabels = nodes.length <= 34 && plot.spacing >= 26;
+      for (const n of nodes) {
+        const top = yOf(n.h - 1);
+        const grow = n.born ? Math.min(1, (now - n.born) / 420) : 1;
+        const h0 = plot.base + 11 - top;
+        const drawnH = h0 * (0.25 + 0.75 * grow);
+        const y = plot.base + 11 - drawnH;
+        const g = ctx.createLinearGradient(0, plot.base, 0, top);
+        g.addColorStop(0, lvlColor(0));
+        g.addColorStop(1, lvlColor(Math.max(n.h - 1, 0)));
+        ctx.globalAlpha = flat && n.h > 1 ? 0.22 : 0.9;
+        ctx.fillStyle = g;
+        rr(n.x - plot.tw / 2, y, plot.tw, drawnH, Math.min(3, plot.tw / 2));
+        ctx.fill();
+        if (!flat && n.h >= 4) {
+          ctx.globalAlpha = 0.35;
+          ctx.shadowColor = lvlColor(n.h - 1);
+          ctx.shadowBlur = 12;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+        ctx.globalAlpha = 1;
+        // a marker in every lane the node reaches — so a ground-floor-only
+        // value still reads as something, not just a stub
+        if (plot.tw >= 3 && grow > 0.98) {
+          const r = Math.min(3.1, plot.tw * 0.42);
+          for (let lvl = 0; lvl < n.h; lvl++) {
+            const dead = flat && lvl > 0;
+            ctx.globalAlpha = dead ? 0.2 : 0.95;
+            ctx.fillStyle = dead ? '#8b8ba6' : lvlColor(lvl);
+            ctx.beginPath();
+            ctx.arc(n.x, yOf(lvl), r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+        if (n === flashNode && now < flashUntil) {
+          ctx.strokeStyle = 'rgba(255,124,195,' + (0.85 * (flashUntil - now) / 900).toFixed(3) + ')';
+          ctx.lineWidth = 2;
+          rr(n.x - plot.tw / 2 - 4, y - 4, plot.tw + 8, drawnH + 8, 5);
+          ctx.stroke();
+        }
+        if (showLabels) {
+          ctx.font = '500 9.5px ui-monospace, SFMono-Regular, Menlo, monospace';
+          ctx.fillStyle = 'rgba(255,255,255,0.42)';
+          ctx.fillText(String(n.v), n.x, plot.base + 16);
+        }
+      }
+
+      // ---- the walk ----
+      if (walk) {
+        const shown = Math.min(walk.i, walk.steps.length);
+        ctx.lineCap = 'round';
+        for (let k = 0; k < shown; k++) {
+          const s = walk.steps[k];
+          const fresh = k === shown - 1;
+          const y = yOf(s.lvl);
+          ctx.strokeStyle = fresh ? '#ffffff' : 'rgba(255,255,255,0.55)';
+          ctx.lineWidth = fresh ? 3.4 : 2.4;
+          ctx.shadowColor = 'rgba(255,255,255,0.65)';
+          ctx.shadowBlur = fresh ? 14 : 6;
+          if (s.kind === 'hop') {
+            ctx.beginPath(); ctx.moveTo(xOf(s.from), y); ctx.lineTo(xOf(s.to), y); ctx.stroke();
+          } else if (s.kind === 'drop') {
+            ctx.beginPath(); ctx.moveTo(xOf(s.from), y); ctx.lineTo(xOf(s.from), yOf(s.lvl - 1)); ctx.stroke();
+          } else if (s.kind === 'found' || s.kind === 'miss') {
+            if (s.to) { ctx.beginPath(); ctx.moveTo(xOf(s.from), y); ctx.lineTo(xOf(s.to), y); ctx.stroke(); }
+          }
+          ctx.shadowBlur = 0;
+          // the value that was too big — the comparison that ended the lane
+          if (s.reject && !(walk.found && s.reject === walk.node)) {
+            ctx.strokeStyle = 'rgba(255,207,124,0.85)';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.arc(xOf(s.reject), yOf(s.lvl), Math.max(5, plot.tw * 0.7), 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+
+        // the marker for where we are, and the target
+        const last = walk.steps[Math.max(shown - 1, 0)];
+        if (last) {
+          const cx = xOf(last.to || last.from);
+          const cy = yOf(last.lvl);
+          const pulse = 4 + Math.sin(now / 160) * 1.4;
+          ctx.fillStyle = '#fff';
+          ctx.shadowColor = '#fff'; ctx.shadowBlur = 16;
+          ctx.beginPath(); ctx.arc(cx, cy, pulse, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+
+        // target label, anchored at the found node or floating at the right
+        const done = walk.i >= walk.steps.length;
+        const tn = walk.node;
+        if (done) {
+          const tx = tn ? tn.x : Math.min(plot.x1, xOf(walk.steps[walk.steps.length - 1].from) + 30);
+          ctx.strokeStyle = walk.found ? 'rgba(138,255,192,0.5)' : 'rgba(255,124,195,0.5)';
+          ctx.setLineDash([3, 4]);
+          ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.moveTo(tx, plot.base + 4); ctx.lineTo(tx, plot.y0 + 6); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = walk.found ? '#8affc0' : '#ff9fd2';
+          ctx.fillText((walk.found ? 'found ' : 'not here: ') + walk.target, tx, plot.y0 - 2);
+        }
+
+        // running comparison count near the walker
+        const cmpSoFar = countedTo(walk, shown);
+        ctx.font = '600 11.5px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.fillText(cmpSoFar + (cmpSoFar === 1 ? ' comparison' : ' comparisons'), plot.x0, plot.y0 + 12);
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = '500 11px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillText('looking for ' + walk.target + (flat ? '  ·  level 0 only' : '  ·  from lane L' + (levels - 1)), plot.x0, plot.y0 + 29);
+      }
+
+      // hover read-out on the skyline
+      if (hoverX >= 0 && nodes.length) {
+        const n = nearestNode(hoverX);
+        if (n) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(n.x, plot.base + 6); ctx.lineTo(n.x, yOf(n.h - 1) - 8); ctx.stroke();
+          ctx.font = '600 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(255,255,255,0.75)';
+          ctx.fillText(String(n.v) + '  ·  ' + n.h + (n.h === 1 ? ' lane' : ' lanes'), n.x, yOf(n.h - 1) - 16);
+        }
+      }
+    }
+
+    function countedTo(w, shown) {
+      let c = 0;
+      for (let k = 0; k < shown; k++) {
+        const s = w.steps[k];
+        if (s.kind === 'hop') c++;
+        if ((s.kind === 'drop' || s.kind === 'land') && s.reject) c++;
+        if ((s.kind === 'found' || s.kind === 'miss') && s.to) c++;
+      }
+      return c;
+    }
+
+    function nearestNode(px) {
+      let best = null, bd = 1e9;
+      for (const n of nodes) {
+        const d = Math.abs(n.x - px);
+        if (d < bd) { bd = d; best = n; }
+      }
+      return bd < Math.max(18, plot.spacing) ? best : null;
+    }
+
+    // ---- Panel ----
+    const $ = (id) => document.getElementById(id);
+    function paintPanel() {
+      $('rLevels').textContent = flat ? '1 of ' + levels : String(levels);
+      $('rPtr').textContent = avgPtr.toFixed(2);
+      $('rPtrE').textContent = (1 / (1 - p)).toFixed(2);
+      $('rCmp').textContent = walk ? String(walk.cmp) : '—';
+      const cur = flat ? avgFlat : avgLane;
+      $('rAvg').textContent = cur.toFixed(1);
+      $('vLane').textContent = avgLane.toFixed(1);
+      $('vFlat').textContent = avgFlat.toFixed(1);
+      const maxv = Math.max(avgFlat, avgLane, 1);
+      $('barLane').style.width = (100 * avgLane / maxv) + '%';
+      $('barFlat').style.width = (100 * avgFlat / maxv) + '%';
+      const speedup = avgLane > 0 ? avgFlat / avgLane : 1;
+      $('costFoot').innerHTML = 'The lanes are doing <b>' + speedup.toFixed(1) + '×</b> the walking for you, for <b>' +
+        avgPtr.toFixed(2) + '</b> pointers a value.';
+
+      let note;
+      if (noteOverride) {
+        $('rNote').innerHTML = noteOverride;
+        return;
+      }
+      if (flat) {
+        note = 'The towers are still standing — the search just is not allowed to use them, so it walks every value in turn. This is the plain sorted linked list.';
+      } else if (p <= 0.2) {
+        note = 'A shy coin: <b class="v">' + (1 / (1 - p)).toFixed(2) + '</b> pointers a value, but few express lanes, so the walk along each one is long.';
+      } else if (p >= 0.65) {
+        note = 'An eager coin: tall towers and <b class="v">' + (1 / (1 - p)).toFixed(2) + '</b> pointers a value, and most of the extra lanes are nearly empty.';
+      } else {
+        note = 'Each value flipped a coin until it came up tails. Expect about <b class="v">' + (1 / (1 - p)).toFixed(2) +
+          '</b> pointers a value and roughly <b class="p">' + (Math.log(Math.max(nodes.length, 2)) / Math.log(1 / p) / p).toFixed(1) + '</b> comparisons a search.';
+      }
+      $('rNote').innerHTML = note;
+    }
+
+    // ---- Animation loop ----
+    function frame(now) {
+      // ease node positions after an insert shifts everybody along
+      for (const n of nodes) n.x += (n.tx - n.x) * 0.22;
+
+      if (walk && walk.i < walk.steps.length) {
+        if (stepMs === 0) { walk.i = walk.steps.length; }
+        else if (now - walk.t >= stepMs) { walk.i++; walk.t = now; }
+        if (walk.i >= walk.steps.length && !walk.done) {
+          walk.done = true;
+          nextAutoAt = now + 1500;
+          paintPanel();
+        }
+      } else if (auto && now > nextAutoAt && !story.classList.contains('open')) {
+        searchRandom();
+      }
+
+      draw(now);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- Controls ----
+    $('pSlider').addEventListener('input', (e) => {
+      p = parseFloat(e.target.value);
+      $('pVal').textContent = p.toFixed(2);
+      reflip();
+    });
+    $('nSlider').addEventListener('input', (e) => {
+      targetN = parseInt(e.target.value, 10);
+      $('nVal').textContent = String(targetN);
+      build(targetN);
+    });
+    const PACE = ['instant', 'sprint', 'quick', 'brisk', 'lively', 'steady', 'easy', 'slow', 'strolling', 'dawdling'];
+    $('speed').addEventListener('input', (e) => {
+      const v = parseInt(e.target.value, 10);
+      stepMs = v === 0 ? 0 : 26 + v * 26;
+      $('spVal').textContent = PACE[v];
+    });
+    $('searchBtn').addEventListener('click', () => searchRandom());
+    $('insertBtn').addEventListener('click', () => doInsert());
+    $('reflip').addEventListener('click', () => reflip());
+    $('resetAll').addEventListener('click', () => {
+      p = 0.5; targetN = 64; flat = false; auto = true;
+      $('pSlider').value = '0.5'; $('pVal').textContent = '0.50';
+      $('nSlider').value = '64'; $('nVal').textContent = '64';
+      $('flatT').classList.remove('on');
+      $('autoT').classList.add('on');
+      build(targetN);
+    });
+
+    function doInsert() {
+      const v = randomValue();
+      const node = insert(v);
+      if (!node) return;
+      relist();
+      targetN = nodes.length;
+      $('nSlider').value = String(Math.min(128, targetN));
+      $('nVal').textContent = String(targetN);
+      layout(false);
+      measure();
+      flashNode = node; flashUntil = performance.now() + 900;
+      const flips = node.h - 1;
+      noteOverride = 'Inserted <b>' + v + '</b>: ' + (flips === 0 ? 'tails on the first flip' : flips + (flips === 1 ? ' head' : ' heads') + ', then tails') +
+        ' — it stands <b class="p">' + node.h + (node.h === 1 ? '</b> lane tall.' : '</b> lanes tall.');
+      startSearch(v, true);
+    }
+
+    $('flatT').addEventListener('click', () => {
+      flat = !flat;
+      noteOverride = null;
+      $('flatT').classList.toggle('on', flat);
+      walk = null;
+      nextAutoAt = performance.now() + 250;
+      paintPanel();
+    });
+    $('autoT').addEventListener('click', () => {
+      auto = !auto;
+      $('autoT').classList.toggle('on', auto);
+      nextAutoAt = performance.now() + 200;
+    });
+
+    const ui = $('ui'), showUi = $('showUi'), legend = $('legend'), cost = $('cost');
+    function togglePanel() {
+      const hidden = ui.classList.toggle('hidden');
+      showUi.classList.toggle('on', hidden);
+      legend.classList.toggle('hidden', hidden);
+      cost.classList.toggle('hidden', hidden);
+    }
+    $('collapse').addEventListener('click', togglePanel);
+    showUi.addEventListener('click', togglePanel);
+
+    // ---- Pointer ----
+    canvas.addEventListener('pointermove', (e) => { hoverX = e.clientX; });
+    canvas.addEventListener('pointerleave', () => { hoverX = -1; });
+    canvas.addEventListener('pointerdown', (e) => {
+      const n = nearestNode(e.clientX);
+      if (n) startSearch(n.v);
+      else searchRandom();
+      nextAutoAt = performance.now() + 4000;
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'h') togglePanel();
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (story.classList.contains('open')) return;
+      if (k === 's') searchRandom();
+      if (k === 'i') doInsert();
+      if (k === 'f') $('flatT').click();
+      if (k === 'r') reflip();
+    });
+
+    window.addEventListener('resize', () => { resize(); });
+
+    // ---- Go ----
+    resize();
+    build(targetN);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
