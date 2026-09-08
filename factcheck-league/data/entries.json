@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-09-07",
+    "lastUpdated": "2026-09-08",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -3698,7 +3698,7 @@
     {
       "id": "2026-09-07",
       "date": "2026-09-07",
-      "headline": true,
+      "headline": false,
       "topic": "Whether small boat arrivals are down 46%",
       "claim": "Small-boat arrivals this summer were down 46% compared with last year.",
       "speaker": "Mike Tapp",
@@ -3743,6 +3743,61 @@
         {
           "title": "Small boats tracker — daily Channel arrivals, 2026 against 2025",
           "url": "https://www.deported.co.uk/small-boats/"
+        }
+      ]
+    },
+    {
+      "id": "2026-09-08",
+      "date": "2026-09-08",
+      "headline": true,
+      "topic": "Whether borrowing is at a six-year low",
+      "claim": "Borrowing – at its lowest level in six years.",
+      "speaker": "John Healey",
+      "party": "Labour",
+      "role": "Chancellor of the Exchequer",
+      "discussionScore": 72,
+      "discussionNote": "Healey's first big pre-Budget speech, in Coventry, led Monday's economic news. Shadow chancellor Andrew Griffith and Reform's Robert Jenrick both attacked it, Griffith citing borrowing rates near a 28-year high.",
+      "score": 72,
+      "verdict": "Mostly True",
+      "explanation": "Right on the measure chancellors normally use, wrong on the other. ONS put borrowing in the year to March 2026 at 4.3% of GDP, its lowest share since 2019-20 — a six-year low. In cash terms it fails: ONS's own series shows £129.8bn last year against £120.2bn in 2021-22 and £127.4bn in 2022-23. The fall he is describing is still real, from £151.7bn the year before. But it describes a closed financial year, not now. Borrowing in 2026-27 to July was £56.7bn, £6bn below last year yet £2.3bn above the OBR forecast. And it is not the borrowing number the markets are watching: Griffith's 28-year high is gilt yields, a different figure, also true.",
+      "evidence": [
+        "The claim: Chancellor John Healey, growth speech at the Manufacturing Technology Centre, Coventry, 7 September 2026, ahead of his 28 October Budget.",
+        "ONS: borrowing in the year to March 2026 was £132.0bn, 4.3% of GDP, the lowest share since the year to March 2020.",
+        "OBR later revised that outturn to £129bn, below its own March forecast of £132.7bn.",
+        "Cash terms undercut it. ONS's monthly series gives £120.2bn in 2021-22 and £127.4bn in 2022-23, both below 2025-26.",
+        "The drop is genuine: £151.7bn in 2024-25 to £129.8bn in 2025-26, a fall of about 14%.",
+        "This year is less flattering. £56.7bn borrowed to July 2026, £2.3bn above the OBR's forecast for the period.",
+        "Same word, different number: Griffith's 'borrowing rates near a 28-year high' is about gilt yields, not the deficit."
+      ],
+      "confidence": "High — every figure is an ONS or OBR outturn; only the choice of measure is arguable.",
+      "sources": [
+        {
+          "title": "GOV.UK — Chancellor John Healey's Growth Speech 2026",
+          "url": "https://www.gov.uk/government/speeches/chancellor-john-healeys-growth-speech-2026"
+        },
+        {
+          "title": "ONS — Public sector finances, UK: March 2026",
+          "url": "https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance/bulletins/publicsectorfinances/march2026"
+        },
+        {
+          "title": "ONS — Public sector finances, UK: July 2026",
+          "url": "https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance/bulletins/publicsectorfinances/july2026"
+        },
+        {
+          "title": "ONS — Public sector net borrowing time series (DZLS)",
+          "url": "https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance/timeseries/dzls/pusf"
+        },
+        {
+          "title": "OBR — Revisions bring 2025-26 borrowing below forecast",
+          "url": "https://obr.uk/revisions-bring-2025-26-borrowing-slightly-below-forecast/"
+        },
+        {
+          "title": "Commons Library — Public finances: Economic indicators",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn02812/"
+        },
+        {
+          "title": "Express & Star — Healey unveils £150m northern growth fund",
+          "url": "https://www.expressandstar.com/uk-news/john-healey-unveils-ps150m-fund-for-northern-firms-in-push-for-growth-8966376"
         }
       ]
     }
