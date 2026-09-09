@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Likeliest Story — Experiment 082</title>
+<meta name="description" content="The Viterbi algorithm — Andrew Viterbi, 1967. A walker in a corridor of coloured doors, a sensor that lies, and the trellis that finds the single most probable path. The most likely sequence of states is not the sequence of most likely states." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 350px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,255,255,0.3); }
+  .toggle.on i::after { transform: translateX(13px); background: #f2f2f8; }
+  .toggle.on { color: #e9e9f0; }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .head { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  #rNote { min-height: 3.1em; }
+
+  /* The story button — prominent on purpose, every page has one. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Scoreboard (bottom right) ---- */
+  .score {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    width: 266px;
+    padding: 12px 14px 13px; border-radius: 13px;
+    background: rgba(10,10,18,0.55);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.72rem; color: #9a9ab0;
+    transition: opacity 0.4s ease;
+  }
+  .score.hidden { opacity: 0; pointer-events: none; }
+  .score h4 { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8f8fa6; font-weight: 600; margin-bottom: 10px; }
+  .crow { display: grid; grid-template-columns: 1fr; gap: 4px; margin-bottom: 9px; }
+  .crow .cl { display: flex; justify-content: space-between; gap: 8px; }
+  .crow .cl b { color: #cfcfe6; font-variant-numeric: tabular-nums; }
+  .cbar { height: 9px; border-radius: 5px; background: rgba(255,255,255,0.07); overflow: hidden; position: relative; }
+  .cbar span {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; width: 0;
+    background: linear-gradient(90deg, #7c7cff, #b48aff);
+    transition: width 0.45s ease;
+  }
+  .cbar span.pinkbar { background: linear-gradient(90deg, #ff7cc3, #ffa3d6); }
+  .score .foot { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07); line-height: 1.55; color: #8f8fa6; }
+  .score .foot b { color: #e9e9f0; }
+  .score .foot b.v { color: #b0b0ff; }
+  .score .foot b.p { color: #ff9fd2; }
+  .score .foot b.bad { color: #ff8f7e; }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; top: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 258px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 16px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.glow { width: 13px; height: 13px; border-radius: 50%; background: radial-gradient(circle, #b48aff, rgba(124,124,255,0.12) 70%); }
+  .legend i.vit { height: 4px; background: #a89bff; box-shadow: 0 0 8px rgba(124,124,255,0.9); }
+  .legend i.step { background: #ff7cc3; }
+  .legend i.truth { background: repeating-linear-gradient(90deg, rgba(255,255,255,0.65) 0 4px, transparent 4px 8px); }
+  .legend i.wall { background: #ff5a4a; box-shadow: 0 0 8px rgba(255,90,74,0.8); }
+  .legend i.swatch { width: 13px; height: 11px; border-radius: 3px; background: linear-gradient(90deg, #45d3c4 0 33%, #e8bf4f 33% 66%, #5aa9ff 66% 100%); }
+
+  /* ---- Hover tooltip ---- */
+  .tip {
+    position: fixed; z-index: 12; pointer-events: none;
+    padding: 8px 11px; border-radius: 10px;
+    background: rgba(12,12,22,0.93);
+    border: 1px solid rgba(124,124,255,0.35);
+    font-size: 0.72rem; color: #cfcfe6; line-height: 1.55;
+    max-width: 236px; opacity: 0; transition: opacity 0.15s ease;
+    font-variant-numeric: tabular-nums;
+  }
+  .tip.on { opacity: 1; }
+  .tip b { color: #fff; font-weight: 600; }
+  .tip b.v { color: #b0b0ff; }
+  .tip em { font-style: normal; color: #8f8fa6; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1260px) {
+    .legend { display: none; }
+  }
+  @media (max-width: 980px) {
+    .score { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 46vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 9px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>The Likeliest Story</h1>
+    <p class="sub">Experiment № 082 · September 9, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label for="lie">how often the sensor lies <b id="lieVal">20%</b></label>
+        <input type="range" id="lie" min="0.02" max="0.42" step="0.01" value="0.20" />
+      </div>
+
+      <div class="row">
+        <label for="cols">colours the doors come in <b id="colsVal">4</b></label>
+        <input type="range" id="cols" min="2" max="5" step="1" value="4" />
+      </div>
+
+      <div class="row">
+        <label for="stay">chance the walker stays put <b id="stayVal">0.55</b></label>
+        <input type="range" id="stay" min="0.2" max="0.85" step="0.01" value="0.55" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="answerBtn">show the answer</button>
+        <button class="btn pink" id="newBtn">a new walk</button>
+        <button class="btn" id="mapBtn">repaint the doors</button>
+      </div>
+
+      <div class="toggle violet on" id="autoT"><i></i> keep going by itself</div>
+      <div class="toggle" id="forestT"><i></i> draw every surviving path</div>
+      <div class="toggle on" id="truthT"><i></i> show where the walker really was</div>
+
+      <div class="row">
+        <label for="pace">pace <b id="paceVal">steady</b></label>
+        <input type="range" id="pace" min="0" max="9" step="1" value="5" />
+      </div>
+
+      <div class="readout">
+        <span class="head">steps no door allows</span>
+        <span class="k">best guess each step</span><span class="v pinkv" id="rJumpG">—</span>
+        <span class="k">the likeliest story</span><span class="v good" id="rJumpV">0</span>
+        <hr />
+        <span class="k">walks this could be</span><span class="v violet" id="rWalks">—</span>
+        <span class="k">routes kept in memory</span><span class="v" id="rKept">—</span>
+        <span class="k">survivors merge</span><span class="v" id="rMerge">—</span>
+        <hr />
+        <p class="full" id="rNote">Every column keeps one best route into each room, and throws the rest away.</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="swatch"></i> the colour the sensor called out</div>
+    <div><i class="glow"></i> best score for a path ending here</div>
+    <div><i class="vit"></i> the likeliest whole story</div>
+    <div><i class="step"></i> best guess at each step, alone</div>
+    <div><i class="truth"></i> where the walker really was</div>
+    <div><i class="wall"></i> a step no door allows</div>
+  </div>
+
+  <div class="score" id="score">
+    <h4>rooms named correctly</h4>
+    <div class="crow">
+      <span class="cl">best guess each step <b id="vStep">—</b></span>
+      <div class="cbar"><span id="barStep" class="pinkbar"></span></div>
+    </div>
+    <div class="crow">
+      <span class="cl">the likeliest story <b id="vVit">—</b></span>
+      <div class="cbar"><span id="barVit"></span></div>
+    </div>
+    <p class="foot" id="scoreFoot">Each read against the walk that actually happened.</p>
+  </div>
+
+  <div class="tip" id="tip"></div>
+
+  <p class="hint">hover a cell for <b>the best story ending there</b> · <b>n</b> new walk · <b>f</b> surviving paths · <b>t</b> the truth · <b>space</b> pause · <b>h</b> panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 082 · The story</p>
+      <h2>The Likeliest Story</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I kept meeting the same sentence in textbooks — <em>the most likely sequence of states is not the sequence of most likely states</em> — nodding at it, and not really believing it. So I built the smallest thing that makes it undeniable. A walker drifts along a corridor of ten rooms, one door per step, and every door is painted one of a handful of colours. A sensor calls out the colour of the room the walker is in, and lies about one time in five. No single reading can tell you where anyone is: several rooms share every colour. But the <em>run</em> of colours is very nearly a fingerprint. Andrew Viterbi's 1967 algorithm — written for decoding convolutional codes, and now sitting in phones, disk read channels, speech recognisers and gene finders — is how you cash that in.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The forgetting. Each column keeps exactly one route into each room — the best one — and discards every other way of arriving, forever, because no future evidence could ever promote a worse prefix. That is the whole trick, and it turns a number of possible walks with eighteen digits in it into a hundred comparisons per step. Then turn on <em>draw every surviving path</em> and watch the second delight: the ten survivors differ only near the cursor, and behind it they collapse into a single trunk. Once every survivor agrees about step 40, nothing that happens later can change step 40 — which is exactly why a hardware decoder can hold a fixed window of history and stream forever. Hovering a cell shows the one story that ends there; the table is ten stories being edited in parallel, and nine of them get abandoned.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A chain of individually best decisions is not the best chain. Watch the scoreboard and you will see the pink line — the best guess for each step on its own, worked out from the whole recording — name <em>more</em> rooms correctly than the violet one. It should: that is the metric it optimises, one room at a time. And it is still not a story. Every few runs it steps from room 3 to room 7 in a single tick, through doors that do not exist, because nothing ever asked it to be a sequence. So: if your answer has to hold together, score whole answers, not steps. Two smaller things I took away. The constraint is free — <em>one door per step</em> is one more term in a sum, and it is what rescues a hopeless sensor. And everything runs in logarithms, because multiplying enough probabilities together underflows to zero; once it is all addition and comparison, this stops looking like statistics and starts looking like what it is — a shortest path through a layered graph.</p>
+
+      <button class="close" id="closeStory">Back to the trellis</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- The Viterbi algorithm — A. J. Viterbi, "Error bounds for convolutional
+  //      codes and an asymptotically optimum decoding algorithm", IEEE Trans.
+  //      Information Theory 13(2), 1967. ----
+  //
+  // A hidden Markov model of the oldest kind: a walker occupies one of K rooms
+  // in a corridor and may only stay put or step next door. Each room's door is
+  // painted one of C colours; a sensor reports that colour, lying with
+  // probability e. Colours repeat, so a single reading localises nothing — the
+  // posterior over rooms is genuinely multimodal.
+  //
+  // Viterbi fills a trellis of K states x T times:
+  //     d[t][j] = max_i ( d[t-1][i] + logA[i][j] ) + logB[j][obs[t]]
+  //     psi[t][j] = the i that won
+  // Only the winning predecessor is kept: no future evidence can promote a
+  // worse prefix. The best whole path is then read backwards out of psi.
+  // O(T·K²) time and O(T·K) memory, against K^T possible walks.
+  //
+  // For contrast the page also runs forward-backward, whose per-step posterior
+  // argmax is the optimal guess for each step considered alone. It names more
+  // rooms correctly — and still emits sequences the model forbids.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const NEG = -1e9;                    // stands in for log(0)
+
+    const PALETTE = ['#45d3c4', '#e8bf4f', '#8ad95c', '#5aa9ff', '#c88bff'];
+    const CNAME = ['teal', 'amber', 'green', 'blue', 'lilac'];
+
+    // ---- Seeded RNG (mulberry32) ----
+    function mulberry(seed) {
+      let s = seed >>> 0;
+      return function () {
+        s |= 0; s = (s + 0x6D2B79F5) | 0;
+        let t = Math.imul(s ^ (s >>> 15), 1 | s);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    function lse(arr, n) {
+      let m = -Infinity;
+      for (let i = 0; i < n; i++) if (arr[i] > m) m = arr[i];
+      if (m === -Infinity) return -Infinity;
+      let s = 0;
+      for (let i = 0; i < n; i++) s += Math.exp(arr[i] - m);
+      return m + Math.log(s);
+    }
+
+    // ---- Parameters ----
+    const K = 10;              // rooms in the corridor
+    let C = 4;                 // colours the doors come in
+    let stay = 0.55;           // P(stay in the same room)
+    let lie = 0.20;            // P(the sensor names the wrong colour)
+    let seed = (Math.random() * 2147483647) | 0;
+    let mapSeed = (Math.random() * 2147483647) | 0;
+    let stepMs = 62;
+    let auto = true, forest = false, showTruth = true, paused = false;
+
+    // ---- Model + data ----
+    let door = [];             // door[k] = colour of room k
+    let logPi = [], logA = [], logB = [], emitCdf = [];
+    let T = 52;
+    let truth = [], obs = [];
+    let delta = [], psi = [], colMax = [];
+    let vpath = [], gpath = [];
+    let vScore = 0, gScore = 0;
+    let pathCount = [];
+
+    // ---- Animation state ----
+    let phase = 'forward';     // forward | trace | done
+    let cursor = 0;
+    let traceT = 0;
+    let doneAt = 0;
+    let hover = null, pinned = null;
+
+    // ---- Painting the corridor ----
+    function paintDoors() {
+      const r = mulberry(mapSeed);
+      door = [];
+      for (let i = 0; i < K; i++) {
+        let v = 0, guard = 0;
+        do { v = Math.floor(r() * C) % C; guard++; } while (i > 0 && v === door[i - 1] && guard < 40);
+        door.push(v);
+      }
+    }
+
+    function buildModel() {
+      logPi = new Array(K).fill(Math.log(1 / K));
+      logA = [];
+      for (let i = 0; i < K; i++) {
+        const p = new Array(K).fill(0);
+        const nb = [];
+        if (i > 0) nb.push(i - 1);
+        if (i < K - 1) nb.push(i + 1);
+        p[i] = stay;
+        for (let n = 0; n < nb.length; n++) p[nb[n]] += (1 - stay) / nb.length;
+        logA.push(p.map((v) => (v > 1e-12 ? Math.log(v) : NEG)));
+      }
+      logB = []; emitCdf = [];
+      for (let k = 0; k < K; k++) {
+        const p = new Array(C).fill(lie / (C - 1));
+        p[door[k]] = 1 - lie;
+        logB.push(p.map((v) => Math.log(Math.max(v, 1e-14))));
+        const cdf = []; let c = 0;
+        for (let o = 0; o < C; o++) { c += p[o]; cdf.push(c); }
+        emitCdf.push(cdf);
+      }
+    }
+
+    // ---- Sampling a walk and what the sensor said ----
+    function generate() {
+      paintDoors();
+      buildModel();
+      const rp = mulberry(seed);                       // the walk
+      const re = mulberry((seed ^ 0x9e3779b9) >>> 0);  // the sensor's honesty
+      truth = new Array(T); obs = new Array(T);
+      let k = Math.floor(rp() * K) % K;
+      for (let t = 0; t < T; t++) {
+        if (t > 0) {
+          const u = rp();
+          let c = 0, nk = k;
+          for (let j = 0; j < K; j++) {
+            c += Math.exp(logA[k][j]);
+            if (u <= c) { nk = j; break; }
+          }
+          k = nk;
+        }
+        truth[t] = k;
+        const u = re();
+        let o = C - 1;
+        for (let j = 0; j < C; j++) if (u <= emitCdf[k][j]) { o = j; break; }
+        obs[t] = o;
+      }
+      decode();
+    }
+
+    // ---- The algorithm ----
+    function decode() {
+      delta = []; psi = []; colMax = new Float64Array(T);
+      for (let t = 0; t < T; t++) { delta.push(new Float64Array(K)); psi.push(new Int32Array(K)); }
+
+      for (let k = 0; k < K; k++) { delta[0][k] = logPi[k] + logB[k][obs[0]]; psi[0][k] = -1; }
+      for (let t = 1; t < T; t++) {
+        for (let j = 0; j < K; j++) {
+          let best = -Infinity, arg = 0;
+          for (let i = 0; i < K; i++) {
+            const v = delta[t - 1][i] + logA[i][j];
+            if (v > best) { best = v; arg = i; }
+          }
+          delta[t][j] = best + logB[j][obs[t]];
+          psi[t][j] = arg;
+        }
+      }
+      for (let t = 0; t < T; t++) {
+        let m = -Infinity;
+        for (let k = 0; k < K; k++) if (delta[t][k] > m) m = delta[t][k];
+        colMax[t] = m;
+      }
+
+      let bi = 0;
+      for (let k = 1; k < K; k++) if (delta[T - 1][k] > delta[T - 1][bi]) bi = k;
+      vpath = new Array(T); vpath[T - 1] = bi;
+      for (let t = T - 1; t > 0; t--) vpath[t - 1] = psi[t][vpath[t]];
+
+      // ---- Forward-backward: the best guess for each step on its own ----
+      const la = [], lb = [];
+      const a0 = new Float64Array(K);
+      for (let k = 0; k < K; k++) a0[k] = logPi[k] + logB[k][obs[0]];
+      la.push(a0);
+      const tmp = new Float64Array(K);
+      for (let t = 1; t < T; t++) {
+        const a = new Float64Array(K);
+        for (let j = 0; j < K; j++) {
+          for (let i = 0; i < K; i++) tmp[i] = la[t - 1][i] + logA[i][j];
+          a[j] = lse(tmp, K) + logB[j][obs[t]];
+        }
+        la.push(a);
+      }
+      for (let t = 0; t < T; t++) lb.push(new Float64Array(K));
+      for (let t = T - 2; t >= 0; t--) {
+        for (let i = 0; i < K; i++) {
+          for (let j = 0; j < K; j++) tmp[j] = logA[i][j] + logB[j][obs[t + 1]] + lb[t + 1][j];
+          lb[t][i] = lse(tmp, K);
+        }
+      }
+      gpath = new Array(T);
+      for (let t = 0; t < T; t++) {
+        let g = 0, m = -Infinity;
+        for (let k = 0; k < K; k++) {
+          const v = la[t][k] + lb[t][k];
+          if (v > m) { m = v; g = k; }
+        }
+        gpath[t] = g;
+      }
+
+      vScore = scorePath(vpath);
+      gScore = scorePath(gpath);
+      countWalks();
+    }
+
+    function scorePath(p) {
+      let s = logPi[p[0]] + logB[p[0]][obs[0]];
+      for (let t = 1; t < T; t++) {
+        const a = logA[p[t - 1]][p[t]];
+        if (a <= NEG) return -Infinity;
+        s += a + logB[p[t]][obs[t]];
+      }
+      return s;
+    }
+    const forbidden = (p, t) => Math.abs(p[t] - p[t - 1]) > 1;
+    function countJumps(p, upTo) {
+      let n = 0;
+      for (let t = 1; t <= upTo; t++) if (forbidden(p, t)) n++;
+      return n;
+    }
+    function countHits(p, upTo) {
+      let n = 0;
+      for (let t = 0; t <= upTo; t++) if (p[t] === truth[t]) n++;
+      return n;
+    }
+    function countDiff(a, b, upTo) {
+      let n = 0;
+      for (let t = 0; t <= upTo; t++) if (a[t] !== b[t]) n++;
+      return n;
+    }
+
+    // How many legal walks of length t+1 exist at all — the haystack the
+    // trellis quietly stands in for.
+    function countWalks() {
+      pathCount = new Array(T);
+      let c = new Float64Array(K).fill(1);
+      pathCount[0] = K;
+      for (let t = 1; t < T; t++) {
+        const n = new Float64Array(K);
+        for (let i = 0; i < K; i++) {
+          if (c[i] === 0) continue;
+          for (let j = 0; j < K; j++) if (logA[i][j] > NEG) n[j] += c[i];
+        }
+        c = n;
+        let s = 0;
+        for (let k = 0; k < K; k++) s += c[k];
+        pathCount[t] = s;
+      }
+    }
+    const SUP = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+    function bigNum(v) {
+      if (!isFinite(v)) return 'beyond counting';
+      if (v < 1e6) return Math.round(v).toLocaleString('en-US');
+      const e = Math.floor(Math.log10(v));
+      const m = v / Math.pow(10, e);
+      return m.toFixed(1) + ' × 10' + String(e).split('').map((d) => SUP[+d] || d).join('');
+    }
+
+    // ---- Survivors: the trellis edges still reachable from the live column ----
+    let survEdge = [], mergeAt = -1;
+    function computeSurvivors(tc) {
+      survEdge = [];
+      for (let t = 0; t <= tc; t++) survEdge.push(new Uint8Array(K));
+      let cur = [];
+      for (let k = 0; k < K; k++) cur.push(k);
+      mergeAt = -1;
+      for (let t = tc; t > 0; t--) {
+        let same = true;
+        for (let i = 1; i < cur.length; i++) if (cur[i] !== cur[0]) { same = false; break; }
+        if (same && mergeAt < 0) mergeAt = t;
+        const seen = new Uint8Array(K);
+        const nxt = [];
+        for (let i = 0; i < cur.length; i++) {
+          const k = cur[i];
+          survEdge[t][k] = 1;
+          const p = psi[t][k];
+          if (!seen[p]) { seen[p] = 1; nxt.push(p); }
+        }
+        cur = nxt;
+      }
+      if (mergeAt < 0 && cur.length === 1) mergeAt = 0;
+    }
+
+    // ---- Geometry ----
+    let W = 0, H = 0, dpr = 1;
+    const plot = { x0: 0, x1: 0, y0: 0, y1: 0, colW: 12, rowH: 26, r: 4, ry: 0, rh: 15 };
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+    }
+
+    function layout() {
+      const wide = W >= 700;
+      plot.x0 = wide ? 430 : 56;
+      plot.x1 = W - (W >= 1260 ? 306 : (W >= 980 ? 302 : 16));
+      if (plot.x1 - plot.x0 < 210) plot.x0 = Math.max(52, plot.x1 - 210);
+      plot.y0 = wide ? 104 : Math.max(H * 0.54, 226);
+      plot.y1 = H - (W >= 980 ? 60 : 72);
+      if (plot.y1 - plot.y0 < 150) plot.y0 = Math.max(56, plot.y1 - 150);
+
+      plot.rh = Math.max(9, Math.min(16, (plot.y1 - plot.y0) / 22));
+      plot.ry = plot.y0 - plot.rh - 16;
+
+      const width = plot.x1 - plot.x0;
+      const nt = Math.max(20, Math.min(110, Math.round(width / 13)));
+      plot.rowH = (plot.y1 - plot.y0) / K;
+      plot.colW = width / nt;
+      plot.r = Math.max(2, Math.min(7.5, Math.min(plot.colW, plot.rowH) * 0.34));
+      if (nt !== T) { T = nt; restart(true); }
+    }
+
+    const xOf = (t) => plot.x0 + (t + 0.5) * plot.colW;
+    const yOf = (k) => plot.y0 + (k + 0.5) * plot.rowH;
+
+    // ---- Lifecycle ----
+    function restart(regen) {
+      if (regen) generate();
+      phase = 'forward';
+      cursor = 0;
+      traceT = T - 1;
+      pinned = null;
+      computeSurvivors(0);
+    }
+    function newWalk() {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      restart(true);
+    }
+    function newMap() {
+      mapSeed = (mapSeed * 1103515245 + 12345) & 0x7fffffff;
+      restart(true);
+    }
+    function finish() {
+      cursor = T - 1;
+      traceT = 0;
+      phase = 'done';
+      doneAt = performance.now();
+      computeSurvivors(T - 1);
+    }
+
+    // ---- Drawing ----
+    function strokeRun(pts) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+    }
+    function line(pts, colour, width, dash) {
+      if (pts.length < 2) return;
+      ctx.save();
+      ctx.setLineDash(dash || []);
+      ctx.strokeStyle = colour; ctx.lineWidth = width;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      strokeRun(pts);
+      ctx.restore();
+    }
+    // A decoded path, with the steps no door allows picked out in red.
+    function drawPath(p, upTo, colour, width, glow) {
+      if (upTo < 1) return;
+      ctx.save();
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      if (glow) { ctx.shadowColor = colour; ctx.shadowBlur = glow; }
+      let run = [[xOf(0), yOf(p[0])]];
+      for (let t = 1; t <= upTo; t++) {
+        if (forbidden(p, t)) {
+          if (run.length > 1) { ctx.strokeStyle = colour; ctx.lineWidth = width; strokeRun(run); }
+          ctx.save();
+          ctx.shadowColor = '#ff5a4a'; ctx.shadowBlur = 10;
+          ctx.strokeStyle = '#ff5a4a'; ctx.lineWidth = width + 1;
+          strokeRun([[xOf(t - 1), yOf(p[t - 1])], [xOf(t), yOf(p[t])]]);
+          ctx.restore();
+          run = [[xOf(t), yOf(p[t])]];
+        } else {
+          run.push([xOf(t), yOf(p[t])]);
+        }
+      }
+      if (run.length > 1) { ctx.strokeStyle = colour; ctx.lineWidth = width; strokeRun(run); }
+      ctx.restore();
+    }
+    function rr(x, y, w, h, rad) {
+      const r = Math.min(rad, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    const cellAlpha = (t, k) => Math.exp((delta[t][k] - colMax[t]) / 2.6);
+
+    function chainFrom(t, k) {
+      const p = new Array(t + 1);
+      let j = k;
+      for (let i = t; i >= 0; i--) { p[i] = j; if (i > 0) j = psi[i][j]; }
+      return p;
+    }
+
+    function hex(c, a) {
+      const n = parseInt(c.slice(1), 16);
+      return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      if (!delta.length || !truth.length) return;
+      const tc = Math.max(0, Math.min(T - 1, Math.floor(cursor)));
+
+      // ---- the corridor: one tinted band per room, with its door colour ----
+      ctx.save();
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      for (let k = 0; k < K; k++) {
+        const y = yOf(k);
+        ctx.fillStyle = hex(PALETTE[door[k]], 0.055);
+        ctx.fillRect(plot.x0, y - plot.rowH / 2 + 1, plot.x1 - plot.x0, plot.rowH - 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(plot.x0, y); ctx.lineTo(plot.x1, y); ctx.stroke();
+        ctx.fillStyle = hex(PALETTE[door[k]], 0.9);
+        rr(plot.x0 - 26, y - 5, 10, 10, 3); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.34)';
+        ctx.textAlign = 'right';
+        ctx.fillText(String(k + 1), plot.x0 - 32, y);
+      }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.26)';
+      ctx.fillText('room', plot.x0 - 42, plot.ry - 12);
+      ctx.textAlign = 'right';
+      ctx.fillText('time →', plot.x1, plot.ry - 12);
+      ctx.restore();
+
+      // ---- the ribbon: what the sensor called out, step by step ----
+      const bw = Math.max(2, plot.colW - 2.2);
+      for (let t = 0; t <= tc; t++) {
+        ctx.fillStyle = hex(PALETTE[obs[t]], 0.92);
+        rr(xOf(t) - bw / 2, plot.ry, bw, plot.rh, Math.min(3, bw / 2));
+        ctx.fill();
+      }
+
+      // ---- the score field: how good is the best path ending in each cell ----
+      for (let t = 0; t <= tc; t++) {
+        const x = xOf(t);
+        for (let k = 0; k < K; k++) {
+          const a = cellAlpha(t, k);
+          if (a < 0.015) continue;
+          ctx.beginPath();
+          ctx.arc(x, yOf(k), plot.r * (0.5 + 0.9 * a), 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(124,124,255,' + (0.10 + 0.5 * a).toFixed(3) + ')';
+          ctx.fill();
+        }
+      }
+
+      // ---- every back-pointer, faded by how good its cell is ----
+      if (forest) {
+        ctx.save();
+        ctx.lineWidth = 1;
+        for (let t = 1; t <= tc; t++) {
+          for (let k = 0; k < K; k++) {
+            const a = cellAlpha(t, k);
+            if (a < 0.02) continue;
+            ctx.strokeStyle = 'rgba(124,124,255,' + (0.05 + 0.17 * a).toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.moveTo(xOf(t), yOf(k));
+            ctx.lineTo(xOf(t - 1), yOf(psi[t][k]));
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+
+      // ---- the survivors ----
+      if (survEdge.length) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(164,129,255,0.5)';
+        ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+        for (let t = 1; t < survEdge.length && t <= tc; t++) {
+          for (let k = 0; k < K; k++) {
+            if (!survEdge[t][k]) continue;
+            ctx.beginPath();
+            ctx.moveTo(xOf(t), yOf(k));
+            ctx.lineTo(xOf(t - 1), yOf(psi[t][k]));
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+
+      // ---- where the survivors have already agreed ----
+      if (mergeAt > 0 && mergeAt <= tc && phase === 'forward') {
+        const x = xOf(mergeAt);
+        ctx.save();
+        ctx.setLineDash([3, 4]);
+        ctx.strokeStyle = 'rgba(180,138,255,0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, plot.ry - 4); ctx.lineTo(x, plot.y1); ctx.stroke();
+        ctx.restore();
+      }
+
+      // ---- where the walker really was ----
+      if (showTruth) {
+        const pts = [];
+        for (let t = 0; t <= tc; t++) pts.push([xOf(t), yOf(truth[t])]);
+        line(pts, 'rgba(255,255,255,0.42)', 1.8, [5, 5]);
+      }
+
+      // ---- best guess at each step, taken alone ----
+      if (phase !== 'forward') drawPath(gpath, tc, 'rgba(255,124,195,0.92)', 2, 7);
+
+      // ---- the likeliest story ----
+      if (phase === 'forward') {
+        let b = 0;
+        for (let k = 1; k < K; k++) if (delta[tc][k] > delta[tc][b]) b = k;
+        drawPath(chainFrom(tc, b), tc, 'rgba(157,141,255,0.6)', 2, 6);
+      } else {
+        const from = phase === 'trace' ? Math.max(0, Math.ceil(traceT)) : 0;
+        const seg = [];
+        for (let t = from; t < T; t++) seg.push([xOf(t), yOf(vpath[t])]);
+        ctx.save();
+        ctx.shadowColor = '#7c7cff'; ctx.shadowBlur = 14;
+        line(seg, 'rgba(124,124,255,0.95)', 3.4);
+        ctx.shadowBlur = 0;
+        line(seg, 'rgba(255,255,255,0.88)', 1.1);
+        ctx.restore();
+        if (phase === 'trace' && from > 0) {
+          ctx.beginPath();
+          ctx.arc(xOf(from), yOf(vpath[from]), plot.r * 1.7, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
+        }
+      }
+
+      // ---- the live column ----
+      if (phase === 'forward') {
+        const x = xOf(tc);
+        ctx.save();
+        const g = ctx.createLinearGradient(x - 16, 0, x + 4, 0);
+        g.addColorStop(0, 'rgba(124,124,255,0)');
+        g.addColorStop(1, 'rgba(124,124,255,0.17)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x - 16, plot.y0 - 4, 20, plot.y1 - plot.y0 + 8);
+        ctx.strokeStyle = 'rgba(180,160,255,0.55)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, plot.ry - 4); ctx.lineTo(x, plot.y1); ctx.stroke();
+        ctx.restore();
+      }
+
+      // ---- the hovered story ----
+      const hl = pinned || hover;
+      if (hl && hl.t <= tc) {
+        const p = chainFrom(hl.t, hl.k);
+        const pts = [];
+        for (let t = 0; t <= hl.t; t++) pts.push([xOf(t), yOf(p[t])]);
+        ctx.save();
+        ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 10;
+        line(pts, 'rgba(255,255,255,0.92)', 2);
+        ctx.restore();
+        ctx.beginPath();
+        ctx.arc(xOf(hl.t), yOf(hl.k), plot.r * 1.9, 0, Math.PI * 2);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.stroke();
+      }
+    }
+
+    // ---- Readouts ----
+    const $ = (id) => document.getElementById(id);
+    let lastNote = '', lastFoot = '';
+    function updateUI() {
+      const tc = Math.max(0, Math.min(T - 1, Math.floor(cursor)));
+      const done = phase !== 'forward';
+      const n = tc + 1;
+
+      $('rJumpG').textContent = done ? countJumps(gpath, tc) : '—';
+      $('rWalks').textContent = bigNum(pathCount[tc]);
+      $('rKept').textContent = K;
+      $('rMerge').textContent = phase === 'forward'
+        ? (mergeAt >= 0 ? (tc - mergeAt) + ' steps back' : 'not yet')
+        : 'at the answer';
+
+      if (done) {
+        const hg = countHits(gpath, tc), hv = countHits(vpath, tc);
+        $('vStep').textContent = Math.round(100 * hg / n) + '%';
+        $('barStep').style.width = (100 * hg / n) + '%';
+        $('vVit').textContent = Math.round(100 * hv / n) + '%';
+        $('barVit').style.width = (100 * hv / n) + '%';
+      } else {
+        $('vStep').textContent = '—'; $('barStep').style.width = '0%';
+        $('vVit').textContent = '—'; $('barVit').style.width = '0%';
+      }
+
+      let foot;
+      if (!done) {
+        foot = 'Filling the trellis, one column at a time. The per-step rival needs the whole recording, so it waits.';
+      } else {
+        const gj = countJumps(gpath, T - 1);
+        const ratio = gScore === -Infinity ? null : Math.exp(vScore - gScore);
+        foot = gj > 0
+          ? (countHits(gpath, T - 1) > countHits(vpath, T - 1)
+              ? 'The pink answer names more rooms right — that is the metric it optimises, one room at a time. It is still <b class="bad">not a walk anyone could take</b>.'
+              : 'Per-step guessing lost this round on points too — and its answer is <b class="bad">not a walk anyone could take</b>.')
+          : 'As whole stories: the likeliest scores <b class="v">' + vScore.toFixed(1) + '</b> against <b class="p">' + gScore.toFixed(1) + '</b>' +
+            (ratio && isFinite(ratio) && ratio > 1.2 ? ' — about <b>' + bigNum(ratio) + '×</b> more probable.' : '.');
+      }
+      if (foot !== lastFoot) { $('scoreFoot').innerHTML = foot; lastFoot = foot; }
+
+      const ab = $('answerBtn');
+      const abt = phase === 'forward' ? 'show the answer' : 'run it again';
+      if (ab.textContent !== abt) ab.textContent = abt;
+
+      let note;
+      if (phase === 'forward') {
+        note = 'Each room keeps only the best way in and forgets the rest. ' +
+          (mergeAt >= 0
+            ? 'Behind step <b>' + mergeAt + '</b> every survivor already agrees — nothing later can change that stretch.'
+            : 'The survivors still disagree all the way back to the start.');
+      } else if (phase === 'trace') {
+        note = 'Walking the back-pointers home. Only now does an answer exist — and it is read out backwards.';
+      } else {
+        const gj = countJumps(gpath, T - 1);
+        const df = countDiff(gpath, vpath, T - 1);
+        const hv = countHits(vpath, T - 1) / T;
+        if (hv < 0.25) {
+          note = 'A rare one: this corridor rhymes with itself, so the likeliest story fits the colours beautifully — ' +
+            'a few rooms away from where the walk really was. Repaint the doors and it stops happening.';
+        } else if (gj > 0) {
+          note = 'The per-step answer is the best guess for every single step — and it still steps through a wall <b>' +
+            gj + '</b> ' + (gj === 1 ? 'time' : 'times') + '. The likeliest story never can.';
+        } else if (df > 0) {
+          note = 'The two answers disagree about <b>' + df + '</b> of ' + T + ' steps, from the same evidence. ' +
+            'Fewer colours or a bigger liar, and the per-step one stops holding together.';
+        } else {
+          note = 'A clear run: both answers agree everywhere. Drop the doors to three colours and watch that end.';
+        }
+      }
+      if (note !== lastNote) { $('rNote').innerHTML = note; lastNote = note; }
+    }
+
+    // ---- Tooltip ----
+    const tip = $('tip');
+    function updateTip(px, py) {
+      const hl = pinned || hover;
+      if (!hl || !delta.length) { tip.classList.remove('on'); return; }
+      const said = obs[hl.t], here = door[hl.k];
+      const d = delta[hl.t][hl.k];
+      const gap = d - colMax[hl.t];
+      tip.innerHTML =
+        'step <b>' + hl.t + '</b> · room <b>' + (hl.k + 1) + '</b><br>' +
+        'sensor said <b style="color:' + PALETTE[said] + '">' + CNAME[said] + '</b>, this door is ' +
+        '<b style="color:' + PALETTE[here] + '">' + CNAME[here] + '</b>' + (said === here ? '' : ' — a lie, then') + '<br>' +
+        'best story ending here: <b class="v">' + d.toFixed(1) + '</b><br>' +
+        (gap < -0.05
+          ? '<em>' + gap.toFixed(1) + ' behind this column’s best</em>'
+          : '<em style="color:#8affc0">this column’s best</em>') +
+        (hl.t > 0 ? '<br>arrived from room <b>' + (psi[hl.t][hl.k] + 1) + '</b>' : '');
+      tip.classList.add('on');
+      tip.style.left = Math.max(8, Math.min(W - 246, px + 16)) + 'px';
+      tip.style.top = Math.max(8, Math.min(H - 108, py - 10)) + 'px';
+    }
+
+    // ---- Pointer ----
+    let mx = 0, my = 0;
+    function hitTest(px, py) {
+      const tc = Math.max(0, Math.min(T - 1, Math.floor(cursor)));
+      const t = Math.round((px - plot.x0) / plot.colW - 0.5);
+      const k = Math.round((py - plot.y0) / plot.rowH - 0.5);
+      if (t < 0 || t > tc || k < 0 || k >= K) return null;
+      if (Math.abs(px - xOf(t)) > plot.colW * 0.8 + 3) return null;
+      if (Math.abs(py - yOf(k)) > plot.rowH * 0.6) return null;
+      return { t: t, k: k };
+    }
+    canvas.addEventListener('pointermove', (e) => {
+      mx = e.clientX; my = e.clientY;
+      hover = hitTest(mx, my);
+      updateTip(mx, my);
+    });
+    canvas.addEventListener('pointerleave', () => {
+      hover = null;
+      if (!pinned) tip.classList.remove('on');
+    });
+    canvas.addEventListener('pointerdown', (e) => {
+      mx = e.clientX; my = e.clientY;
+      const h = hitTest(mx, my);
+      if (h) {
+        pinned = (pinned && pinned.t === h.t && pinned.k === h.k) ? null : h;
+        hover = h;
+        updateTip(mx, my);
+      } else if (phase === 'forward') {
+        finish();
+      }
+    });
+
+    // ---- Controls ----
+    const paceWords = ['crawling', 'slow', 'unhurried', 'easy', 'measured', 'steady', 'brisk', 'quick', 'fast', 'headlong'];
+    function setPace(v) {
+      stepMs = [340, 240, 170, 120, 88, 62, 44, 30, 20, 12][v];
+      $('paceVal').textContent = paceWords[v];
+    }
+    $('pace').addEventListener('input', (e) => setPace(+e.target.value));
+    $('lie').addEventListener('input', (e) => {
+      lie = +e.target.value;
+      $('lieVal').textContent = Math.round(lie * 100) + '%';
+      restart(true);
+    });
+    $('cols').addEventListener('input', (e) => {
+      C = +e.target.value;
+      $('colsVal').textContent = C;
+      restart(true);
+    });
+    $('stay').addEventListener('input', (e) => {
+      stay = +e.target.value;
+      $('stayVal').textContent = stay.toFixed(2);
+      restart(true);
+    });
+    $('newBtn').addEventListener('click', newWalk);
+    $('mapBtn').addEventListener('click', newMap);
+    $('answerBtn').addEventListener('click', () => {
+      if (phase === 'forward') finish(); else restart(false);
+    });
+
+    function bindToggle(id, get, set) {
+      const el = $(id);
+      el.addEventListener('click', () => { set(!get()); el.classList.toggle('on', get()); });
+    }
+    bindToggle('autoT', () => auto, (v) => { auto = v; });
+    bindToggle('forestT', () => forest, (v) => { forest = v; });
+    bindToggle('truthT', () => showTruth, (v) => { showTruth = v; });
+
+    $('collapse').addEventListener('click', () => {
+      $('ui').classList.add('hidden');
+      $('showUi').classList.add('on');
+    });
+    $('showUi').addEventListener('click', () => {
+      $('ui').classList.remove('hidden');
+      $('showUi').classList.remove('on');
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { story.classList.remove('open'); return; }
+      if (story.classList.contains('open')) return;
+      const k = e.key.toLowerCase();
+      if (k === 'h') {
+        const hid = $('ui').classList.toggle('hidden');
+        $('showUi').classList.toggle('on', hid);
+      }
+      if (k === 'n') newWalk();
+      if (k === 'm') newMap();
+      if (k === 'r') restart(false);
+      if (k === 'f') $('forestT').click();
+      if (k === 't') $('truthT').click();
+      if (e.code === 'Space') { e.preventDefault(); paused = !paused; }
+    });
+
+    // ---- Loop ----
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(80, now - last);
+      last = now;
+
+      if (!paused) {
+        if (phase === 'forward') {
+          const before = Math.floor(cursor);
+          cursor += dt / stepMs;
+          if (cursor >= T - 1) {
+            cursor = T - 1; phase = 'trace'; traceT = T - 1;
+            computeSurvivors(T - 1);
+          } else if (Math.floor(cursor) !== before) {
+            computeSurvivors(Math.floor(cursor));
+          }
+        } else if (phase === 'trace') {
+          traceT -= dt / Math.max(7, stepMs * 0.42);
+          if (traceT <= 0) { traceT = 0; phase = 'done'; doneAt = now; }
+        } else if (phase === 'done' && auto && now - doneAt > 3000) {
+          newWalk();
+        }
+      }
+
+      draw();
+      updateUI();
+      if (pinned || hover) updateTip(mx, my);
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', resize);
+    setPace(5);
+    resize();
+    if (!truth.length) restart(true);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
