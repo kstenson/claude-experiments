@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Farther Than the Wall — Experiment 083</title>
+<meta name="description" content="The k-d tree — Jon Bentley, 1975. Split the plane in half at a point, again and again, and a nearest-neighbour search can throw away whole regions unexamined: if the wall is farther than your best guess, nothing behind it can win." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 348px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,255,255,0.3); }
+  .toggle.on i::after { transform: translateX(13px); background: #f2f2f8; }
+  .toggle.on { color: #e9e9f0; }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .head { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  #rNote { min-height: 3.2em; }
+
+  /* The story button — prominent on purpose, every page has one. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Scoreboard (bottom right) ---- */
+  .score {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    width: 286px;
+    padding: 12px 14px 13px; border-radius: 13px;
+    background: rgba(10,10,18,0.55);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.72rem; color: #9a9ab0;
+    transition: opacity 0.4s ease;
+  }
+  .score.hidden { opacity: 0; pointer-events: none; }
+  .score h4 { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8f8fa6; font-weight: 600; margin-bottom: 9px; }
+  .crow { display: grid; grid-template-columns: 1fr; gap: 4px; margin-bottom: 8px; }
+  .crow .cl { display: flex; justify-content: space-between; gap: 8px; }
+  .crow .cl b { color: #cfcfe6; font-variant-numeric: tabular-nums; }
+  .cbar { height: 9px; border-radius: 5px; background: rgba(255,255,255,0.07); overflow: hidden; position: relative; }
+  .cbar span {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; width: 0;
+    background: linear-gradient(90deg, #7c7cff, #b48aff);
+    transition: width 0.45s ease;
+  }
+  .cbar span.pinkbar { background: linear-gradient(90deg, #ff7cc3, #ffa3d6); }
+  .score .sep { border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 11px 0 10px; }
+  .dims { display: grid; gap: 5px; }
+  .drow { display: grid; grid-template-columns: 42px 1fr 44px; align-items: center; gap: 8px; }
+  .drow .dl { color: #8f8fa6; font-variant-numeric: tabular-nums; }
+  .drow .dv { color: #cfcfe6; text-align: right; font-variant-numeric: tabular-nums; }
+  .dbar { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; position: relative; }
+  .dbar span {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; width: 0;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3);
+    transition: width 0.5s ease;
+  }
+  .score .foot { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07); line-height: 1.55; color: #8f8fa6; }
+  .score .foot b { color: #e9e9f0; }
+  .score .foot b.v { color: #b0b0ff; }
+  .score .foot b.p { color: #ff9fd2; }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; top: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 262px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 16px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.wall { background: linear-gradient(90deg, #7c7cff, #ff7cc3); }
+  .legend i.cur { background: #ff7cc3; box-shadow: 0 0 8px rgba(255,124,195,0.9); }
+  .legend i.ring { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid #b0b0ff; background: rgba(124,124,255,0.12); }
+  .legend i.hit { width: 11px; height: 11px; border-radius: 50%; background: #8affc0; box-shadow: 0 0 9px rgba(138,255,192,0.8); }
+  .legend i.pruned { width: 14px; height: 11px; border-radius: 3px; background: rgba(255,90,110,0.22); border: 1px solid rgba(255,90,110,0.45); }
+  .legend i.q { width: 13px; height: 13px; border-radius: 50%; background: radial-gradient(circle, #fff, rgba(255,255,255,0.1) 70%); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px; max-width: 92vw;
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1280px) {
+    .legend { display: none; }
+  }
+  @media (max-width: 1020px) {
+    .score { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 47vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 9px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Farther Than the Wall</h1>
+    <p class="sub">Experiment № 083 · September 10, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label for="nPts">points in the field <b id="nVal">900</b></label>
+        <input type="range" id="nPts" min="120" max="4000" step="20" value="900" />
+      </div>
+
+      <div class="row">
+        <label for="kNbr">neighbours wanted <b id="kVal">1</b></label>
+        <input type="range" id="kNbr" min="1" max="16" step="1" value="1" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="newBtn">new cloud</button>
+        <button class="btn pink" id="shapeBtn">another shape</button>
+        <button class="btn" id="replayBtn">replay the search</button>
+      </div>
+
+      <div class="toggle violet on" id="autoT"><i></i> let the query wander by itself</div>
+      <div class="toggle rose on" id="pruneT"><i></i> shade the regions it skips</div>
+      <div class="toggle on" id="wallT"><i></i> draw every wall</div>
+
+      <div class="row">
+        <label for="pace">pace <b id="paceVal">steady</b></label>
+        <input type="range" id="pace" min="0" max="9" step="1" value="5" />
+      </div>
+
+      <div class="readout">
+        <span class="head">this query</span>
+        <span class="k">the cloud</span><span class="v" id="rShape">an even scatter</span>
+        <span class="k">distances measured</span><span class="v violet" id="rTests">—</span>
+        <span class="k">of points in the field</span><span class="v" id="rN">—</span>
+        <span class="k">regions skipped whole</span><span class="v pinkv" id="rPrunes">—</span>
+        <span class="k">points never touched</span><span class="v good" id="rSkipped">—</span>
+        <hr />
+        <p class="full" id="rNote">Every point splits its region in two. The search falls to the bottom, then argues its way back up.</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="wall"></i> a wall — one point, one region halved</div>
+    <div><i class="cur"></i> the wall being weighed right now</div>
+    <div><i class="q"></i> the query</div>
+    <div><i class="ring"></i> best distance so far</div>
+    <div><i class="hit"></i> the nearest neighbours</div>
+    <div><i class="pruned"></i> skipped without a single distance</div>
+  </div>
+
+  <div class="score" id="score">
+    <h4>distances measured per query</h4>
+    <div class="crow">
+      <span class="cl">check every point <b id="vBrute">—</b></span>
+      <div class="cbar"><span id="barBrute" class="pinkbar"></span></div>
+    </div>
+    <div class="crow">
+      <span class="cl">walk the k-d tree <b id="vTree">—</b></span>
+      <div class="cbar"><span id="barTree"></span></div>
+    </div>
+
+    <hr class="sep" />
+    <h4>the same tree in d dimensions</h4>
+    <div class="dims" id="dims"></div>
+    <p class="foot" id="scoreFoot">Measuring 2000 random points per dimension, live…</p>
+  </div>
+
+  <p class="hint">move the pointer to <b>place the query</b> · click to <b>add a point</b> · <b>n</b> new cloud · <b>s</b> shape · <b>p</b> skipped regions · <b>space</b> pause · <b>h</b> panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 083 · The story</p>
+      <h2>Farther Than the Wall</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Because I wanted to draw the moment a program decides <em>not</em> to look. Finding the nearest of a thousand points is the most boring loop in the world — measure all thousand, keep the smallest — and Jon Bentley's 1975 k-d tree gets the same answer, exactly the same answer, after about thirty measurements. There is no approximation and no luck in that. Every point in the tree is also a wall: it cuts its region in half, alternating between a vertical cut and a horizontal one as you descend. The picture that falls out looks like a Mondrian drawn by a mob — dense where the points crowd, wide and calm where they don't — and I find it genuinely beautiful that the picture <em>is</em> the index. Then a query arrives, drops through the walls to the little cell it lands in, and starts walking back up asking one question at each wall: could anything on the other side possibly beat what I already have?</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The question has a one-line answer, and it is the whole algorithm. Everything behind a wall is at least as far away as the wall itself, because the shortest way there crosses it. So if the perpendicular distance to the wall is bigger than my current best, that entire half — a hundred points, a thousand, a subtree I never look inside — cannot contain a winner, and I skip it without a single distance calculation. Watch the rose regions switch off one after another as it climbs, and read the note in the panel: <em>the wall is 14.2% away, my best is 3.1% — 218 points behind it can't win</em>. It is proof, not heuristics. And it is fragile in exactly one direction: turn the neighbours dial up, and the circle it has to defend grows, so fewer walls clear the bar and the skipping quietly stops paying. The pruning is an argument about geometry, and you can watch the argument get harder.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Look at the panel in the bottom-right corner. It builds the same tree over 2000 random points in 2, 3, 4, 6, 8, 12 and 16 dimensions and reports how many points each search actually measures. In the plane it is about 1%. At eight dimensions it is a quarter of them, at twelve it is four fifths, and by sixteen the tree is measuring essentially every point — the brute-force loop with extra bookkeeping and worse cache behaviour. Nothing is broken — the geometry simply turns on you. In high dimensions almost all of a box's volume hugs its boundary, so the query is close to nearly every wall, so nearly every wall must be crossed. That is the curse of dimensionality with a number attached, and it is why modern vector search gave up on exactness and went to approximate methods like HNSW. The general lesson I keep: a data structure is a claim about the shape of your data, and it is worth knowing which shapes make the claim false. The second one: <em>everything behind that wall is at least as far as the wall</em> is a bound you can prove in a sentence, and one provable bound in the right place is worth any amount of cleverness.</p>
+
+      <button class="close" id="closeStory">Back to the field</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- The k-d tree — J. L. Bentley, "Multidimensional binary search trees
+  //      used for associative searching", CACM 18(9), 1975. ----
+  //
+  // Build: at depth h, split the point set on axis h mod d at its median. The
+  // median point becomes the node; its coordinate on that axis is a wall that
+  // halves the region. O(n log n) to build, O(n) memory, and the drawing of the
+  // walls IS the index.
+  //
+  // Nearest-neighbour search (Friedman, Bentley & Finkel, 1977): descend to the
+  // leaf cell containing the query, keeping the best k seen so far in a bounded
+  // list; then unwind. At each node, the perpendicular distance from the query
+  // to the wall lower-bounds the distance to EVERY point on the far side, since
+  // any path there crosses the wall. So:
+  //
+  //     if (found < k || (q[axis] - split)^2 < worstOfBestK)  search the far side
+  //     else                                                  discard it entire
+  //
+  // The result is exact. Expected O(log n) in the plane; O(n) as d grows, which
+  // the dimension panel measures rather than asserts.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+
+    // ---------------- state ----------------
+    const SHAPES = ['an even scatter', 'four clusters', 'a ring', 'filaments'];
+    const st = {
+      n: 900, k: 1, pace: 5, shape: 0,
+      auto: true, showPruned: true, showWalls: true, paused: false
+    };
+    const PACE_LABEL = ['frozen', 'a crawl', 'slow', 'unhurried', 'easy', 'steady', 'brisk', 'quick', 'fast', 'instant'];
+    const PACE_RATE = [0, 2, 4, 7, 11, 17, 26, 40, 70, 1e6];
+
+    let PX = new Float64Array(0), PY = new Float64Array(0);
+    let root = null;
+    let qx = 0.5, qy = 0.5;
+
+    let trace = [], totals = { tests: 0, prunes: 0, skipped: 0, crosses: 0 };
+    let tp = 0, appliedIdx = -1;
+    let best = [], prunedRects = [], curEvent = null, note = '';
+    let prunedMark = new Uint8Array(0), seenMark = new Uint8Array(0);
+    let history = [];
+
+    // pointer / wander
+    let pointerActive = false, lastPointer = -1e9;
+    let glide = null, holdUntil = 0;
+
+    // ---------------- canvas ----------------
+    let W = 0, H = 0, DPR = 1, side = 0, ox = 0, oy = 0;
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = Math.max(1, Math.round(W * DPR));
+      canvas.height = Math.max(1, Math.round(H * DPR));
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      if (W <= 700) {
+        side = Math.min(W - 24, H * 0.40);
+        ox = (W - side) / 2;
+        oy = H * 0.50 + (H * 0.42 - side) / 2;
+      } else {
+        const leftPad = 400, rightPad = W > 1020 ? 326 : 24;
+        const avail = Math.max(180, W - leftPad - rightPad);
+        side = Math.min(avail, H - 90);
+        ox = leftPad + (avail - side) / 2;
+        oy = (H - side) / 2;
+      }
+    }
+    const sx = (x) => ox + x * side;
+    const sy = (y) => oy + y * side;
+    window.addEventListener('resize', resize);
+
+    // ---------------- point clouds ----------------
+    function makeCloud() {
+      const n = st.n;
+      PX = new Float64Array(n); PY = new Float64Array(n);
+      const clamp = (v) => Math.min(0.998, Math.max(0.002, v));
+      const gauss = () => {
+        let u = 0, v = 0;
+        while (u === 0) u = Math.random();
+        while (v === 0) v = Math.random();
+        return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      };
+      if (st.shape === 0) {
+        for (let i = 0; i < n; i++) { PX[i] = Math.random(); PY[i] = Math.random(); }
+      } else if (st.shape === 1) {
+        const cx = [], cy = [];
+        for (let c = 0; c < 4; c++) { cx.push(0.18 + Math.random() * 0.64); cy.push(0.18 + Math.random() * 0.64); }
+        for (let i = 0; i < n; i++) {
+          const c = i & 3;
+          PX[i] = clamp(cx[c] + gauss() * 0.085);
+          PY[i] = clamp(cy[c] + gauss() * 0.085);
+        }
+      } else if (st.shape === 2) {
+        for (let i = 0; i < n; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const r = 0.34 + gauss() * 0.035;
+          PX[i] = clamp(0.5 + Math.cos(a) * r);
+          PY[i] = clamp(0.5 + Math.sin(a) * r);
+        }
+      } else {
+        const arms = 5, ph = [], sl = [];
+        for (let a = 0; a < arms; a++) { ph.push(Math.random() * Math.PI); sl.push(0.1 + Math.random() * 0.8); }
+        for (let i = 0; i < n; i++) {
+          const a = i % arms, t = Math.random();
+          const x0 = 0.08 + 0.84 * t;
+          const y0 = sl[a] + Math.sin(x0 * 3.1 + ph[a]) * 0.22;
+          PX[i] = clamp(x0 + gauss() * 0.012);
+          PY[i] = clamp(y0 + gauss() * 0.018);
+        }
+      }
+      prunedMark = new Uint8Array(n);
+      seenMark = new Uint8Array(n);
+      history = [];
+      buildTree();
+      runSearch();
+    }
+
+    function addPoint(x, y) {
+      const n = PX.length + 1;
+      const nx = new Float64Array(n), ny = new Float64Array(n);
+      nx.set(PX); ny.set(PY);
+      nx[n - 1] = x; ny[n - 1] = y;
+      PX = nx; PY = ny;
+      prunedMark = new Uint8Array(n);
+      seenMark = new Uint8Array(n);
+      st.n = n;
+      $('nPts').value = Math.min(4000, n);
+      $('nVal').textContent = n;
+      buildTree();
+      runSearch();
+    }
+
+    // ---------------- the tree ----------------
+    // A node holds one point; its coordinate on `axis` is the wall that splits
+    // `rect` in two. Empty subtrees are null. Textbook Bentley, alternating axes.
+    function buildTree() {
+      const idx = new Array(PX.length);
+      for (let i = 0; i < PX.length; i++) idx[i] = i;
+      root = build(idx, 0, { x0: 0, y0: 0, x1: 1, y1: 1 });
+    }
+    function build(list, depth, rect) {
+      if (list.length === 0) return null;
+      const axis = depth & 1;
+      const A = axis === 0 ? PX : PY;
+      list.sort((a, b) => A[a] - A[b]);
+      const m = list.length >> 1;
+      const pi = list[m];
+      const split = A[pi];
+      const node = { pi, axis, split, depth, rect, size: list.length, left: null, right: null };
+      const lr = axis === 0 ? { x0: rect.x0, y0: rect.y0, x1: split, y1: rect.y1 }
+                            : { x0: rect.x0, y0: rect.y0, x1: rect.x1, y1: split };
+      const rr = axis === 0 ? { x0: split, y0: rect.y0, x1: rect.x1, y1: rect.y1 }
+                            : { x0: rect.x0, y0: split, x1: rect.x1, y1: rect.y1 };
+      node.left = build(list.slice(0, m), depth + 1, lr);
+      node.right = build(list.slice(m + 1), depth + 1, rr);
+      return node;
+    }
+
+    // ---------------- the search, recorded ----------------
+    // Runs to completion immediately and writes down every decision, so the
+    // animation is a replay of a real search rather than a re-enactment.
+    function runSearch() {
+      trace = [];
+      totals = { tests: 0, prunes: 0, skipped: 0, crosses: 0 };
+      const K = Math.min(st.k, Math.max(1, PX.length));
+      const bestL = [];
+      const worst = () => (bestL.length < K ? Infinity : bestL[bestL.length - 1].d2);
+
+      function visit(node) {
+        if (!node) return;
+        const dx = qx - PX[node.pi], dy = qy - PY[node.pi];
+        const d2 = dx * dx + dy * dy;
+        let improved = false;
+        if (bestL.length < K || d2 < worst()) {
+          improved = true;
+          bestL.push({ i: node.pi, d2 });
+          bestL.sort((a, b) => a.d2 - b.d2);
+          if (bestL.length > K) bestL.length = K;
+        }
+        totals.tests++;
+        trace.push({ t: 'test', node, d2, improved });
+
+        const diff = (node.axis === 0 ? qx : qy) - node.split;
+        const near = diff < 0 ? node.left : node.right;
+        const far = diff < 0 ? node.right : node.left;
+        visit(near);
+        if (!far) return;
+        const wall2 = diff * diff;
+        if (bestL.length < K || wall2 < worst()) {
+          totals.crosses++;
+          trace.push({ t: 'cross', node, far, wall2, r2: worst() });
+          visit(far);
+        } else {
+          totals.prunes++;
+          totals.skipped += far.size;
+          trace.push({ t: 'prune', node, far, wall2, r2: worst(), count: far.size });
+        }
+      }
+      visit(root);
+      trace.push({ t: 'done' });
+
+      tp = 0; appliedIdx = -1;
+      history.push(totals.tests);
+      if (history.length > 24) history.shift();
+      updateScore();
+      applyState(true);
+    }
+
+    // Replay the first `idx` events to rebuild what should be on screen.
+    function applyState(force) {
+      const idx = Math.min(Math.floor(tp), trace.length);
+      if (idx === appliedIdx && !force) return;
+      appliedIdx = idx;
+      const K = Math.min(st.k, Math.max(1, PX.length));
+      best = []; prunedRects = []; curEvent = null;
+      prunedMark.fill(0); seenMark.fill(0);
+      let tests = 0, prunes = 0, skipped = 0;
+
+      for (let i = 0; i < idx; i++) {
+        const e = trace[i];
+        if (e.t === 'test') {
+          tests++;
+          seenMark[e.node.pi] = 1;
+          if (e.improved) {
+            best.push({ i: e.node.pi, d2: e.d2 });
+            best.sort((a, b) => a.d2 - b.d2);
+            if (best.length > K) best.length = K;
+          }
+        } else if (e.t === 'prune') {
+          prunes++; skipped += e.count;
+          prunedRects.push(e.far.rect);
+          markSubtree(e.far);
+        }
+        if (e.t !== 'done') curEvent = e;
+      }
+
+      // ---- the running commentary ----
+      const pct = (v) => (v * 100).toFixed(1) + '%';
+      const rNow = best.length ? Math.sqrt(best[Math.min(best.length, K) - 1].d2) : 0;
+      if (idx >= trace.length) {
+        note = 'Done. <b class="v">' + totals.tests + '</b> distances measured out of <b>' + PX.length +
+               '</b>, and <b class="g">' + totals.skipped + '</b> points were never touched at all.';
+      } else if (!curEvent) {
+        note = 'Falling through the walls to the cell the query lands in.';
+      } else if (curEvent.t === 'test') {
+        note = curEvent.improved
+          ? 'Measured a point at <b class="v">' + pct(Math.sqrt(curEvent.d2)) + '</b> — that is a new best; the circle shrinks.'
+          : 'Measured a point at <b>' + pct(Math.sqrt(curEvent.d2)) + '</b> — no better than <b class="v">' + pct(rNow) + '</b>.';
+      } else if (curEvent.t === 'cross') {
+        note = 'The wall is <b class="p">' + pct(Math.sqrt(curEvent.wall2)) + '</b> away and my best is <b class="v">' +
+               pct(rNow) + '</b> — something over there could still win, so I have to look.';
+      } else if (curEvent.t === 'prune') {
+        note = 'The wall is <b class="p">' + pct(Math.sqrt(curEvent.wall2)) + '</b> away, my best is <b class="v">' +
+               pct(rNow) + '</b> — <b class="g">' + curEvent.count + '</b> points behind it cannot win. Skipped, unmeasured.';
+      }
+
+      $('rTests').textContent = tests;
+      $('rN').textContent = PX.length;
+      $('rPrunes').textContent = prunes;
+      $('rSkipped').textContent = skipped;
+      $('rNote').innerHTML = note;
+    }
+
+    function markSubtree(node) {
+      if (!node) return;
+      prunedMark[node.pi] = 1;
+      markSubtree(node.left);
+      markSubtree(node.right);
+    }
+
+    function updateScore() {
+      const n = PX.length;
+      const avg = history.length ? history.reduce((a, b) => a + b, 0) / history.length : totals.tests;
+      $('vBrute').textContent = n;
+      $('vTree').textContent = avg.toFixed(0);
+      $('barBrute').style.width = '100%';
+      $('barTree').style.width = Math.max(1.5, (avg / n) * 100).toFixed(1) + '%';
+    }
+
+    // ---------------- drawing ----------------
+    function wallColor(depth, a) {
+      const t = Math.min(1, depth / 9);
+      const r = Math.round(124 + t * 131);
+      const g = 124;
+      const b = Math.round(255 - t * 60);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+    }
+
+    function drawWalls(node) {
+      if (!node) return;
+      const a = Math.max(0.05, 0.5 * Math.pow(0.82, node.depth));
+      ctx.strokeStyle = wallColor(node.depth, a);
+      ctx.lineWidth = Math.max(0.5, 1.9 * Math.pow(0.86, node.depth));
+      ctx.beginPath();
+      if (node.axis === 0) {
+        ctx.moveTo(sx(node.split), sy(node.rect.y0));
+        ctx.lineTo(sx(node.split), sy(node.rect.y1));
+      } else {
+        ctx.moveTo(sx(node.rect.x0), sy(node.split));
+        ctx.lineTo(sx(node.rect.x1), sy(node.split));
+      }
+      ctx.stroke();
+      drawWalls(node.left);
+      drawWalls(node.right);
+    }
+
+    function drawNodeWall(node, color, width, glow) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      if (glow) { ctx.shadowColor = color; ctx.shadowBlur = 12; }
+      ctx.beginPath();
+      if (node.axis === 0) {
+        ctx.moveTo(sx(node.split), sy(node.rect.y0));
+        ctx.lineTo(sx(node.split), sy(node.rect.y1));
+      } else {
+        ctx.moveTo(sx(node.rect.x0), sy(node.split));
+        ctx.lineTo(sx(node.rect.x1), sy(node.split));
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+
+      // the field
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.014)';
+      ctx.fillRect(sx(0), sy(0), side, side);
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(sx(0), sy(0), side, side);
+      ctx.restore();
+
+      if (st.showWalls) drawWalls(root);
+
+      // regions thrown away without a single measurement
+      if (st.showPruned) {
+        ctx.save();
+        for (const r of prunedRects) {
+          ctx.fillStyle = 'rgba(255,90,110,0.085)';
+          ctx.fillRect(sx(r.x0), sy(r.y0), (r.x1 - r.x0) * side, (r.y1 - r.y0) * side);
+          ctx.strokeStyle = 'rgba(255,90,110,0.30)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(sx(r.x0), sy(r.y0), (r.x1 - r.x0) * side, (r.y1 - r.y0) * side);
+        }
+        ctx.restore();
+      }
+
+      // the points
+      const rad = Math.max(1.1, Math.min(2.6, 90 / Math.sqrt(PX.length)));
+      ctx.save();
+      for (let i = 0; i < PX.length; i++) {
+        if (seenMark[i]) continue;
+        ctx.fillStyle = prunedMark[i] && st.showPruned ? 'rgba(255,140,160,0.30)' : 'rgba(200,200,225,0.5)';
+        ctx.beginPath();
+        ctx.arc(sx(PX[i]), sy(PY[i]), rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // points actually measured
+      ctx.fillStyle = 'rgba(176,176,255,0.95)';
+      for (let i = 0; i < PX.length; i++) {
+        if (!seenMark[i]) continue;
+        ctx.beginPath();
+        ctx.arc(sx(PX[i]), sy(PY[i]), rad + 1.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // the wall currently being weighed
+      if (curEvent && curEvent.node) {
+        const isDecision = curEvent.t === 'cross' || curEvent.t === 'prune';
+        drawNodeWall(curEvent.node, isDecision ? 'rgba(255,124,195,0.95)' : 'rgba(255,255,255,0.5)', isDecision ? 2.4 : 1.4, isDecision);
+        if (isDecision) {
+          // the perpendicular: the distance that decides everything
+          const n = curEvent.node;
+          ctx.save();
+          ctx.setLineDash([4, 4]);
+          ctx.strokeStyle = 'rgba(255,124,195,0.85)';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(sx(qx), sy(qy));
+          if (n.axis === 0) ctx.lineTo(sx(n.split), sy(qy)); else ctx.lineTo(sx(qx), sy(n.split));
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // the bound being defended
+      const K = Math.min(st.k, Math.max(1, PX.length));
+      if (best.length) {
+        const r = Math.sqrt(best[Math.min(best.length, K) - 1].d2) * side;
+        ctx.save();
+        ctx.strokeStyle = best.length < K ? 'rgba(176,176,255,0.35)' : 'rgba(176,176,255,0.8)';
+        ctx.lineWidth = 1.5;
+        if (best.length < K) ctx.setLineDash([5, 5]);
+        ctx.fillStyle = 'rgba(124,124,255,0.07)';
+        ctx.beginPath();
+        ctx.arc(sx(qx), sy(qy), r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // the neighbours themselves
+        ctx.save();
+        for (const b of best) {
+          ctx.strokeStyle = 'rgba(138,255,192,0.35)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(sx(qx), sy(qy));
+          ctx.lineTo(sx(PX[b.i]), sy(PY[b.i]));
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(138,255,192,0.95)';
+          ctx.shadowColor = 'rgba(138,255,192,0.8)';
+          ctx.shadowBlur = 9;
+          ctx.beginPath();
+          ctx.arc(sx(PX[b.i]), sy(PY[b.i]), rad + 1.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+        ctx.restore();
+      }
+
+      // the query
+      const pulse = 1 + Math.sin(now / 420) * 0.12;
+      ctx.save();
+      const g = ctx.createRadialGradient(sx(qx), sy(qy), 0, sx(qx), sy(qy), 16 * pulse);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)');
+      g.addColorStop(0.3, 'rgba(255,255,255,0.35)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(sx(qx), sy(qy), 16 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(sx(qx), sy(qy), 3.1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ---------------- the wandering query ----------------
+    function newGlide(now) {
+      const tx = Math.min(0.96, Math.max(0.04, qx + (Math.random() - 0.5) * 0.75));
+      const ty = Math.min(0.96, Math.max(0.04, qy + (Math.random() - 0.5) * 0.75));
+      glide = { fx: qx, fy: qy, tx, ty, t0: now, dur: 700 + Math.random() * 500 };
+    }
+
+    // ---------------- loop ----------------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+
+      if (!st.paused) {
+        if (tp < trace.length) {
+          tp += PACE_RATE[st.pace] * dt;
+          if (tp >= trace.length) { tp = trace.length; holdUntil = now + 900; }
+        } else if (st.auto && !pointerActive) {
+          if (glide) {
+            const u = Math.min(1, (now - glide.t0) / glide.dur);
+            const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+            qx = glide.fx + (glide.tx - glide.fx) * e;
+            qy = glide.fy + (glide.ty - glide.fy) * e;
+            if (u >= 1) { glide = null; runSearch(); }
+          } else if (now >= holdUntil) {
+            newGlide(now);
+          }
+        }
+      }
+      if (pointerActive && now - lastPointer > 2600) pointerActive = false;
+
+      applyState(false);
+      draw(now);
+      studyStep();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------------- the dimension study ----------------
+    // The same tree, the same search, in d dimensions — measured, not asserted.
+    const DIMS = [2, 3, 4, 6, 8, 12, 16];
+    let studyI = 0;
+    const dimsEl = $('dims');
+    const dimRows = DIMS.map((d) => {
+      const row = document.createElement('div');
+      row.className = 'drow';
+      row.innerHTML = '<span class="dl">d = ' + d + '</span><span class="dbar"><span></span></span><span class="dv">…</span>';
+      dimsEl.appendChild(row);
+      return row;
+    });
+    const dimVals = new Array(DIMS.length).fill(0);
+
+    function studyStep() {
+      if (studyI >= DIMS.length) return;
+      const d = DIMS[studyI];
+      const n = 2000, queries = 24;
+      const A = new Float64Array(n * d);
+      for (let i = 0; i < n * d; i++) A[i] = Math.random();
+
+      const list = new Array(n);
+      for (let i = 0; i < n; i++) list[i] = i;
+
+      function gbuild(sub, depth) {
+        if (sub.length === 0) return null;
+        const ax = depth % d;
+        sub.sort((a, b) => A[a * d + ax] - A[b * d + ax]);
+        const m = sub.length >> 1, pi = sub[m];
+        return {
+          pi, ax, sp: A[pi * d + ax],
+          l: gbuild(sub.slice(0, m), depth + 1),
+          r: gbuild(sub.slice(m + 1), depth + 1)
+        };
+      }
+      const gr = gbuild(list, 0);
+
+      let cnt = 0, bd = Infinity;
+      const q = new Float64Array(d);
+      function gsearch(node) {
+        if (!node) return;
+        cnt++;
+        let s = 0;
+        for (let j = 0; j < d; j++) { const t = q[j] - A[node.pi * d + j]; s += t * t; }
+        if (s < bd) bd = s;
+        const diff = q[node.ax] - node.sp;
+        const near = diff < 0 ? node.l : node.r;
+        const far = diff < 0 ? node.r : node.l;
+        gsearch(near);
+        if (diff * diff < bd) gsearch(far);
+      }
+      for (let t = 0; t < queries; t++) {
+        for (let j = 0; j < d; j++) q[j] = Math.random();
+        bd = Infinity;
+        gsearch(gr);
+      }
+      const frac = cnt / queries / n;
+      dimVals[studyI] = frac;
+      const row = dimRows[studyI];
+      row.querySelector('.dbar span').style.width = Math.max(1.5, frac * 100).toFixed(1) + '%';
+      row.querySelector('.dv').textContent = (frac * 100).toFixed(frac < 0.1 ? 1 : 0) + '%';
+      studyI++;
+      if (studyI >= DIMS.length) {
+        const lo = (dimVals[0] * 100).toFixed(1), hi = (dimVals[DIMS.length - 1] * 100).toFixed(0);
+        $('scoreFoot').innerHTML = 'In the plane the tree measures <b class="v">' + lo +
+          '%</b> of the points. At sixteen dimensions, <b class="p">' + hi +
+          '%</b> — the query is close to nearly every wall, so nearly every wall must be crossed.';
+      }
+    }
+
+    // ---------------- interaction ----------------
+    function pointerAt(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const px = (ev.clientX - rect.left - ox) / side;
+      const py = (ev.clientY - rect.top - oy) / side;
+      return { x: px, y: py, inside: px >= -0.06 && px <= 1.06 && py >= -0.06 && py <= 1.06 };
+    }
+    canvas.addEventListener('pointermove', (ev) => {
+      const p = pointerAt(ev);
+      if (!p.inside) return;
+      pointerActive = true; lastPointer = performance.now(); glide = null;
+      qx = Math.min(1, Math.max(0, p.x));
+      qy = Math.min(1, Math.max(0, p.y));
+      runSearch();
+    });
+    canvas.addEventListener('pointerdown', (ev) => {
+      const p = pointerAt(ev);
+      if (!p.inside) return;
+      if (ev.pointerType === 'touch') {
+        pointerActive = true; lastPointer = performance.now(); glide = null;
+        qx = Math.min(1, Math.max(0, p.x)); qy = Math.min(1, Math.max(0, p.y));
+        runSearch();
+      } else {
+        addPoint(Math.min(0.999, Math.max(0.001, p.x)), Math.min(0.999, Math.max(0.001, p.y)));
+      }
+    });
+
+    $('nPts').addEventListener('input', (e) => {
+      st.n = +e.target.value; $('nVal').textContent = st.n; makeCloud();
+    });
+    $('kNbr').addEventListener('input', (e) => {
+      st.k = +e.target.value; $('kVal').textContent = st.k; history = []; runSearch();
+    });
+    $('pace').addEventListener('input', (e) => {
+      st.pace = +e.target.value; $('paceVal').textContent = PACE_LABEL[st.pace];
+    });
+    $('newBtn').addEventListener('click', () => makeCloud());
+    $('shapeBtn').addEventListener('click', () => {
+      st.shape = (st.shape + 1) % SHAPES.length;
+      $('rShape').textContent = SHAPES[st.shape];
+      makeCloud();
+    });
+    $('replayBtn').addEventListener('click', () => { tp = 0; appliedIdx = -1; applyState(true); });
+
+    function bindToggle(id, key, after) {
+      const el = $(id);
+      el.addEventListener('click', () => {
+        st[key] = !st[key];
+        el.classList.toggle('on', st[key]);
+        if (after) after();
+      });
+    }
+    bindToggle('autoT', 'auto', () => { if (st.auto) pointerActive = false; });
+    bindToggle('pruneT', 'showPruned');
+    bindToggle('wallT', 'showWalls');
+
+    const ui = $('ui'), showUi = $('showUi');
+    function toggleUi() {
+      ui.classList.toggle('hidden');
+      showUi.classList.toggle('on', ui.classList.contains('hidden'));
+    }
+    $('collapse').addEventListener('click', toggleUi);
+    showUi.addEventListener('click', toggleUi);
+
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (key === 'h') toggleUi();
+      if (key === 'n') makeCloud();
+      if (key === 's') $('shapeBtn').click();
+      if (key === 'p') $('pruneT').click();
+      if (key === 'r') $('replayBtn').click();
+      if (e.code === 'Space') { e.preventDefault(); st.paused = !st.paused; }
+    });
+
+    // ---------------- go ----------------
+    $('rShape').textContent = SHAPES[st.shape];
+    $('paceVal').textContent = PACE_LABEL[st.pace];
+    resize();
+    makeCloud();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
