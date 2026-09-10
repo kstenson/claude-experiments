@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-09-09",
+    "lastUpdated": "2026-09-10",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -3804,7 +3804,7 @@
     {
       "id": "2026-09-09",
       "date": "2026-09-09",
-      "headline": true,
+      "headline": false,
       "topic": "Whether settler attacks in the West Bank are at a record high",
       "claim": "The UN reports an average of six violent settler attacks against Palestinians per day this year, the highest on record.",
       "speaker": "Ed Miliband",
@@ -3849,6 +3849,62 @@
         {
           "title": "Al Jazeera — UK bans goods from Israeli West Bank settlements",
           "url": "https://www.aljazeera.com/news/2026/9/8/uk-bans-goods-from-israeli-west-bank-settlements-what-that-really-means"
+        }
+      ]
+    },
+    {
+      "id": "2026-09-10",
+      "date": "2026-09-10",
+      "headline": true,
+      "topic": "Whether Tory housing benefit cuts would cause unprecedented homelessness",
+      "claim": "I don't think myself that taking £4 billion out of housing benefit is going to get the right consensus around this issue, because that would create levels of homelessness in this country that we wouldn't have seen before – hundreds of thousands of children in temporary accommodation.",
+      "speaker": "Andy Burnham",
+      "party": "Labour",
+      "role": "Prime Minister",
+      "discussionScore": 84,
+      "discussionNote": "PMQs led Wednesday's coverage: Burnham's second session, the last before conference recess, became a defence-versus-welfare fight over Badenoch's £10bn funding plan and the resignation of his own chancellor.",
+      "score": 62,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The arithmetic is his opponents' own. Badenoch's £10bn defence package takes £4bn from housing benefit by cutting Local Housing Allowance from the 30th to the 10th percentile of local rents and freezing social rents, so Burnham is quoting the Conservatives accurately, if not neutrally. The consequence is the weaker half. No published model attaches a homelessness number to the policy; Shelter, Crisis and the Chartered Institute of Housing give a direction, not a forecast. And \"levels we wouldn't have seen before\" is a low bar: children in temporary accommodation in England hit 177,530 in March 2026, the twelfth consecutive record. \"Hundreds of thousands\" needs another 13% on a trend already rising 5% a year.",
+      "evidence": [
+        "The claim: Prime Minister Andy Burnham at PMQs, House of Commons, 9 September 2026, answering Kemi Badenoch on defence spending.",
+        "The £4bn is the Conservatives' own costing: Local Housing Allowance cut from the 30th to the 10th percentile of local rents, plus a social rent freeze.",
+        "It funds a £10bn defence package alongside about £3bn from restoring the two-child benefit cap and £200m from scrapping the Chagos deal.",
+        "MHCLG: 177,530 children and 135,580 households were in temporary accommodation in England in January to March 2026, both record highs.",
+        "Crisis called the previous quarter's count a twelfth consecutive record — \"levels we wouldn't have seen before\" describes the existing trend, not this policy.",
+        "No costed projection exists. Shelter, Crisis and the Chartered Institute of Housing warn of higher homelessness but publish no number for it.",
+        "Resolution Foundation: LHA has been frozen since April 2024 and roughly 950,000 Universal Credit households already pay rent above their entitlement.",
+        "\"Hundreds of thousands\" needs about 13% more children in temporary accommodation; the count rose 5.2% in the year to March 2026."
+      ],
+      "confidence": "Medium-high — the £4bn and the homelessness counts are documented; the projected effect is unmodelled, so the second half is judgement.",
+      "sources": [
+        {
+          "title": "PA/Yahoo — Andy Burnham tells PMQs: I won’t cut Britain’s benefits bill for defence",
+          "url": "https://ca.news.yahoo.com/andy-burnham-tells-pmqs-wont-130510495.html"
+        },
+        {
+          "title": "New Statesman — What we learned at PMQs: Burnham defends his Israel sanctions",
+          "url": "https://www.newstatesman.com/politics/uk-politics/2026/09/what-we-learned-at-pmqs"
+        },
+        {
+          "title": "City AM — Badenoch: cut benefits to fund £10bn defence package",
+          "url": "https://www.cityam.com/badenoch-cut-benefits-to-fund-10bn-defence-spending-package/"
+        },
+        {
+          "title": "GOV.UK — Statutory homelessness in England: January to March 2026",
+          "url": "https://www.gov.uk/government/statistics/statutory-homelessness-in-england-january-to-march-2026/statutory-homelessness-in-england-january-to-march-2026"
+        },
+        {
+          "title": "Big Issue — Conservatives want to cut housing benefit to fund defence",
+          "url": "https://www.bigissue.com/news/housing/conservatives-defence-spending-housing-benefit-lha/"
+        },
+        {
+          "title": "Resolution Foundation — Housing Outlook Q3 2026",
+          "url": "https://www.resolutionfoundation.org/publications/housing-outlook-q3-2026/"
+        },
+        {
+          "title": "Crisis — record number of children in temporary accommodation",
+          "url": "https://www.crisis.org.uk/about-us/crisis-media-centre/crisis-reacts-to-a-record-number-of-children-living-in-temporary-accommodation-in-england-1/"
         }
       ]
     }
