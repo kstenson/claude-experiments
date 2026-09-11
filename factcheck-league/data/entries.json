@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-09-10",
+    "lastUpdated": "2026-09-11",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -3855,7 +3855,7 @@
     {
       "id": "2026-09-10",
       "date": "2026-09-10",
-      "headline": true,
+      "headline": false,
       "topic": "Whether Tory housing benefit cuts would cause unprecedented homelessness",
       "claim": "I don't think myself that taking £4 billion out of housing benefit is going to get the right consensus around this issue, because that would create levels of homelessness in this country that we wouldn't have seen before – hundreds of thousands of children in temporary accommodation.",
       "speaker": "Andy Burnham",
@@ -3905,6 +3905,61 @@
         {
           "title": "Crisis — record number of children in temporary accommodation",
           "url": "https://www.crisis.org.uk/about-us/crisis-media-centre/crisis-reacts-to-a-record-number-of-children-living-in-temporary-accommodation-in-england-1/"
+        }
+      ]
+    },
+    {
+      "id": "2026-09-11",
+      "date": "2026-09-11",
+      "headline": true,
+      "topic": "Whether a £15,000 personal allowance would be the biggest rise ever",
+      "claim": "A tax cut for 40 million people. The biggest rise in the personal allowance in its history, and delivered not in 10 years but in my very first budget.",
+      "speaker": "Robert Jenrick",
+      "party": "Reform UK",
+      "role": "Reform UK Treasury spokesman",
+      "discussionScore": 74,
+      "discussionNote": "Reform's conference pledge is the fixed point of the pre-Budget tax argument, and Jenrick's prominence in this week's Holborn by-election row has kept it in circulation.",
+      "score": 78,
+      "verdict": "Mostly True",
+      "explanation": "Both halves survive the arithmetic. HMRC projects 40.8 million income tax payers in 2026-27, so 40 million is cautious rather than inflated. Going from £12,570 to £15,000 is £2,430, and HMRC's published series starts in 1990-91 with the allowance at £3,005 — no earlier year can have delivered a bigger cash rise. What the superlative hides is why the gap is so wide. The allowance has been frozen since 2021-22; uprated by CPI it would already be near £16,050, so a record-breaking rise still lands below simple indexation. HMRC's ready reckoner also implies about £19.7bn a year, above Reform's £17.7bn costing.",
+      "evidence": [
+        "The claim: Robert Jenrick in his keynote speech to Reform UK's conference in Birmingham, 5 September 2026, pledging to resign if he missed the deadline.",
+        "HMRC Table 2.1 projects 40.8 million income tax payers in 2026-27, up from 39.8 million in 2025-26.",
+        "HMRC Table A.1 begins in 1990-91 with a personal allowance of £3,005, so no pre-1990 rise could have reached £2,430 in cash.",
+        "The largest rise in that series is £1,335 in 2013-14 (£8,105 to £9,440). In percentage terms £2,430 is 19.3%, against 16.5% then.",
+        "The allowance has been £12,570 since 2021-22. ONS CPI rose from 109.1 in September 2020 to 139.3 in September 2025: indexation implies about £16,050.",
+        "HMRC's ready reckoner prices £100 on the allowance at £810m in 2026-27, implying roughly £19.7bn for £2,430 — above the £17.7bn Reform published.",
+        "Reform's other figures hold up: £2,430 taxed at 20% is £486, close to the \"around £500\" claimed for an average basic-rate taxpayer."
+      ],
+      "confidence": "High — both halves rest on HMRC's own published tables; only the pre-1990 percentage comparison sits outside the data.",
+      "sources": [
+        {
+          "title": "LBC — Reform pledges to raise tax-free personal allowance to £15,000",
+          "url": "https://www.lbc.co.uk/article/reform-pledges-raise-tax-free-personal-allowance-5Hjdh26_2/"
+        },
+        {
+          "title": "PA — Reform vows to raise personal allowance to £15,000",
+          "url": "https://ca.news.yahoo.com/reform-vows-raise-personal-allowance-131905028.html"
+        },
+        {
+          "title": "City AM — Jenrick pledges to raise tax-free personal allowance to £15,000",
+          "url": "https://www.cityam.com/jenrick-pledges-to-raise-tax-free-personal-allowance-to-15000/"
+        },
+        {
+          "title": "HMRC — Income Tax personal allowances and reliefs (Table A.1)",
+          "url": "https://www.gov.uk/government/statistics/income-tax-personal-allowances-and-reliefs"
+        },
+        {
+          "title": "HMRC — Number of individual Income Tax payers (Table 2.1)",
+          "url": "https://www.gov.uk/government/statistics/number-of-individual-income-taxpayers-by-marginal-rate-gender-and-age"
+        },
+        {
+          "title": "HMRC — Direct effects of illustrative tax changes",
+          "url": "https://www.gov.uk/government/statistics/direct-effects-of-illustrative-tax-changes"
+        },
+        {
+          "title": "ONS — CPI index 00: all items (D7BT)",
+          "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7bt/mm23"
         }
       ]
     }
