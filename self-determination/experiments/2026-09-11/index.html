@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Two Speeds, No Memory — Experiment 084</title>
+<meta name="description" content="Floyd's tortoise and hare — cycle detection in constant space. Iterate any function on a finite set and the path must close into a loop. Two pointers moving at different speeds find the loop, and the exact step it starts, remembering nothing at all." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 348px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 10px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,255,255,0.3); }
+  .toggle.on i::after { transform: translateX(13px); background: #f2f2f8; }
+  .toggle.on { color: #e9e9f0; }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  /* phase pills */
+  .phases { display: flex; gap: 6px; }
+  .pill {
+    flex: 1 1 0; text-align: center;
+    font-size: 0.66rem; letter-spacing: 0.05em;
+    padding: 7px 4px; border-radius: 9px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #6f6f88; transition: all 0.25s ease;
+    line-height: 1.25;
+  }
+  .pill b { display: block; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: #56566c; font-weight: 700; margin-bottom: 2px; }
+  .pill.on { background: rgba(124,124,255,0.14); border-color: rgba(124,124,255,0.42); color: #cfcfff; }
+  .pill.on b { color: #7c7cff; }
+  .pill.done { color: #7ddba6; border-color: rgba(138,255,192,0.28); }
+  .pill.done b { color: #5fae83; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .head { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.92em; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  #rNote { min-height: 3.3em; }
+
+  /* The story button — prominent on purpose, every page has one. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Scoreboard (bottom right) ---- */
+  .score {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    width: 288px;
+    padding: 12px 14px 13px; border-radius: 13px;
+    background: rgba(10,10,18,0.55);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.72rem; color: #9a9ab0;
+    transition: opacity 0.4s ease;
+  }
+  .score.hidden { opacity: 0; pointer-events: none; }
+  .score h4 { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8f8fa6; font-weight: 600; margin-bottom: 9px; }
+  .crow { display: grid; grid-template-columns: 1fr; gap: 4px; margin-bottom: 8px; }
+  .crow .cl { display: flex; justify-content: space-between; gap: 8px; }
+  .crow .cl b { color: #cfcfe6; font-variant-numeric: tabular-nums; }
+  .cbar { height: 9px; border-radius: 5px; background: rgba(255,255,255,0.07); overflow: hidden; position: relative; }
+  .cbar span {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; width: 0;
+    background: linear-gradient(90deg, #7c7cff, #b48aff);
+    transition: width 0.4s ease;
+  }
+  .cbar span.pinkbar { background: linear-gradient(90deg, #ff7cc3, #ffa3d6); }
+  .score .sep { border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 11px 0 10px; }
+  .dims { display: grid; gap: 5px; }
+  .drow { display: grid; grid-template-columns: 54px 1fr 40px; align-items: center; gap: 8px; }
+  .drow .dl { color: #8f8fa6; font-variant-numeric: tabular-nums; }
+  .drow .dv { color: #cfcfe6; text-align: right; font-variant-numeric: tabular-nums; }
+  .dbar { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; position: relative; }
+  .dbar span {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; width: 0;
+    background: linear-gradient(90deg, #7c7cff, #ff7cc3);
+    transition: width 0.5s ease;
+  }
+  .score .foot { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07); line-height: 1.55; color: #8f8fa6; }
+  .score .foot b { color: #e9e9f0; }
+  .score .foot b.v { color: #b0b0ff; }
+  .score .foot b.p { color: #ff9fd2; }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; top: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 266px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 15px; height: 15px; border-radius: 50%; flex: none; display: block; }
+  .legend i.tort { background: #7c7cff; box-shadow: 0 0 9px rgba(124,124,255,0.9); }
+  .legend i.hare { background: #ff7cc3; box-shadow: 0 0 9px rgba(255,124,195,0.9); }
+  .legend i.meet { background: #8affc0; box-shadow: 0 0 9px rgba(138,255,192,0.8); }
+  .legend i.entr { background: transparent; border: 2px solid #8affc0; }
+  .legend i.seen { background: rgba(255,255,255,0.08); border: 1.5px dashed rgba(255,255,255,0.55); }
+  .legend i.node { width: 9px; height: 9px; background: #4a4a63; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: min(92vw, 460px);
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1280px) {
+    .legend { display: none; }
+  }
+  @media (max-width: 1020px) {
+    .score { display: none; }
+    .hint { right: 12px; left: 12px; transform: none; }
+  }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 47vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 9px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Two Speeds, No Memory</h1>
+    <p class="sub">Experiment № 084 · September 11, 2026</p>
+
+    <div class="controls">
+      <div class="phases">
+        <div class="pill" id="p1"><b>one</b>the chase</div>
+        <div class="pill" id="p2"><b>two</b>the entrance</div>
+        <div class="pill" id="p3"><b>three</b>the length</div>
+      </div>
+
+      <div class="row">
+        <label for="nStates">states in the world <b id="nVal">220</b></label>
+        <input type="range" id="nStates" min="24" max="1500" step="1" value="220" />
+      </div>
+
+      <div class="row">
+        <label for="cAdd">the constant <i>c</i> <b id="cVal">11</b></label>
+        <input type="range" id="cAdd" min="0" max="60" step="1" value="11" />
+      </div>
+
+      <div class="row">
+        <label for="x0" >where it starts <b id="xVal">2</b></label>
+        <input type="range" id="x0" min="0" max="60" step="1" value="2" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="replayBtn">run it again</button>
+        <button class="btn pink" id="ruleBtn">a random rule</button>
+      </div>
+
+      <div class="toggle violet on" id="autoT"><i></i> keep going by itself</div>
+      <div class="toggle rose on" id="seenT"><i></i> mark what a set would store</div>
+
+      <div class="row">
+        <label for="pace">pace <b id="paceVal">steady</b></label>
+        <input type="range" id="pace" min="0" max="9" step="1" value="5" />
+      </div>
+
+      <div class="readout">
+        <span class="head">this run</span>
+        <span class="k">the rule</span><span class="v" id="rRule">x² + 11 mod 220</span>
+        <span class="k">tortoise — one step</span><span class="v violet" id="rTort">—</span>
+        <span class="k">hare — two steps</span><span class="v pinkv" id="rHare">—</span>
+        <span class="k">tail before the loop (μ)</span><span class="v" id="rMu">—</span>
+        <span class="k">length of the loop (λ)</span><span class="v" id="rLam">—</span>
+        <span class="k">states it has held</span><span class="v good" id="rMem">2</span>
+        <hr />
+        <p class="full" id="rNote">A rule with nowhere new to go. Follow it long enough and it has to arrive somewhere it has already been.</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="node"></i> a state, and the arrow it follows</div>
+    <div><i class="tort"></i> the tortoise — one step per tick</div>
+    <div><i class="hare"></i> the hare — two steps per tick</div>
+    <div><i class="meet"></i> where they collide</div>
+    <div><i class="entr"></i> where the loop begins</div>
+    <div><i class="seen"></i> what a remember-everything scan would store</div>
+  </div>
+
+  <div class="score" id="score">
+    <h4>states held in memory</h4>
+    <div class="crow">
+      <span class="cl">remember every state <b id="vNaive">—</b></span>
+      <div class="cbar"><span id="barNaive" class="pinkbar"></span></div>
+    </div>
+    <div class="crow">
+      <span class="cl">two pointers <b id="vFloyd">2</b></span>
+      <div class="cbar"><span id="barFloyd"></span></div>
+    </div>
+
+    <hr class="sep" />
+    <h4>how long is a ρ, really?</h4>
+    <div class="dims" id="dims"></div>
+    <p class="foot" id="scoreFoot">Averaging random rules over n states, live…</p>
+  </div>
+
+  <p class="hint">drag to <b>change the rule</b> · <b>r</b> again · <b>f</b> random rule · <b>space</b> pause</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 084 · The story</p>
+      <h2>Two Speeds, No Memory</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Because of the shape. Take any rule that turns one state into exactly one other state — <code>x → x² + c mod n</code> here — and start following it. There are only finitely many states, so you cannot keep finding new ones forever; sooner or later you step onto something you have already stood on, and from then on you are going round and round. The path you traced is a straight-ish run of length μ that falls into a loop of length λ: a lasso, which number theorists draw as the Greek letter ρ. I wanted that picture on a screen, because it is not a metaphor — it is what every deterministic process in a finite machine actually does. And then the question that makes it an algorithm: standing inside that path, with no map and no notebook, how do you find out you are in the loop?</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The obvious answer is to write down every state you visit and check each new one against the list. That works, and it costs you a memory that grows to μ + λ entries — watch the rose rings pile up along the path when you turn them on. Floyd's answer, which Knuth wrote down in 1969 and credited to Robert Floyd, is to send two walkers instead: the tortoise takes one step per tick, the hare takes two. If there is a loop, the hare gains exactly one position per tick on the tortoise <em>inside</em> it, so it cannot jump over — it must land on the tortoise, and it does, at most λ ticks after the tortoise enters. Two variables. That is the entire memory. Then comes the part I find genuinely lovely: put the tortoise back at the start, leave the hare where they collided, and walk them both at one step. They meet precisely at the mouth of the loop. The collision happened at some step m that is a whole number of loops, so the distance from the start to the entrance and the distance from the collision to the entrance differ by a whole number of loops — same remainder, same arrival. Watch phase two land dead on the entrance every time and it stops feeling like a trick.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Two things. The first is the trade you just watched: Floyd walks the path about three times over instead of once, and in exchange its memory stops depending on the problem at all. That direction — spend a constant factor of time, delete an unbounded factor of space — is one of the few genuinely general moves in algorithms, and it is why this trick shows up in linked-list bug hunts, in detecting when a simulation has gone periodic, and in finding the repeating part of a decimal expansion. The second is in the bottom-right panel, which keeps building random rules over n states and measuring how long the ρ turns out to be. It lands near 1.25 × √n every time — that is √(π/2), the birthday paradox wearing a different hat. A random rule over four billion states closes its loop after about eighty thousand steps, not two billion. Pollard turned exactly that into a factoring algorithm: if you want a collision, you do not need to see most of the space, you need to see its square root. Structure that small is worth remembering, because it is usually the difference between an attack that is theoretical and one that runs before lunch.</p>
+
+      <button class="close" id="closeStory">Back to the path</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Floyd's cycle detection — "the tortoise and the hare".
+  //      Attributed to Robert W. Floyd; first written down in Knuth, TAOCP
+  //      vol. 2 (1969), exercise 3.1-6. ----
+  //
+  // Any function f from a finite set to itself, iterated from any x0, produces
+  // a sequence that must eventually repeat. Its shape is a "rho": a tail of
+  // length mu (steps before the first repeated state) feeding a cycle of
+  // length lam.
+  //
+  //   phase 1  tortoise = f(tortoise), hare = f(f(hare)) until they are equal.
+  //            Inside the cycle the hare gains exactly one position per tick,
+  //            so it cannot step over the tortoise — a collision is forced,
+  //            at the first multiple of lam that is >= mu.
+  //
+  //   phase 2  reset the tortoise to x0; advance both one step at a time.
+  //            The collision step m satisfies m = 0 (mod lam), so the distance
+  //            start->entrance and the distance collision->entrance agree
+  //            modulo lam. They therefore meet exactly at the entrance: mu.
+  //
+  //   phase 3  hold one, walk the other round until it returns: that count is
+  //            lam.
+  //
+  // Memory: two indices. Never the path. That is the whole point of the thing.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+    const TAU = Math.PI * 2;
+    const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    // ---------------- state ----------------
+    const st = {
+      n: 220, c: 11, x0: 2,
+      randomRule: false, table: null,
+      pace: 5, playing: true, auto: true, showSeen: true,
+      mu: 0, lam: 1,
+      view: { w: 1, h: 1 }
+    };
+
+    const run = {
+      phase: 1, tick: 0, frac: 0,
+      meetStep: 0, entranceSteps: 0,
+      calls: 0, holdMs: 0,
+      pending: 0, pendMs: 0
+    };
+
+    const PACE_MS = [820, 610, 460, 350, 265, 200, 150, 112, 78, 48];
+    const PACE_NAME = ['a crawl', 'slow', 'unhurried', 'easy', 'gentle', 'steady', 'brisk', 'quick', 'fast', 'a blur'];
+
+    // ---------------- the rule ----------------
+    function f(x) {
+      return st.randomRule ? st.table[x] : (x * x + st.c) % st.n;
+    }
+
+    function makeRandomTable() {
+      const t = new Int32Array(st.n);
+      for (let i = 0; i < st.n; i++) t[i] = (Math.random() * st.n) | 0;
+      st.table = t;
+    }
+
+    // Walk the orbit once, with a seen-map, purely so the page can DRAW the
+    // rho. The algorithm being demonstrated never gets to look at this.
+    function measureShape() {
+      const seen = new Int32Array(st.n).fill(-1);
+      let x = st.x0 % st.n, i = 0;
+      while (seen[x] === -1) { seen[x] = i++; x = f(x); }
+      st.mu = seen[x];
+      st.lam = i - st.mu;
+    }
+
+    // Orbit index -> the node it lands on (tail nodes 0..mu-1, cycle mu..mu+lam-1)
+    const nodeOf = (i) => (i < st.mu ? i : st.mu + ((i - st.mu) % st.lam));
+
+    function planRun() {
+      // phase 1: first tick s >= 1 with nodeOf(s) === nodeOf(2s)
+      let s = 1;
+      while (nodeOf(s) !== nodeOf(2 * s) && s <= st.mu + st.lam + 2) s++;
+      run.meetStep = s;
+      // phase 2: first u >= 0 with nodeOf(u) === nodeOf(meetStep + u)  (== mu)
+      let u = 0;
+      while (nodeOf(u) !== nodeOf(run.meetStep + u) && u <= st.mu + 2) u++;
+      run.entranceSteps = u;
+      run.phase = 1; run.tick = 0; run.frac = 0; run.calls = 0;
+      run.holdMs = 0; run.pending = 0; run.pendMs = 0;
+    }
+
+    function rebuild(newTable) {
+      st.n = clamp(st.n | 0, 24, 1500);
+      if (newTable || (st.randomRule && (!st.table || st.table.length !== st.n))) makeRandomTable();
+      st.x0 = st.x0 % st.n;
+      measureShape();
+      planRun();
+      layout();
+      paintUi();
+    }
+
+    // ---------------- layout ----------------
+    // Abstract space: cycle is the unit circle at the origin; the loop mouth
+    // sits at the top; the tail is a bezier hooking into it, with the same
+    // node spacing as the circle so the whole thing reads as one path.
+    const L = { cx: 0, cy: 0, R: 1, sc: 1, p0: [0, 0], cp: [0, 0], e: [0, -1], tl: 0, dot: 4 };
+
+    function bez(t) {
+      const mt = 1 - t;
+      const a = mt * mt, b = 2 * mt * t, d = t * t;
+      return [a * L.p0[0] + b * L.cp[0] + d * L.e[0], a * L.p0[1] + b * L.cp[1] + d * L.e[1]];
+    }
+
+    function safeRect() {
+      const W = st.view.w, H = st.view.h;
+      if (W < 700) return { x: 14, y: H * 0.50, w: W - 28, h: H * 0.42 };
+      if (W < 1020) return { x: 392, y: 40, w: W - 416, h: H - 110 };
+      return { x: 392, y: 40, w: Math.max(160, W - 392 - 320), h: H - 110 };
+    }
+
+    function layout() {
+      const step = TAU / st.lam;                         // angular node spacing
+      L.tl = st.mu > 0 ? clamp(st.mu * step, 0.5, 5.4) : 0;
+      L.e = [0, -1];
+      L.p0 = [-L.tl * 0.55, -1 - L.tl * 0.80];
+      L.cp = [L.tl * 0.34, -1 - L.tl * 0.60];
+
+      // bounding box of everything we will draw, in abstract units
+      let x0 = -1, x1 = 1, y0 = -1, y1 = 1;
+      if (st.mu > 0) {
+        for (let k = 0; k <= 30; k++) {
+          const p = bez(k / 30);
+          if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0];
+          if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1];
+        }
+      }
+      const pad = 0.14;
+      x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
+
+      const r = safeRect();
+      const fit = Math.min(r.w / (x1 - x0), r.h / (y1 - y0));
+      const cap = Math.min(r.w, r.h) * 0.46;             // don't blow up a tiny rho
+      L.sc = Math.max(8, Math.min(fit, cap));
+      L.cx = r.x + r.w / 2 - ((x0 + x1) / 2) * L.sc;
+      L.cy = r.y + r.h / 2 - ((y0 + y1) / 2) * L.sc;
+      L.R = L.sc;
+      L.dot = clamp(L.sc * step * 0.30, 1.9, 7.0);
+    }
+
+    const A2S = (p) => [L.cx + p[0] * L.sc, L.cy + p[1] * L.sc];
+    const onCircle = (ang) => [L.cx + Math.cos(ang) * L.R, L.cy + Math.sin(ang) * L.R];
+
+    // Screen point for a (possibly fractional) orbit index.
+    function pointAt(fi) {
+      if (st.mu > 0 && fi <= st.mu) return A2S(bez(fi / st.mu));
+      const k = fi - st.mu;
+      return onCircle(-Math.PI / 2 + k * (TAU / st.lam));
+    }
+
+    function nodePoint(idx) {
+      if (idx < st.mu) return A2S(bez(idx / st.mu));
+      return onCircle(-Math.PI / 2 + (idx - st.mu) * (TAU / st.lam));
+    }
+
+    // ---------------- canvas sizing ----------------
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = canvas.clientWidth || window.innerWidth;
+      const h = canvas.clientHeight || window.innerHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      st.view.w = w; st.view.h = h;
+      layout();
+    }
+    window.addEventListener('resize', resize);
+
+    // ---------------- drawing ----------------
+    function arrowAt(p, ang, size, alpha) {
+      ctx.save();
+      ctx.translate(p[0], p[1]);
+      ctx.rotate(ang);
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.moveTo(size, 0);
+      ctx.lineTo(-size * 0.85, size * 0.62);
+      ctx.lineTo(-size * 0.85, -size * 0.62);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawPath() {
+      // the loop
+      ctx.lineWidth = Math.max(1.2, L.dot * 0.38);
+      ctx.strokeStyle = 'rgba(124,124,255,0.34)';
+      ctx.beginPath();
+      ctx.arc(L.cx, L.cy, L.R, 0, TAU);
+      ctx.stroke();
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(124,124,255,0.5)';
+      ctx.shadowBlur = 18;
+      ctx.strokeStyle = 'rgba(124,124,255,0.16)';
+      ctx.beginPath();
+      ctx.arc(L.cx, L.cy, L.R, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+
+      // the tail
+      if (st.mu > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+        ctx.beginPath();
+        const a = A2S(L.p0), b = A2S(L.cp), c = A2S(L.e);
+        ctx.moveTo(a[0], a[1]);
+        ctx.quadraticCurveTo(b[0], b[1], c[0], c[1]);
+        ctx.stroke();
+      }
+
+      // direction arrows
+      ctx.fillStyle = '#8f8fa6';
+      const arrows = clamp(Math.round(st.lam / 3), 3, 14);
+      for (let k = 0; k < arrows; k++) {
+        const ang = -Math.PI / 2 + (k + 0.5) * (TAU / arrows);
+        arrowAt(onCircle(ang), ang + Math.PI / 2, Math.max(2.6, L.dot * 0.72), 0.42);
+      }
+      if (st.mu > 0) {
+        for (let k = 1; k <= 3; k++) {
+          const t = k / 4;
+          const p = A2S(bez(t)), q = A2S(bez(t + 0.012));
+          arrowAt(p, Math.atan2(q[1] - p[1], q[0] - p[0]), Math.max(2.6, L.dot * 0.72), 0.42);
+        }
+      }
+    }
+
+    function drawNodes() {
+      const total = st.mu + st.lam;
+      // what a "remember everything" scan would be holding right now
+      const seenUpTo = st.showSeen
+        ? (run.phase === 1 ? Math.min(run.tick, total - 1) : total - 1)
+        : -1;
+
+      for (let i = 0; i < total; i++) {
+        const p = nodePoint(i);
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], L.dot, 0, TAU);
+        ctx.fillStyle = i >= st.mu ? 'rgba(150,150,220,0.55)' : 'rgba(120,120,150,0.5)';
+        ctx.fill();
+
+        if (i <= seenUpTo && L.dot > 2.2) {
+          ctx.beginPath();
+          ctx.arc(p[0], p[1], L.dot + 3.2, 0, TAU);
+          ctx.strokeStyle = 'rgba(255,124,195,0.5)';
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([2, 2.4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+
+      // the start
+      const s = nodePoint(0);
+      ctx.beginPath();
+      ctx.arc(s[0], s[1], L.dot + 2.4, 0, TAU);
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      label('start', s, -14 - L.dot, 'rgba(255,255,255,0.5)');
+    }
+
+    function label(text, p, dy, color) {
+      if (L.sc < 40) return;
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = color;
+      ctx.fillText(text, p[0], p[1] + dy);
+    }
+
+    function token(p, color, glow, r, ring) {
+      ctx.save();
+      ctx.shadowColor = glow;
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], r, 0, TAU);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+      if (ring) {
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], r + 5, 0, TAU);
+        ctx.strokeStyle = glow;
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+      }
+    }
+
+    // While a phase holds on its punchline, report the phase it has just proved.
+    const eff = () => (run.pending ? run.pending : run.phase);
+
+    function positions() {
+      const t = run.tick + run.frac;
+      if (run.phase === 1) return { tort: t, hare: 2 * t };
+      if (run.phase === 2) return { tort: t, hare: run.meetStep + t };
+      if (run.phase === 3) return { tort: st.mu, hare: st.mu + t };
+      return { tort: st.mu, hare: st.mu };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, st.view.w, st.view.h);
+      drawPath();
+      drawNodes();
+
+      // milestones found so far
+      const ph = eff();
+      if (ph >= 2) {
+        const m = nodePoint(nodeOf(run.meetStep));
+        ctx.beginPath();
+        ctx.arc(m[0], m[1], L.dot + 6, 0, TAU);
+        ctx.strokeStyle = 'rgba(138,255,192,0.8)';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        label('they collided', m, 18 + L.dot, 'rgba(138,255,192,0.75)');
+      }
+      if (ph >= 3) {
+        const e = nodePoint(st.mu);
+        ctx.beginPath();
+        ctx.arc(e[0], e[1], L.dot + 9, 0, TAU);
+        ctx.strokeStyle = 'rgba(138,255,192,0.95)';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+        label('the loop starts here', e, -16 - L.dot, 'rgba(138,255,192,0.9)');
+      }
+
+      const pos = positions();
+      const rT = Math.max(4.5, L.dot * 1.25);
+
+      // the stretch of loop the hare is measuring in phase 3
+      if (run.phase === 3) {
+        const a0 = -Math.PI / 2;
+        const a1 = a0 + (run.tick + run.frac) * (TAU / st.lam);
+        ctx.beginPath();
+        ctx.arc(L.cx, L.cy, L.R, a0, a1);
+        ctx.strokeStyle = 'rgba(255,124,195,0.75)';
+        ctx.lineWidth = Math.max(2, L.dot * 0.5);
+        ctx.stroke();
+      }
+
+      token(pointAt(pos.hare), '#ff7cc3', 'rgba(255,124,195,0.95)', rT, ph !== 4);
+      token(pointAt(pos.tort), '#7c7cff', 'rgba(124,124,255,0.95)', rT, ph !== 4);
+    }
+
+    // ---------------- the animation ----------------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(now - last, 120);
+      last = now;
+      const ms = PACE_MS[st.pace];
+
+      if (st.playing && !story.classList.contains('open')) {
+        if (run.pending) {
+          // hold on the moment a phase proves its point, then move on
+          run.pendMs += dt;
+          if (run.pendMs > 950) {
+            run.phase = run.pending;
+            run.pending = 0; run.pendMs = 0; run.tick = 0; run.frac = 0;
+            paintUi();
+          }
+        } else if (run.phase === 4) {
+          run.holdMs += dt;
+          if (st.auto && run.holdMs > 2800) nextRun();
+        } else {
+          run.frac += dt / ms;
+          while (run.frac >= 1) {
+            run.frac -= 1;
+            run.tick += 1;
+            advance();
+            if (run.pending) { run.frac = 0; break; }
+          }
+        }
+      }
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    function advance() {
+      if (run.phase === 1) {
+        run.calls += 3;                       // one for the tortoise, two for the hare
+        if (run.tick >= run.meetStep) { run.pending = 2; paintUi(); }
+      } else if (run.phase === 2) {
+        run.calls += 2;
+        if (run.tick >= run.entranceSteps) { run.pending = 3; paintUi(); }
+      } else if (run.phase === 3) {
+        run.calls += 1;
+        if (run.tick >= st.lam) { run.pending = 4; paintUi(); }
+      }
+    }
+
+    function nextRun() {
+      // move on to a fresh path so the page keeps showing new shapes
+      if (st.randomRule) makeRandomTable();
+      else { st.c = (st.c + 7) % 61; $('cAdd').value = st.c; $('cVal').textContent = st.c; }
+      st.x0 = (st.x0 + 3) % Math.min(61, st.n);
+      $('x0').value = st.x0; $('xVal').textContent = st.x0;
+      measureShape(); planRun(); layout(); paintUi();
+    }
+
+    // ---------------- panel ----------------
+    const NOTES = {
+      1: () => {
+        const t = run.tick, h = 2 * run.tick;
+        return 'The <b class="v">tortoise</b> is at step <b>' + t + '</b>, the <b class="p">hare</b> at step <b>' + h +
+          '</b>. Inside a loop the hare closes the gap by exactly one place per tick, so it cannot step over — a collision is forced.';
+      },
+      2: () => 'They collided at step <b>' + run.meetStep + '</b> — a whole number of loops. Put the tortoise back at the <b>start</b>, walk both one step at a time, and they must meet at the mouth of the loop.',
+      3: () => 'The mouth is step <b class="g">' + st.mu + '</b>. Now hold one and send the other round: the count when it returns is the length of the loop.',
+      4: () => 'Tail <b class="g">μ = ' + st.mu + '</b>, loop <b class="g">λ = ' + st.lam + '</b>, found with <b>two</b> stored states and ' + run.calls +
+        ' steps of the rule. A remember-everything scan needs <b class="p">' + (st.mu + st.lam) + '</b> slots to learn the same thing.'
+    };
+
+    function paintUi() {
+      const ph = eff();
+      $('rRule').textContent = st.randomRule ? ('a random map on ' + st.n) : ('x² + ' + st.c + ' mod ' + st.n);
+      $('rMu').textContent = ph >= 3 ? st.mu : '—';
+      $('rLam').textContent = ph >= 4 ? st.lam : '—';
+      $('rMem').textContent = '2';
+      $('p1').className = 'pill' + (ph === 1 ? ' on' : ph > 1 ? ' done' : '');
+      $('p2').className = 'pill' + (ph === 2 ? ' on' : ph > 2 ? ' done' : '');
+      $('p3').className = 'pill' + (ph === 3 ? ' on' : ph > 3 ? ' done' : '');
+
+      const total = st.mu + st.lam;
+      const naive = ph === 1 ? Math.min(run.tick + 1, total) : total;
+      $('vNaive').textContent = naive;
+      $('barNaive').style.width = (100 * naive / Math.max(total, 1)) + '%';
+      $('barFloyd').style.width = (100 * 2 / Math.max(total, 1)) + '%';
+    }
+
+    function paintLive() {
+      const ph = eff();
+      const pos = positions();
+      $('rTort').textContent = ph === 4 ? 'at the mouth' : ('step ' + Math.floor(pos.tort));
+      $('rHare').textContent = ph === 4 ? 'at the mouth' : ('step ' + Math.floor(pos.hare));
+      $('rNote').innerHTML = NOTES[ph]();
+      $('rMu').textContent = ph >= 3 ? st.mu : '—';
+      $('rLam').textContent = ph >= 4 ? st.lam : '—';
+      const total = st.mu + st.lam;
+      const naive = ph === 1 ? Math.min(run.tick + 1, total) : total;
+      $('vNaive').textContent = naive;
+      $('barNaive').style.width = (100 * naive / Math.max(total, 1)) + '%';
+    }
+    setInterval(paintLive, 90);
+
+    // ---------------- controls ----------------
+    function bindRange(id, valId, apply, fmt) {
+      const el = $(id);
+      el.addEventListener('input', () => {
+        const v = +el.value;
+        $(valId).textContent = fmt ? fmt(v) : v;
+        apply(v);
+      });
+    }
+
+    bindRange('nStates', 'nVal', (v) => { st.n = v; rebuild(st.randomRule); });
+    bindRange('cAdd', 'cVal', (v) => { st.c = v; rebuild(false); });
+    bindRange('x0', 'xVal', (v) => { st.x0 = v % st.n; rebuild(false); });
+    bindRange('pace', 'paceVal', (v) => { st.pace = v; }, (v) => PACE_NAME[v]);
+
+    $('replayBtn').addEventListener('click', () => { planRun(); paintUi(); });
+    $('ruleBtn').addEventListener('click', () => {
+      st.randomRule = true;
+      makeRandomTable();
+      measureShape(); planRun(); layout(); paintUi();
+    });
+
+    function bindToggle(id, key, onSet) {
+      const el = $(id);
+      el.addEventListener('click', () => {
+        st[key] = !st[key];
+        el.classList.toggle('on', st[key]);
+        if (onSet) onSet();
+      });
+    }
+    bindToggle('autoT', 'auto');
+    bindToggle('seenT', 'showSeen');
+
+    $('collapse').addEventListener('click', () => {
+      $('ui').classList.add('hidden');
+      $('showUi').classList.add('on');
+    });
+    $('showUi').addEventListener('click', () => {
+      $('ui').classList.remove('hidden');
+      $('showUi').classList.remove('on');
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const k = (e.key || '').toLowerCase();
+      if (k === 'escape') story.classList.remove('open');
+      if (k === 'h') { $('ui').classList.toggle('hidden'); $('showUi').classList.toggle('on'); }
+      if (k === 'r') { planRun(); paintUi(); }
+      if (k === 'f') { st.randomRule = true; makeRandomTable(); measureShape(); planRun(); layout(); paintUi(); }
+      if (e.code === 'Space' || k === ' ') { e.preventDefault(); st.playing = !st.playing; }
+    });
+
+    // Tapping the stage pauses and resumes — handy on a phone.
+    canvas.addEventListener('pointerdown', () => { st.playing = !st.playing; });
+
+    // ---------------- the rho-length measurement ----------------
+    // For a random map on n states the expected tail and the expected cycle are
+    // each about sqrt(pi*n/8), so the whole rho is about sqrt(pi*n/2) ~ 1.2533
+    // * sqrt(n). Measured here rather than asserted.
+    // A fresh random rule for every trial: within one rule nearly every start
+    // drains into the same cycle, so averaging over starts alone would just
+    // measure that one cycle over and over.
+    function measureRhos() {
+      const SIZES = [100, 400, 1600, 6400, 25600, 102400];
+      const TRIALS = 160;
+      const rows = SIZES.map((n) => ({ n, sum: 0, done: 0 }));
+      const host = $('dims');
+      let si = 0;
+
+      function rho(n) {
+        const tbl = new Int32Array(n);
+        for (let i = 0; i < n; i++) tbl[i] = (Math.random() * n) | 0;
+        const stamp = new Int32Array(n);   // 0 = never stood here
+        let x = (Math.random() * n) | 0, i = 0;
+        while (stamp[x] === 0) { stamp[x] = ++i; x = tbl[x]; }
+        return i;                          // distinct states seen = mu + lam
+      }
+
+      function paint() {
+        const seen = rows.filter((r) => r.done > 0);
+        if (!seen.length) return;
+        const max = Math.max.apply(null, seen.map((r) => r.sum / r.done));
+        host.innerHTML = rows.map((r) => {
+          const avg = r.done ? r.sum / r.done : 0;
+          return '<div class="drow"><span class="dl">n = ' + r.n + '</span>' +
+            '<div class="dbar"><span style="width:' + (r.done ? 100 * avg / max : 0) + '%"></span></div>' +
+            '<span class="dv">' + (r.done ? avg.toFixed(0) : '…') + '</span></div>';
+        }).join('');
+        const ratio = seen.reduce((a, r) => a + (r.sum / r.done) / Math.sqrt(r.n), 0) / seen.length;
+        $('scoreFoot').innerHTML = 'Tail + loop, averaged over ' + TRIALS + ' random rules each. Measured ÷ √n = <b class="v">' +
+          ratio.toFixed(2) + '</b>, against a prediction of <b>1.25</b> — that is √(π/2). To force a collision you need the square root of the space, not the space.';
+      }
+
+      function step() {
+        const r = rows[si];
+        const batch = clamp(Math.round(400000 / r.n), 3, 40);
+        for (let k = 0; k < batch && r.done < TRIALS; k++) { r.sum += rho(r.n); r.done++; }
+        if (r.done >= TRIALS) si++;
+        paint();
+        if (si < rows.length) setTimeout(step, 16);
+      }
+      step();
+    }
+
+    // ---------------- go ----------------
+    resize();
+    rebuild(false);
+    requestAnimationFrame((t) => { last = t; frame(t); });
+    setTimeout(measureRhos, 240);
+  })();
+</script>
+</body>
+</html>
