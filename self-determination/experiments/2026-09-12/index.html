@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>One Swap Too Many — Experiment 085</title>
+<meta name="description" content="The Fisher–Yates shuffle, and the one-character bug beside it. Drawing the swap partner from the whole deck instead of from what is left leaves a shuffle that is provably not uniform — and you can watch the bias appear." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage ---- */
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 344px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 44%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.76rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 30px; height: 17px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i { background: rgba(255,255,255,0.3); }
+  .toggle.on i::after { transform: translateX(13px); background: #f2f2f8; }
+  .toggle.on { color: #e9e9f0; }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.good { color: #8affc0; }
+  .readout .head { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-weight: 500; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.g { color: #8affc0; }
+  .readout code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.92em; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  #rNote { min-height: 3.4em; }
+
+  /* the two lines of code, side by side */
+  .code2 {
+    display: grid; gap: 7px;
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem; line-height: 1.5;
+  }
+  .code2 .c { color: #7f7f99; }
+  .code2 .l1 { color: #cfcfe6; }
+  .code2 .l1 em { font-style: normal; color: #b0b0ff; background: rgba(124,124,255,0.16); border-radius: 4px; padding: 0 3px; }
+  .code2 .l2 { color: #cfcfe6; }
+  .code2 .l2 em { font-style: normal; color: #ff9fd2; background: rgba(255,124,195,0.16); border-radius: 4px; padding: 0 3px; }
+
+  /* The story button — prominent on purpose, every page has one. */
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; top: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    max-width: 250px;
+  }
+  .legend.hidden { opacity: 0; }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 15px; height: 15px; border-radius: 4px; flex: none; display: block; }
+  .legend i.more { background: #7c7cff; }
+  .legend i.less { background: #ff7cc3; }
+  .legend i.fair { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.18); }
+  .legend i.pool { background: rgba(124,124,255,0.14); border: 1px dashed rgba(124,124,255,0.75); }
+  .legend i.lock { background: rgba(138,255,192,0.12); border: 1px solid rgba(138,255,192,0.5); }
+
+  /* ---- Scoreboard (bottom right) ---- */
+  .score {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    width: 272px;
+    padding: 12px 14px 13px; border-radius: 13px;
+    background: rgba(10,10,18,0.55);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.72rem; color: #9a9ab0;
+    transition: opacity 0.4s ease;
+  }
+  .score.hidden { opacity: 0; pointer-events: none; }
+  .score h4 { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: #8f8fa6; font-weight: 600; margin-bottom: 9px; }
+  .crow { display: grid; gap: 4px; margin-bottom: 9px; }
+  .crow .cl { display: flex; justify-content: space-between; gap: 8px; }
+  .crow .cl b { color: #cfcfe6; font-variant-numeric: tabular-nums; }
+  .cbar { height: 9px; border-radius: 5px; background: rgba(255,255,255,0.07); overflow: hidden; position: relative; }
+  .cbar span {
+    position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; width: 0;
+    background: linear-gradient(90deg, #7c7cff, #b48aff);
+    transition: width 0.35s ease;
+  }
+  .cbar span.pinkbar { background: linear-gradient(90deg, #ff7cc3, #ffa3d6); }
+  .score .foot { margin-top: 3px; padding-top: 9px; border-top: 1px solid rgba(255,255,255,0.07); line-height: 1.55; color: #8f8fa6; }
+  .score .foot b { color: #e9e9f0; }
+  .score .foot b.v { color: #b0b0ff; }
+  .score .foot b.p { color: #ff9fd2; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e9d8ff; font-size: 0.9em; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+    max-width: min(92vw, 470px);
+  }
+  .hint b { color: rgba(255,255,255,0.72); font-weight: 600; }
+
+  @media (max-width: 1340px) { .legend { display: none; } }
+  @media (max-width: 1080px) { .score { display: none; } .hint { right: 12px; left: 12px; transform: none; } }
+  @media (max-width: 700px) {
+    .ui { left: 10px; right: 10px; top: 10px; width: auto; max-width: none; padding: 15px 16px; max-height: 44vh; }
+    #showUi { left: 10px; top: 10px; }
+    h1 { font-size: 1.15rem; margin: 8px 0 3px; }
+    .story-card { padding: 28px 24px; }
+    .hint { font-size: 0.68rem; bottom: 9px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+  </div>
+
+  <button id="showUi">▸ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="hide the panel (h)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>One Swap Too Many</h1>
+    <p class="sub">Experiment № 085 · September 12, 2026</p>
+
+    <div class="controls">
+      <div class="code2">
+        <div class="l1"><span class="c">// Fisher–Yates</span><br />for i = n−1 … 1: swap(i, rand(0, <em>i</em>))</div>
+        <div class="l2"><span class="c">// one swap too many</span><br />for i = 0 … n−1: swap(i, rand(0, <em>n−1</em>))</div>
+      </div>
+
+      <div class="row">
+        <label for="nCards">cards in the deck <b id="nVal">5</b></label>
+        <input type="range" id="nCards" min="3" max="6" step="1" value="5" />
+      </div>
+
+      <div class="row">
+        <label for="pace">pace of the deal <b id="paceVal">steady</b></label>
+        <input type="range" id="pace" min="0" max="9" step="1" value="5" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="runBtn">deal 20,000 more</button>
+        <button class="btn pink" id="clearBtn">clear the counts</button>
+      </div>
+
+      <div class="toggle violet on" id="autoT"><i></i> keep dealing in the background</div>
+      <div class="toggle rose on" id="poolT"><i></i> show the pool the partner comes from</div>
+
+      <div class="readout">
+        <span class="head">how uneven is it?</span>
+        <span class="k">hands dealt, each way</span><span class="v" id="rTrials">0</span>
+        <span class="k">Fisher–Yates spread</span><span class="v good" id="rFy">—</span>
+        <span class="k">one-swap-too-many spread</span><span class="v pinkv" id="rNv">—</span>
+        <hr />
+        <span class="k">orders a deck can be in</span><span class="v" id="rFact">120</span>
+        <span class="k">ways the buggy loop runs</span><span class="v" id="rPow">3,125</span>
+        <span class="k">outcomes per order</span><span class="v pinkv" id="rDiv">26.04</span>
+        <hr />
+        <p class="full" id="rNote">Two loops, one character apart. Give them both a few thousand hands and only one of them stays flat.</p>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="pool"></i> the pool the partner is drawn from</div>
+    <div><i class="lock"></i> already settled — never touched again</div>
+    <div><i class="more"></i> happens more often than it should</div>
+    <div><i class="fair"></i> exactly as often as it should</div>
+    <div><i class="less"></i> happens less often than it should</div>
+  </div>
+
+  <div class="score" id="score">
+    <h4>most likely order ÷ least likely</h4>
+    <div class="crow">
+      <span class="cl">Fisher–Yates <b id="vFy">—</b></span>
+      <div class="cbar"><span id="barFy"></span></div>
+    </div>
+    <div class="crow">
+      <span class="cl">one swap too many <b id="vNv">—</b></span>
+      <div class="cbar"><span id="barNv" class="pinkbar"></span></div>
+    </div>
+    <p class="foot" id="scoreFoot">A perfect shuffle drives this ratio to 1. Sampling noise alone keeps it a little above.</p>
+  </div>
+
+  <p class="hint"><b>space</b> pause · <b>d</b> deal 20,000 · <b>r</b> clear · <b>h</b> hide the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 085 · The story</p>
+      <h2>One Swap Too Many</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Because it is the smallest bug I know that is genuinely invisible. Ronald Fisher and Frank Yates published the shuffle in 1938 as a table of random numbers for agricultural trials, and Richard Durstenfeld turned it into the in-place loop everyone writes today: walk from the end of the array, and for each position draw a partner uniformly from the part you have <em>not</em> settled yet. The near-miss is to draw the partner from the whole deck every time — <code>rand(0, n-1)</code> instead of <code>rand(0, i)</code>. It looks more random, not less. The deck comes out scrambled. Every test you are likely to write passes: every card reaches every position, no card is ever lost or duplicated, the output differs each run. And yet the thing is provably not a fair shuffle, and I wanted to put the proof somewhere you could see it rather than take it on faith.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The counting argument, which is short enough to hold in your head. Fisher–Yates makes <em>n</em> choices with <em>n</em>, <em>n−1</em>, <em>n−2</em>… options, so it has exactly <em>n!</em> equally likely paths and exactly <em>n!</em> possible outcomes — a perfect one-to-one match, and every order comes out once. The buggy loop makes <em>n</em> choices with <em>n</em> options each: <em>n<sup>n</sup></em> equally likely paths, which still have to land on <em>n!</em> orders. For a five-card deck that is 3,125 paths over 120 orders, or 26.04 paths per order — and since 120 does not divide 3,125, no assignment of whole paths to orders can be even. The bias is forced by arithmetic before a single card moves. Then you watch it show up: the grid is <em>card × final position</em>, violet where a cell comes up too often and rose where it comes up too little, and within a few thousand hands the buggy one grows a diagonal scar while Fisher–Yates just gets quieter. My favourite detail is in that scar — the first card's row and the last column stay perfectly fair even in the broken version, so if you happened to test only those you would find nothing wrong. Cards near the front of the deck drift backwards; cards near the back get pulled forwards. At five cards the most likely order already turns up about three times as often as the least likely.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When you need something to be uniform, counting beats testing. No amount of eyeballing shuffled output would have caught this, and the statistical test that does catch it needs you to already suspect where to look. But "how many equally likely paths does my procedure have, and how many outcomes must they cover?" is a question you can answer on the back of an envelope, and it settles the matter. The same divisibility argument is why <code>rand() % n</code> quietly favours small values whenever <em>n</em> does not divide the generator's range, why drawing a random number in a range needs a rejection loop to be exact, and why card-room shuffles are specified as procedures rather than as "mix them up well". Shuffles of exactly this shape have shipped in real card rooms and real ballot-order randomisers, and the wider family of near-misses — this loop, and sorting a list with a coin-flip comparator — is one of the most reliably rediscovered bugs there is. It is not an exotic failure. It is what happens when a loop looks obviously fine.</p>
+
+      <button class="close" id="closeStory">Back to the deal</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- The Fisher-Yates shuffle, and the off-by-one-pool version of it. ----
+  //
+  //   Fisher & Yates 1938 (as a pencil-and-paper table), Durstenfeld 1964 (in
+  //   place, linear time), popularised by Knuth as "Algorithm P".
+  //
+  //     correct:  for i = n-1 down to 1:  j = randInt(0, i);    swap(a[i], a[j])
+  //     buggy:    for i = 0  up to n-1:   j = randInt(0, n-1);  swap(a[i], a[j])
+  //
+  //   The correct loop has n! equally likely execution paths and n! possible
+  //   outputs, in bijection: every permutation exactly once, so every order is
+  //   equally likely. The buggy loop has n^n equally likely paths covering the
+  //   same n! outputs. For n >= 3, n! never divides n^n, so the counts per
+  //   permutation cannot all be equal — the shuffle is biased no matter how
+  //   good the random number generator is.
+  //
+  //   This page runs both on the same clock, animating one hand at a time
+  //   while thousands more are dealt in the background, and draws:
+  //     - a card x final-position grid (deviation from the fair 1/n), and
+  //     - a per-permutation deviation profile, on a scale shared by both.
+  (() => {
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+    const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const FACT = [1, 1, 2, 6, 24, 120, 720];
+    const fmt = (v) => v.toLocaleString('en-US');
+
+    const PACE_MS = [900, 690, 520, 400, 300, 230, 175, 130, 92, 58];
+    const PACE_NAME = ['a crawl', 'slow', 'unhurried', 'easy', 'gentle', 'steady', 'brisk', 'quick', 'fast', 'a blur'];
+
+    const st = {
+      n: 5,
+      pace: 5,
+      playing: true,
+      auto: true,
+      showPool: true,
+      view: { w: 1, h: 1, dpr: 1 }
+    };
+
+    // ---------------- the two shufflers ----------------
+    function makeMethod(key, name, sub, tint) {
+      return {
+        key, name, sub, tint,
+        deck: [], step: 0, i: -1, j: -1, poolHi: 0,
+        anim: 1, moved: false,
+        counts: null,   // n x n : card -> final position
+        perm: null,     // n! buckets
+        trials: 0,
+        ratio: 1, worst: 0
+      };
+    }
+    const M = [
+      makeMethod('fy', 'Fisher–Yates', 'partner drawn from what is left', '#7c7cff'),
+      makeMethod('nv', 'One swap too many', 'partner drawn from the whole deck', '#ff7cc3')
+    ];
+
+    // Lehmer-code rank of a permutation: a unique integer in [0, n!).
+    function rankOf(a) {
+      const n = a.length;
+      let r = 0;
+      for (let i = 0; i < n; i++) {
+        let c = 0;
+        for (let k = i + 1; k < n; k++) if (a[k] < a[i]) c++;
+        r = r * (n - i) + c;
+      }
+      return r;
+    }
+
+    function freshDeck(n) {
+      const d = new Array(n);
+      for (let k = 0; k < n; k++) d[k] = k;
+      return d;
+    }
+
+    // Where the i-th step of this method works, and how big its pool is.
+    function stepPlan(m, s, n) {
+      if (m.key === 'fy') { const i = n - 1 - s; return { i, poolHi: i }; }
+      return { i: s, poolHi: n - 1 };
+    }
+
+    function record(m, deck) {
+      const n = deck.length;
+      for (let p = 0; p < n; p++) m.counts[deck[p] * n + p]++;
+      m.perm[rankOf(deck)]++;
+      m.trials++;
+    }
+
+    // One whole hand, no animation.
+    function quickHand(m, n) {
+      const d = freshDeck(n);
+      if (m.key === 'fy') {
+        for (let i = n - 1; i > 0; i--) {
+          const j = (Math.random() * (i + 1)) | 0;
+          const t = d[i]; d[i] = d[j]; d[j] = t;
+        }
+      } else {
+        for (let i = 0; i < n; i++) {
+          const j = (Math.random() * n) | 0;
+          const t = d[i]; d[i] = d[j]; d[j] = t;
+        }
+      }
+      record(m, d);
+    }
+
+    function batch(k) {
+      const n = st.n;
+      for (const m of M) for (let t = 0; t < k; t++) quickHand(m, n);
+      refreshStats();
+    }
+
+    function newHand(m) {
+      m.deck = freshDeck(st.n);
+      m.step = 0; m.i = -1; m.j = -1; m.poolHi = st.n - 1;
+      m.anim = 1; m.moved = false;
+    }
+
+    function advance(m) {
+      const n = st.n;
+      if (m.step >= n) { record(m, m.deck); newHand(m); return; }
+      const plan = stepPlan(m, m.step, n);
+      const i = plan.i;
+      const j = (Math.random() * (plan.poolHi + 1)) | 0;
+      const t = m.deck[i]; m.deck[i] = m.deck[j]; m.deck[j] = t;
+      m.i = i; m.j = j; m.poolHi = plan.poolHi;
+      m.moved = i !== j;
+      m.anim = 0;
+      m.step++;
+    }
+
+    function resetAll() {
+      const n = st.n;
+      for (const m of M) {
+        m.counts = new Float64Array(n * n);
+        m.perm = new Float64Array(FACT[n]);
+        m.trials = 0;
+        newHand(m);
+      }
+      refreshStats();
+    }
+
+    // ---------------- statistics ----------------
+    function refreshStats() {
+      const n = st.n, nf = FACT[n];
+      for (const m of M) {
+        const exp = m.trials / nf;
+        let lo = Infinity, hi = -Infinity;
+        if (m.trials > 0) {
+          for (let r = 0; r < nf; r++) { const v = m.perm[r]; if (v < lo) lo = v; if (v > hi) hi = v; }
+          m.ratio = lo > 0 ? hi / lo : (hi > 0 ? Infinity : 1);
+        } else { m.ratio = 1; lo = hi = 0; }
+        let worst = 0;
+        if (m.trials > 0) {
+          const cexp = m.trials / n;
+          for (let k = 0; k < n * n; k++) {
+            const d = Math.abs(m.counts[k] / cexp - 1);
+            if (d > worst) worst = d;
+          }
+        }
+        m.worst = worst;
+        m.expPerm = exp;
+      }
+      paintPanel();
+    }
+
+    const spread = (m) => (m.trials < 60 ? '—' : (m.worst * 100).toFixed(1) + '%');
+    const ratioTxt = (m) => {
+      if (m.trials < 60) return '—';
+      if (!isFinite(m.ratio)) return '∞';
+      return m.ratio.toFixed(2) + '×';
+    };
+
+    function paintPanel() {
+      const n = st.n, nf = FACT[n], nn = Math.pow(n, n);
+      $('rTrials').textContent = fmt(M[0].trials);
+      $('rFy').textContent = spread(M[0]);
+      $('rNv').textContent = spread(M[1]);
+      $('rFact').textContent = fmt(nf);
+      $('rPow').textContent = fmt(nn);
+      $('rDiv').textContent = (nn / nf).toFixed(2);
+
+      $('vFy').textContent = ratioTxt(M[0]);
+      $('vNv').textContent = ratioTxt(M[1]);
+      const cap = Math.max(1.6, isFinite(M[1].ratio) ? M[1].ratio : 1.6);
+      const bar = (m) => clamp(((isFinite(m.ratio) ? m.ratio : cap) - 1) / (cap - 1 || 1), 0, 1) * 100;
+      $('barFy').style.width = (M[0].trials < 60 ? 0 : bar(M[0])).toFixed(1) + '%';
+      $('barNv').style.width = (M[1].trials < 60 ? 0 : bar(M[1])).toFixed(1) + '%';
+
+      let note;
+      if (M[0].trials < 400) {
+        note = 'Counting the first few hands. Give it a few thousand — or press <b>deal 20,000 more</b> — before believing either picture.';
+      } else if (M[1].ratio > M[0].ratio * 1.35) {
+        note = 'The buggy grid has grown a diagonal: cards near the front drift <b class="p">back</b>, cards near the back get pulled <b class="p">forward</b>. Fisher–Yates is only getting flatter.';
+      } else {
+        note = 'Still settling. <b class="g">' + fmt(nn) + ' ÷ ' + fmt(nf) + ' = ' + (nn / nf).toFixed(2) + '</b> is not a whole number, so the rose one cannot come out even — keep dealing.';
+      }
+      $('rNote').innerHTML = note;
+
+      const foot = M[0].trials < 400
+        ? 'A perfect shuffle drives this ratio to 1. Sampling noise alone keeps it a little above.'
+        : 'Both are fed the same number of hands. Only one of them has a ratio that stops falling.';
+      $('scoreFoot').innerHTML = foot;
+    }
+
+    // ---------------- colours ----------------
+    const cardHue = (k, n) => 248 + (k * 84) / Math.max(1, n - 1);
+    const cardCol = (k, n, l) => 'hsl(' + cardHue(k, n).toFixed(0) + ', 72%, ' + (l || 62) + '%)';
+
+    // deviation -> colour. violet above fair, rose below.
+    function devCol(d, scale, alphaBoost) {
+      const t = clamp(Math.abs(d) / scale, 0, 1);
+      const a = (0.08 + 0.86 * t * t * 0.6 + 0.34 * t) * (alphaBoost || 1);
+      return d >= 0
+        ? 'rgba(124,124,255,' + clamp(a, 0, 0.95).toFixed(3) + ')'
+        : 'rgba(255,124,195,' + clamp(a, 0, 0.95).toFixed(3) + ')';
+    }
+
+    function roundRect(x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+
+    // ---------------- drawing ----------------
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = canvas.clientWidth || window.innerWidth;
+      const h = canvas.clientHeight || window.innerHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      st.view = { w, h, dpr };
+    }
+
+    function panelBox() {
+      // keep the artwork clear of the floating control panel where there's room
+      const w = st.view.w;
+      if (w <= 700) return { left: 12, top: Math.round(st.view.h * 0.44) + 16, right: 12, bottom: 46 };
+      const right = w > 1080 ? 312 : 24;
+      return { left: 392, top: 26, right, bottom: 46 };
+    }
+
+    function draw(now) {
+      const { w, h } = st.view;
+      ctx.clearRect(0, 0, w, h);
+
+      // soft aurora
+      const g1 = ctx.createRadialGradient(w * 0.26, h * 0.2, 0, w * 0.26, h * 0.2, Math.max(w, h) * 0.6);
+      g1.addColorStop(0, 'rgba(124,124,255,0.10)');
+      g1.addColorStop(1, 'rgba(124,124,255,0)');
+      ctx.fillStyle = g1; ctx.fillRect(0, 0, w, h);
+      const g2 = ctx.createRadialGradient(w * 0.78, h * 0.82, 0, w * 0.78, h * 0.82, Math.max(w, h) * 0.6);
+      g2.addColorStop(0, 'rgba(255,124,195,0.09)');
+      g2.addColorStop(1, 'rgba(255,124,195,0)');
+      ctx.fillStyle = g2; ctx.fillRect(0, 0, w, h);
+
+      const box = panelBox();
+      const aw = Math.max(220, w - box.left - box.right);
+      const ah = Math.max(220, h - box.top - box.bottom);
+      const twoCol = aw >= 600;
+
+      // shared scale for the permutation profiles
+      let profScale = 0.12;
+      for (const m of M) {
+        if (m.trials < 60) continue;
+        const nf = FACT[st.n], exp = m.trials / nf;
+        let mx = 0;
+        for (let r = 0; r < nf; r++) { const d = Math.abs(m.perm[r] / exp - 1); if (d > mx) mx = d; }
+        if (mx > profScale) profScale = mx;
+      }
+      profScale = Math.min(profScale, 2.2);
+
+      if (twoCol) {
+        const cw = (aw - 30) / 2;
+        drawColumn(M[0], box.left, box.top, cw, ah, profScale);
+        drawColumn(M[1], box.left + cw + 30, box.top, cw, ah, profScale);
+      } else {
+        const ch = (ah - 22) / 2;
+        drawColumn(M[0], box.left, box.top, aw, ch, profScale);
+        drawColumn(M[1], box.left, box.top + ch + 22, aw, ch, profScale);
+      }
+    }
+
+    function drawColumn(m, x, y, w, h, profScale) {
+      const n = st.n;
+      const labelW = 20;
+
+      // ---- vertical budget: heading, deck, grid, permutation profile ----
+      const roomy = h >= 300;
+      const headH = roomy ? 48 : 26;
+      const tile = clamp(Math.min((w - 14) / n - 9, h * (roomy ? 0.14 : 0.11), 62), 15, 62);
+      const deckBlock = tile + (roomy ? 40 : 26);
+      const showProf = h >= 250;
+      const profH = showProf ? clamp(h * 0.26, 38, 210) : 0;
+      const profBlock = showProf ? profH + 38 : 0;
+      const gridBudget = Math.max(40, h - headH - deckBlock - profBlock - (roomy ? 30 : 14));
+      const cell = clamp(Math.min((w - labelW - 4) / n, gridBudget / n), 10, 68);
+
+      let cy = y;
+
+      // ---- heading ----
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = m.tint;
+      ctx.font = '600 ' + (roomy ? 15 : 13) + 'px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillText(m.name, x, cy + 13);
+      if (roomy) {
+        ctx.fillStyle = 'rgba(255,255,255,0.34)';
+        ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillText(m.sub, x, cy + 30);
+      }
+      cy += headH;
+
+      // ---- the deck, mid-hand ----
+      const gap = Math.max(5, tile * 0.16);
+      const dw = n * tile + (n - 1) * gap;
+      const dx = x + Math.max(0, (w - dw) / 2);
+      const slotX = (k) => dx + k * (tile + gap);
+      const deckTop = cy;
+
+      // pool band
+      if (st.showPool && m.i >= 0) {
+        const px = slotX(0) - 6, pw = slotX(m.poolHi) + tile + 6 - px;
+        ctx.save();
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = 'rgba(124,124,255,0.55)';
+        ctx.fillStyle = 'rgba(124,124,255,0.07)';
+        ctx.lineWidth = 1;
+        roundRect(px, deckTop - 7, pw, tile + 14, 10);
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+      }
+
+      // settled tail (Fisher–Yates only ever revisits the head of the deck)
+      if (m.key === 'fy' && m.i >= 0 && m.i < n - 1) {
+        const px = slotX(m.i + 1) - 5, pw = slotX(n - 1) + tile + 5 - px;
+        ctx.strokeStyle = 'rgba(138,255,192,0.42)';
+        ctx.fillStyle = 'rgba(138,255,192,0.07)';
+        ctx.lineWidth = 1;
+        roundRect(px, deckTop - 5, pw, tile + 10, 9);
+        ctx.fill(); ctx.stroke();
+      }
+
+      const t = ease(clamp(m.anim, 0, 1));
+      for (let p = 0; p < n; p++) {
+        let tx = slotX(p);
+        if (m.moved && m.anim < 1) {
+          if (p === m.i) tx = lerp(slotX(m.j), slotX(m.i), t);
+          else if (p === m.j) tx = lerp(slotX(m.i), slotX(m.j), t);
+        }
+        const card = m.deck[p];
+        // the two swapping cards arc past each other in opposite directions,
+        // so an exchange never looks like one card vanishing
+        const swapping = m.moved && m.anim < 1 && (p === m.i || p === m.j);
+        const lift = swapping ? (p === m.i ? -1 : 1) * Math.sin(t * Math.PI) * tile * 0.24 : 0;
+        const ty = deckTop + lift;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = lift ? 14 : 5; ctx.shadowOffsetY = 2;
+        ctx.fillStyle = cardCol(card, n, 58);
+        roundRect(tx, ty, tile, tile, tile * 0.22);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.20)'; ctx.lineWidth = 1;
+        roundRect(tx + 0.5, ty + 0.5, tile - 1, tile - 1, tile * 0.22);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(10,8,20,0.86)';
+        ctx.font = '700 ' + (tile * 0.46).toFixed(0) + 'px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String.fromCharCode(65 + card), tx + tile / 2, ty + tile / 2 + 1);
+      }
+
+      // i / j markers under the deck
+      const markY = deckTop + tile + (roomy ? 20 : 9);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.font = '600 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      if (m.i >= 0) {
+        if (m.i === m.j) {
+          ctx.fillStyle = 'rgba(255,255,255,0.60)';
+          ctx.fillText('i=j', slotX(m.i) + tile / 2, markY);
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.72)';
+          ctx.fillText('i', slotX(m.i) + tile / 2, markY);
+          ctx.fillStyle = m.tint;
+          ctx.fillText('j', slotX(m.j) + tile / 2, markY);
+        }
+      }
+      cy = y + headH + deckBlock;
+
+      // ---- card x position grid ----
+      const gs = cell * n;
+      const gx = x + labelW + Math.max(0, (w - labelW - gs) / 2);
+      const gy = cy + 14;
+
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = 'rgba(255,255,255,0.30)';
+      ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillText('WHICH CARD ENDS UP WHERE', x, cy + 6);
+
+      const cexp = m.trials / n;
+      for (let card = 0; card < n; card++) {
+        for (let pos = 0; pos < n; pos++) {
+          const cx2 = gx + pos * cell, cy2 = gy + card * cell;
+          const v = m.counts[card * n + pos];
+          const d = m.trials >= 60 ? v / cexp - 1 : 0;
+          ctx.fillStyle = 'rgba(255,255,255,0.045)';
+          roundRect(cx2 + 1, cy2 + 1, cell - 2, cell - 2, 3);
+          ctx.fill();
+          if (m.trials >= 60) {
+            ctx.fillStyle = devCol(d, 0.22);
+            roundRect(cx2 + 1, cy2 + 1, cell - 2, cell - 2, 3);
+            ctx.fill();
+          }
+        }
+        // row label: the card
+        ctx.fillStyle = cardCol(card, n, 64);
+        ctx.font = '700 ' + clamp(cell * 0.42, 9, 14).toFixed(0) + 'px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText(String.fromCharCode(65 + card), gx - 6, gy + card * cell + cell / 2);
+      }
+      // column labels: final position
+      ctx.fillStyle = 'rgba(255,255,255,0.30)';
+      ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      for (let pos = 0; pos < n; pos++) ctx.fillText(String(pos + 1), gx + pos * cell + cell / 2, gy + gs + 3);
+
+      if (!showProf) return;
+      cy = gy + gs + 30;
+
+      // ---- per-permutation deviation profile ----
+      const px0 = x, pw0 = w;
+      const mid = cy + profH / 2;
+
+      ctx.fillStyle = 'rgba(255,255,255,0.30)';
+      ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('ALL ' + FACT[n] + ' POSSIBLE ORDERS', px0, cy - 6);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      roundRect(px0, cy, pw0, profH, 8);
+      ctx.fill();
+
+      const nf = FACT[n];
+      const bw = pw0 / nf;
+      if (m.trials >= 60) {
+        const exp = m.trials / nf;
+        for (let r = 0; r < nf; r++) {
+          const d = clamp(m.perm[r] / exp - 1, -profScale, profScale);
+          const hgt = (d / profScale) * (profH / 2 - 3);
+          ctx.fillStyle = devCol(d, profScale, 1.25);
+          const bx = px0 + r * bw;
+          if (hgt >= 0) ctx.fillRect(bx, mid - hgt, Math.max(1, bw - (bw > 3 ? 1 : 0)), hgt + 0.8);
+          else ctx.fillRect(bx, mid, Math.max(1, bw - (bw > 3 ? 1 : 0)), -hgt + 0.8);
+        }
+      }
+      // the fair line
+      ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px0, mid + 0.5); ctx.lineTo(px0 + pw0, mid + 0.5); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.34)';
+      ctx.font = '9px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+      ctx.fillText('fair', px0 + pw0 - 4, mid - 2);
+      ctx.textBaseline = 'top';
+      ctx.fillText('±' + (profScale * 100).toFixed(0) + '%', px0 + pw0 - 4, cy + 3);
+
+      // ---- one-line verdict ----
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.42)';
+      const line = m.trials < 60
+        ? 'dealing…'
+        : fmt(m.trials) + ' hands · widest gap ' + ratioTxt(m) + ' · worst cell ' + spread(m);
+      ctx.fillText(line, px0, cy + profH + 7);
+    }
+
+    // ---------------- loop ----------------
+    let last = performance.now(), acc = 0, statAcc = 0;
+    function frame(now) {
+      const dt = Math.min(64, now - last); last = now;
+      const tick = PACE_MS[st.pace];
+
+      if (st.playing) {
+        acc += dt;
+        while (acc >= tick) { acc -= tick; for (const m of M) advance(m); }
+        const p = clamp(acc / (tick * 0.72), 0, 1);
+        for (const m of M) m.anim = p;
+
+        if (st.auto) {
+          // keep the statistics converging far faster than the animation
+          const perFrame = 1000;
+          const nn = st.n;
+          for (const m of M) for (let k = 0; k < perFrame; k++) quickHand(m, nn);
+          statAcc += dt;
+          if (statAcc > 120) { statAcc = 0; refreshStats(); }
+        }
+      }
+
+      draw(now);
+      requestAnimationFrame(frame);
+    }
+
+    // ---------------- wiring ----------------
+    $('nCards').addEventListener('input', (e) => {
+      st.n = +e.target.value;
+      $('nVal').textContent = st.n;
+      resetAll();
+    });
+    $('pace').addEventListener('input', (e) => {
+      st.pace = +e.target.value;
+      $('paceVal').textContent = PACE_NAME[st.pace];
+    });
+    $('runBtn').addEventListener('click', () => batch(20000));
+    $('clearBtn').addEventListener('click', resetAll);
+
+    const bindToggle = (id, key) => {
+      const el = $(id);
+      el.addEventListener('click', () => { st[key] = !st[key]; el.classList.toggle('on', st[key]); });
+    };
+    bindToggle('autoT', 'auto');
+    bindToggle('poolT', 'showPool');
+
+    const ui = $('ui'), showUi = $('showUi'), legend = $('legend'), score = $('score');
+    const setUi = (hidden) => {
+      ui.classList.toggle('hidden', hidden);
+      showUi.classList.toggle('on', hidden);
+      legend.classList.toggle('hidden', hidden);
+      score.classList.toggle('hidden', hidden);
+    };
+    $('collapse').addEventListener('click', () => setUi(true));
+    showUi.addEventListener('click', () => setUi(false));
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'h') setUi(!ui.classList.contains('hidden'));
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (e.key === ' ') { e.preventDefault(); st.playing = !st.playing; }
+      if (k === 'd') batch(20000);
+      if (k === 'r') resetAll();
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    resetAll();
+    $('paceVal').textContent = PACE_NAME[st.pace];
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
