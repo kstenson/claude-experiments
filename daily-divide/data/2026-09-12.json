@@ -1,0 +1,250 @@
+{
+  "date": "2026-09-12",
+  "topic": "The $5,000 'Trump dividend' — promised only if Republicans hold both chambers",
+  "question": "Is the $5,000 payment Trump promised if Republicans keep the House and Senate affordable, legal, or likely to arrive?",
+  "summary": "At the RNC's first midterm convention in Dallas on Sept. 9, Trump made a conditional offer: 'If the Republicans win the House of Representatives and the United States Senate, I will issue a dividend to every adult citizen … for $5,000.' Three days later it is the argument dominating the campaign, and unusually it is not a clean left–right split — the sharpest fiscal objections came from the nonpartisan Committee for a Responsible Federal Budget, from Fox Business, and from Republicans including Rep. Thomas Massie and Gov. Sarah Huckabee Sanders.\n\nThe right says tariffs have generated extraordinary revenue and workers should share it, and that a campaign promise of a universal benefit is plainly lawful. The left says it is a $1.2 trillion bribe the president cannot legally pay. Both halves are checkable, and they resolve in opposite directions.\n\nOn the money, the right's case does not survive Treasury's own ledger: net customs duties for fiscal 2026 through August were $167.3 billion — about a seventh of the promise, and barely above last year's — with three months of net *outflows* after the Supreme Court struck the IEEPA tariffs in February. On the law, the left's loudest claim is the weaker one: a universal payment promised in public is a campaign promise, not vote-buying. The needle leans left on the arithmetic, not on the accusation.",
+  "needle": -15,
+  "verdict": "The evidence favors the critics on the checkable core: the payment cannot come from tariff revenue, cannot be issued without an appropriation, and follows three earlier promised payments that were never made. But the left's most-repeated charge — that the offer is criminal vote-buying — is mostly false, and a Democratic president made a structurally identical conditional pitch in Georgia in 2021. Whether universal cash transfers are good policy, and whether conditioning one on an election is unseemly, are values questions this meter does not decide.",
+  "weights": { "factualAccuracy": 0.6, "reasoningHonesty": 0.4 },
+  "verificationNote": "Dollar figures were taken from Treasury's own Monthly Treasury Statement via the fiscaldata.treasury.gov API rather than from reporting, and independently match Reuters' $167 billion. The Supreme Court's IEEPA holding was read from the slip opinion PDF on supremecourt.gov. Statutory text came from the U.S. Code. Cost estimates were corroborated across CRFB, Fox Business and Reuters. CNBC, The Hill, Congress.gov, CBO and Senate press pages returned HTTP 403/451 and could not be machine-read; claims resting on them were re-sourced to readable pages or flagged.",
+  "sources_consulted": [
+    "U.S. Treasury (fiscaldata.treasury.gov, Monthly Treasury Statement)",
+    "Supreme Court of the United States (slip opinion, No. 24-1287)",
+    "U.S. Code (18 U.S.C. §597, via Cornell LII)",
+    "Brown v. Hartlage, 456 U.S. 45 (via Cornell LII)",
+    "Committee for a Responsible Federal Budget",
+    "Reuters (via U.S. News)",
+    "Fox Business",
+    "Fox News",
+    "Fox News Radio",
+    "CBS News",
+    "PBS NewsHour",
+    "Time",
+    "NBC News / NBC DFW",
+    "Newsweek",
+    "The Conversation",
+    "Media Bias/Fact Check",
+    "Fortune",
+    "Al Jazeera",
+    "Bipartisan Policy Center (via CBS News)",
+    "Cato Institute (via CBS News)",
+    "Congressional Budget Office"
+  ],
+  "sides": {
+    "left": {
+      "label": "A $1.2 trillion bribe he cannot legally pay",
+      "framing": "Trump is dangling borrowed money to buy a midterm majority. The payment would cost about $1.2 trillion, tariffs come nowhere near covering it, no president can write checks without an appropriation, and this is the fourth promised payment of the term that will never arrive.",
+      "factualAccuracy": 68,
+      "reasoningHonesty": 54,
+      "score": 62,
+      "strongestPoint": "The arithmetic is verifiable in the government's own books: Treasury recorded $167.3 billion in net customs duties for the first eleven months of fiscal 2026 — roughly a seventh of the promise — and three of those months were net negative because of court-ordered refunds.",
+      "weakestPoint": "The headline accusation is the weakest link. A universal payment promised openly is protected campaign speech under Brown v. Hartlage, not a §597 expenditure — and in January 2021 a Democratic president made the same conditional pitch in Georgia, then delivered $1,400 instead of $2,000."
+    },
+    "right": {
+      "label": "Workers should share in the tariff windfall",
+      "framing": "Tariffs have pulled in enormous sums from foreign producers, the economy is strong, and Americans should get a cash distribution the way shareholders do. Promising a benefit if voters return your majority is what campaigns are for, and a senator is already drafting the bill.",
+      "factualAccuracy": 50,
+      "reasoningHonesty": 42,
+      "score": 47,
+      "strongestPoint": "On the law they are right and their critics are wrong: the offer is a public, universal campaign promise, and both an election attorney cited by AP and George W. Bush's chief ethics counsel say it is lawful. Sen. Moreno drafting legislation is the constitutionally correct route.",
+      "weakestPoint": "The funding claim fails against Treasury's ledger by a factor of about seven, and the 'company paying its shareholders' analogy inverts the facts — the government has no profits to distribute, and CBO projects a $2.1 trillion deficit for fiscal 2026. Three prior promised payments were never made."
+    }
+  },
+  "facts": [
+    {
+      "claim": "Trump promised a $5,000 payment to every adult citizen, explicitly conditioned on Republicans keeping both the House and the Senate.",
+      "side": "both",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Trump, Dallas, Sept. 9, 2026: 'Here is my promise: If the Republicans win the House of Representatives and the United States Senate, I will issue a dividend to every adult citizen in the United States of America for $5,000, very much like a successful company will do a cash distribution to its shareholders.'",
+      "explanation": "The conditionality is in the sentence itself, not in a critic's paraphrase. PBS and CBS quote the shorter line 'If the Republicans win, you win with us and you get $5,000. It will be called the Trump dividend.' Some outlets date the speech Sept. 10; Time, PBS and Reuters place it on Wednesday, Sept. 9.",
+      "source": "Time",
+      "url": "https://time.com/article/2026/09/10/trump-dividend-five-thousand-dollars-midterms-republican-convention/",
+      "corroboration": [
+        { "source": "PBS NewsHour", "url": "https://www.pbs.org/newshour/politics/watch-trump-promises-5000-dividend-for-americans-if-gop-wins-midterms" },
+        { "source": "CBS News", "url": "https://www.cbsnews.com/news/trump-dividends-5000-checks-rnc-midterm-convention/" }
+      ]
+    },
+    {
+      "claim": "The dividend would cost roughly $1.2 trillion and would more than double next year's projected primary deficit.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "CRFB: the payment 'would cost over $1.2 trillion' and 'would more than double next year's projected $780 billion primary deficit to $2 trillion and increase total projected deficits to $3.1 trillion.' CRFB president Maya MacGuineas called it 'fiscally dangerous, economically backwards and fundamentally unserious.'",
+      "explanation": "Estimates vary with the denominator: $1.2 trillion using the roughly 240–245 million adult citizens Reuters and PBS cite from Census, about $1.3 trillion if all ~270 million adults qualify. The range, not a single figure, is the honest number. Notably, right-leaning Fox Business reports the same CRFB estimate without challenging it.",
+      "source": "Committee for a Responsible Federal Budget",
+      "url": "https://www.crfb.org/blogs/5000-dividends-would-cost-12-trillion",
+      "corroboration": [
+        { "source": "Fox Business", "url": "https://www.foxbusiness.com/politics/trumps-5000-dividend-proposal-could-add-1-2t-federal-deficit-analysts-say" },
+        { "source": "Reuters (via U.S. News)", "url": "https://www.usnews.com/news/politics/articles/2026-09-10/explainer-is-trumps-5-000-dividend-legal-and-how-would-it-work" }
+      ]
+    },
+    {
+      "claim": "Tariff revenue can pay for the dividend.",
+      "side": "right",
+      "verdict": "mostly-false",
+      "confidence": "high",
+      "evidence": "Treasury's Monthly Treasury Statement records net customs duties of $167,308,212,393 for fiscal 2026 through Aug. 31 — against $165,190,786,550 in the same period of fiscal 2025. Monthly net receipts were negative in May (−$0.04B), June (−$25.6B) and July (−$8.5B) 2026.",
+      "explanation": "A full year of net tariff receipts covers about one-seventh of $1.2 trillion, and is essentially flat year-over-year once refunds are netted out. Vance's underlying figure is not fabricated — the Bipartisan Policy Center puts gross tariff and excise revenue near $500 billion since early 2025 — but gross collections spread over two years are not a pay-for, and CRFB notes tariff revenue is already inside existing deficit projections.",
+      "source": "U.S. Treasury — Monthly Treasury Statement (fiscaldata API)",
+      "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/mts/mts_table_9",
+      "corroboration": [
+        { "source": "Reuters (via U.S. News) — '$167 billion so far in the fiscal year'", "url": "https://www.usnews.com/news/politics/articles/2026-09-10/explainer-is-trumps-5-000-dividend-legal-and-how-would-it-work" },
+        { "source": "CBS News (Bipartisan Policy Center: ~$210B gross in 2026, ~$857 per adult; Cato Institute: 60–75% of a decade of tariff revenue)", "url": "https://www.cbsnews.com/news/trump-5000-dividend-checks-midterms/" }
+      ]
+    },
+    {
+      "claim": "The promise is criminal vote-buying under federal law.",
+      "side": "left",
+      "verdict": "mostly-false",
+      "confidence": "medium",
+      "evidence": "18 U.S.C. §597 reaches whoever 'makes or offers to make an expenditure to any person, either to vote or withhold his vote, or to vote for or against any candidate.' Brown v. Hartlage (1982): 'a candidate's promise to confer some ultimate benefit on the voter, qua taxpayer, citizen, or member of the general public, does not lie beyond the pale of First Amendment protection.'",
+      "explanation": "The payment would go to every adult citizen regardless of how or whether they vote, and was announced openly — the two features Brown v. Hartlage treats as separating a campaign promise from a quid pro quo. Election attorney John Day (cited by AP) and Bush ethics counsel Richard Painter say it is lawful. Former prosecutors Barbara McQuade and Michael McAuliffe disagree, so it is contested rather than settled — hence medium confidence.",
+      "source": "18 U.S.C. §597 (Cornell Legal Information Institute)",
+      "url": "https://www.law.cornell.edu/uscode/text/18/597",
+      "corroboration": [
+        { "source": "The Conversation — legal analysis of §597 and §600", "url": "https://theconversation.com/how-anti-bribery-laws-apply-to-trumps-promise-of-5-000-payments-if-republicans-keep-control-of-congress-291722" },
+        { "source": "Brown v. Hartlage, 456 U.S. 45 (1982)", "url": "https://www.law.cornell.edu/supremecourt/text/456/45" },
+        { "source": "Media Bias/Fact Check — rates the illegality claim 'Mostly False'", "url": "https://mediabiasfactcheck.com/2026/09/10/fact-vs-fiction-is-it-illegal-for-trump-to-promise-5000-checks-if-republicans-keep-control-of-congress/" }
+      ]
+    },
+    {
+      "claim": "No payment can be made unless Congress appropriates the money; the president cannot issue it on his own.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "A UC Law San Francisco professor, quoted by CBS: 'funds in the U.S. Treasury can only be spent if Congress enacts an appropriation.' Sen. Bernie Moreno (R-Ohio) confirmed the point in practice, telling Fox News he will draft legislation to be passed after the Nov. 3 election.",
+      "explanation": "This is the one legal point both sides effectively concede: the right's own remedy is a bill. It also makes the promise contingent twice over — on the election, and on a 60-vote Senate or a reconciliation vehicle. Reuters notes Democrats could block it outright. Trump's speech offered no legislative mechanism.",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/trump-5000-dividend-checks-midterms/",
+      "corroboration": [
+        { "source": "Fox News — Moreno drafting 'Trump Dividend' legislation", "url": "https://www.foxnews.com/politics/trumps-5000-dividend-checks-would-come-major-catch-under-gop-senators-plan" },
+        { "source": "Reuters (via U.S. News)", "url": "https://www.usnews.com/news/politics/articles/2026-09-10/explainer-is-trumps-5-000-dividend-legal-and-how-would-it-work" }
+      ]
+    },
+    {
+      "claim": "The tariff revenue stream the dividend is pinned to was struck down by the Supreme Court in February 2026, and billions are being refunded.",
+      "side": "neither",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Learning Resources, Inc. v. Trump, No. 24-1287, argued Nov. 5, 2025, decided Feb. 20, 2026 — 'Held: IEEPA does not authorize the President to impose tariffs.' The Chief Justice wrote that 'The Framers did not vest any part of the taxing power in the Executive Branch.'",
+      "explanation": "Read directly from the slip opinion. Treasury's ledger shows the consequence: net customs duties went negative for three straight months in mid-2026 as refunds exceeded collections, which is why fiscal 2026 receipts are flat against 2025 despite higher headline rates. Newsweek puts refunds near $166 billion; CBO's revised projections could not be machine-read (HTTP 403).",
+      "source": "Supreme Court of the United States — slip opinion, No. 24-1287",
+      "url": "https://www.supremecourt.gov/opinions/25pdf/24-1287_4gcj.pdf",
+      "corroboration": [
+        { "source": "U.S. Treasury — Monthly Treasury Statement (negative net customs months)", "url": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/mts/mts_table_9" },
+        { "source": "Newsweek", "url": "https://www.newsweek.com/every-dividend-check-donald-trump-promised-then-what-happened-next-12427685" }
+      ]
+    },
+    {
+      "claim": "Three direct payments promised earlier in this term were never made.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Newsweek's tally: the $5,000 'DOGE dividend' (Feb. 2025) 'never became law. DOGE was dissolved in late 2025' having logged $215 billion in claimed savings, about 11% of its $2 trillion target; the $2,000 tariff dividend 'unraveled in February 2026 when the Supreme Court struck down Trump's tariffs'; $1,000–$1,500 ACA payments 'never progressed beyond Trump's endorsement.'",
+      "explanation": "The track record is the strongest predictive evidence either side has, and it is not in dispute — CBS reaches the same conclusion independently, noting the promised $2,000 refunds went to importers rather than households. It does not prove the fourth promise will fail, but it is why even sympathetic outlets treat it as a pledge rather than a plan.",
+      "source": "Newsweek",
+      "url": "https://www.newsweek.com/every-dividend-check-donald-trump-promised-then-what-happened-next-12427685",
+      "corroboration": [
+        { "source": "CBS News", "url": "https://www.cbsnews.com/news/trump-5000-dividend-checks-midterms/" }
+      ]
+    },
+    {
+      "claim": "Prominent Republicans, not only Democrats, publicly objected to the pledge.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Rep. Thomas Massie (R-Ky.): 'I don't know about you all, but frankly I'm insulted by the notion that my vote this November could be bought for 5K.' Arkansas Gov. Sarah Huckabee Sanders, on Fox Business: 'You do not build a strong economy by giving things away,' adding that taxpayers ultimately pay.",
+      "explanation": "This cuts both ways. It is evidence against the right's own reasoning — its fiscal hawks do not believe the pay-for — but it also undercuts the left's framing of a party marching in lockstep to buy an election. Democratic reaction was mostly dismissal rather than rebuttal: Rep. Robert Garcia said simply, 'The dividend is not happening.'",
+      "source": "NBC News (via NBC DFW)",
+      "url": "https://www.nbcdfw.com/news/national-international/trump-5000-dollars-dividend-checks-reaction/4075294/",
+      "corroboration": [
+        { "source": "Fox Business", "url": "https://www.foxbusiness.com/politics/trumps-5000-dividend-proposal-could-add-1-2t-federal-deficit-analysts-say" }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "The power test here is unusually clean, because the exact structure — 'elect us and the checks go out' — was run by the other party inside living memory. Would Democrats calling this bribery have called it bribery in January 2021? Would Republicans defending it as an ordinary campaign promise have said the same about Biden's student-debt cancellation eleven weeks before the 2022 midterms? The record says no on both counts.",
+    "precedent": {
+      "case": "Georgia Senate runoffs, January 2021",
+      "what": "On the eve of the Jan. 5 runoffs, President-elect Biden campaigned in Georgia tying $2,000 stimulus checks directly to the outcome: electing Ossoff and Warnock 'will put an end to the block in Washington on the $2,000 stimulus check,' while re-electing Perdue and Loeffler meant 'those checks will never get there.' Democrats won both seats; the relief bill delivered $1,400.",
+      "mirror": "Same offer, same conditionality, same chamber-control stakes, opposite party — and the same gap between the promised number and the delivered one. It maps onto today almost line for line, including the post-election shortfall risk.",
+      "source": "NBC News (Jan. 4, 2021)",
+      "url": "https://www.nbcnews.com/politics/congress/georgia-democrats-close-populist-pitch-vowing-2-000-stimulus-checks-n1252805",
+      "corroboration": [
+        { "source": "Forbes", "url": "https://www.forbes.com/sites/jackbrewster/2021/01/04/bidens-final-pitch-to-georgia-vote-blue-and-2000-checks-will-go-out-the-door-immediately/" }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Democrats",
+        "then": "Ran the 2021 Georgia runoffs on an explicitly conditional cash promise — Biden: 'If you send Jon and the reverend to Washington, those $2,000 checks will go out the door' — then enacted $1,400.",
+        "now": "Describe an identically structured conditional cash promise as bribery and vote-buying.",
+        "source": "Fox News (right-leaning outlet documenting the 2021 $2,000-to-$1,400 gap)",
+        "url": "https://www.foxnews.com/politics/georgia-democrats-2000-checks-1400"
+      },
+      {
+        "who": "Republicans",
+        "then": "Called Biden's August 2022 student-debt cancellation vote-buying. Rep. Markwayne Mullin, on Fox News Radio: 'So he's trying to buy their vote.' Sen. Bill Cassidy called it 'an unfair ploy to buy votes before an election'; Sen. Ted Cruz, 'just a Hail Mary before midterms.'",
+        "now": "Defend a $1.2 trillion pre-election cash promise as an ordinary campaign pledge, with a senator drafting the bill for the week after the vote.",
+        "source": "Fox News Radio (Aug. 24, 2022)",
+        "url": "https://radio.foxnews.com/2022/08/24/rep-markwayne-mullin-bidens-student-loan-forgiveness-plan-is-all-about-buying-votes-in-the-midterms/",
+        "note": "Cassidy's statement is on his Senate page, which returns HTTP 403 to automated fetching; it is quoted here from search-indexed text of that release and should be read as medium-confidence.",
+        "corroboration": [
+          { "source": "Fortune (McConnell, Cruz, McCarthy reactions)", "url": "https://fortune.com/2022/08/24/republicans-react-biden-student-loan-forgiveness-mcconnell-cruz/amp" }
+        ]
+      }
+    ],
+    "longRun": "Strip out the party labels and the through-line is escalation: $1,400 delivered in 2021, $2,000 promised in 2025, $5,000 promised in 2026, each pitched as a share of money someone else supposedly paid — pandemic borrowing, DOGE savings, foreign exporters. The constant is that the pay-for is always somewhere other than the taxpayer, and the number always goes up. That predicts what happens when power changes hands next: the party out of office will rediscover the deficit, and the party in office will find a new source of money that foreigners or waste are said to have already paid.",
+    "appliedToScore": "Because neither side's stance on 'is a conditional cash promise legitimate' would survive swapping the parties, neither earns a reasoning-honesty bonus for it, and each carries it as a weakest point. The needle rests only on today's checkable facts: what tariff revenue actually is, what the payment would actually cost, and what the law actually requires before a dollar leaves the Treasury."
+  },
+  "pattern": {
+    "thesis": "Judged in isolation, this looks like a bold new policy. Judged in sequence, it is the fourth promised direct payment of this term and the third pinned to a revenue source that did not materialize. The 'one-off' frame is what keeps the argument on whether $5,000 would be nice rather than on the delivery record.",
+    "campaigns": [
+      {
+        "where": "DOGE dividend (Feb. 2025)",
+        "what": "$5,000 per household from Department of Government Efficiency savings. DOGE was dissolved in late 2025 with $215 billion in claimed savings — roughly 11% of its $2 trillion target.",
+        "authorization": "None — never introduced as law",
+        "source": "Newsweek",
+        "url": "https://www.newsweek.com/every-dividend-check-donald-trump-promised-then-what-happened-next-12427685",
+        "corroboration": [
+          { "source": "CBS News", "url": "https://www.cbsnews.com/news/trump-5000-dividend-checks-midterms/" }
+        ]
+      },
+      {
+        "where": "$2,000 tariff dividend (2025)",
+        "what": "Promised to everyone except high earners, funded by tariffs. Collapsed after the Supreme Court voided the IEEPA tariffs in February 2026; the refunds went to importers, with no obligation to pass them to consumers.",
+        "authorization": "None — no bill, no payments",
+        "source": "CBS News",
+        "url": "https://www.cbsnews.com/news/trump-5000-dividend-checks-midterms/",
+        "corroboration": [
+          { "source": "Supreme Court slip opinion, No. 24-1287", "url": "https://www.supremecourt.gov/opinions/25pdf/24-1287_4gcj.pdf" }
+        ]
+      },
+      {
+        "where": "ACA subsidy payments (late 2025)",
+        "what": "$1,000–$1,500 routed into individual healthcare accounts from expiring Affordable Care Act subsidies. Never advanced past endorsement; replaced by a different plan in January 2026.",
+        "authorization": "None — superseded",
+        "source": "Newsweek",
+        "url": "https://www.newsweek.com/every-dividend-check-donald-trump-promised-then-what-happened-next-12427685",
+        "corroboration": []
+      },
+      {
+        "where": "$5,000 Trump dividend (Sept. 9, 2026)",
+        "what": "Today's issue. Announced with no bill text and no appropriation; Sen. Moreno says he will introduce legislation after the Nov. 3 election, funded by 'market access fees' on imports — a tariff by another name, and the same authority the Court has already narrowed.",
+        "authorization": "Pending — legislation promised post-election",
+        "source": "Fox News",
+        "url": "https://www.foxnews.com/politics/trumps-5000-dividend-checks-would-come-major-catch-under-gop-senators-plan",
+        "corroboration": []
+      }
+    ],
+    "takeaway": "The recurring question is not 'would $5,000 help families' — it plainly would — but 'what has to be true for the money to exist, and has that ever been true before?' The one-off tell: a defender who discusses the payment without naming a pay-for, or a critic who discusses the pay-for without acknowledging that Congress, not the president, decides. Three prior rounds ended the same way."
+  },
+  "notAdjudicable": [
+    "Whether universal cash transfers are a better use of public money than deficit reduction or targeted aid — a priorities judgment, not a factual one.",
+    "Whether it is proper for a president to condition a public benefit on an election result — an ethics question that survives even after the legal question is answered.",
+    "Whether tariffs should be understood as a tax on foreign producers or on American buyers — the economic incidence is measurable, but which framing is 'fair' is not.",
+    "Whether $5,000 now is worth the interest costs borne by future taxpayers — an intergenerational values trade-off no meter can settle."
+  ],
+  "biasWatch": "The dominant distortion here is fiscal illusion — the mental accounting that treats a government payout as a distribution of money someone else already paid rather than as borrowing. Trump's own framing invites it: a 'dividend,' 'very much like a successful company will do a cash distribution to its shareholders.' But companies distribute profits, and CBO projects a $2.1 trillion deficit for fiscal 2026; there is nothing to distribute. The tell works on both sides: watch whether the speaker names a pay-for and a number. If someone can talk for two minutes about $5,000 checks without saying where $1.2 trillion comes from — or can attack them without conceding that roughly $167 billion a year in tariffs is real money that voters did notice — the illusion is doing the work, not the argument."
+}
