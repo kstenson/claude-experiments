@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-09-11",
+    "lastUpdated": "2026-09-12",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -3911,7 +3911,7 @@
     {
       "id": "2026-09-11",
       "date": "2026-09-11",
-      "headline": true,
+      "headline": false,
       "topic": "Whether a £15,000 personal allowance would be the biggest rise ever",
       "claim": "A tax cut for 40 million people. The biggest rise in the personal allowance in its history, and delivered not in 10 years but in my very first budget.",
       "speaker": "Robert Jenrick",
@@ -3960,6 +3960,66 @@
         {
           "title": "ONS — CPI index 00: all items (D7BT)",
           "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7bt/mm23"
+        }
+      ]
+    },
+    {
+      "id": "2026-09-12",
+      "date": "2026-09-12",
+      "headline": true,
+      "topic": "Whether a tourist tax raises no money and drives business away",
+      "claim": "I predict a similar thing will happen with a tourism tax. It is a tax on families. It is a tax on a local economy. It doesn't bring in money. It actually takes business away.",
+      "speaker": "Kemi Badenoch",
+      "party": "Conservative",
+      "role": "Leader of the Opposition",
+      "discussionScore": 71,
+      "discussionNote": "The government handed England's mayors levy powers on 10 September, and Badenoch's reply became the Conservative attack line through a week of hospitality-industry coverage.",
+      "score": 25,
+      "verdict": "False",
+      "explanation": "The first half is simply wrong. Manchester's £1-a-night charge has raised £10.5m in three years, Liverpool's £2 charge over £2m since June 2025, and Edinburgh's 5% levy is forecast at up to £50m a year. These levies demonstrably bring in money; that is why mayors asked for the power. The second half is contested rather than refuted. A 2025 Tourism Management study of Manchester found no significant effect on hotel performance, and Bangor University researchers reviewing the international evidence call the effect on visitor numbers inconclusive. Some studies do find small falls, and UKHospitality projects 12m fewer visits from a 5% English levy. But \"doesn't bring in money\" fails outright, and \"takes business away\" is asserted well beyond what the evidence shows.",
+      "evidence": [
+        "The claim: Badenoch to the Press Association on 11 September 2026, after visiting the Bayeux Tapestry exhibition at the British Museum, drawing an analogy with VAT on private school fees.",
+        "On 10 September the government gave English mayors power to set an Overnight Visitor Levy, charged as a percentage of accommodation cost, with a bill in the 2026-27 session.",
+        "Manchester's hotel-led £1 City Visitor Charge, live since April 2023, has raised £10.5m; Liverpool's £2 charge has raised over £2m since June 2025.",
+        "Edinburgh's 5% visitor levy took effect on 24 July 2026; the council projects up to £50m a year.",
+        "Anguera-Torrell et al., Tourism Management 109 (2025), find Manchester's charge had no significant effect on hotel occupancy or rates.",
+        "Bangor University researchers reviewing 60-plus levy destinations call the impact on visitor numbers inconclusive — not proven harmless, but not proven harmful either.",
+        "The Scottish Government's elasticities review finds leisure demand price-sensitive and business travel much less so; effects depend on the visitor mix.",
+        "UKHospitality estimates a 5% English levy would mean 12m fewer visits and 33,000 job losses — a projection, not an observation."
+      ],
+      "confidence": "High on the revenue half, which is published; moderate on the demand half, where the literature is genuinely mixed.",
+      "sources": [
+        {
+          "title": "Hexham Courant (PA) — Badenoch warns of tourist tax 'disaster' for hospitality",
+          "url": "https://www.hexham-courant.co.uk/news/national/26541604.badenoch-warns-tourist-tax-disaster-hospitality-industry/"
+        },
+        {
+          "title": "GOV.UK — Local leaders handed powers to drive investment in communities",
+          "url": "https://www.gov.uk/government/news/local-leaders-handed-powers-to-drive-investment-in-communities"
+        },
+        {
+          "title": "City of Edinburgh Council — Edinburgh Visitor Levy comes into effect",
+          "url": "https://www.edinburgh.gov.uk/news/article/14452/edinburgh-visitor-levy-comes-into-effect"
+        },
+        {
+          "title": "Tourism Management — Does an industry-promoted tourist tax affect hotel performance?",
+          "url": "https://doi.org/10.1016/j.tourman.2025.105137"
+        },
+        {
+          "title": "Bangor University — Why you should expect to pay more tourist taxes",
+          "url": "https://www.bangor.ac.uk/news/2024-05-09-why-you-should-expect-to-pay-more-tourist-taxes-even-though-the-evidence-for-them"
+        },
+        {
+          "title": "Scottish Government — Elasticities relevant to tourism in Scotland",
+          "url": "https://www.gov.scot/publications/elasticities-relevant-tourism-scotland-evidence-review/pages/5/"
+        },
+        {
+          "title": "House of Commons Library — Tourist taxes in the UK",
+          "url": "https://commonslibrary.parliament.uk/tourist-taxes-in-the-uk/"
+        },
+        {
+          "title": "Guardian (via AOL) — Hospitality fears a tourist tax will deter visitors",
+          "url": "https://www.aol.co.uk/articles/hospitality-industry-fears-tourist-tax-163725000.html"
         }
       ]
     }
