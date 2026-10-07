@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Replace with your own: every podcast app can export subscriptions as OPML
+     (Apple Podcasts via a shortcut, Pocket Casts/Overcast/AntennaPod natively). -->
+<opml version="2.0">
+  <head><title>Podcast Digest subscriptions</title></head>
+  <body>
+    <outline text="The Daily" type="rss" xmlUrl="https://feeds.simplecast.com/54nAGcIl"/>
+    <outline text="Planet Money" type="rss" xmlUrl="https://feeds.npr.org/510289/podcast.xml"/>
+    <outline text="Lex Fridman Podcast" type="rss" xmlUrl="https://lexfridman.com/feed/podcast/"/>
+    <outline text="Huberman Lab" type="rss" xmlUrl="https://feeds.megaphone.fm/hubermanlab"/>
+    <outline text="Global News Podcast" type="rss" xmlUrl="https://podcasts.files.bbci.co.uk/p02nq0gn.rss"/>
+  </body>
+</opml>

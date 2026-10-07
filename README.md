@@ -15,6 +15,7 @@ self-contained and publishes to GitHub Pages.
 | [Song Bird](song-bird/) | Each day's World Mood Score becomes a song — lyrics and music composed to match the tone, synthesized live in the browser with Strudel. | `song-bird/` |
 | [Daily Divide](daily-divide/) | One contested political issue a day, scored on the facts. A left–right meter weighs each side's checkable claims and reasoning, sets the values disagreements aside, and names the bias clouding the debate. | `daily-divide/` |
 | [UK Politics Fact-Check League](factcheck-league/) | The most-discussed claim in UK politics each day, fact-checked against primary sources and scored 0–100 on a truth meter, with a running cross-party league table of everyone featured. | `factcheck-league/` |
+| [Podcast Digest](podcast-digest/) | A weekly episode built from my podcast subscriptions: Claude summarises every new episode, gives a listen/skip verdict, and splices the best clips in the hosts' own voices between narrated links — published as its own podcast feed with chapters. | `podcast-digest/` |
 
 ## How it's organized
 
@@ -34,6 +35,10 @@ factcheck-league/              ← daily UK claim fact-check + league table
   data/entries.json            ← one entry per day; league computed client-side
   PROMPT.md                    ← the daily fact-check workflow
   validate.mjs                 ← data linter
+podcast-digest/                ← weekly podcast digest (Python + ffmpeg + Claude)
+  digest/                      ← pipeline: feeds, transcripts, writer, tts, audio, publish
+  config.toml                  ← show settings; subscriptions.opml lists the feeds
+  feed.xml                     ← the digest's own podcast feed
 shared/                        ← common building blocks used across experiments
   history-nav.js / .css        ← the "browse past days" navigator
 ```

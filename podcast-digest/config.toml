@@ -1,0 +1,44 @@
+subscriptions = "subscriptions.opml"
+
+[show]
+name = "The Week in Your Ears"
+host = "Claude"
+author = "Podcast Digest"
+description = "A weekly digest of the podcasts I subscribe to: what each show covered, whether it's worth your time, and the best moments in the hosts' own words."
+site_url = "https://kstenson.github.io/claude-experiments/podcast-digest/"
+language = "en"
+image = ""
+# Adds <itunes:block>Yes</itunes:block> so directories don't list it. The feed
+# re-uses short clips of other people's shows — keep it a personal feed.
+private = true
+
+[digest]
+days = 7                    # look-back window
+max_episodes_per_show = 2
+max_episodes = 10           # across all shows (newest kept)
+max_clips_per_episode = 2
+max_clip_seconds = 45       # keep clips short: commentary, not re-broadcast
+target_minutes = 15
+
+[claude]
+model = "claude-opus-5-5"
+effort = "high"
+
+[transcribe]
+# Publisher transcripts (<podcast:transcript>) are tried first. Set
+# published = false if a show uses dynamic ad insertion and clips land in
+# the wrong place (its transcript timestamps won't match the audio you get).
+published = true
+whisper = true              # fall back to local faster-whisper if installed
+whisper_model = "base"      # tiny | base | small | medium | large-v3
+
+[tts]
+backend = "flite"           # flite (offline, robotic) | openai | elevenlabs
+voice = ""                  # backend-specific; blank = backend default
+
+[audio]
+bitrate = "96k"
+gap_seconds = 0.5
+# Where the MP3 is served from. The weekly workflow uploads each episode as a
+# GitHub Release asset so audio never bloats the git history.
+url_template = "https://github.com/kstenson/claude-experiments/releases/download/podcast-digest-{date}/podcast-digest-{date}.mp3"

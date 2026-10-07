@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Podcast Digest</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A7%3C/text%3E%3C/svg%3E" />
+<link rel="alternate" type="application/rss+xml" title="Podcast Digest" href="feed.xml" />
+<link rel="stylesheet" href="../shared/history-nav.css" />
+<style>
+  :root {
+    --bg: #f4f4f0; --text: #2d2d2d; --text-secondary: #5a5a58; --accent: #1a6b5c;
+    --rule: #c8c8c2; --rule-light: #ddddd8; --panel: #ebebe5;
+    --must: #1a6b5c; --worth: #7a5c12; --skip: #8a8a86;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1b1c1b; --text: #e6e6e1; --text-secondary: #a3a39d; --accent: #5cc2ad;
+      --rule: #3c3d3b; --rule-light: #2e2f2d; --panel: #252624;
+      --must: #5cc2ad; --worth: #d9b45a; --skip: #8a8a86; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 18px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 16px 80px; }
+  a { color: var(--accent); }
+  .back { font-size: .85rem; color: var(--text-secondary); text-decoration: none; }
+  h1 { font-weight: 400; font-size: 2.2rem; margin: .4rem 0 .2rem; }
+  .lede { color: var(--text-secondary); margin: 0 0 1.4rem; }
+  .sub { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; font-size: .85rem;
+    color: var(--text-secondary); margin-bottom: 1.6rem; }
+  .sub code { background: var(--panel); padding: .2rem .45rem; border-radius: 4px; word-break: break-all; }
+  .sub button { font: inherit; border: 1px solid var(--rule); background: transparent; color: var(--text);
+    padding: .2rem .6rem; border-radius: 4px; cursor: pointer; }
+  h2 { font-weight: 400; font-size: 1.6rem; margin: 1.6rem 0 .3rem; }
+  .meta { color: var(--text-secondary); font-size: .85rem; }
+  audio { width: 100%; margin: 1rem 0; }
+  .notes { white-space: pre-line; }
+  h3 { font-weight: 400; font-size: 1.1rem; border-bottom: 1px solid var(--rule); padding-bottom: .25rem;
+    margin-top: 2rem; }
+  ol.chapters { list-style: none; padding: 0; margin: 0; }
+  ol.chapters li { display: flex; gap: .8rem; padding: .3rem 0; border-bottom: 1px solid var(--rule-light); }
+  ol.chapters button { font: inherit; font-variant-numeric: tabular-nums; color: var(--accent);
+    background: none; border: 0; padding: 0; cursor: pointer; min-width: 3.4rem; text-align: left; }
+  .source { padding: .8rem 0; border-bottom: 1px solid var(--rule-light); }
+  .source .show { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); }
+  .source .title { font-size: 1.05rem; }
+  .source p { margin: .3rem 0 0; font-size: .95rem; }
+  .badge { font-size: .72rem; padding: .05rem .45rem; border-radius: 999px; border: 1px solid currentColor;
+    margin-left: .4rem; white-space: nowrap; font-family: system-ui, sans-serif; }
+  .must_listen { color: var(--must); } .worth_a_listen { color: var(--worth); } .skippable { color: var(--skip); }
+  .empty { padding: 2rem; background: var(--panel); border-radius: 8px; }
+  .empty pre { white-space: pre-wrap; font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../index.html">← The Lab</a>
+  <h1>Podcast Digest</h1>
+  <p class="lede">Every week, Claude works through my podcast subscriptions, tells me what each show covered and
+    whether it's worth my time, and splices the best moments — in the hosts' own voices — into one short episode.</p>
+  <div class="sub">Subscribe in any podcast app: <code id="feedUrl"></code><button id="copy">Copy</button></div>
+  <div id="historyNav"></div>
+  <article id="episode"></article>
+</main>
+<script src="../shared/history-nav.js"></script>
+<script>
+(async function () {
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls;
+    if (text != null) n.textContent = text; return n; };
+  const fmt = s => { s = Math.round(s); const m = Math.floor(s / 60), r = String(s % 60).padStart(2, '0');
+    return m >= 60 ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}:${r}` : `${m}:${r}`; };
+  const VERDICT = { must_listen: 'must listen', worth_a_listen: 'worth a listen', skippable: 'skippable' };
+
+  const feedUrl = new URL('feed.xml', location.href).href;
+  document.getElementById('feedUrl').textContent = feedUrl;
+  document.getElementById('copy').onclick = () => navigator.clipboard?.writeText(feedUrl);
+
+  const root = document.getElementById('episode');
+  let episodes = [];
+  try { episodes = (await (await fetch('data/episodes.json', { cache: 'no-cache' })).json()).episodes; } catch (e) {}
+  if (!episodes.length) {
+    const box = el('div', 'empty');
+    box.append(el('p', null, 'No digests yet. The first one appears after the weekly run, or build one locally:'));
+    box.append(el('pre', null, 'cd podcast-digest\npip install -r requirements.txt\nexport ANTHROPIC_API_KEY=…\npython -m digest build'));
+    root.append(box);
+    return;
+  }
+  const byDate = Object.fromEntries(episodes.map(e => [e.date, e]));
+
+  function render(ep) {
+    root.replaceChildren();
+    root.append(el('h2', null, ep.title));
+    root.append(el('div', 'meta', `Week ending ${new Date(ep.date + 'T12:00:00Z').toLocaleDateString(undefined,
+      { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${fmt(ep.duration)} · ${ep.sources.length} episodes`));
+    const player = el('audio'); player.controls = true; player.preload = 'none'; player.src = ep.audio_url;
+    root.append(player);
+    root.append(el('p', 'notes', ep.description));
+
+    if (ep.chapters?.length) {
+      root.append(el('h3', null, 'Chapters'));
+      const ol = el('ol', 'chapters');
+      for (const c of ep.chapters) {
+        const li = el('li'); const b = el('button', null, fmt(c.start));
+        b.onclick = () => { player.currentTime = c.start; player.play(); };
+        li.append(b, el('span', null, c.title)); ol.append(li);
+      }
+      root.append(ol);
+    }
+
+    root.append(el('h3', null, 'This week’s episodes'));
+    for (const s of ep.sources) {
+      const d = el('div', 'source');
+      d.append(el('div', 'show', s.show));
+      const t = el('div', 'title');
+      if (s.link) { const a = el('a', null, s.title); a.href = s.link; a.rel = 'noopener'; t.append(a); }
+      else t.append(s.title);
+      t.append(el('span', 'badge ' + s.worth_it, VERDICT[s.worth_it] || s.worth_it));
+      d.append(t, el('p', null, s.summary));
+      root.append(d);
+    }
+  }
+
+  HistoryNav.mount({
+    container: document.getElementById('historyNav'),
+    label: 'week',
+    days: episodes.map(e => ({ date: e.date, label: e.title })),
+    onSelect: date => render(byDate[date]),
+  });
+})();
+</script>
+</body>
+</html>
