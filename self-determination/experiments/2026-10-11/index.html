@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Bit That Lied — Experiment 086</title>
+<meta name="description" content="Hamming's 1950 error-correcting code, extended to sixteen bits: four parity checks, each watching half the block, and the ones that fail spell out in binary the exact position of the bit that flipped. A picture is sent through a noisy channel twice — once bare, once protected." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(900px 600px at 80% 10%, rgba(124,124,255,0.09), transparent 60%),
+      radial-gradient(800px 600px at 30% 100%, rgba(255,124,195,0.07), transparent 60%);
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 330px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.36rem; margin: 9px 0 3px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 12px; }
+  .lede { font-size: 0.84rem; line-height: 1.55; color: #b9b9cc; margin-bottom: 14px; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer; box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 4px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 3px; }
+  .seg button {
+    flex: 1; background: none; border: 0; color: #9a9ab0; font-size: 0.78rem;
+    padding: 7px 4px; border-radius: 8px; cursor: pointer;
+  }
+  .seg button.on { background: rgba(124,124,255,0.22); color: #e9e9ff; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 40%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+
+  .toggle {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 0.78rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i { width: 30px; height: 17px; border-radius: 999px; flex: none; background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease; }
+  .toggle i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease; }
+  .toggle.on i { background: rgba(124,124,255,0.5); }
+  .toggle.on i::after { transform: translateX(13px); background: #f2f2f8; }
+
+  .stats { margin-top: 14px; display: grid; gap: 8px; }
+  .stat {
+    border-radius: 11px; padding: 9px 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.8rem; line-height: 1.5; color: #b9b9cc;
+  }
+  .stat h4 { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 3px; font-weight: 600; }
+  .stat.raw h4 { color: #ff8a9e; }
+  .stat.ham h4 { color: #9d9dff; }
+  .stat b { color: #f0f0fa; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .stat .big { font-size: 1.05rem; }
+  .note { font-size: 0.74rem; color: #8a8aa2; line-height: 1.5; margin-top: 10px; }
+
+  .story-btn {
+    margin-top: 14px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Main stage ---- */
+  .stage {
+    margin-left: 378px;
+    padding: 24px 28px 70px 0;
+    display: grid; gap: 18px;
+    max-width: 1180px;
+  }
+  .panel {
+    background: rgba(13, 13, 24, 0.66);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 18px;
+    padding: 18px 20px;
+  }
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .panel-head h2 { font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: #ff7cc3; font-weight: 600; }
+  .panel-head span { font-size: 0.78rem; color: #8a8aa2; }
+
+  /* inspector */
+  .insp { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: start; }
+  .block {
+    display: grid; grid-template-columns: repeat(4, 64px); grid-template-rows: repeat(4, 64px); gap: 6px;
+    position: relative;
+  }
+  .cell {
+    position: relative; border-radius: 11px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.035);
+    color: #e9e9f0; font: 600 1.5rem/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease, box-shadow 0.25s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .cell:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.3); }
+  .cell .ix { position: absolute; top: 5px; left: 7px; font-size: 0.56rem; font-weight: 500; color: rgba(255,255,255,0.35); letter-spacing: 0.04em; }
+  .cell .role { position: absolute; bottom: 5px; right: 7px; font-size: 0.52rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.32); font-family: ui-sans-serif, system-ui, sans-serif; }
+  .cell.one { background: linear-gradient(140deg, rgba(124,124,255,0.42), rgba(255,124,195,0.32)); }
+  .cell.par { border-style: dashed; border-color: rgba(124,124,255,0.55); }
+  .cell.all { border-style: dashed; border-color: rgba(255,124,195,0.55); }
+  .cell.grp { box-shadow: 0 0 0 2px rgba(255,214,120,0.85), 0 0 18px rgba(255,214,120,0.25); }
+  .cell.err::before {
+    content: ''; position: absolute; inset: -4px; border-radius: 14px;
+    border: 2px solid #ff5470; box-shadow: 0 0 14px rgba(255,84,112,0.55);
+    pointer-events: none;
+  }
+  .cell.target { animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(120,255,200,0.9), 0 0 22px rgba(120,255,200,0.45); }
+    50% { box-shadow: 0 0 0 3px rgba(120,255,200,0.35), 0 0 6px rgba(120,255,200,0.15); }
+  }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 0.72rem; color: #8a8aa2; }
+  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+
+  .checks { display: grid; gap: 6px; }
+  .check {
+    display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; align-items: center;
+    padding: 7px 11px; border-radius: 10px; cursor: default;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.8rem; color: #b9b9cc;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .check:hover { border-color: rgba(255,214,120,0.6); background: rgba(255,214,120,0.06); }
+  .check .nm { font-weight: 600; color: #e9e9f0; font-variant-numeric: tabular-nums; }
+  .check .res { font: 600 0.78rem ui-monospace, Menlo, monospace; padding: 3px 8px; border-radius: 6px; }
+  .check .res.ok { color: #9ff0c8; background: rgba(120,255,200,0.1); }
+  .check .res.bad { color: #ff9cad; background: rgba(255,84,112,0.14); }
+  .syn {
+    margin-top: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 10px 12px; border-radius: 12px; background: rgba(124,124,255,0.07); border: 1px solid rgba(124,124,255,0.2);
+  }
+  .bits { display: flex; gap: 4px; }
+  .bits span {
+    width: 28px; height: 34px; border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    font: 700 1.05rem ui-monospace, Menlo, monospace; background: rgba(255,255,255,0.05); color: #8a8aa2;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .bits span.on { background: rgba(255,84,112,0.2); color: #ffd0d8; border-color: rgba(255,84,112,0.45); }
+  .syn .eq { font-size: 0.86rem; color: #cfcfe6; }
+  .syn .eq b { font-size: 1.15rem; color: #fff; font-variant-numeric: tabular-nums; }
+  .verdict { margin-top: 10px; font-size: 0.86rem; line-height: 1.55; color: #c7c7d6; min-height: 3.1em; }
+  .verdict strong { color: #fff; }
+  .verdict .truth { display: block; margin-top: 4px; font-size: 0.78rem; color: #ffb3c0; }
+  .insp-btns { margin-top: 10px; }
+  .insp-btns .btn { flex: 1 1 auto; }
+
+  /* channels */
+  .channels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  figure { display: grid; gap: 8px; }
+  figure canvas {
+    width: 100%; aspect-ratio: 3 / 2; display: block;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+    border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
+    background: #0b0b16; cursor: crosshair;
+  }
+  figcaption { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 8px; }
+  figcaption b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; text-transform: none; font-variant-numeric: tabular-nums; }
+  figure.raw figcaption span:first-child { color: #ff8a9e; }
+  figure.ham figcaption span:first-child { color: #9d9dff; }
+
+  .hint {
+    position: fixed; bottom: 16px; left: calc(378px + (100vw - 378px) / 2); transform: translateX(-50%); z-index: 5;
+    font-size: 0.76rem; color: rgba(255,255,255,0.42); letter-spacing: 0.04em;
+    pointer-events: none; text-align: center; white-space: nowrap;
+    background: rgba(5,5,10,0.6); padding: 6px 12px; border-radius: 999px;
+  }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-height: 820px) { .hint { display: none; } }
+  @media (max-width: 1100px) {
+    .insp { grid-template-columns: 1fr; }
+    .block { justify-self: center; }
+  }
+  @media (max-width: 900px) {
+    .ui { position: relative; left: auto; top: auto; width: auto; max-height: none; margin: 16px; }
+    .ui.hidden { opacity: 1; transform: none; pointer-events: auto; }
+    .stage { margin: 0; padding: 0 16px 60px; }
+    .channels { grid-template-columns: 1fr; }
+    .hint { display: none; }
+  }
+  @media (max-width: 420px) {
+    .block { grid-template-columns: repeat(4, 58px); grid-template-rows: repeat(4, 58px); gap: 5px; }
+    .panel { padding: 14px; }
+    .check { grid-template-columns: 58px 1fr auto; }
+    .story-card { padding: 28px 22px; }
+  }
+</style>
+</head>
+<body>
+  <div class="ui" id="ui">
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>The Bit That Lied</h1>
+    <p class="sub">Experiment № 086 · October 11, 2026</p>
+    <p class="lede">Hamming, 1950. Wrap every eleven bits in five checks. When one bit flips on the way, the checks that fail spell out — in binary — exactly which one it was.</p>
+
+    <div class="controls">
+      <div class="row">
+        <label for="noise">Channel noise <b id="noiseVal">1.0%</b></label>
+        <input id="noise" type="range" min="0" max="60" step="1" value="10" />
+      </div>
+      <div class="row">
+        <label>Picture</label>
+        <div class="seg" id="pics">
+          <button data-pic="rings" class="on">Rings</button>
+          <button data-pic="words">Words</button>
+          <button data-pic="waves">Waves</button>
+        </div>
+      </div>
+      <div class="toggle on" id="live"><i></i><span>Keep transmitting</span></div>
+      <div class="toggle" id="mark"><i></i><span>Mark wrong pixels</span></div>
+      <div class="btn-row">
+        <button class="btn" id="sendOnce">Send once</button>
+        <button class="btn pink" id="resetStats">Reset totals</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat raw">
+        <h4>Unprotected</h4>
+        <div><b class="big" id="rawNow">0</b> wrong pixels this pass</div>
+        <div>running: <b id="rawRate">0%</b> of bits wrong</div>
+      </div>
+      <div class="stat ham">
+        <h4>Hamming (16, 11)</h4>
+        <div><b class="big" id="hamNow">0</b> wrong pixels this pass</div>
+        <div><b id="fixedNow">0</b> blocks fixed · <b id="flagNow">0</b> flagged</div>
+        <div>running: <b id="hamRate">0%</b> of bits wrong</div>
+      </div>
+    </div>
+    <p class="note" id="theory"></p>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <main class="stage" id="stage">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>One block, sixteen bits</h2>
+        <span id="blockLabel">block 0 of the picture</span>
+      </div>
+      <div class="insp">
+        <div>
+          <div class="block" id="block"></div>
+          <div class="legend">
+            <span><i style="background:transparent;border:1px dashed #7c7cff"></i>check bit</span>
+            <span><i style="background:transparent;border:1px dashed #ff7cc3"></i>whole-block parity</span>
+            <span><i style="background:transparent;border:2px solid #ff5470"></i>actually flipped</span>
+          </div>
+        </div>
+        <div>
+          <div class="checks" id="checks"></div>
+          <div class="syn">
+            <div class="bits" id="synBits"></div>
+            <div class="eq" id="synEq"></div>
+          </div>
+          <p class="verdict" id="verdict"></p>
+          <div class="btn-row insp-btns">
+            <button class="btn" id="flip1">Flip 1 at random</button>
+            <button class="btn" id="flip2">Flip 2</button>
+            <button class="btn" id="flip3">Flip 3</button>
+            <button class="btn pink" id="fixIt">Correct it</button>
+            <button class="btn pink" id="resetBlock">Reset</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>The same picture, sent twice</h2>
+        <span>click any pixel to open its block above</span>
+      </div>
+      <div class="channels">
+        <figure>
+          <canvas id="cvSent" width="120" height="80"></canvas>
+          <figcaption><span>Sent</span><b id="bitCount"></b></figcaption>
+        </figure>
+        <figure class="raw">
+          <canvas id="cvRaw" width="120" height="80"></canvas>
+          <figcaption><span>Received bare</span><b id="rawCap"></b></figcaption>
+        </figure>
+        <figure class="ham">
+          <canvas id="cvHam" width="120" height="80"></canvas>
+          <figcaption><span>Received with Hamming</span><b id="hamCap"></b></figcaption>
+        </figure>
+      </div>
+    </section>
+  </main>
+
+  <p class="hint">click cells to flip bits · click a pixel to inspect its block · space pauses · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 086 · The story</p>
+      <h2>The Bit That Lied</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Richard Hamming was at Bell Labs in the late 1940s, feeding weekend jobs to a relay computer that could tell when it had read a card wrong — and then simply gave up and moved on to the next job. He came back on Monday to find his work abandoned. His irritated question was the obvious one: if the machine can tell something is wrong, why can't it tell <em>where</em>? The answer he published in 1950 is the one on this page, and I picked it because it is the purest example I know of an algorithm born out of being annoyed.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment the syndrome lights up. Each check bit watches the positions whose index has one particular binary digit set — odd columns, right half, odd rows, bottom half. So when a single bit flips, the checks that fail are exactly the binary digits of where it is. Nobody looks anything up; the address of the mistake just falls out. I also like the honesty of the sixteenth bit: with it, two errors can't be fixed but can at least be noticed, and you can watch the flagged blocks pile up when you push the noise. Push it further and three flips make the code confidently "fix" the wrong bit — the page tells you when that happens.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Redundancy only helps if it's arranged. Sending every bit three times would cost 200% extra and fix one error per three bits; Hamming's layout costs about 45% and fixes one error per eleven data bits, because every check bit is placed to answer a different yes-or-no question about the error's position. Four questions are enough to pick one of sixteen places. A version of this idea sits in the ECC memory of most servers today, quietly correcting stray bit flips from cosmic rays and electrical noise.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- YOUR EXPERIMENT ----
+  // Extended Hamming code (16, 11), a.k.a. SECDED — single error correct, double error detect.
+  //   Positions 0..15 laid out as a 4×4 grid (position = row*4 + col).
+  //   Check bits live at the powers of two: 1, 2, 4, 8. Check 2^i covers every
+  //   position whose index has bit i set, so the XOR of the indices of all the 1s
+  //   (the "syndrome") is zero for a valid word — and equals the index of the
+  //   culprit after a single flip. Position 0 holds parity over the whole block,
+  //   which separates "one flip" (odd) from "two flips" (even, but syndrome ≠ 0).
+  (() => {
+    const W = 120, H = 80, N = W * H, K = 11;
+    const BLOCKS = Math.ceil(N / K);
+    const DATA_POS = [3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15];
+    const PAR_POS = [1, 2, 4, 8];
+
+    const popcount = (x) => { let c = 0; while (x) { x &= x - 1; c++; } return c; };
+    const syndromeOf = (w) => { let s = 0; for (let i = 1; i < 16; i++) if ((w >> i) & 1) s ^= i; return s; };
+
+    function encode(bits, off) {
+      let w = 0, s = 0;
+      for (let j = 0; j < K; j++) {
+        if (bits[off + j]) { w |= 1 << DATA_POS[j]; s ^= DATA_POS[j]; }
+      }
+      for (let i = 0; i < 4; i++) if ((s >> i) & 1) w |= 1 << (1 << i);
+      if (popcount(w) & 1) w |= 1;
+      return w;
+    }
+    // returns { word: corrected word, status: 'clean' | 'fixed' | 'flagged', s, odd }
+    function decode(w) {
+      const s = syndromeOf(w);
+      const odd = popcount(w) & 1;
+      if (odd) return { word: w ^ (1 << s), status: 'fixed', s, odd };
+      if (s) return { word: w, status: 'flagged', s, odd };
+      return { word: w, status: 'clean', s, odd };
+    }
+    function extract(w, out, off) {
+      for (let j = 0; j < K; j++) out[off + j] = (w >> DATA_POS[j]) & 1;
+    }
+
+    // ---------- pictures ----------
+    const sent = new Uint8Array(BLOCKS * K);
+    function makePicture(kind) {
+      sent.fill(0);
+      if (kind === 'words') {
+        const c = document.createElement('canvas'); c.width = W; c.height = H;
+        const x = c.getContext('2d');
+        x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
+        x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+        x.font = '800 25px ui-sans-serif, system-ui, -apple-system, Helvetica, Arial, sans-serif';
+        x.fillText('HAMMING', W / 2, 24);
+        x.font = '700 30px ui-monospace, Menlo, Consolas, monospace';
+        x.fillText('1950', W / 2, 57);
+        const d = x.getImageData(0, 0, W, H).data;
+        for (let i = 0; i < N; i++) sent[i] = d[i * 4] > 110 ? 1 : 0;
+      } else if (kind === 'waves') {
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const v = Math.sin(x * 0.19 + Math.sin(y * 0.11) * 2.2) + Math.sin(y * 0.23 - x * 0.05) + Math.sin(Math.hypot(x - 84, y - 30) * 0.32);
+          sent[y * W + x] = v > 0.35 ? 1 : 0;
+        }
+      } else {
+        const c1 = [42, 40], c2 = [80, 38];
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const d1 = Math.hypot(x - c1[0], y - c1[1]), d2 = Math.hypot(x - c2[0], y - c2[1]);
+          sent[y * W + x] = (Math.floor(d1 / 4.2) + Math.floor(d2 / 4.2)) & 1;
+        }
+      }
+      for (let b = 0; b < BLOCKS; b++) codewords[b] = encode(sent, b * K);
+    }
+    const codewords = new Uint16Array(BLOCKS);
+
+    // ---------- channel ----------
+    let p = 0.01;
+    const rawRecv = new Uint8Array(BLOCKS * K);
+    const recvWords = new Uint16Array(BLOCKS);
+    const hamOut = new Uint8Array(BLOCKS * K);
+    const status = new Uint8Array(BLOCKS); // 0 clean, 1 fixed, 2 flagged
+    let totals = { passes: 0, rawWrong: 0, hamWrong: 0 };
+    let last = { rawWrong: 0, hamWrong: 0, fixed: 0, flagged: 0 };
+
+    function transmit() {
+      let rawWrong = 0, hamWrong = 0, fixed = 0, flagged = 0;
+      for (let i = 0; i < N; i++) {
+        const f = Math.random() < p ? 1 : 0;
+        rawRecv[i] = sent[i] ^ f;
+        rawWrong += f;
+      }
+      for (let b = 0; b < BLOCKS; b++) {
+        let mask = 0;
+        for (let i = 0; i < 16; i++) if (Math.random() < p) mask |= 1 << i;
+        const r = codewords[b] ^ mask;
+        recvWords[b] = r;
+        const d = decode(r);
+        status[b] = d.status === 'fixed' ? 1 : d.status === 'flagged' ? 2 : 0;
+        if (status[b] === 1) fixed++;
+        if (status[b] === 2) flagged++;
+        extract(d.word, hamOut, b * K);
+      }
+      for (let i = 0; i < N; i++) if (hamOut[i] !== sent[i]) hamWrong++;
+      last = { rawWrong, hamWrong, fixed, flagged };
+      totals.passes++; totals.rawWrong += rawWrong; totals.hamWrong += hamWrong;
+      draw();
+      updateStats();
+    }
+
+    // ---------- drawing ----------
+    const cvs = { sent: document.getElementById('cvSent'), raw: document.getElementById('cvRaw'), ham: document.getElementById('cvHam') };
+    const ctxs = {}, imgs = {};
+    for (const k in cvs) { ctxs[k] = cvs[k].getContext('2d'); imgs[k] = ctxs[k].createImageData(W, H); }
+    const ON = new Uint8Array(N * 3);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const t = Math.min(1, Math.max(0, x / W * 0.85 + y / H * 0.15));
+      const i = (y * W + x) * 3;
+      // accent gradient #7c7cff → #ff7cc3, lifted a little so it reads on dark
+      ON[i] = Math.min(255, 154 + 101 * t); ON[i + 1] = 164; ON[i + 2] = Math.max(0, 255 - 50 * t);
+    }
+    let marking = false;
+    let inspBlock = 0;
+
+    function paint(key, bits, flagSrc) {
+      const d = imgs[key].data;
+      for (let i = 0; i < N; i++) {
+        const o = i * 4, c = i * 3;
+        const v = bits[i];
+        let r, g, b;
+        if (v) { r = ON[c]; g = ON[c + 1]; b = ON[c + 2]; } else { r = 12; g = 12; b = 24; }
+        if (marking && key !== 'sent') {
+          if (v !== sent[i]) { r = 255; g = 70; b = 100; }
+          else if (flagSrc && flagSrc[(i / K) | 0] === 2) { r = (r + 255 * 2) / 3; g = (g + 196 * 2) / 3; b = (b + 90 * 2) / 3; if (!v) { r *= 0.45; g *= 0.45; b *= 0.45; } }
+        }
+        // highlight the inspected block
+        if (((i / K) | 0) === inspBlock) { r = r * 0.35 + 255 * 0.65; g = g * 0.35 + 230 * 0.65; b = b * 0.35 + 140 * 0.65; }
+        d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = 255;
+      }
+      ctxs[key].putImageData(imgs[key], 0, 0);
+    }
+    function draw() {
+      paint('sent', sent, null);
+      paint('raw', rawRecv, null);
+      paint('ham', hamOut, status);
+    }
+
+    // ---------- stats ----------
+    const $ = (id) => document.getElementById(id);
+    const pct = (x) => (x * 100 < 0.01 && x > 0 ? (x * 100).toFixed(3) : (x * 100).toFixed(2)) + '%';
+    function updateStats() {
+      $('rawNow').textContent = last.rawWrong;
+      $('hamNow').textContent = last.hamWrong;
+      $('fixedNow').textContent = last.fixed;
+      $('flagNow').textContent = last.flagged;
+      const bits = totals.passes * N;
+      $('rawRate').textContent = bits ? pct(totals.rawWrong / bits) : '—';
+      $('hamRate').textContent = bits ? pct(totals.hamWrong / bits) : '—';
+      $('rawCap').textContent = last.rawWrong + ' wrong';
+      $('hamCap').textContent = last.hamWrong + ' wrong';
+    }
+    function updateTheory() {
+      const q = 1 - p;
+      const p0 = Math.pow(q, 16), p1 = 16 * p * Math.pow(q, 15);
+      const p2 = 120 * p * p * Math.pow(q, 14);
+      const more = Math.max(0, 1 - p0 - p1 - p2);
+      $('noiseVal').textContent = (p * 100).toFixed(1) + '%';
+      $('theory').innerHTML = p === 0
+        ? 'A perfect channel: nothing to fix. Raise the noise.'
+        : `Each of the ${BLOCKS} blocks takes 16 shots at ${(p * 100).toFixed(1)}%. Expect <b>${pct(p1)}</b> to take one hit (fixed), <b>${pct(p2)}</b> two (flagged, not fixable), and <b>${pct(more)}</b> three or more — where the code can be fooled. The price: 16 bits sent for every 11.`;
+    }
+    $('bitCount').textContent = N + ' bits';
+
+    // ---------- inspector ----------
+    const blockEl = $('block');
+    const cells = [];
+    for (let pos = 0; pos < 16; pos++) {
+      const c = document.createElement('div');
+      c.className = 'cell';
+      c.innerHTML = `<span class="ix">${pos.toString(2).padStart(4, '0')}</span><span class="v"></span><span class="role"></span>`;
+      c.addEventListener('click', () => { insp.recv ^= 1 << pos; renderInspector(); });
+      blockEl.appendChild(c);
+      cells.push(c);
+    }
+    const CHECKS = [
+      { bit: 0, name: 'Check 1', desc: '2nd & 4th columns' },
+      { bit: 1, name: 'Check 2', desc: '3rd & 4th columns' },
+      { bit: 2, name: 'Check 4', desc: '2nd & 4th rows' },
+      { bit: 3, name: 'Check 8', desc: '3rd & 4th rows' },
+    ];
+    const checksEl = $('checks');
+    const checkEls = [];
+    const setGroup = (fn) => cells.forEach((c, pos) => c.classList.toggle('grp', fn ? fn(pos) : false));
+    CHECKS.forEach((ch) => {
+      const el = document.createElement('div');
+      el.className = 'check';
+      el.innerHTML = `<span class="nm">${ch.name}</span><span class="ds">${ch.desc}</span><span class="res"></span>`;
+      el.addEventListener('mouseenter', () => setGroup((pos) => (pos >> ch.bit) & 1));
+      el.addEventListener('mouseleave', () => setGroup(null));
+      checksEl.appendChild(el);
+      checkEls.push(el);
+    });
+    const allEl = document.createElement('div');
+    allEl.className = 'check';
+    allEl.innerHTML = `<span class="nm">Whole</span><span class="ds">all sixteen bits</span><span class="res"></span>`;
+    allEl.addEventListener('mouseenter', () => setGroup(() => true));
+    allEl.addEventListener('mouseleave', () => setGroup(null));
+    checksEl.appendChild(allEl);
+    const synBits = $('synBits');
+    for (let i = 3; i >= 0; i--) { const s = document.createElement('span'); s.dataset.i = i; synBits.appendChild(s); }
+
+    const insp = { sent: 0, recv: 0 };
+    function loadBlock(b, fromChannel) {
+      inspBlock = b;
+      insp.sent = codewords[b];
+      insp.recv = fromChannel ? recvWords[b] : codewords[b];
+      $('blockLabel').textContent = `block ${b + 1} of ${BLOCKS} · pixels ${b * K}–${Math.min(N - 1, b * K + K - 1)}`;
+      renderInspector();
+      draw();
+    }
+
+    function renderInspector() {
+      const w = insp.recv;
+      const d = decode(w);
+      const errMask = w ^ insp.sent;
+      const nErr = popcount(errMask);
+      for (let pos = 0; pos < 16; pos++) {
+        const c = cells[pos];
+        const v = (w >> pos) & 1;
+        c.querySelector('.v').textContent = v;
+        c.querySelector('.role').textContent = pos === 0 ? 'all' : PAR_POS.includes(pos) ? 'chk ' + pos : 'd' + (DATA_POS.indexOf(pos) + 1);
+        c.classList.toggle('one', !!v);
+        c.classList.toggle('par', PAR_POS.includes(pos));
+        c.classList.toggle('all', pos === 0);
+        c.classList.toggle('err', !!((errMask >> pos) & 1));
+        c.classList.toggle('target', d.status === 'fixed' && pos === d.s);
+      }
+      CHECKS.forEach((ch, k) => {
+        let ones = 0;
+        for (let pos = 0; pos < 16; pos++) if (((pos >> ch.bit) & 1) && ((w >> pos) & 1)) ones++;
+        const bad = ones & 1;
+        const r = checkEls[k].querySelector('.res');
+        r.textContent = `${ones} ones · ${bad ? 'odd ✗' : 'even ✓'}`;
+        r.className = 'res ' + (bad ? 'bad' : 'ok');
+      });
+      const tot = popcount(w);
+      const ar = allEl.querySelector('.res');
+      ar.textContent = `${tot} ones · ${tot & 1 ? 'odd ✗' : 'even ✓'}`;
+      ar.className = 'res ' + (tot & 1 ? 'bad' : 'ok');
+      [...synBits.children].forEach((s) => {
+        const i = +s.dataset.i;
+        const on = (d.s >> i) & 1;
+        s.textContent = on;
+        s.classList.toggle('on', !!on);
+      });
+      $('synEq').innerHTML = `failing checks, read as binary = <b>${d.s}</b>`;
+
+      let msg;
+      if (d.status === 'clean') {
+        msg = '<strong>All checks pass.</strong> Nothing looks wrong, so nothing is touched. Click any cell to flip it, as the channel would.';
+      } else if (d.status === 'fixed') {
+        msg = d.s === 0
+          ? '<strong>Only the whole-block check fails.</strong> The four position checks agree on nothing, so the culprit is position 0 — the parity bit itself.'
+          : `<strong>One bit flipped.</strong> The failing checks spell <b>${d.s.toString(2).padStart(4, '0')}</b> = position <b>${d.s}</b>, and the whole block is odd, so it was exactly one. Flip it back.`;
+      } else {
+        msg = `<strong>Two bits flipped.</strong> The checks point at ${d.s}, but the whole block is still even — an odd number of flips would have made it odd. Hamming can see this block is broken, not mend it.`;
+      }
+      if (nErr >= 3) {
+        const wouldBeRight = d.word === insp.sent;
+        msg += `<span class="truth">The truth: ${nErr} bits actually flipped. ${wouldBeRight ? 'By luck the answer still comes out right.' : d.status === 'fixed' ? 'The code is fooled — "correcting" it makes a fourth mistake.' : 'The flag is raised, but for the wrong reason.'}</span>`;
+      } else if (nErr === 0 && d.status === 'clean') {
+        // nothing extra
+      }
+      $('verdict').innerHTML = msg;
+      $('fixIt').disabled = d.status !== 'fixed';
+    }
+
+    function flipRandom(n) {
+      const pool = [...Array(16).keys()];
+      let w = insp.sent;
+      for (let k = 0; k < n; k++) {
+        const j = (Math.random() * pool.length) | 0;
+        w ^= 1 << pool[j];
+        pool.splice(j, 1);
+      }
+      insp.recv = w;
+      renderInspector();
+    }
+    $('flip1').addEventListener('click', () => flipRandom(1));
+    $('flip2').addEventListener('click', () => flipRandom(2));
+    $('flip3').addEventListener('click', () => flipRandom(3));
+    $('fixIt').addEventListener('click', () => { insp.recv = decode(insp.recv).word; renderInspector(); });
+    $('resetBlock').addEventListener('click', () => { insp.recv = insp.sent; renderInspector(); });
+
+    // click on any picture -> inspect that pixel's block as it arrived
+    for (const k in cvs) {
+      cvs[k].addEventListener('click', (e) => {
+        const r = cvs[k].getBoundingClientRect();
+        const x = Math.min(W - 1, Math.max(0, Math.floor((e.clientX - r.left) / r.width * W)));
+        const y = Math.min(H - 1, Math.max(0, Math.floor((e.clientY - r.top) / r.height * H)));
+        loadBlock(Math.floor((y * W + x) / K), true);
+      });
+    }
+
+    // ---------- controls ----------
+    $('noise').addEventListener('input', (e) => {
+      p = +e.target.value / 1000;
+      totals = { passes: 0, rawWrong: 0, hamWrong: 0 };
+      updateTheory();
+      if (!live) transmit();
+    });
+    $('pics').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      [...$('pics').children].forEach((x) => x.classList.toggle('on', x === b));
+      makePicture(b.dataset.pic);
+      totals = { passes: 0, rawWrong: 0, hamWrong: 0 };
+      transmit();
+      loadBlock(inspBlock, true);
+    });
+    let live = true;
+    const liveEl = $('live');
+    const setLive = (v) => { live = v; liveEl.classList.toggle('on', v); };
+    liveEl.addEventListener('click', () => setLive(!live));
+    $('mark').addEventListener('click', () => { marking = !marking; $('mark').classList.toggle('on', marking); draw(); });
+    $('sendOnce').addEventListener('click', () => { setLive(false); transmit(); });
+    $('resetStats').addEventListener('click', () => { totals = { passes: 0, rawWrong: 0, hamWrong: 0 }; updateStats(); });
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !(e.target && /INPUT|BUTTON/.test(e.target.tagName))) { e.preventDefault(); setLive(!live); }
+    });
+
+    // ---------- go ----------
+    makePicture('rings');
+    updateTheory();
+    transmit();
+    // open on a block that took a single hit, if there is one — the best first look
+    let first = 0;
+    for (let b = 0; b < BLOCKS; b++) if (status[b] === 1 && recvWords[b] !== (codewords[b] ^ 1)) { first = b; break; }
+    loadBlock(first, true);
+
+    let acc = 0, prev = performance.now();
+    function loop(t) {
+      acc += t - prev; prev = t;
+      if (live && acc > 280 && !document.hidden) { acc = 0; transmit(); }
+      if (!live) acc = 0;
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  })();
+</script>
+</body>
+</html>
