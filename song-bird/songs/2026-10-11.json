@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-11",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "The Clock That Keeps Itself",
+  "mood": {
+    "label": "Under strain",
+    "score": -0.2,
+    "summary": "A heavy Sunday centred on the Gulf — Houthi strikes on Riyadh airport, Iran talks stalled — plus twenty killed in Zaporizhzhia, 139 drowned off Djibouti, a hurricane and a big quake. Small bright notes: a nuclear clock, new parks, thriving tortoises.",
+    "palette": {
+      "bg": "#14121a",
+      "bg2": "#241f2c",
+      "accent": "#c98a4b",
+      "accent2": "#7fa3b8",
+      "text": "#ece6ef"
+    }
+  },
+  "style": {
+    "genre": "post-rock slow-burn — jazz guitar, cello, CR-78",
+    "key": "G",
+    "scale": "phrygian",
+    "bpm": 70,
+    "swing": 0
+  },
+  "sampleSources": ["Strudel default library (GM, VCSL, RolandCR78)"],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~, ~ ~ ~ ~ sd ~ ~ ~, hh ~ hh ~ hh ~ hh hh\").bank(\"RolandCR78\").gain(0.42).room(0.3).hpf(80), note(\"<g1 af1 ef1 f1>\").s(\"sine\").attack(0.4).sustain(0.9).release(2.5).lpf(160).gain(0.3), note(\"<[g2 ~ ~ ~ d2 ~ ~ ~] [af2 ~ ~ ~ ef2 ~ ~ ~] [ef2 ~ ~ ~ bf1 ~ ~ ~] [f2 ~ ~ ~ c2 ~ af1 ~]>\").s(\"gm_cello\").attack(0.3).sustain(0.8).release(1.5).gain(0.34).room(0.5).lpf(1400), note(\"<[g3,bf3,d4] [af3,c4,ef4] [ef3,g3,bf3] [f3,af3,c4]>\").struct(\"x*8\").s(\"gm_electric_guitar_jazz\").attack(0.005).release(0.3).gain(sine.range(0.14,0.3).slow(8)).lpf(sine.range(900,2800).slow(16)).room(0.55).rsize(4).delay(0.35).delaytime(0.4286).jux(rev), note(\"<[~ d5 ~ ~ bf4 ~ af4 ~] [~ c5 ~ ~ af4 ~ g4 ~] [~ bf4 ~ ~ g4 ~ ef4 ~] [~ af4 ~ g4 ~ f4 ~ ~]>\").s(\"gm_music_box\").gain(0.26).room(0.6).rsize(5).delay(0.3).delaytime(0.2143).off(0.25, x => x.gain(0.1).pan(0.7)), note(\"<[g4,d5] [af4,ef5] [ef4,bf4] [f4,c5]>\").s(\"gm_string_ensemble_1\").attack(1.6).sustain(0.8).release(3).lpf(sine.range(500,1600).slow(20)).gain(0.15).room(0.65).rsize(5))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Sunday came in through the airport smoke,",
+        "Riyadh struck, and struck again.",
+        "The Hormuz talks have gone quiet,",
+        "Zaporizhzhia counted twenty slain."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Off Djibouti the boat went under,",
+        "Isaias took the Gulf Coast light,",
+        "Panama shook and a building fell —",
+        "the storm and the quake spared every life."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Somewhere a clock keeps its own time,",
+        "thorium steady, it doesn't lean.",
+        "Tortoises counted by the hundred thousand,",
+        "three new parks in the Victoria green."
+      ]
+    }
+  ]
+}
