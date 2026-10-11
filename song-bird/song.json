@@ -1,55 +1,55 @@
 {
-  "date": "2026-09-12",
+  "date": "2026-10-11",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "The Blow Not Thrown",
+  "title": "The Clock That Keeps Itself",
   "mood": {
-    "label": "Uneasy restraint",
+    "label": "Under strain",
     "score": -0.2,
-    "summary": "Danger concentrated in one corridor — the Red Sea mouth, a shut Saudi pipeline, missiles off Wonsan, the hottest August ever measured — yet the day's best news was restraint: Riyadh declined to retaliate, and markets steadied. Tense, held, unresolved.",
+    "summary": "A heavy Sunday centred on the Gulf — Houthi strikes on Riyadh airport, Iran talks stalled — plus twenty killed in Zaporizhzhia, 139 drowned off Djibouti, a hurricane and a big quake. Small bright notes: a nuclear clock, new parks, thriving tortoises.",
     "palette": {
-      "bg": "#101a1e",
-      "bg2": "#1d2b2f",
-      "accent": "#d8654f",
-      "accent2": "#8fb4a8",
-      "text": "#e6efee"
+      "bg": "#14121a",
+      "bg2": "#241f2c",
+      "accent": "#c98a4b",
+      "accent2": "#7fa3b8",
+      "text": "#ece6ef"
     }
   },
   "style": {
-    "genre": "post-punk drive — glockenspiel, clean guitar, TR-707",
-    "key": "Ab",
-    "scale": "harmonic minor",
-    "bpm": 120,
+    "genre": "post-rock slow-burn — jazz guitar, cello, CR-78",
+    "key": "G",
+    "scale": "phrygian",
+    "bpm": 70,
     "swing": 0
   },
-  "sampleSources": ["Strudel default library (VCSL, GM, RolandTR707)"],
-  "pattern": "stack(s(\"bd ~ bd ~ bd ~ bd ~, ~ ~ sd ~ ~ ~ sd ~, hh*8\").bank(\"RolandTR707\").gain(0.5).hpf(120).room(0.15), s(\"~ ~ ~ ~ ~ rim ~ ~\").bank(\"RolandTR707\").gain(0.24).pan(0.7).delay(0.3).delaytime(0.25), note(\"<af1 e1 ef1 af1>\").s(\"sine\").attack(0.05).sustain(0.9).release(1.2).lpf(150).gain(0.3), note(\"<[af1 af1 af2 af1 af1 af1 ef2 e2] [e1 e1 e2 e1 e1 e1 b1 bf1] [ef1 ef1 ef2 ef1 ef1 ef1 g1 bf1] [af1 af1 af2 af1 af1 ef2 g1 g1]>\").s(\"gm_electric_bass_finger\").lpf(1100).attack(0.01).decay(0.18).sustain(0.35).release(0.2).gain(0.5), note(\"<[af3,b3,ef4] [e3,af3,b3] [ef3,g3,bf3] [af3,b3,ef4]>\").struct(\"x ~ x ~ ~ x ~ x\").s(\"gm_electric_guitar_clean\").attack(0.01).release(0.45).lpf(sine.range(1100,3200).slow(10)).gain(0.34).room(0.3).delay(0.25).delaytime(0.125).jux(rev), note(\"<[~ ef5 ~ af5 ~ g5 ~ ~] [~ b4 ~ e5 ~ df5 ~ ~] [~ bf4 ~ ef5 ~ g5 ~ ~] [~ af5 ~ g5 ~ ef5 ~ ~]>\").s(\"glockenspiel\").gain(0.3).room(0.45).rsize(3).delay(0.3).delaytime(0.1875).off(0.25, x => x.gain(0.12).pan(0.28)), note(\"<[af4,ef5] [e4,b4] [ef4,bf4] [af4,ef5]>\").s(\"strings\").attack(1.4).sustain(0.8).release(2.4).lpf(sine.range(600,1800).slow(16)).gain(0.16).room(0.55).rsize(4))",
+  "sampleSources": ["Strudel default library (GM, VCSL, RolandCR78)"],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~, ~ ~ ~ ~ sd ~ ~ ~, hh ~ hh ~ hh ~ hh hh\").bank(\"RolandCR78\").gain(0.42).room(0.3).hpf(80), note(\"<g1 af1 ef1 f1>\").s(\"sine\").attack(0.4).sustain(0.9).release(2.5).lpf(160).gain(0.3), note(\"<[g2 ~ ~ ~ d2 ~ ~ ~] [af2 ~ ~ ~ ef2 ~ ~ ~] [ef2 ~ ~ ~ bf1 ~ ~ ~] [f2 ~ ~ ~ c2 ~ af1 ~]>\").s(\"gm_cello\").attack(0.3).sustain(0.8).release(1.5).gain(0.34).room(0.5).lpf(1400), note(\"<[g3,bf3,d4] [af3,c4,ef4] [ef3,g3,bf3] [f3,af3,c4]>\").struct(\"x*8\").s(\"gm_electric_guitar_jazz\").attack(0.005).release(0.3).gain(sine.range(0.14,0.3).slow(8)).lpf(sine.range(900,2800).slow(16)).room(0.55).rsize(4).delay(0.35).delaytime(0.4286).jux(rev), note(\"<[~ d5 ~ ~ bf4 ~ af4 ~] [~ c5 ~ ~ af4 ~ g4 ~] [~ bf4 ~ ~ g4 ~ ef4 ~] [~ af4 ~ g4 ~ f4 ~ ~]>\").s(\"gm_music_box\").gain(0.26).room(0.6).rsize(5).delay(0.3).delaytime(0.2143).off(0.25, x => x.gain(0.1).pan(0.7)), note(\"<[g4,d5] [af4,ef5] [ef4,bf4] [f4,c5]>\").s(\"gm_string_ensemble_1\").attack(1.6).sustain(0.8).release(3).lpf(sine.range(500,1600).slow(20)).gain(0.15).room(0.65).rsize(5))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "They took the coast at the narrow mouth,",
-        "Perim in the dark where the tankers turn.",
-        "A drone found the pumps on the desert line —",
-        "Riyadh counted ten and did not burn."
+        "Sunday came in through the airport smoke,",
+        "Riyadh struck, and struck again.",
+        "The Hormuz talks have gone quiet,",
+        "Zaporizhzhia counted twenty slain."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Wonsan sent its rockets to the sea,",
-        "August came back the hottest ever known.",
-        "In Nairobi a hand learns how to sign,",
-        "the market lifts its head off the stone."
+        "Off Djibouti the boat went under,",
+        "Isaias took the Gulf Coast light,",
+        "Panama shook and a building fell —",
+        "the storm and the quake spared every life."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Hold it — don't answer, don't answer yet.",
-        "The day stands still on a taken breath.",
-        "Some days the good news is the blow not thrown,",
-        "the match not struck, the thunder withheld."
+        "Somewhere a clock keeps its own time,",
+        "thorium steady, it doesn't lean.",
+        "Tortoises counted by the hundred thousand,",
+        "three new parks in the Victoria green."
       ]
     }
   ]
