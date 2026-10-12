@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-12",
+  "score": 43,
+  "label": "Uneasy",
+  "emoji": "🌥️",
+  "summary": "Monday opens with a surprise from Washington: President Trump announced an immediate energy ceasefire between Russia and Ukraine. Kyiv backed it but awaited details and guarantees; Moscow had not confirmed. Oil slipped on the news and US stock futures edged higher, though Brent remains near $100. The Gulf stays the heaviest weight: a second Houthi strike on Riyadh's airport killed one, and Tehran called Washington's reply to its Hormuz plan inadequate. North Korea fired ballistic missiles, an air strike killed at least 72 miners in Sudan, and Ebola is spreading in eastern Congo, with Kenya confirming an imported case. Hurricane Simon reached Category 4 off Mexico's Pacific coast. Brighter notes came from Brazil, where police freed 13 child hostages, and from labs reporting progress on fusion and glaucoma. The weighted formula gave 43; no editorial adjustment.",
+  "dimensions": {
+    "conflict": 30,
+    "economy": 46,
+    "climate": 44,
+    "humanInterest": 40,
+    "techProgress": 64
+  },
+  "regions": {
+    "northAmerica": 46,
+    "southAmerica": 48,
+    "europe": 44,
+    "africa": 32,
+    "middleEast": 22,
+    "asia": 40,
+    "oceania": 54
+  },
+  "drivers": [
+    {
+      "direction": "up",
+      "headline": "Trump announces Ukraine energy ceasefire with Russia, surprising Zelensky",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/world/1853817/trump-announces-ukraine-energy-ceasefire-with-russia-surprising-zelensky",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Saudi Arabia says 1 dead, 11 injured in latest attack on Riyadh airport",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/12/saudi-arabia-says-1-dead-11-injured-in-latest-attack-on-riyadh-airport",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "One killed in Riyadh attack; Iran says US reply to Hormuz plan 'inadequate'",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/10/12/iran-war-live-riyadh-airport-hit-again-tehran-says-us-reply-inadequate",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "North Korea fires multiple ballistic missiles towards the sea",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/12/north-korea-fires-multiple-ballistic-missiles-towards-the-sea",
+      "dimension": "conflict",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "At least 72 Sudanese miners killed in air strike: Rights monitor",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/11/at-least-72-sudanese-miners-killed-in-air-strike-rights-monitor",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Ebola spreads in eastern DRC as Kenya confirms imported case",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/11/ebola-spreads-in-eastern-drc-as-kenya-confirms-imported-case",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Hurricane Simon strengthens to Category 4 off Mexico coast",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/world/1839833/hurricane-simon-strengthens-to-category-4-off-mexico-coast",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Oil prices tumble as stocks rise after Trump touts 'energy ceasefire'",
+      "source": "Euronews via Yahoo Finance",
+      "url": "https://finance.yahoo.com/energy/articles/stocks-rise-oil-prices-tumble-040428507.html",
+      "dimension": "economy"
+    },
+    {
+      "direction": "down",
+      "headline": "China sanctions Paraguay, Belize ministers over Taiwan ties",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/12/china-sanctions-paraguay-belize-ministers-over-taiwan-ties",
+      "dimension": "conflict",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Brazil police rescue 13 children held hostage, assailant dead: official",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/world/1828986/brazil-police-rescue-13-children-held-hostage-assailant-dead-official",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Scientists May Have Found a Shortcut to Fusion Energy",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/releases/2026/10/261008005242.htm",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Statins May Protect People From Glaucoma or Blindness By Preventing or Slowing Nerve Cell Death",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/statin-drugs-may-protect-people-from-glaucoma/",
+      "dimension": "techProgress"
+    }
+  ],
+  "sources_consulted": [
+    "Al Jazeera",
+    "RNZ",
+    "Euronews",
+    "Yahoo Finance",
+    "Capital Brief",
+    "Stocktwits",
+    "ScienceDaily",
+    "Good News Network"
+  ]
+}
