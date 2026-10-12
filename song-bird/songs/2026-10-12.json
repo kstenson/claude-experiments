@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-12",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Details to Follow",
+  "mood": {
+    "label": "Uneasy",
+    "score": -0.14,
+    "summary": "A surprise energy ceasefire for Ukraine nudged oil down and markets up, but Moscow hadn't confirmed. The Gulf stayed heavy, North Korea fired missiles, Sudan and Congo suffered, a Category 4 hurricane churned — with small light from Brazil's freed children and lab progress.",
+    "palette": {
+      "bg": "#10141a",
+      "bg2": "#1c2430",
+      "accent": "#8fb8c9",
+      "accent2": "#c96b8a",
+      "text": "#e6edf2"
+    }
+  },
+  "style": {
+    "genre": "darkwave pulse — marimba, choir pad, synth bass, TR-909",
+    "key": "D",
+    "scale": "locrian",
+    "bpm": 116,
+    "swing": 0
+  },
+  "sampleSources": ["Strudel default library (GM, RolandTR909)"],
+  "pattern": "stack(s(\"bd ~ ~ ~ bd ~ ~ ~, ~ ~ ~ ~ cp ~ ~ ~, ~ hh ~ hh ~ hh ~ [hh hh]\").bank(\"RolandTR909\").gain(0.5).hpf(60).room(0.2), note(\"<d2 ef2 bf1 c2>\").struct(\"x*8\").s(\"gm_synth_bass_1\").lpf(sine.range(300,900).slow(8)).attack(0.005).release(0.15).gain(0.32), note(\"<[d3,f3,af3] [ef3,g3,bf3] [bf2,d3,f3] [c3,ef3,g3]>\").s(\"gm_choir_aahs\").attack(1.2).sustain(0.8).release(2.5).lpf(1400).gain(0.16).room(0.5), note(\"<[af4 ~ f4 ~ ~ d4 ~ ef4] [g4 ~ ~ bf4 ~ g4 ef4 ~] [f4 ~ d4 ~ bf3 ~ ~ ~] [ef4 ~ g4 ~ c5 ~ bf4 ~]>\").s(\"gm_marimba\").gain(0.34).room(0.55).rsize(4).delay(0.3).delaytime(0.3879).jux(rev), note(\"d5 ~ ~ ~ ~ ~ af4 ~\").s(\"gm_marimba\").gain(0.12).room(0.7).slow(2).off(0.375, x => x.gain(0.06).pan(0.8)))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Monday rang with a ceasefire nobody planned,",
+        "Kyiv said yes, then asked for terms.",
+        "Moscow kept quiet, the oil price dipped,",
+        "Brent still hovering where it burns."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Riyadh's runway took the second hit,",
+        "missiles from the north fell into the sea.",
+        "Miners in Sudan, a fever moving east,",
+        "Simon turning on the Pacific's knee."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Details to follow, guarantees to come,",
+        "hold the good news loosely in your hand.",
+        "Thirteen children walking out in Brazil —",
+        "some days that's the only thing that stands."
+      ]
+    }
+  ]
+}
