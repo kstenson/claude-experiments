@@ -1,55 +1,55 @@
 {
-  "date": "2026-10-11",
+  "date": "2026-10-12",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "The Clock That Keeps Itself",
+  "title": "Details to Follow",
   "mood": {
-    "label": "Under strain",
-    "score": -0.2,
-    "summary": "A heavy Sunday centred on the Gulf — Houthi strikes on Riyadh airport, Iran talks stalled — plus twenty killed in Zaporizhzhia, 139 drowned off Djibouti, a hurricane and a big quake. Small bright notes: a nuclear clock, new parks, thriving tortoises.",
+    "label": "Uneasy",
+    "score": -0.14,
+    "summary": "A surprise energy ceasefire for Ukraine nudged oil down and markets up, but Moscow hadn't confirmed. The Gulf stayed heavy, North Korea fired missiles, Sudan and Congo suffered, a Category 4 hurricane churned — with small light from Brazil's freed children and lab progress.",
     "palette": {
-      "bg": "#14121a",
-      "bg2": "#241f2c",
-      "accent": "#c98a4b",
-      "accent2": "#7fa3b8",
-      "text": "#ece6ef"
+      "bg": "#10141a",
+      "bg2": "#1c2430",
+      "accent": "#8fb8c9",
+      "accent2": "#c96b8a",
+      "text": "#e6edf2"
     }
   },
   "style": {
-    "genre": "post-rock slow-burn — jazz guitar, cello, CR-78",
-    "key": "G",
-    "scale": "phrygian",
-    "bpm": 70,
+    "genre": "darkwave pulse — marimba, choir pad, synth bass, TR-909",
+    "key": "D",
+    "scale": "locrian",
+    "bpm": 116,
     "swing": 0
   },
-  "sampleSources": ["Strudel default library (GM, VCSL, RolandCR78)"],
-  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~, ~ ~ ~ ~ sd ~ ~ ~, hh ~ hh ~ hh ~ hh hh\").bank(\"RolandCR78\").gain(0.42).room(0.3).hpf(80), note(\"<g1 af1 ef1 f1>\").s(\"sine\").attack(0.4).sustain(0.9).release(2.5).lpf(160).gain(0.3), note(\"<[g2 ~ ~ ~ d2 ~ ~ ~] [af2 ~ ~ ~ ef2 ~ ~ ~] [ef2 ~ ~ ~ bf1 ~ ~ ~] [f2 ~ ~ ~ c2 ~ af1 ~]>\").s(\"gm_cello\").attack(0.3).sustain(0.8).release(1.5).gain(0.34).room(0.5).lpf(1400), note(\"<[g3,bf3,d4] [af3,c4,ef4] [ef3,g3,bf3] [f3,af3,c4]>\").struct(\"x*8\").s(\"gm_electric_guitar_jazz\").attack(0.005).release(0.3).gain(sine.range(0.14,0.3).slow(8)).lpf(sine.range(900,2800).slow(16)).room(0.55).rsize(4).delay(0.35).delaytime(0.4286).jux(rev), note(\"<[~ d5 ~ ~ bf4 ~ af4 ~] [~ c5 ~ ~ af4 ~ g4 ~] [~ bf4 ~ ~ g4 ~ ef4 ~] [~ af4 ~ g4 ~ f4 ~ ~]>\").s(\"gm_music_box\").gain(0.26).room(0.6).rsize(5).delay(0.3).delaytime(0.2143).off(0.25, x => x.gain(0.1).pan(0.7)), note(\"<[g4,d5] [af4,ef5] [ef4,bf4] [f4,c5]>\").s(\"gm_string_ensemble_1\").attack(1.6).sustain(0.8).release(3).lpf(sine.range(500,1600).slow(20)).gain(0.15).room(0.65).rsize(5))",
+  "sampleSources": ["Strudel default library (GM, RolandTR909)"],
+  "pattern": "stack(s(\"bd ~ ~ ~ bd ~ ~ ~, ~ ~ ~ ~ cp ~ ~ ~, ~ hh ~ hh ~ hh ~ [hh hh]\").bank(\"RolandTR909\").gain(0.5).hpf(60).room(0.2), note(\"<d2 ef2 bf1 c2>\").struct(\"x*8\").s(\"gm_synth_bass_1\").lpf(sine.range(300,900).slow(8)).attack(0.005).release(0.15).gain(0.32), note(\"<[d3,f3,af3] [ef3,g3,bf3] [bf2,d3,f3] [c3,ef3,g3]>\").s(\"gm_choir_aahs\").attack(1.2).sustain(0.8).release(2.5).lpf(1400).gain(0.16).room(0.5), note(\"<[af4 ~ f4 ~ ~ d4 ~ ef4] [g4 ~ ~ bf4 ~ g4 ef4 ~] [f4 ~ d4 ~ bf3 ~ ~ ~] [ef4 ~ g4 ~ c5 ~ bf4 ~]>\").s(\"gm_marimba\").gain(0.34).room(0.55).rsize(4).delay(0.3).delaytime(0.3879).jux(rev), note(\"d5 ~ ~ ~ ~ ~ af4 ~\").s(\"gm_marimba\").gain(0.12).room(0.7).slow(2).off(0.375, x => x.gain(0.06).pan(0.8)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Sunday came in through the airport smoke,",
-        "Riyadh struck, and struck again.",
-        "The Hormuz talks have gone quiet,",
-        "Zaporizhzhia counted twenty slain."
+        "Monday rang with a ceasefire nobody planned,",
+        "Kyiv said yes, then asked for terms.",
+        "Moscow kept quiet, the oil price dipped,",
+        "Brent still hovering where it burns."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Off Djibouti the boat went under,",
-        "Isaias took the Gulf Coast light,",
-        "Panama shook and a building fell —",
-        "the storm and the quake spared every life."
+        "Riyadh's runway took the second hit,",
+        "missiles from the north fell into the sea.",
+        "Miners in Sudan, a fever moving east,",
+        "Simon turning on the Pacific's knee."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Somewhere a clock keeps its own time,",
-        "thorium steady, it doesn't lean.",
-        "Tortoises counted by the hundred thousand,",
-        "three new parks in the Victoria green."
+        "Details to follow, guarantees to come,",
+        "hold the good news loosely in your hand.",
+        "Thirteen children walking out in Brazil —",
+        "some days that's the only thing that stands."
       ]
     }
   ]
