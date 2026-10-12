@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Keep the Farthest — Experiment 087</title>
+<meta name="description" content="Ramer–Douglas–Peucker line simplification, live: draw a chord, keep the farthest point only if it strays more than ε, recurse. Compare it against keeping every k-th point." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none; cursor: crosshair;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 30%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.wide { flex: 2 1 55%; }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  #rNote { min-height: 3.2em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+  }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 18px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.orig { background: rgba(233,233,240,0.4); }
+  .legend i.rdp { background: #a9a9ff; box-shadow: 0 0 6px #7c7cff; }
+  .legend i.tube { height: 10px; background: rgba(124,124,255,0.22); border-radius: 5px; }
+  .legend i.naive { background: #ff7cc3; }
+  .legend .off { opacity: 0.35; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .legend, .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <button id="showUi">☰ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Keep the Farthest</h1>
+    <p class="sub">Experiment № 087 · October 12, 2026</p>
+
+    <div class="controls">
+      <div class="seg" id="presets">
+        <button data-p="island" class="on">Coastline</button>
+        <button data-p="heart">Heartbeat</button>
+        <button data-p="spiral">Spiral</button>
+      </div>
+
+      <div class="row">
+        <label><span>Tolerance <span style="text-transform:none">ε</span></span> <b id="epsV">3.0 px</b></label>
+        <input type="range" id="eps" min="0" max="1000" value="0" />
+      </div>
+
+      <div class="code">
+        <span class="c">// simplify(a, b):</span><br />
+        far = point farthest from chord <u>a→b</u><br />
+        if dist(far) &gt; <em>ε</em>: keep far; simplify(a, far), simplify(far, b)<br />
+        else: drop everything between a and b
+      </div>
+
+      <div class="btn-row">
+        <button class="btn wide" id="play">▶ Watch it decide</button>
+        <button class="btn" id="step">Step</button>
+      </div>
+
+      <div class="row">
+        <label>Pace <b id="paceV">4 steps/s</b></label>
+        <input type="range" id="pace" min="0" max="100" value="35" />
+      </div>
+
+      <div class="toggles">
+        <div class="toggle violet on" id="tTube"><i></i>ε corridor</div>
+        <div class="toggle rose" id="tNaive"><i></i>every k-th</div>
+      </div>
+
+      <div class="readout">
+        <span class="k">points drawn</span><span class="v" id="rN">0</span>
+        <span class="k">kept by RDP</span><span class="v violet" id="rM">0</span>
+        <span class="k">RDP worst miss</span><span class="v violet" id="rErr">0</span>
+        <span class="k">every k-th, worst miss</span><span class="v pinkv" id="rNaive">0</span>
+        <span class="k">distance checks</span><span class="v" id="rChecks">0</span>
+        <hr />
+        <span class="full" id="rNote"></span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="orig"></i>the original line</div>
+    <div><i class="rdp"></i>Douglas–Peucker, kept points</div>
+    <div id="lgTube"><i class="tube"></i>ε corridor (nothing escapes it)</div>
+    <div id="lgNaive" class="off"><i class="naive"></i>every k-th point, same budget</div>
+  </div>
+
+  <p class="hint">drag anywhere to draw your own line · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 087 · The story</p>
+      <h2>Keep the Farthest</h2>
+
+      <h3>Why I picked it</h3>
+      <p>A lot of this collection has turned out to be about deciding what to throw away — Huffman, Burrows–Wheeler, Floyd–Steinberg — but I had never done geometry's version of the question. A GPS track logs a point every second; a country's border is digitised to the metre; and almost all of that is wasted on a screen where three pixels is the finest thing anyone can see. Urs Ramer answered it in 1972 for image processing, and a year later two cartographers, David Douglas and Thomas Peucker, published it with a title that asks for a digitised line's <em>caricature</em>. I loved that a paper full of distances reached for a drawing word. A caricature is exactly right: keep the features that make it recognisable, lose everything that doesn't.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The heartbeat preset. Keeping every eleventh sample treats each point as equally important just because of where it sits in the list, so it steps straight over the tall, narrow spike in each beat — the one feature a cardiologist actually looks at. Douglas–Peucker can't miss it, because the only question it ever asks is "what is farthest from the story I'm telling so far?", and a spike is, by definition, far. I also like pressing play and watching the first three or four splits: the island is already recognisable after a handful of points, and the remaining hundreds are just decimals being filled in.</p>
+      <p>The guarantee is what makes it feel honest. Every point it drops was checked and found within ε of the chord that replaced it, so the worst miss can never exceed the dial. Turn the corridor on and you can see the promise: the faint line never leaves the violet band.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A good summary isn't an even sample; it's a promise about the worst thing you left out. "We kept ten percent" says nothing — ten percent chosen evenly can lose the spike that mattered. Say your tolerance out loud, then keep exactly the points that would break it, and spend your detail where the shape actually turns. It's a decent rule for notes, reports and maps alike: ask not how much a summary kept, but how far it's allowed to be wrong.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Ramer–Douglas–Peucker ----
+  (() => {
+    const stage = document.getElementById('stage');
+    const ui = document.getElementById('ui');
+    const cv = document.createElement('canvas');
+    stage.appendChild(cv);
+    const ctx = cv.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+
+    let W = 0, H = 0, DPR = 1;
+    let region = { x: 0, y: 0, w: 1, h: 1 };
+    // Source line in its own box; screen points are a fit of that box into the region.
+    let src = { pts: [], w: 1, h: 1 };
+    let P = [];             // screen points
+    let eps = 3;
+    let res = null;         // RDP result
+    let naive = null;       // every-k-th comparison
+    let anim = null;        // replay state
+    let showTube = true, showNaive = false;
+    let preset = 'island';
+    let drawing = null;
+    let pace = 4;
+    let seed = 1;
+
+    // ---------- tiny seeded RNG ----------
+    function rng(s) {
+      return () => {
+        s |= 0; s = (s + 0x6D2B79F5) | 0;
+        let t = Math.imul(s ^ (s >>> 15), 1 | s);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    // ---------- geometry ----------
+    function segDist(p, a, b) {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const L = dx * dx + dy * dy;
+      let t = L ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / L : 0;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      return Math.hypot(a.x + t * dx - p.x, a.y + t * dy - p.y);
+    }
+    function farthest(a, b) {
+      let far = -1, fd = -1;
+      for (let i = a + 1; i < b; i++) {
+        const q = segDist(P[i], P[a], P[b]);
+        if (q > fd) { fd = q; far = i; }
+      }
+      return { far, d: fd };
+    }
+
+    function rdp(e) {
+      const n = P.length;
+      const keep = new Uint8Array(n);
+      const depth = new Int16Array(n);
+      keep[0] = keep[n - 1] = 1;
+      let checks = 0, steps = 0;
+      const stack = [[0, n - 1, 1]];
+      while (stack.length) {
+        const [a, b, d] = stack.pop();
+        if (b - a < 2) continue;
+        const f = farthest(a, b);
+        checks += b - a - 1; steps++;
+        if (f.d > e) {
+          keep[f.far] = 1; depth[f.far] = d;
+          stack.push([f.far, b, d + 1]);
+          stack.push([a, f.far, d + 1]);
+        }
+      }
+      const idx = [];
+      for (let i = 0; i < n; i++) if (keep[i]) idx.push(i);
+      return { keep, depth, idx, checks, steps, worst: worstMiss(idx) };
+    }
+
+    // Each original point is measured against the kept segment that replaced it.
+    function worstMiss(idx) {
+      let best = 0, at = -1, seg = 0;
+      for (let j = 0; j < idx.length - 1; j++) {
+        const a = idx[j], b = idx[j + 1];
+        for (let i = a + 1; i < b; i++) {
+          const q = segDist(P[i], P[a], P[b]);
+          if (q > best) { best = q; at = i; seg = j; }
+        }
+      }
+      return { d: best, at, seg };
+    }
+
+    function everyKth(m) {
+      const n = P.length;
+      m = Math.max(2, Math.min(n, m));
+      const idx = [];
+      for (let j = 0; j < m; j++) {
+        const i = Math.round(j * (n - 1) / (m - 1));
+        if (!idx.length || idx[idx.length - 1] !== i) idx.push(i);
+      }
+      return { idx, worst: worstMiss(idx), k: (n - 1) / (m - 1) };
+    }
+
+    // ---------- presets (generated in a box the size of the region) ----------
+    function genIsland(w, h, r) {
+      const N = 1400, pts = [];
+      const cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.33;
+      const comps = [];
+      for (let f = 2; f <= 260; f++) comps.push({ f, a: Math.pow(f, -1.25) * (0.6 + r() * 0.8), ph: r() * Math.PI * 2 });
+      const raw = [];
+      let mx = 0;
+      for (let i = 0; i < N; i++) {
+        const th = i / N * Math.PI * 2;
+        let s = 0;
+        for (const c of comps) s += c.a * Math.sin(c.f * th + c.ph);
+        raw.push(s); mx = Math.max(mx, Math.abs(s));
+      }
+      const sx = w / Math.min(w, h), sy = h / Math.min(w, h);
+      const ax = Math.min(1.45, sx), ay = Math.min(1.25, sy);
+      for (let i = 0; i <= N; i++) {
+        const th = (i % N) / N * Math.PI * 2;
+        const rr = R * (1 + 0.36 * raw[i % N] / mx);
+        pts.push({ x: cx + Math.cos(th) * rr * ax, y: cy + Math.sin(th) * rr * ay });
+      }
+      return pts;
+    }
+
+    function genHeart(w, h, r) {
+      const N = Math.round(Math.max(900, Math.min(2200, w * 1.6)));
+      const beats = w > 600 ? 4.3 : 2.6;
+      const pts = [];
+      const g = (x, mu, s) => Math.exp(-((x - mu) * (x - mu)) / (2 * s * s));
+      const off = r();
+      const amp = Math.min(h * 0.36, 220);
+      for (let i = 0; i < N; i++) {
+        const u = i / (N - 1);
+        const ph = (u * beats + off) % 1;
+        let v = 0.13 * g(ph, 0.2, 0.025)
+              - 0.12 * g(ph, 0.37, 0.006)
+              + 1.0 * g(ph, 0.4, 0.0055)
+              - 0.28 * g(ph, 0.43, 0.007)
+              + 0.3 * g(ph, 0.66, 0.04);
+        v += 0.05 * Math.sin(u * Math.PI * 2 * 1.3 + off * 6) + (r() - 0.5) * 0.025;
+        pts.push({ x: w * 0.02 + u * w * 0.96, y: h * 0.62 - v * amp });
+      }
+      return pts;
+    }
+
+    function genSpiral(w, h, r) {
+      const N = 1100, pts = [];
+      const cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.46;
+      const turns = 4.5;
+      const k1 = r() * 6, k2 = r() * 6;
+      for (let i = 0; i < N; i++) {
+        const u = i / (N - 1);
+        const th = u * turns * Math.PI * 2;
+        const rr = R * (0.06 + 0.94 * u) * (1 + 0.05 * Math.sin(th * 3 + k1) + 0.025 * Math.sin(th * 11 + k2) + (r() - 0.5) * 0.008);
+        pts.push({ x: cx + Math.cos(th) * rr, y: cy + Math.sin(th) * rr });
+      }
+      return pts;
+    }
+
+    function loadPreset(p) {
+      preset = p;
+      const r = rng(seed * 7919 + p.length * 31);
+      const w = region.w, h = region.h;
+      const pts = p === 'island' ? genIsland(w, h, r) : p === 'heart' ? genHeart(w, h, r) : genSpiral(w, h, r);
+      src = { pts, w, h };
+      document.querySelectorAll('#presets button').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
+      project();
+    }
+
+    // ---------- layout ----------
+    function computeRegion() {
+      const collapsed = ui.classList.contains('hidden');
+      if (W < 700) {
+        const top = 16;
+        const panelH = collapsed ? 0 : Math.min(ui.offsetHeight, H * 0.46) + 24;
+        return { x: 16, y: top, w: W - 32, h: Math.max(140, H - panelH - top - 16) };
+      }
+      const left = collapsed ? 48 : Math.min(W * 0.5, 24 + ui.offsetWidth + 44);
+      return { x: left, y: 56, w: Math.max(200, W - left - 48), h: Math.max(200, H - 56 - 110) };
+    }
+
+    function project(keepAnim) {
+      const s = Math.min(region.w / src.w, region.h / src.h);
+      const ox = region.x + (region.w - src.w * s) / 2;
+      const oy = region.y + (region.h - src.h * s) / 2;
+      P = src.pts.map((p) => ({ x: ox + p.x * s, y: oy + p.y * s }));
+      recompute(keepAnim);
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      region = computeRegion();
+      if (src.pts.length) project(true);
+    }
+
+    // ---------- compute + readouts ----------
+    const fmt = (x) => (x < 10 ? x.toFixed(1) : Math.round(x).toString());
+    function recompute(keepAnim) {
+      if (!keepAnim) anim = null;
+      setPlayLabel();
+      if (P.length < 3) { res = null; naive = null; return; }
+      res = rdp(eps);
+      naive = everyKth(res.idx.length);
+      const n = P.length, m = res.idx.length;
+      $('rN').textContent = n.toLocaleString();
+      $('rM').textContent = m + ' · ' + (100 * m / n).toFixed(1) + '%';
+      $('rErr').textContent = fmt(res.worst.d) + ' px';
+      $('rNaive').textContent = fmt(naive.worst.d) + ' px';
+      $('rChecks').textContent = res.checks.toLocaleString();
+      const k = naive.k;
+      const ratio = naive.worst.d / Math.max(res.worst.d, 0.01);
+      let note = 'At <b class="v">ε = ' + fmt(eps) + ' px</b> it keeps <b class="v">' + m + '</b> of ' + n +
+        ' points and nothing strays further than ε. Keeping one point in every ' + (k < 10 ? k.toFixed(1) : Math.round(k)) +
+        ' on the same budget misses by <b class="p">' + fmt(naive.worst.d) + ' px</b>';
+      note += ratio > 1.5 ? ' — ' + ratio.toFixed(ratio < 10 ? 1 : 0) + '× worse.' : '.';
+      $('rNote').innerHTML = note;
+    }
+
+    // ---------- replay of the recursion ----------
+    function startAnim() {
+      const n = P.length;
+      const kept = new Uint8Array(n); kept[0] = kept[n - 1] = 1;
+      anim = { kept, dropped: new Uint8Array(n), stack: [[0, n - 1, 1]], cur: null, acc: 0, playing: false, done: false, count: 0, hold: 0 };
+    }
+    function finalizeCur() {
+      const c = anim.cur;
+      if (!c) return;
+      if (c.keep) {
+        anim.kept[c.far] = 1;
+        anim.stack.push([c.far, c.b, c.depth + 1]);
+        anim.stack.push([c.a, c.far, c.depth + 1]);
+      } else {
+        for (let i = c.a + 1; i < c.b; i++) anim.dropped[i] = 1;
+      }
+      anim.cur = null;
+    }
+    function advance() {
+      finalizeCur();
+      while (anim.stack.length) {
+        const [a, b, depth] = anim.stack.pop();
+        if (b - a < 2) continue;
+        const f = farthest(a, b);
+        anim.cur = { a, b, far: f.far, d: f.d, keep: f.d > eps, depth };
+        anim.count++;
+        return;
+      }
+      anim.done = true;
+      anim.playing = false;
+    }
+    function setPlayLabel() {
+      $('play').textContent = anim && anim.playing ? '❚❚ Pause' : (anim && !anim.done ? '▶ Resume' : '▶ Watch it decide');
+    }
+
+    $('play').addEventListener('click', () => {
+      if (!res) return;
+      if (!anim || anim.done) { startAnim(); advance(); anim.playing = true; }
+      else anim.playing = !anim.playing;
+      setPlayLabel();
+    });
+    $('step').addEventListener('click', () => {
+      if (!res) return;
+      if (!anim || anim.done) startAnim();
+      anim.playing = false;
+      advance();
+      setPlayLabel();
+    });
+
+    // ---------- controls ----------
+    const epsFromSlider = (v) => 0.5 * Math.pow(120, v / 1000);    // 0.5 … 60 px
+    const sliderFromEps = (e) => Math.round(1000 * Math.log(e / 0.5) / Math.log(120));
+    $('eps').value = sliderFromEps(eps);
+    $('eps').addEventListener('input', (e) => {
+      eps = epsFromSlider(+e.target.value);
+      $('epsV').textContent = fmt(eps) + ' px';
+      recompute();
+    });
+    $('epsV').textContent = fmt(eps) + ' px';
+
+    const paceFromSlider = (v) => Math.max(1, Math.round(Math.pow(120, v / 100)));
+    $('pace').addEventListener('input', (e) => {
+      pace = paceFromSlider(+e.target.value);
+      $('paceV').textContent = pace + ' step' + (pace === 1 ? '' : 's') + '/s';
+    });
+    pace = paceFromSlider(+$('pace').value);
+    $('paceV').textContent = pace + ' steps/s';
+
+    document.querySelectorAll('#presets button').forEach((b) => b.addEventListener('click', () => {
+      if (b.dataset.p === preset && src.pts.length && src.kind !== 'drawn') seed++;
+      loadPreset(b.dataset.p);
+    }));
+
+    function bindToggle(el, fn) {
+      el.addEventListener('click', () => { el.classList.toggle('on'); fn(el.classList.contains('on')); });
+    }
+    bindToggle($('tTube'), (on) => { showTube = on; $('lgTube').classList.toggle('off', !on); });
+    bindToggle($('tNaive'), (on) => { showNaive = on; $('lgNaive').classList.toggle('off', !on); });
+
+    function relayout() { setTimeout(() => { region = computeRegion(); if (src.pts.length) project(true); }, 30); }
+    $('collapse').addEventListener('click', () => { ui.classList.add('hidden'); $('showUi').classList.add('on'); relayout(); });
+    $('showUi').addEventListener('click', () => { ui.classList.remove('hidden'); $('showUi').classList.remove('on'); relayout(); });
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'h') { $('showUi').classList.toggle('on', ui.classList.contains('hidden')); relayout(); }
+    });
+
+    // ---------- drawing your own line ----------
+    cv.addEventListener('pointerdown', (e) => {
+      cv.setPointerCapture(e.pointerId);
+      anim = null; setPlayLabel();
+      drawing = [{ x: e.clientX, y: e.clientY }];
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!drawing) return;
+      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      for (const ev of evs) {
+        const p = { x: ev.clientX, y: ev.clientY };
+        const l = drawing[drawing.length - 1];
+        if (Math.hypot(p.x - l.x, p.y - l.y) >= 1.5) drawing.push(p);
+      }
+    });
+    const endDraw = () => {
+      if (!drawing) return;
+      const d = drawing; drawing = null;
+      if (d.length < 12) return;
+      src = { pts: d.map((p) => ({ x: p.x - region.x, y: p.y - region.y })), w: region.w, h: region.h, kind: 'drawn' };
+      preset = 'drawn';
+      document.querySelectorAll('#presets button').forEach((b) => b.classList.remove('on'));
+      project();
+    };
+    cv.addEventListener('pointerup', endDraw);
+    cv.addEventListener('pointercancel', endDraw);
+
+    // ---------- rendering ----------
+    function polyline(idx, close) {
+      ctx.beginPath();
+      for (let j = 0; j < idx.length; j++) {
+        const p = P[idx[j]];
+        if (j === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      if (close) ctx.closePath();
+    }
+    function allLine(pts) {
+      ctx.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        if (i === 0) ctx.moveTo(pts[i].x, pts[i].y); else ctx.lineTo(pts[i].x, pts[i].y);
+      }
+    }
+    function missMarker(w, idx, color) {
+      if (w.at < 0 || w.d < 0.5) return;
+      const p = P[w.at], a = P[idx[w.seg]], b = P[idx[w.seg + 1]];
+      const dx = b.x - a.x, dy = b.y - a.y, L = dx * dx + dy * dy;
+      let t = L ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / L : 0;
+      t = Math.max(0, Math.min(1, t));
+      const fx = a.x + t * dx, fy = a.y + t * dy;
+      ctx.strokeStyle = color; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = 'rgba(255,255,255,0.045)';
+      const g = 28;
+      for (let x = (W % g) / 2; x < W; x += g) for (let y = (H % g) / 2; y < H; y += g) ctx.fillRect(x, y, 1, 1);
+    }
+
+    function render() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      drawGrid();
+
+      if (drawing) {
+        ctx.strokeStyle = 'rgba(255,124,195,0.9)'; ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        allLine(drawing); ctx.stroke();
+        return;
+      }
+      if (!res) return;
+      const n = P.length;
+
+      // which kept-set are we showing: the final one, or the replay's partial one
+      let idx = res.idx, keptFlags = res.keep, dropped = null;
+      if (anim) {
+        keptFlags = anim.kept; dropped = anim.dropped;
+        idx = [];
+        for (let i = 0; i < n; i++) if (keptFlags[i]) idx.push(i);
+      }
+
+      // ε corridor
+      if (showTube && (!anim || anim.done)) {
+        ctx.strokeStyle = 'rgba(124,124,255,0.13)';
+        ctx.lineWidth = Math.max(1, eps * 2);
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        polyline(idx); ctx.stroke();
+      }
+
+      // original line
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(233,233,240,0.3)'; ctx.lineWidth = 1;
+      allLine(P); ctx.stroke();
+
+      // original points (dimmed once dropped in a replay)
+      if (n <= 2400) {
+        for (let i = 0; i < n; i++) {
+          if (keptFlags[i]) continue;
+          const p = P[i];
+          ctx.fillStyle = dropped && dropped[i] ? 'rgba(255,255,255,0.07)' : 'rgba(233,233,240,0.32)';
+          ctx.fillRect(p.x - 0.8, p.y - 0.8, 1.6, 1.6);
+        }
+      }
+
+      // pending chords in the replay
+      if (anim && !anim.done) {
+        ctx.setLineDash([4, 5]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
+        for (const [a, b] of anim.stack) {
+          if (b - a < 2) continue;
+          ctx.beginPath(); ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      }
+
+      // every k-th comparison
+      if (showNaive && naive && !anim) {
+        ctx.strokeStyle = 'rgba(255,124,195,0.85)'; ctx.lineWidth = 1.6;
+        polyline(naive.idx); ctx.stroke();
+        ctx.fillStyle = '#ff9fd2';
+        for (const i of naive.idx) { const p = P[i]; ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3); }
+        missMarker(naive.worst, naive.idx, '#ff7cc3');
+      }
+
+      // simplified line
+      ctx.save();
+      ctx.shadowColor = 'rgba(124,124,255,0.8)'; ctx.shadowBlur = 8;
+      ctx.strokeStyle = '#a9a9ff'; ctx.lineWidth = 2;
+      polyline(idx); ctx.stroke();
+      ctx.restore();
+
+      // kept vertices — earlier splits drawn bigger
+      for (const i of idx) {
+        const p = P[i];
+        const d = (i === 0 || i === n - 1) ? 0 : res.depth[i];
+        const rr = Math.max(1.8, 5 - d * 0.45);
+        ctx.beginPath(); ctx.arc(p.x, p.y, rr, 0, Math.PI * 2);
+        ctx.fillStyle = d <= 2 ? '#ffffff' : '#dcdcff'; ctx.fill();
+        ctx.strokeStyle = 'rgba(124,124,255,0.9)'; ctx.lineWidth = 1; ctx.stroke();
+      }
+      if (!anim) missMarker(res.worst, res.idx, '#a9a9ff');
+
+      // the current decision in the replay
+      if (anim && anim.cur) drawDecision(anim.cur);
+    }
+
+    function drawDecision(c) {
+      const A = P[c.a], B = P[c.b], F = P[c.far];
+      // corridor of half-width ε around the chord (a capsule)
+      ctx.strokeStyle = c.keep ? 'rgba(255,124,195,0.16)' : 'rgba(124,124,255,0.22)';
+      ctx.lineWidth = Math.max(2, eps * 2); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+      // the stretch being judged
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let i = c.a; i <= c.b; i++) { if (i === c.a) ctx.moveTo(P[i].x, P[i].y); else ctx.lineTo(P[i].x, P[i].y); }
+      ctx.stroke();
+      // the chord
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+      ctx.setLineDash([]);
+      // perpendicular to the farthest point
+      const dx = B.x - A.x, dy = B.y - A.y, L = dx * dx + dy * dy;
+      let t = L ? ((F.x - A.x) * dx + (F.y - A.y) * dy) / L : 0;
+      t = Math.max(0, Math.min(1, t));
+      const fx = A.x + t * dx, fy = A.y + t * dy;
+      const col = c.keep ? '#ff7cc3' : '#a9a9ff';
+      ctx.strokeStyle = col; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(F.x, F.y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(F.x, F.y, 6, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(F.x, F.y, 2.5, 0, Math.PI * 2); ctx.fill();
+      // label
+      const txt = c.keep
+        ? 'd = ' + fmt(c.d) + ' px > ε  →  keep it, split in two'
+        : 'd = ' + fmt(c.d) + ' px ≤ ε  →  drop ' + (c.b - c.a - 1) + ' point' + (c.b - c.a - 1 === 1 ? '' : 's');
+      ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+      const tw = ctx.measureText(txt).width;
+      let lx = F.x + 12, ly = F.y - 14;
+      if (lx + tw + 16 > W) lx = F.x - tw - 28;
+      if (ly < 20) ly = F.y + 26;
+      ctx.fillStyle = 'rgba(10,10,18,0.82)';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(lx - 7, ly - 15, tw + 14, 22, 7) : ctx.rect(lx - 7, ly - 15, tw + 14, 22); ctx.fill();
+      ctx.fillStyle = col;
+      ctx.fillText(txt, lx, ly);
+      // step counter
+      ctx.font = '500 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText('call ' + anim.count + ' of ' + res.steps + '  ·  depth ' + c.depth, region.x, Math.max(16, region.y - 18));
+    }
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      if (anim && anim.playing) {
+        anim.acc += dt * pace;
+        while (anim.acc >= 1 && anim.playing) { anim.acc -= 1; advance(); }
+        if (anim.done) setPlayLabel();
+      }
+      if (anim && anim.done) {
+        anim.hold += dt;
+        if (anim.hold > 1.2) { anim = null; setPlayLabel(); }
+      }
+      render();
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    loadPreset('island');
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
