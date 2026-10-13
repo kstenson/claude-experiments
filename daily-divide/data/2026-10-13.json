@@ -1,0 +1,325 @@
+{
+  "date": "2026-10-13",
+  "topic": "The federal search of Rep. Ilhan Omar's home, 22 days before the midterms",
+  "question": "Is the search of a sitting congresswoman's home an ordinary, court-approved step in a real criminal case, or a politically timed use of federal law enforcement against a Trump critic?",
+  "summary": "On Monday, Oct. 12, Homeland Security Investigations agents searched Rep. Ilhan Omar's Washington-area home. The Justice Department said HSI 'executed a judicially authorized search warrant' in 'an ongoing federal criminal investigation,' without naming Omar or the allegation. Anonymous sources told Reuters, ABC and Fox News Digital the probe concerns her immigration paperwork, filed by her late father when she was a child; one NBC source said it 'goes beyond' immigration and fraud. No charges have been filed, and the warrant is not public.\n\nOmar called it an attempt to 'weaponize federal law enforcement.' Republicans such as Rep. Tom Emmer answered 'Nobody is above the law.' Trump said he had 'nothing to do with it' — after posting in January that she 'should be in jail.'\n\nThe checkable record cuts both ways. A judge did sign the warrant, and searches of lawmakers' homes are not new: the FBI searched Democrat Henry Cuellar's home in 2022, and the 2025 search of John Bolton's home ended in a guilty plea. But the administration's own officials prejudged the case in public, Trump's wealth claim about Omar is wrong, and DOJ's written rules require extra review for steps that could affect an election.",
+  "needle": -5,
+  "verdict": "Close to even, leaning slightly toward Omar's defenders. The right is correct that a judge found probable cause and that searching a lawmaker's home is not unprecedented. But its leaders asserted guilt without evidence and misstated Omar's wealth. The left overstates when it calls the search 'unprecedented' or cites a written 60-day rule that doesn't exist, though its timing concern rests on real DOJ policy. What the sealed warrant shows — and whether the case is sound — cannot be settled until charges, or none, are filed.",
+  "weights": {
+    "factualAccuracy": 0.6,
+    "reasoningHonesty": 0.4
+  },
+  "verificationNote": "The DOJ statement was read as quoted in NBC, ABC, AP (via PBS) and Fox 9; the warrant itself is sealed, so every claim about the probe's subject rests on anonymous sources and is marked accordingly. DOJ's election-timing rule was read in the Justice Manual (9-85.500) on justice.gov. Omar's wealth figures come from coverage of her House disclosure across Deseret News, Mediaite and the Free Beacon; the Clerk's filing itself was not opened. NPR timed out; Axios and Africa Check returned HTTP 403, so claims were re-sourced to readable pages. Reuters copy was read via The Irish Times.",
+  "sources_consulted": [
+    "Justice Manual 9-85.500 (justice.gov)",
+    "NBC News",
+    "ABC News",
+    "Associated Press (via PBS NewsHour)",
+    "Reuters (via The Irish Times)",
+    "Fox News",
+    "FOX 9 Minneapolis",
+    "Washington Free Beacon",
+    "Deseret News",
+    "Mediaite",
+    "Al Jazeera",
+    "WHEC (NBC News)",
+    "UPI",
+    "Axios",
+    "NPR",
+    "Africa Check",
+    "The Washington Post",
+    "CNBC"
+  ],
+  "sides": {
+    "left": {
+      "label": "Political retaliation against a Trump critic",
+      "framing": "The president has demanded for months that Omar be jailed or deported. Now his administration has searched her home three weeks before an election, in a case its own officials prejudged on television — the latest in a line of prosecutions of his critics.",
+      "factualAccuracy": 60,
+      "reasoningHonesty": 48,
+      "score": 55,
+      "strongestPoint": "The public record of prejudgment is real and documented: Trump posted that she 'should be in jail,' Vance said she 'definitely committed immigration fraud' without evidence, and Mullin said 'something's gonna happen' — all before any warrant.",
+      "weakestPoint": "'Unprecedented' is false: lawmakers' homes have been searched before, including Democrat Henry Cuellar's under Biden. And Democrats who in 2022 said the FBI 'doesn't just go in unless a judge signs off' now wave away the same judicial sign-off."
+    },
+    "right": {
+      "label": "No one is above the law",
+      "framing": "A judge found probable cause. Questions about Omar's immigration history and finances have gone unanswered for years, and members of Congress get no exemption from a criminal investigation because an election is near.",
+      "factualAccuracy": 54,
+      "reasoningHonesty": 44,
+      "score": 50,
+      "strongestPoint": "A judge signed the warrant, which requires probable cause that evidence of a crime will be found. And the Bolton precedent shows a home search of a Trump critic can lead to a real case: he pleaded guilty in June.",
+      "weakestPoint": "Its leaders asserted guilt before any evidence was public, Trump's '$44 million' figure exceeds even the top of Omar's disclosed range, and 'nothing to do with it' sits poorly beside his January demand that she be jailed."
+    }
+  },
+  "facts": [
+    {
+      "claim": "A federal judge authorized the search of Omar's home.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "DOJ spokesperson: 'Homeland Security Investigations executed a judicially authorized search warrant… This enforcement action is part of an ongoing federal criminal investigation.' Homan: 'a search warrant was executed this morning, signed by a judge.'",
+      "explanation": "A signed warrant means a judge found probable cause that evidence of a crime would be found at the location — not that Omar committed a crime. The DOJ statement did not name Omar, the warrant is sealed, and no charges have been filed.",
+      "source": "NBC News",
+      "url": "https://www.nbcnews.com/politics/trump-administration/rep-ilhan-omar-home-searched-federal-agents-criminal-probe-dhs-rcna602950",
+      "corroboration": [
+        {
+          "source": "FOX 9 Minneapolis",
+          "url": "https://www.fox9.com/news/ilhan-omar-house-raid-minnesota-leaders-respond"
+        },
+        {
+          "source": "Associated Press (via PBS NewsHour)",
+          "url": "https://www.pbs.org/newshour/politics/ap-report-federal-agents-search-rep-ilhan-omars-home-as-part-of-a-criminal-investigation"
+        }
+      ]
+    },
+    {
+      "claim": "The investigation concerns immigration paperwork filed for Omar by her late father when she was a child.",
+      "side": "both",
+      "verdict": "mostly-supported",
+      "confidence": "low",
+      "evidence": "Reuters: a source said 'part of the inquiry concerns the Somali-born politician's immigration paperwork.' Fox 9, citing Fox News Digital: paperwork 'completed by Omar's late father when she was a child.' NBC source: it 'deals partly with immigration and fraud' but 'goes beyond those things.'",
+      "explanation": "Consistent across right-leaning, left-leaning and wire reporting, but every account rests on anonymous sources; DOJ has confirmed nothing about the subject. The scope may be broader than paperwork.",
+      "source": "Reuters (via The Irish Times)",
+      "url": "https://www.irishtimes.com/world/us/2026/10/12/ilhan-omar-us-immigration-authorities-raid-democratic-congresswomans-home/",
+      "corroboration": [
+        {
+          "source": "FOX 9 Minneapolis",
+          "url": "https://www.fox9.com/news/ilhan-omar-house-raid-minnesota-leaders-respond"
+        },
+        {
+          "source": "ABC News",
+          "url": "https://abcnews.com/US/rep-ilhan-omars-residence-searched-part-ongoing-criminal/story?id=137192001"
+        },
+        {
+          "source": "NBC News",
+          "url": "https://www.nbcnews.com/politics/trump-administration/rep-ilhan-omar-home-searched-federal-agents-criminal-probe-dhs-rcna602950"
+        }
+      ]
+    },
+    {
+      "claim": "Omar committed immigration fraud, including by marrying her brother.",
+      "side": "right",
+      "verdict": "unverifiable",
+      "confidence": "medium",
+      "evidence": "AP: Vance said, 'without offering evidence,' that 'we actually think that Ilhan Omar definitely committed immigration fraud.' Omar calls the allegations 'disgusting lies.' Free Beacon (2019): 'It has been difficult to confirm or refute the allegation that Omar married her brother.'",
+      "explanation": "No public evidence establishes fraud. AP, PolitiFact and the Star Tribune found no proof Omar's ex-husband is her brother; even the right-leaning Free Beacon called it hard to confirm. A sealed warrant may rest on evidence not yet public, so this stays unresolved rather than false.",
+      "source": "Associated Press (via PBS NewsHour)",
+      "url": "https://www.pbs.org/newshour/politics/ap-report-federal-agents-search-rep-ilhan-omars-home-as-part-of-a-criminal-investigation",
+      "corroboration": [
+        {
+          "source": "Washington Free Beacon",
+          "url": "https://freebeacon.com/politics/fact-checkers-decline-to-revisit-ilhan-omar-marriage-question/"
+        }
+      ]
+    },
+    {
+      "claim": "Omar is worth more than $44 million.",
+      "side": "right",
+      "verdict": "mostly-false",
+      "confidence": "medium",
+      "evidence": "Trump, Jan. 26: Omar is 'reportedly worth more than 44 Million Dollars.' Her 2024 House disclosure lists her and her husband's holdings at $6 million to $30 million, mostly his winery ($1M–$5M) and venture firm ($5M–$25M) stakes, up from about $51,000 a year earlier.",
+      "explanation": "$44 million exceeds the top of the disclosed range. But the jump is real and unexplained, and Omar's earlier denial — calling millions 'categorically false' — is contradicted by the filing, though the stakes are her husband's. The Clerk filing was read only through coverage.",
+      "source": "Deseret News",
+      "url": "https://www.deseret.com/politics/2025/09/02/ilhan-omars-net-worth-rises-dramatically",
+      "corroboration": [
+        {
+          "source": "Mediaite",
+          "url": "https://www.mediaite.com/media/news/ilhan-omar-net-worth-skyrockets-after-she-says-its-categorically-false-shes-a-millionaire/"
+        },
+        {
+          "source": "Al Jazeera",
+          "url": "https://www.aljazeera.com/news/2026/1/26/trump-says-justice-department-looking-at-ilhan-omars-wealth"
+        }
+      ]
+    },
+    {
+      "claim": "Senior administration figures publicly called for or prejudged action against Omar before the search.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Trump, Jan. 18: 'She should be in jail, or even a worse punishment, sent back to Somalia.' Days later: an investigation 'should start, NOW.' Mullin: 'something's gonna happen.' Trump, Oct. 12: 'I had nothing to do with it.'",
+      "explanation": "The public demands are documented by Fox News and wire reporting. They do not prove the president directed this warrant, and a judge still had to approve it. But they make 'nothing to do with it' unverifiable and undercut the appearance of an independent process.",
+      "source": "Fox News",
+      "url": "https://www.foxnews.com/politics/trump-asserts-ilhan-omar-should-jailed-booted-somalia.amp",
+      "corroboration": [
+        {
+          "source": "Reuters (via The Irish Times)",
+          "url": "https://www.irishtimes.com/world/us/2026/10/12/ilhan-omar-us-immigration-authorities-raid-democratic-congresswomans-home/"
+        },
+        {
+          "source": "Al Jazeera",
+          "url": "https://www.aljazeera.com/news/2026/1/26/trump-says-justice-department-looking-at-ilhan-omars-wealth"
+        }
+      ]
+    },
+    {
+      "claim": "DOJ policy bars investigative steps against candidates within 60 days of an election.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "high",
+      "evidence": "Justice Manual 9-85.500: prosecutors may never select timing 'for the purpose of affecting any election'; actions likely to raise the issue require consulting the Public Integrity Section. It names no 60-day period. 2018 DOJ IG: 'No Department policy contains a specific prohibition on overt investigative steps.'",
+      "explanation": "The 60-day window is an unwritten practice, not a rule — the point Trump argued the other way in 2024. The written policy is real and requires Public Integrity review; whether that happened here is unknown. ABC and NBC describe the practice as generally observed.",
+      "source": "U.S. Department of Justice — Justice Manual 9-85.500",
+      "url": "https://www.justice.gov/jm/jm-9-85000-protection-government-integrity",
+      "corroboration": [
+        {
+          "source": "Al Jazeera (2024)",
+          "url": "https://www.aljazeera.com/news/2024/9/6/is-there-a-60-day-rule-in-the-us-elections-what-to-know-in-500-words"
+        },
+        {
+          "source": "ABC News",
+          "url": "https://abcnews.com/US/rep-ilhan-omars-residence-searched-part-ongoing-criminal/story?id=137192001"
+        }
+      ]
+    },
+    {
+      "claim": "A federal search of a sitting member of Congress's home is unprecedented.",
+      "side": "left",
+      "verdict": "mostly-false",
+      "confidence": "high",
+      "evidence": "UPI: on Jan. 19, 2022, the FBI searched the Laredo home of Rep. Henry Cuellar, D-Texas, calling it 'court-authorized law enforcement activity.' Fox News: Bolton's case 'began with an FBI raid on Bolton's home and office in August 2025.'",
+      "explanation": "Biden's Justice Department searched a sitting Democrat's home while he faced a primary challenge; Cuellar was later indicted and then pardoned by Trump. What is unusual here is the combination: an immigration-agency search of an opposition member whom the president had publicly urged be jailed, weeks before a general election.",
+      "source": "UPI",
+      "url": "https://www.upi.com/Top_News/US/2022/01/20/Henry-Cuellar-FBI-raid/3001642692170/",
+      "corroboration": [
+        {
+          "source": "Fox News",
+          "url": "https://www.foxnews.com/politics/ex-trump-official-john-bolton-pleads-guilty-1-18-counts-classified-docs-indictment.amp"
+        },
+        {
+          "source": "NBC News",
+          "url": "https://www.nbcnews.com/politics/donald-trump/trump-says-pardoning-democratic-rep-henry-cuellar-was-indicted-bribery-rcna247185"
+        }
+      ]
+    },
+    {
+      "claim": "This administration's prosecutions of Trump critics have collapsed in court.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "high",
+      "evidence": "Reuters: 'The case against James and one of two brought against Comey were thrown out by a federal judge'; 'Bolton pleaded guilty and is scheduled to be sentenced later this month'; 'Grand juries and federal judges have stymied several other probes.'",
+      "explanation": "The James and Comey dismissals turned on the prosecutor's unlawful appointment, not the merits. Bolton admitted guilt — 'I am your honor, and I'm sorry for it,' per Fox News. The record shows both weak cases and at least one that held.",
+      "source": "Reuters (via The Irish Times)",
+      "url": "https://www.irishtimes.com/world/us/2026/10/12/ilhan-omar-us-immigration-authorities-raid-democratic-congresswomans-home/",
+      "corroboration": [
+        {
+          "source": "Fox News",
+          "url": "https://www.foxnews.com/politics/ex-trump-official-john-bolton-pleads-guilty-1-18-counts-classified-docs-indictment.amp"
+        }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "The power test: would each side say the same thing if the search had targeted its own side? The mirror is August 2022, when Biden's FBI searched Mar-a-Lago under a judge-signed warrant three months before the midterms. Then, Republicans called a court-approved search of a political opponent 'weaponization' and Democrats said a judge's signature settled its legitimacy. Today the roles are exactly swapped.",
+    "precedent": {
+      "case": "The FBI search of Mar-a-Lago, Aug. 8, 2022",
+      "what": "Under a judge-approved warrant, agents searched Trump's home 92 days before the 2022 midterms. Republicans called it an 'unprecedented political weaponization of the Justice Department'; Democrats said the FBI 'doesn't just go in unless a judge signs off.'",
+      "mirror": "A court-approved search of a prominent opponent of the sitting president, shortly before a national election — with the parties reversed.",
+      "source": "Fox News (Aug. 8, 2022)",
+      "url": "https://www.foxnews.com/politics/gop-slams-weaponization-doj-after-trumps-mar-a-lago-raided-fbi-dems-call-accountability.print",
+      "corroboration": [
+        {
+          "source": "UPI (Cuellar search, Jan. 2022)",
+          "url": "https://www.upi.com/Top_News/US/2022/01/20/Henry-Cuellar-FBI-raid/3001642692170/"
+        }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Republicans (Trump; Rep. Tom Emmer)",
+        "then": "2022: Gov. Kristi Noem called the Mar-a-Lago search 'an unprecedented political weaponization of the Justice Department.' 2024: Trump said 'It is DOJ policy' not to take actions that could influence an election within 60 days.",
+        "now": "Emmer on the Omar search: 'Nobody is above the law… ACCOUNTABILITY IS COMING!' Trump's DOJ acted 22 days before the vote.",
+        "source": "Al Jazeera (Sept. 2024)",
+        "url": "https://www.aljazeera.com/news/2024/9/6/is-there-a-60-day-rule-in-the-us-elections-what-to-know-in-500-words",
+        "corroboration": [
+          {
+            "source": "Fox News (Aug. 8, 2022)",
+            "url": "https://www.foxnews.com/politics/gop-slams-weaponization-doj-after-trumps-mar-a-lago-raided-fbi-dems-call-accountability.print"
+          },
+          {
+            "source": "FOX 9 Minneapolis",
+            "url": "https://www.fox9.com/news/ilhan-omar-house-raid-minnesota-leaders-respond"
+          }
+        ]
+      },
+      {
+        "who": "Democrats (Reps. Ro Khanna, Pramila Jayapal)",
+        "then": "2022, on Mar-a-Lago: Khanna said 'the FBI doesn't just go in unless a judge signs off on a search warrant'; Jayapal said 'Donald Trump should be in jail.' Legal experts in 2024 dismissed Trump's 60-day claim as unwritten.",
+        "now": "Democrats treat the judge's sign-off on the Omar warrant as no answer to 'weaponization,' and Minnesota's AG says the search 'has all the hallmarks' of targeting a political rival.",
+        "source": "Fox News (Aug. 8, 2022)",
+        "url": "https://www.foxnews.com/politics/gop-slams-weaponization-doj-after-trumps-mar-a-lago-raided-fbi-dems-call-accountability.print",
+        "corroboration": [
+          {
+            "source": "FOX 9 Minneapolis",
+            "url": "https://www.fox9.com/news/ilhan-omar-house-raid-minnesota-leaders-respond"
+          },
+          {
+            "source": "NBC News",
+            "url": "https://www.nbcnews.com/politics/trump-administration/rep-ilhan-omar-home-searched-federal-agents-criminal-probe-dhs-rcna602950"
+          }
+        ]
+      }
+    ],
+    "longRun": "Strip out the labels and both parties hold the same pair of positions in turn: a warrant against an opponent is proof of legitimacy, and a warrant against an ally is proof of persecution. The durable test is neither the judge's signature nor the target's party; it is whether charges follow and survive court on the merits. Expect the next administration of either party to cite this search as precedent.",
+    "appliedToScore": "Neither side earns a reasoning-honesty bonus for its stated principle. The Republican '60-day' and 'weaponization' arguments of 2022–2024 sit in the right's weakest point; Democrats' 2022 deference to judicial warrants sits in the left's. The needle rests on present-tense facts: what is public about the warrant, the officials' statements, the wealth figures and DOJ's written rules."
+  },
+  "pattern": {
+    "thesis": "In isolation the Omar search is one sealed warrant. In sequence it follows a run of federal actions against prominent Trump critics after he publicly demanded them. The record of those cases is mixed, which is exactly why treating this one as either obviously legitimate or obviously political skips the evidence.",
+    "campaigns": [
+      {
+        "where": "James Comey and Letitia James, Sept.–Nov. 2025",
+        "what": "Indicted after Trump urged prosecutions; both indictments dismissed in November 2025 because the prosecutor was unlawfully appointed — a procedural, not merits, ruling.",
+        "authorization": "Grand jury indictments; dismissed",
+        "source": "Reuters (via The Irish Times)",
+        "url": "https://www.irishtimes.com/world/us/2026/10/12/ilhan-omar-us-immigration-authorities-raid-democratic-congresswomans-home/",
+        "corroboration": [
+          {
+            "source": "NBC News (via WHEC)",
+            "url": "https://www.whec.com/?p=957601"
+          }
+        ]
+      },
+      {
+        "where": "John Bolton, Aug. 2025–June 2026",
+        "what": "FBI searched his home and office; indicted on 18 counts; pleaded guilty to one count of unauthorized possession of national defense information. Sentencing Oct. 28.",
+        "authorization": "Search warrant; guilty plea",
+        "source": "Fox News",
+        "url": "https://www.foxnews.com/politics/ex-trump-official-john-bolton-pleads-guilty-1-18-counts-classified-docs-indictment.amp",
+        "corroboration": [
+          {
+            "source": "Reuters (via The Irish Times)",
+            "url": "https://www.irishtimes.com/world/us/2026/10/12/ilhan-omar-us-immigration-authorities-raid-democratic-congresswomans-home/"
+          }
+        ]
+      },
+      {
+        "where": "Sen. Adam Schiff, Fed officials Powell and Cook, Democratic lawmakers on 'illegal orders'",
+        "what": "Investigated but not charged; Reuters reports grand juries and judges 'have stymied several other probes.'",
+        "authorization": "Investigations; no charges",
+        "source": "Reuters (via The Irish Times)",
+        "url": "https://www.irishtimes.com/world/us/2026/10/12/ilhan-omar-us-immigration-authorities-raid-democratic-congresswomans-home/",
+        "corroboration": []
+      },
+      {
+        "where": "Rep. Ilhan Omar, Oct. 12, 2026",
+        "what": "Today's issue: HSI search under a sealed warrant, 22 days before her re-election, after Trump, Vance and Mullin publicly prejudged her.",
+        "authorization": "Judge-signed warrant; no charges",
+        "source": "NBC News",
+        "url": "https://www.nbcnews.com/politics/trump-administration/rep-ilhan-omar-home-searched-federal-agents-criminal-probe-dhs-rcna602950",
+        "corroboration": [
+          {
+            "source": "FOX 9 Minneapolis",
+            "url": "https://www.fox9.com/news/ilhan-omar-house-raid-minnesota-leaders-respond"
+          }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is whether a case would exist if the president had not demanded it — and the only reliable answer arrives in court. The 'one-off' tell: a defender who cites Bolton's plea without mentioning the dismissed James and Comey cases, or a critic who cites those dismissals without mentioning Bolton."
+  },
+  "notAdjudicable": [
+    "Whether members of Congress facing re-election deserve extra insulation from investigative steps, or whether that amounts to a privilege ordinary citizens don't get — a values judgment about equality before the law versus electoral fairness.",
+    "Whether a president's public demands to jail an opponent should disqualify his administration's cases against her, even when a judge approves them — a question about appearances and trust, not evidence.",
+    "Whether alleged misstatements on a child's immigration paperwork, decades later, should carry the weight of a criminal case or deportation — a values question about proportionality and finality.",
+    "How much the rising wealth of a lawmaker's spouse is a legitimate public concern versus private business."
+  ],
+  "biasWatch": "The distortion is filling a sealed warrant with whatever you already believed. Nobody outside the case knows what it says, so each side supplies the contents from its priors: proof of fraud for one, proof of persecution for the other. The tell: anyone who describes what the investigation 'found' or 'shows' before charges are filed is reporting their expectations, not evidence. A second tell is selective deference to judges — praising a signed warrant only when it targets the other side."
+}
