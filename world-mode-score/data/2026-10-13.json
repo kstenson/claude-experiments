@@ -1,0 +1,130 @@
+{
+  "date": "2026-10-13",
+  "score": 40,
+  "label": "Uneasy",
+  "emoji": "🌥️",
+  "summary": "Yesterday's relief over a Russia-Ukraine energy ceasefire has faded: Moscow still has not confirmed it, and Brent crude climbed back toward $107 before easing. Asian markets fell sharply on Tuesday. Seoul's KOSPI dropped about 6% as chip stocks slid, and the Nikkei lost 2.6%. The Gulf remains the heaviest weight. Saudi Arabia intercepted more Houthi missiles, the UAE called for closer Gulf defence, and Britain blamed Iran for a plot against an airbase. In Africa, monitors warned that conflict and drought are raising famine risk in Sudan, and Ethiopian troops entered Adwa in Tigray. Storms Simon and Rachel killed two people in Mexico. Protests over voter lists in Delhi met a police crackdown. Brighter notes included Cuba's push for renewables, new research on ageing and memory, and Kiribati's first football title. The weighted formula gave 40; no editorial adjustment.",
+  "dimensions": {
+    "conflict": 29,
+    "economy": 38,
+    "climate": 42,
+    "humanInterest": 40,
+    "techProgress": 60
+  },
+  "regions": {
+    "northAmerica": 42,
+    "southAmerica": 48,
+    "europe": 43,
+    "africa": 30,
+    "middleEast": 22,
+    "asia": 36,
+    "oceania": 48
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "UAE calls for stronger Gulf defence as allies back Saudi Arabia after Riyadh airport attacks",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/10/12/uae-calls-for-stronger-gulf-defence-as-allies-back-saudi-arabia-after-riyadh-airport-attac",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "UK blames Iran for airbase plot, sanctions two Iranian nationals",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/12/uk-blames-iran-for-airbase-plot-sanctions-two-iranian-nationals",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Ethiopian forces enter strategic Tigray town of Adwa, witnesses say",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/12/ethiopian-troops-capture-adwa-without-a-fight-witnesses-say",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Conflict, drought increasing risk of famine in Sudan: Monitor",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/12/conflict-drought-increasing-risk-of-famine-in-sudan-monitor",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Two deaths reported as Hurricane Simon, storm Rachel batter Mexico’s coast",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/12/two-deaths-reported-as-hurricane-simon-storm-rachel-batter-mexicos-coast",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Markets live updates: Lush Cosmetics to leave all Westfield locations",
+      "source": "ABC News (Australia)",
+      "url": "https://abc.net.au/news/2026-10-13/asx-markets-business-live-news/107258880",
+      "dimension": "economy",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Opposition figures and journalists allege police abuses during India protests",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/10/12/opposition-figures-and-journalists-allege-police-abuses-during-india-protests",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Eight dead in September violence at Papua New Guinea's troubled Porgera",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/pacific/1865980/eight-dead-in-september-massacre-at-papua-new-guinea-s-troubled-porgera",
+      "dimension": "conflict",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "Cuba forges ahead with renewable energy plans amid US oil blockade",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/10/12/cuba-forges-ahead-with-renewable-energy-plans-amid-us-oil-blockade",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Scientists Find Hidden Driver of Aging and a Simple Amino Acid That Fights Memory Loss in Mice",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/releases/2026/10/261009025708.htm",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Teen's Wish to Return Kindness She Received Sees Her Lemonade Stand Become $5 Million Charity Engine",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/teens-wish-to-return-kindness-she-received-sees-her-lemonade-stand-become-5-million-charity-engine/",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Kiribati makes history with first-ever football title win in Fiji",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/pacific/1865880/kiribati-makes-history-with-first-ever-football-title-win-in-fiji",
+      "dimension": "humanInterest",
+      "region": "oceania"
+    }
+  ],
+  "sources_consulted": [
+    "Al Jazeera",
+    "RNZ",
+    "Euronews",
+    "ABC News (Australia)",
+    "Fortune",
+    "Trading Economics",
+    "ScienceDaily",
+    "Good News Network"
+  ]
+}
