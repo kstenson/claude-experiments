@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Move to the Middle — Experiment 088</title>
+<meta name="description" content="Lloyd's k-means, one half-step at a time: give every point to its nearest centre, move every centre to the middle of its points, repeat until nobody switches. Seed it badly, seed it with k-means++, and watch it settle." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none; cursor: crosshair;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 30%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.wide { flex: 2 1 55%; }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  #rNote { min-height: 3.2em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+  }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 18px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.orig { background: rgba(233,233,240,0.4); }
+  .legend i.rdp { background: #a9a9ff; box-shadow: 0 0 6px #7c7cff; }
+  .legend i.tube { height: 10px; background: rgba(124,124,255,0.22); border-radius: 5px; }
+  .legend i.naive { background: #ff7cc3; }
+  .legend .off { opacity: 0.35; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .legend, .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+
+  /* ---- Experiment 088 additions ---- */
+  .stage canvas.grab { cursor: grab; }
+  .stage canvas.grabbing { cursor: grabbing; }
+  .spark { grid-column: 1 / -1; width: 100%; height: 46px; display: block; }
+  .strip { grid-column: 1 / -1; width: 100%; height: 26px; display: none; }
+  .strip.on { display: block; }
+  .seg.small button { font-size: 0.72rem; }
+  .legend i.dot { width: 9px; height: 9px; border-radius: 50%; background: #7c7cff; margin: 0 4.5px; }
+  .legend i.ring { width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #ff7cc3; background: #05050a; margin: 0 2px; }
+  .legend i.trail { background: repeating-linear-gradient(90deg, #b0b0ff 0 4px, transparent 4px 7px); }
+  .legend i.ghost { width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed rgba(233,233,240,0.7); margin: 0 2px; }
+  .legend i.terr { height: 10px; border-radius: 3px; background: linear-gradient(90deg, rgba(124,124,255,0.28) 0 50%, rgba(255,124,195,0.28) 50% 100%); }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <button id="showUi">☰ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Move to the Middle</h1>
+    <p class="sub">Experiment № 088 · October 13, 2026</p>
+
+    <div class="controls">
+      <div class="seg" id="presets">
+        <button data-p="blobs" class="on">Blobs</button>
+        <button data-p="uneven">Uneven</button>
+        <button data-p="rings">Rings</button>
+        <button data-p="none">No clusters</button>
+      </div>
+
+      <div class="row">
+        <label>Centres <span style="text-transform:none">k</span> <b id="kV">5</b></label>
+        <input type="range" id="k" min="1" max="10" value="5" />
+      </div>
+
+      <div class="seg small" id="seeding">
+        <button data-s="forgy" class="on">Seed: random points</button>
+        <button data-s="pp">Seed: k-means++</button>
+      </div>
+
+      <div class="code">
+        <span class="c">// Lloyd, 1957 — repeat until nobody switches:</span><br />
+        <u>assign</u>: each point → its nearest centre<br />
+        <em>update</em>: each centre → the mean of its points
+      </div>
+
+      <div class="btn-row">
+        <button class="btn wide" id="play">▶ Run</button>
+        <button class="btn" id="step">Half-step</button>
+        <button class="btn" id="reseed">New seeds</button>
+        <button class="btn pink wide" id="restarts">×12 restarts, keep the best</button>
+        <button class="btn" id="regen">New points</button>
+      </div>
+
+      <div class="row">
+        <label>Pace <b id="paceV">3 half-steps/s</b></label>
+        <input type="range" id="pace" min="0" max="100" value="35" />
+      </div>
+
+      <div class="toggles">
+        <div class="toggle violet on" id="tTerr"><i></i>territories</div>
+        <div class="toggle rose on" id="tSpokes"><i></i>spokes</div>
+      </div>
+
+      <div class="readout">
+        <span class="k">round</span><span class="v" id="rRound">0</span>
+        <span class="k">points that switched</span><span class="v" id="rMoved">–</span>
+        <span class="k">typical distance to centre</span><span class="v violet" id="rRms">–</span>
+        <span class="k">cost Σ d²</span><span class="v pinkv" id="rCost">–</span>
+        <canvas class="spark" id="spark"></canvas>
+        <canvas class="strip" id="strip"></canvas>
+        <hr />
+        <span class="full" id="rNote"></span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="dot"></i>a point, coloured by its centre</div>
+    <div><i class="ring"></i>a centre</div>
+    <div><i class="ghost"></i>where the next update will move it</div>
+    <div><i class="trail"></i>the path each centre has walked</div>
+    <div id="lgTerr"><i class="terr"></i>territory: closer to this centre than any other</div>
+  </div>
+
+  <p class="hint">drag a centre to move it · drag empty space to spray points · space runs · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 088 · The story</p>
+      <h2>Move to the Middle</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Stuart Lloyd wrote this down at Bell Labs in 1957, in an internal memo about pulse-code modulation: if you can only send a handful of signal levels, which levels should you pick so the rounding hurts least? The memo sat in a drawer for twenty-five years before it was published in 1982, and by then James MacQueen had already given the idea its name in 1967 and the whole world was using it. I like that one of the most-run procedures in data science started life as a question about telephone audio, and that its author's paper arrived after its fame did.</p>
+      <p>The collection has plenty of algorithms that search or sort. This is the first one that <em>argues with itself</em>: two half-steps, each solving the other's problem, taking turns until neither has anything left to say.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Each half-step is trivially easy on its own. If you knew the groups, finding their middles would be arithmetic. If you knew the middles, sorting points into groups would be arithmetic. Neither is known, so you guess one and alternate. And the cost can never go up: handing a point to a nearer centre can only shrink its distance, and the mean is precisely the spot that minimises the squared distances to a group. The pink-and-violet staircase in the panel only ever steps down. With finitely many ways to split the points, it has to stop.</p>
+      <p>But it stops in the nearest valley, not the deepest one. Seed with random points on the Blobs preset a few times and you'll catch two centres sharing one blob while a third straddles two, perfectly content, because no single half-step improves things. k-means++ (Arthur and Vassilvitskii, 2007) helps by spreading the seeds out — each new one chosen with probability proportional to its squared distance from the seeds already placed. The Rings preset shows the deeper limit: borders between middles are always straight lines, so no seed can ever find a ring.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When a problem is a chicken-and-egg — which groups, which middles — you don't have to solve it all at once. Guess one half, fix the other, and alternate; every round makes things no worse. Just remember what it buys you: a place nothing nearby beats, not the best place there is. Where you start decides where you finish, so start in a few different places. And notice No clusters: ask for five groups and you'll get five tidy groups, whether the data had any or not.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Lloyd's k-means ----
+  (() => {
+    const stage = document.getElementById('stage');
+    const ui = document.getElementById('ui');
+    const cv = document.createElement('canvas');
+    stage.appendChild(cv);
+    const ctx = cv.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+
+    const COLORS = ['#7c7cff', '#ff7cc3', '#5fd3ff', '#ffcf6b', '#6fe3a5', '#ff8a6b', '#b98cff', '#4fe0d0', '#ff6b9a', '#c8e86b'];
+    const RGB = COLORS.map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
+
+    // Territory buffer: a coarse grid, coloured by nearest centre.
+    const CELL = 4;
+    const tc = document.createElement('canvas');
+    const tctx = tc.getContext('2d');
+    let timg = null, tlab = null;
+
+    let W = 0, H = 0, DPR = 1;
+    let region = { x: 0, y: 0, w: 1, h: 1 };
+    let pts = [];            // { x, y, c, flash }
+    let C = [];              // { x, y, dx, dy, trail: [[x,y]...] }
+    let targets = null;      // means awaiting the next update
+    let k = 5, seeding = 'forgy', preset = 'blobs';
+    let phase = 'assign', round = 0, moved = null, converged = false;
+    let playing = false, lastStep = 0, interval = 333;
+    let history = [];        // { v, kind: 'a' | 'u' }
+    let restarts = null;     // { vals, best }
+    let showTerr = true, showSpokes = true;
+    let note = '';
+    let drag = null;
+
+    // ---------- helpers ----------
+    const gauss = () => {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    };
+    const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+    const fmt = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : v.toFixed(0));
+
+    function nearest(x, y, cx, cy, kk) {
+      let best = 0, bd = Infinity;
+      for (let j = 0; j < kk; j++) {
+        const dx = x - cx[j], dy = y - cy[j];
+        const d = dx * dx + dy * dy;
+        if (d < bd) { bd = d; best = j; }
+      }
+      return best;
+    }
+
+    // ---------- layout ----------
+    function computeRegion() {
+      const collapsed = ui.classList.contains('hidden');
+      if (W <= 700) {
+        const panelH = collapsed ? 0 : Math.min(ui.offsetHeight, H * 0.46) + 24;
+        return { x: 18, y: 22, w: Math.max(80, W - 36), h: Math.max(80, H - panelH - 40) };
+      }
+      const left = collapsed ? 48 : Math.min(W * 0.5, 24 + ui.offsetWidth + 44);
+      return { x: left, y: 44, w: Math.max(120, W - left - 48), h: Math.max(120, H - 44 - 120) };
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      tc.width = Math.ceil(W / CELL) + 1; tc.height = Math.ceil(H / CELL) + 1;
+      timg = tctx.createImageData(tc.width, tc.height);
+      tlab = new Int8Array(tc.width * tc.height);
+      const sp = $('spark');
+      sp.width = Math.round(sp.clientWidth * DPR) || 280; sp.height = Math.round(46 * DPR);
+      const st = $('strip');
+      st.width = Math.round(st.clientWidth * DPR) || 280; st.height = Math.round(26 * DPR);
+    }
+
+    function relayout(remap) {
+      const old = region;
+      region = computeRegion();
+      if (!remap || !pts.length) return;
+      const mx = (x) => region.x + ((x - old.x) / old.w) * region.w;
+      const my = (y) => region.y + ((y - old.y) / old.h) * region.h;
+      for (const p of pts) { p.x = mx(p.x); p.y = my(p.y); }
+      for (const c of C) {
+        c.x = mx(c.x); c.y = my(c.y); c.dx = mx(c.dx); c.dy = my(c.dy);
+        c.trail = c.trail.map(([x, y]) => [mx(x), my(y)]);
+      }
+      if (targets) for (const t of targets) { t.x = mx(t.x); t.y = my(t.y); }
+      history = [{ v: cost(), kind: phase === 'assign' ? 'u' : 'a' }];
+      restarts = null;
+    }
+
+    // ---------- data ----------
+    function generate(p) {
+      preset = p;
+      const R = region, m = Math.min(R.w, R.h);
+      const N = Math.round(clamp((R.w * R.h) / 230, 450, 1500));
+      pts = [];
+      const add = (x, y) => {
+        if (x < R.x || x > R.x + R.w || y < R.y || y > R.y + R.h) return false;
+        pts.push({ x, y, c: -1, flash: 0 });
+        return true;
+      };
+      const blob = (cx, cy, sx, sy, ang, n) => {
+        const ca = Math.cos(ang), sa = Math.sin(ang);
+        let made = 0, tries = 0;
+        while (made < n && tries++ < n * 6) {
+          const u = gauss() * sx, v = gauss() * sy;
+          if (add(cx + u * ca - v * sa, cy + u * sa + v * ca)) made++;
+        }
+      };
+      if (p === 'blobs') {
+        const nb = 5, centres = [];
+        let guard = 0;
+        while (centres.length < nb && guard++ < 400) {
+          const x = R.x + R.w * (0.14 + 0.72 * Math.random());
+          const y = R.y + R.h * (0.14 + 0.72 * Math.random());
+          if (centres.every(([a, b]) => Math.hypot(a - x, b - y) > m * 0.26)) centres.push([x, y]);
+        }
+        while (centres.length < nb) centres.push([R.x + R.w * Math.random(), R.y + R.h * Math.random()]);
+        const wts = centres.map(() => 0.6 + Math.random() * 0.8);
+        const tw = wts.reduce((a, b) => a + b, 0);
+        centres.forEach(([x, y], i) => {
+          const s = m * (0.045 + Math.random() * 0.04);
+          blob(x, y, s * (1 + Math.random() * 0.8), s, Math.random() * Math.PI, Math.round((N * wts[i]) / tw));
+        });
+        setK(5);
+        note = 'Five blobs. Seeded with random points, two centres sometimes land in one blob and stay there — watch for a centre that never leaves.';
+      } else if (p === 'uneven') {
+        blob(R.x + R.w * 0.36, R.y + R.h * 0.5, m * 0.17, m * 0.15, 0.3, Math.round(N * 0.74));
+        blob(R.x + R.w * 0.74, R.y + R.h * 0.3, m * 0.035, m * 0.035, 0, Math.round(N * 0.13));
+        blob(R.x + R.w * 0.77, R.y + R.h * 0.7, m * 0.035, m * 0.035, 0, Math.round(N * 0.13));
+        setK(3);
+        note = 'One big loose crowd and two tight little ones. k-means likes groups of similar spread, so the big crowd tends to lend its edge to the small ones.';
+      } else if (p === 'rings') {
+        const cx = R.x + R.w / 2, cy = R.y + R.h / 2;
+        for (let i = 0; i < N; i++) {
+          const outer = i < N * 0.62;
+          const r = (outer ? 0.42 : 0.17) * m + gauss() * m * 0.018;
+          const a = Math.random() * Math.PI * 2;
+          add(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        }
+        setK(2);
+        note = 'Two rings, one inside the other. Borders between centres are always straight lines, so k-means can only cut them like a pie — no seed finds a ring.';
+      } else {
+        for (let i = 0; i < N; i++) add(R.x + Math.random() * R.w, R.y + Math.random() * R.h);
+        setK(6);
+        note = 'Uniform noise: there are no clusters here at all. Ask for k groups anyway and you will get k tidy groups.';
+      }
+      document.querySelectorAll('#presets button').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
+      reseed(true);
+    }
+
+    function setK(v) {
+      k = v; $('k').value = v; $('kV').textContent = v;
+    }
+
+    function seedCentres(xs, ys, kk, method) {
+      const n = xs.length, cx = [], cy = [];
+      if (!n) return { cx, cy };
+      if (method === 'pp') {
+        let i = Math.floor(Math.random() * n);
+        cx.push(xs[i]); cy.push(ys[i]);
+        const d2 = new Float64Array(n);
+        for (let t = 0; t < n; t++) d2[t] = (xs[t] - cx[0]) ** 2 + (ys[t] - cy[0]) ** 2;
+        while (cx.length < kk) {
+          let sum = 0;
+          for (let t = 0; t < n; t++) sum += d2[t];
+          let r = Math.random() * sum;
+          i = n - 1;
+          for (let t = 0; t < n; t++) { r -= d2[t]; if (r <= 0) { i = t; break; } }
+          cx.push(xs[i]); cy.push(ys[i]);
+          const j = cx.length - 1;
+          for (let t = 0; t < n; t++) {
+            const d = (xs[t] - cx[j]) ** 2 + (ys[t] - cy[j]) ** 2;
+            if (d < d2[t]) d2[t] = d;
+          }
+        }
+      } else {
+        const used = new Set();
+        while (cx.length < kk && used.size < n) {
+          const i = Math.floor(Math.random() * n);
+          if (used.has(i)) continue;
+          used.add(i); cx.push(xs[i]); cy.push(ys[i]);
+        }
+      }
+      return { cx, cy };
+    }
+
+    function reseed(fresh) {
+      const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+      const kk = Math.min(k, pts.length);
+      const { cx, cy } = seedCentres(xs, ys, kk, seeding);
+      C = cx.map((x, j) => ({ x, y: cy[j], dx: x, dy: cy[j], trail: [[x, cy[j]]] }));
+      for (const p of pts) { p.c = -1; p.flash = 0; }
+      phase = 'assign'; round = 0; moved = null; converged = false; targets = null;
+      history = []; restarts = null;
+      if (!fresh) note = seeding === 'pp'
+        ? 'k-means++ seeds: each new seed was picked with probability proportional to its squared distance from the seeds already placed, so they start spread out.'
+        : 'Random-point seeds: k points picked uniformly. Cheap, and sometimes two land in the same crowd.';
+      refresh();
+    }
+
+    // ---------- Lloyd's two half-steps ----------
+    function cost() {
+      let s = 0;
+      for (const p of pts) {
+        if (p.c < 0) continue;
+        const c = C[p.c];
+        s += (p.x - c.x) ** 2 + (p.y - c.y) ** 2;
+      }
+      return s;
+    }
+
+    function assignStep() {
+      const cx = C.map((c) => c.x), cy = C.map((c) => c.y);
+      const now = performance.now();
+      moved = 0;
+      for (const p of pts) {
+        const j = nearest(p.x, p.y, cx, cy, C.length);
+        if (j !== p.c) { moved++; p.c = j; p.flash = now; }
+      }
+      round++;
+      history.push({ v: cost(), kind: 'a' });
+      if (moved === 0) {
+        converged = true; targets = null; playing = false;
+        note = `Converged after ${round - 1} round${round - 1 === 1 ? '' : 's'}: nobody switched, so no centre will move again. That's <b class="v">a</b> local minimum — not necessarily <b class="p">the</b> best one. Try New seeds, or ×12 restarts.`;
+        return;
+      }
+      // Precompute where each centre is about to go.
+      const sx = new Float64Array(C.length), sy = new Float64Array(C.length), n = new Int32Array(C.length);
+      for (const p of pts) { if (p.c >= 0) { sx[p.c] += p.x; sy[p.c] += p.y; n[p.c]++; } }
+      targets = C.map((c, j) => (n[j] ? { x: sx[j] / n[j], y: sy[j] / n[j], n: n[j] } : { x: c.x, y: c.y, n: 0 }));
+      phase = 'update';
+      note = `<b class="v">Assign</b>: ${moved} point${moved === 1 ? '' : 's'} switched to a nearer centre. No point got farther from its centre, so the cost can only have gone down.`;
+    }
+
+    function updateStep() {
+      if (!targets) { phase = 'assign'; return; }
+      let empty = 0, shift = 0;
+      C.forEach((c, j) => {
+        const t = targets[j];
+        if (!t.n) { empty++; return; }
+        shift = Math.max(shift, Math.hypot(t.x - c.x, t.y - c.y));
+        c.x = t.x; c.y = t.y; c.trail.push([t.x, t.y]);
+      });
+      targets = null;
+      phase = 'assign';
+      history.push({ v: cost(), kind: 'u' });
+      note = `<b class="p">Update</b>: every centre moved to the mean of its points (largest move ${shift.toFixed(1)} px). The mean is exactly the spot that minimises squared distance to a group.` +
+        (empty ? ` ${empty} centre${empty > 1 ? 's own' : ' owns'} no points and stays put.` : '');
+    }
+
+    function step() {
+      if (converged || !C.length) return;
+      if (phase === 'assign') assignStep(); else updateStep();
+      refresh();
+    }
+
+    // ---------- restarts: run Lloyd to convergence from many seeds ----------
+    function runLloyd(xs, ys, kk) {
+      const n = xs.length;
+      const { cx, cy } = seedCentres(xs, ys, kk, seeding);
+      const trails = cx.map((x, j) => [[x, cy[j]]]);
+      const lab = new Int32Array(n).fill(-1);
+      const hist = [];
+      let rounds = 0;
+      const costOf = () => {
+        let s = 0;
+        for (let t = 0; t < n; t++) s += (xs[t] - cx[lab[t]]) ** 2 + (ys[t] - cy[lab[t]]) ** 2;
+        return s;
+      };
+      for (let it = 0; it < 300; it++) {
+        let ch = 0;
+        for (let t = 0; t < n; t++) {
+          const j = nearest(xs[t], ys[t], cx, cy, kk);
+          if (j !== lab[t]) { lab[t] = j; ch++; }
+        }
+        rounds++;
+        hist.push({ v: costOf(), kind: 'a' });
+        if (!ch) break;
+        const sx = new Float64Array(kk), sy = new Float64Array(kk), m = new Int32Array(kk);
+        for (let t = 0; t < n; t++) { sx[lab[t]] += xs[t]; sy[lab[t]] += ys[t]; m[lab[t]]++; }
+        for (let j = 0; j < kk; j++) if (m[j]) { cx[j] = sx[j] / m[j]; cy[j] = sy[j] / m[j]; trails[j].push([cx[j], cy[j]]); }
+        hist.push({ v: costOf(), kind: 'u' });
+      }
+      return { cx, cy, lab, trails, hist, rounds, cost: hist[hist.length - 1].v };
+    }
+
+    function runRestarts() {
+      if (pts.length < 2) return;
+      playing = false;
+      const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+      const kk = Math.min(k, pts.length);
+      const runs = [];
+      for (let r = 0; r < 12; r++) runs.push(runLloyd(xs, ys, kk));
+      const vals = runs.map((r) => r.cost);
+      let bi = 0;
+      vals.forEach((v, i) => { if (v < vals[bi]) bi = i; });
+      const best = runs[bi], worst = Math.max(...vals);
+      const hits = vals.filter((v) => v <= best.cost * 1.001).length;
+      const now = performance.now();
+      C = best.cx.map((x, j) => ({ x, y: best.cy[j], dx: C[j] ? C[j].dx : x, dy: C[j] ? C[j].dy : best.cy[j], trail: best.trails[j] }));
+      pts.forEach((p, t) => { if (p.c !== best.lab[t]) p.flash = now; p.c = best.lab[t]; });
+      history = best.hist; round = best.rounds - 1; moved = 0;
+      phase = 'assign'; targets = null; converged = true;
+      restarts = { vals, best: best.cost };
+      const pct = ((worst / best.cost - 1) * 100);
+      const how = `12 runs from 12 different ${seeding === 'pp' ? 'k-means++' : 'random-point'} seedings.`;
+      if (hits === 12) note = `${how} All 12 settled at the same cost — on this data every seed rolls into the same valley. Showing it.`;
+      else note = `${how} ${hits} of 12 reached the best cost; the worst ended <b class="p">${pct < 0.05 ? '0' : pct.toFixed(pct < 10 ? 1 : 0)}%</b> higher. Showing the best. Every run converged — they just converged to different valleys.`;
+      refresh();
+    }
+
+    // ---------- readout ----------
+    function refresh() {
+      $('rRound').textContent = round;
+      $('rMoved').textContent = moved == null ? '–' : moved;
+      const assigned = pts.some((p) => p.c >= 0);
+      const c = assigned ? cost() : null;
+      const n = pts.filter((p) => p.c >= 0).length;
+      $('rRms').textContent = c == null ? '–' : Math.sqrt(c / Math.max(1, n)).toFixed(1) + ' px';
+      $('rCost').textContent = c == null ? '–' : fmt(c);
+      $('rNote').innerHTML = note;
+      $('play').textContent = playing ? '❚❚ Pause' : converged ? '✓ Converged' : '▶ Run';
+      $('step').textContent = phase === 'assign' ? 'Assign' : 'Update';
+      drawSpark();
+      drawStrip();
+    }
+
+    function drawSpark() {
+      const sp = $('spark'), g = sp.getContext('2d');
+      const w = sp.width, h = sp.height;
+      g.clearRect(0, 0, w, h);
+      g.fillStyle = 'rgba(255,255,255,0.03)';
+      g.fillRect(0, 0, w, h);
+      g.font = `${10 * DPR}px ui-sans-serif, system-ui, sans-serif`;
+      g.fillStyle = '#6f6f88';
+      if (history.length < 2) {
+        g.fillText('cost per half-step appears here', 6 * DPR, h / 2 + 3 * DPR);
+        return;
+      }
+      const vs = history.map((e) => e.v);
+      const lo = Math.min(...vs), hi = Math.max(...vs);
+      const span = hi - lo || 1;
+      const pad = 6 * DPR;
+      const X = (i) => pad + (i / (history.length - 1)) * (w - pad * 2);
+      const Y = (v) => pad + (1 - (v - lo) / span) * (h - pad * 2);
+      g.strokeStyle = 'rgba(233,233,240,0.35)';
+      g.lineWidth = 1.2 * DPR;
+      g.beginPath();
+      history.forEach((e, i) => {
+        // Staircase: a level line, then a drop.
+        if (i === 0) g.moveTo(X(i), Y(e.v));
+        else { g.lineTo(X(i), Y(history[i - 1].v)); g.lineTo(X(i), Y(e.v)); }
+      });
+      g.stroke();
+      history.forEach((e, i) => {
+        g.fillStyle = e.kind === 'a' ? '#a9a9ff' : '#ff9fd2';
+        g.beginPath(); g.arc(X(i), Y(e.v), 2.2 * DPR, 0, Math.PI * 2); g.fill();
+      });
+      g.fillStyle = '#6f6f88';
+      g.textAlign = 'right';
+      g.fillText('only ever down', w - 6 * DPR, 12 * DPR);
+      g.textAlign = 'left';
+    }
+
+    function drawStrip() {
+      const st = $('strip');
+      st.classList.toggle('on', !!restarts);
+      if (!restarts) return;
+      if (!st.width || st.clientWidth * DPR !== st.width) { st.width = Math.round(st.clientWidth * DPR) || 280; st.height = Math.round(26 * DPR); }
+      const g = st.getContext('2d'), w = st.width, h = st.height;
+      g.clearRect(0, 0, w, h);
+      const lo = restarts.best, hi = Math.max(...restarts.vals);
+      const span = hi - lo || 1;
+      const pad = 10 * DPR;
+      g.strokeStyle = 'rgba(255,255,255,0.12)'; g.lineWidth = DPR;
+      g.beginPath(); g.moveTo(pad, h / 2); g.lineTo(w - pad, h / 2); g.stroke();
+      const placed = {};
+      restarts.vals.forEach((v) => {
+        const x = pad + ((v - lo) / span) * (w - pad * 2);
+        const key = Math.round(x / (5 * DPR));
+        placed[key] = (placed[key] || 0) + 1;
+        const yy = h / 2 + (placed[key] % 2 ? -1 : 1) * Math.floor(placed[key] / 2) * 4 * DPR;
+        g.fillStyle = v <= lo * 1.001 ? '#a9a9ff' : '#ff9fd2';
+        g.beginPath(); g.arc(x, clamp(yy, 4 * DPR, h - 4 * DPR), 3.2 * DPR, 0, Math.PI * 2); g.fill();
+      });
+      g.font = `${9 * DPR}px ui-sans-serif, system-ui, sans-serif`;
+      g.fillStyle = '#6f6f88';
+      g.fillText('best', 0, h - 1);
+      g.textAlign = 'right'; g.fillText('worst', w, h - 1); g.textAlign = 'left';
+    }
+
+    // ---------- drawing ----------
+    function drawTerritories() {
+      const gw = tc.width, gh = tc.height, d = timg.data;
+      const kk = C.length;
+      const cx = C.map((c) => c.dx), cy = C.map((c) => c.dy);
+      for (let gy = 0; gy < gh; gy++) {
+        const y = gy * CELL + CELL / 2;
+        for (let gx = 0; gx < gw; gx++) {
+          tlab[gy * gw + gx] = nearest(gx * CELL + CELL / 2, y, cx, cy, kk);
+        }
+      }
+      for (let gy = 0; gy < gh; gy++) {
+        for (let gx = 0; gx < gw; gx++) {
+          const i = gy * gw + gx, l = tlab[i], rgb = RGB[l % RGB.length];
+          const edge = (gx + 1 < gw && tlab[i + 1] !== l) || (gy + 1 < gh && tlab[i + gw] !== l);
+          const o = i * 4;
+          d[o] = rgb[0]; d[o + 1] = rgb[1]; d[o + 2] = rgb[2];
+          d[o + 3] = edge ? 70 : 20;
+        }
+      }
+      tctx.putImageData(timg, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(tc, 0, 0, gw * CELL, gh * CELL);
+    }
+
+    function frame(now) {
+      // Auto-play.
+      if (playing && now - lastStep > interval) {
+        lastStep = now;
+        step();
+        if (converged) { playing = false; refresh(); }
+      }
+      // Ease the drawn centres toward their true positions.
+      for (const c of C) {
+        if (drag && drag.c === c) { c.dx = c.x; c.dy = c.y; continue; }
+        c.dx += (c.x - c.dx) * 0.16; c.dy += (c.y - c.dy) * 0.16;
+      }
+
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      if (showTerr && C.length) drawTerritories();
+
+      // Spokes: each point to its centre.
+      if (showSpokes) {
+        ctx.lineWidth = 0.6;
+        C.forEach((c, j) => {
+          ctx.strokeStyle = COLORS[j % COLORS.length];
+          ctx.globalAlpha = 0.09;
+          ctx.beginPath();
+          for (const p of pts) if (p.c === j) { ctx.moveTo(p.x, p.y); ctx.lineTo(c.dx, c.dy); }
+          ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      // Points, batched by colour.
+      const r = pts.length > 1100 ? 1.7 : 2.1;
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = '#9a9ab0';
+      ctx.beginPath();
+      for (const p of pts) if (p.c < 0) { ctx.moveTo(p.x + r, p.y); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); }
+      ctx.fill();
+      ctx.globalAlpha = 0.92;
+      C.forEach((c, j) => {
+        ctx.fillStyle = COLORS[j % COLORS.length];
+        ctx.beginPath();
+        for (const p of pts) if (p.c === j) { ctx.moveTo(p.x + r, p.y); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); }
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      // Flash rings for points that just switched.
+      ctx.lineWidth = 1;
+      for (const p of pts) {
+        const t = (now - p.flash) / 650;
+        if (p.flash && t < 1) {
+          ctx.strokeStyle = `rgba(255,255,255,${(1 - t) * 0.7})`;
+          ctx.beginPath(); ctx.arc(p.x, p.y, r + 2 + t * 7, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+
+      // Trails.
+      C.forEach((c, j) => {
+        if (c.trail.length < 2) return;
+        ctx.strokeStyle = COLORS[j % COLORS.length];
+        ctx.globalAlpha = 0.7;
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        c.trail.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = COLORS[j % COLORS.length];
+        for (const [x, y] of c.trail) { ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill(); }
+        ctx.globalAlpha = 1;
+      });
+
+      // Ghosts: where the next update will move each centre.
+      if (targets && phase === 'update') {
+        targets.forEach((t, j) => {
+          const c = C[j];
+          if (!t.n || Math.hypot(t.x - c.x, t.y - c.y) < 1.5) return;
+          ctx.strokeStyle = 'rgba(233,233,240,0.6)';
+          ctx.lineWidth = 1.3;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.arc(t.x, t.y, 8, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(c.dx, c.dy); ctx.lineTo(t.x, t.y); ctx.stroke();
+          ctx.setLineDash([]);
+        });
+      }
+
+      // Centres.
+      C.forEach((c, j) => {
+        const col = COLORS[j % COLORS.length];
+        ctx.shadowColor = col; ctx.shadowBlur = 16;
+        ctx.fillStyle = '#05050a';
+        ctx.beginPath(); ctx.arc(c.dx, c.dy, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = col; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(c.dx, c.dy, 10, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(c.dx, c.dy, 2.4, 0, Math.PI * 2); ctx.fill();
+        if (drag && drag.c === c) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(c.dx, c.dy, 16, 0, Math.PI * 2); ctx.stroke();
+        }
+      });
+
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- interaction ----------
+    function pos(e) {
+      const r = cv.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    function hitCentre(x, y) {
+      let best = null, bd = 22;
+      for (const c of C) {
+        const d = Math.hypot(c.dx - x, c.dy - y);
+        if (d < bd) { bd = d; best = c; }
+      }
+      return best;
+    }
+    function spray(x, y, n) {
+      if (pts.length > 4000) return;
+      for (let i = 0; i < n; i++) {
+        pts.push({ x: x + gauss() * 14, y: y + gauss() * 14, c: -1, flash: 0 });
+      }
+      if (converged) { converged = false; phase = 'assign'; targets = null; }
+      restarts = null;
+    }
+
+    cv.addEventListener('pointerdown', (e) => {
+      const p = pos(e);
+      cv.setPointerCapture(e.pointerId);
+      const c = hitCentre(p.x, p.y);
+      if (c) {
+        drag = { c };
+        cv.classList.add('grabbing');
+      } else {
+        drag = { spray: true, last: p };
+        spray(p.x, p.y, 8);
+        note = 'New points arrive grey: they belong to nobody until the next <b class="v">assign</b>.';
+        refresh();
+      }
+    });
+    cv.addEventListener('pointermove', (e) => {
+      const p = pos(e);
+      if (!drag) {
+        cv.classList.toggle('grab', !!hitCentre(p.x, p.y));
+        return;
+      }
+      if (drag.c) {
+        drag.c.x = p.x; drag.c.y = p.y;
+        drag.c.trail = [[p.x, p.y]];
+        converged = false; phase = 'assign'; targets = null; restarts = null;
+      } else if (drag.spray && Math.hypot(p.x - drag.last.x, p.y - drag.last.y) > 4) {
+        drag.last = p;
+        spray(p.x, p.y, 4);
+      }
+    });
+    const endDrag = () => {
+      if (drag && drag.c) {
+        note = 'You moved a centre by hand. Nothing is assigned to it yet — run an <b class="v">assign</b> and see who it wins over.';
+        refresh();
+      } else if (drag) refresh();
+      drag = null;
+      cv.classList.remove('grabbing');
+    };
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+
+    document.querySelectorAll('#presets button').forEach((b) => b.addEventListener('click', () => { playing = false; generate(b.dataset.p); }));
+    document.querySelectorAll('#seeding button').forEach((b) => b.addEventListener('click', () => {
+      seeding = b.dataset.s;
+      document.querySelectorAll('#seeding button').forEach((x) => x.classList.toggle('on', x === b));
+      playing = false;
+      reseed(false);
+    }));
+    $('k').addEventListener('input', () => {
+      setK(+$('k').value);
+      playing = false;
+      reseed(false);
+    });
+    $('play').addEventListener('click', () => {
+      if (converged) return;
+      playing = !playing;
+      lastStep = 0;
+      refresh();
+    });
+    $('step').addEventListener('click', () => { playing = false; step(); });
+    $('reseed').addEventListener('click', () => { playing = false; reseed(false); });
+    $('regen').addEventListener('click', () => { playing = false; generate(preset); });
+    $('restarts').addEventListener('click', runRestarts);
+
+    const setPace = () => {
+      const v = +$('pace').value / 100;
+      const hz = 0.5 * Math.pow(24, v);  // 0.5 … 12 half-steps per second
+      interval = 1000 / hz;
+      $('paceV').textContent = (hz < 1 ? hz.toFixed(1) : Math.round(hz)) + ' half-steps/s';
+    };
+    $('pace').addEventListener('input', setPace);
+
+    const toggle = (id, fn) => $(id).addEventListener('click', () => { $(id).classList.toggle('on'); fn($(id).classList.contains('on')); });
+    toggle('tTerr', (v) => { showTerr = v; $('lgTerr').classList.toggle('off', !v); });
+    toggle('tSpokes', (v) => { showSpokes = v; });
+
+    $('collapse').addEventListener('click', () => { ui.classList.add('hidden'); $('showUi').classList.add('on'); });
+    $('showUi').addEventListener('click', () => { ui.classList.remove('hidden'); $('showUi').classList.remove('on'); });
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'h') $('showUi').classList.toggle('on', ui.classList.contains('hidden'));
+      if (story.classList.contains('open')) return;
+      if (e.key === ' ' && e.target === document.body) { e.preventDefault(); $('play').click(); }
+      if (e.key === 'ArrowRight') { playing = false; step(); }
+    });
+
+    let rt = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => { resize(); relayout(true); refresh(); }, 120);
+    });
+
+    // ---------- go ----------
+    resize();
+    relayout(false);
+    setPace();
+    generate('blobs');
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
