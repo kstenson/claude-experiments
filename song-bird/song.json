@@ -1,55 +1,55 @@
 {
-  "date": "2026-10-12",
+  "date": "2026-10-13",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Details to Follow",
+  "title": "Six Percent by Morning",
   "mood": {
     "label": "Uneasy",
-    "score": -0.14,
-    "summary": "A surprise energy ceasefire for Ukraine nudged oil down and markets up, but Moscow hadn't confirmed. The Gulf stayed heavy, North Korea fired missiles, Sudan and Congo suffered, a Category 4 hurricane churned — with small light from Brazil's freed children and lab progress.",
+    "score": -0.2,
+    "summary": "Monday's ceasefire relief faded unconfirmed. Oil climbed back toward $107 and Seoul's KOSPI fell about 6%. The Gulf stayed heaviest, Sudan's famine risk rose, and Tigray and Delhi tensed. Small light came from Cuba's renewables, memory research and Kiribati's first football title.",
     "palette": {
-      "bg": "#10141a",
-      "bg2": "#1c2430",
-      "accent": "#8fb8c9",
-      "accent2": "#c96b8a",
-      "text": "#e6edf2"
+      "bg": "#14110f",
+      "bg2": "#241c18",
+      "accent": "#d98e4a",
+      "accent2": "#5fb3a8",
+      "text": "#efe6dd"
     }
   },
   "style": {
-    "genre": "darkwave pulse — marimba, choir pad, synth bass, TR-909",
-    "key": "D",
-    "scale": "locrian",
-    "bpm": 116,
+    "genre": "industrial drum-and-bass — steel drums, distorted guitar, SP-1200",
+    "key": "A",
+    "scale": "harmonic minor",
+    "bpm": 124,
     "swing": 0
   },
-  "sampleSources": ["Strudel default library (GM, RolandTR909)"],
-  "pattern": "stack(s(\"bd ~ ~ ~ bd ~ ~ ~, ~ ~ ~ ~ cp ~ ~ ~, ~ hh ~ hh ~ hh ~ [hh hh]\").bank(\"RolandTR909\").gain(0.5).hpf(60).room(0.2), note(\"<d2 ef2 bf1 c2>\").struct(\"x*8\").s(\"gm_synth_bass_1\").lpf(sine.range(300,900).slow(8)).attack(0.005).release(0.15).gain(0.32), note(\"<[d3,f3,af3] [ef3,g3,bf3] [bf2,d3,f3] [c3,ef3,g3]>\").s(\"gm_choir_aahs\").attack(1.2).sustain(0.8).release(2.5).lpf(1400).gain(0.16).room(0.5), note(\"<[af4 ~ f4 ~ ~ d4 ~ ef4] [g4 ~ ~ bf4 ~ g4 ef4 ~] [f4 ~ d4 ~ bf3 ~ ~ ~] [ef4 ~ g4 ~ c5 ~ bf4 ~]>\").s(\"gm_marimba\").gain(0.34).room(0.55).rsize(4).delay(0.3).delaytime(0.3879).jux(rev), note(\"d5 ~ ~ ~ ~ ~ af4 ~\").s(\"gm_marimba\").gain(0.12).room(0.7).slow(2).off(0.375, x => x.gain(0.06).pan(0.8)))",
+  "sampleSources": ["Strudel default library (GM, EmuSP12)"],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ [~ sd]\").bank(\"EmuSP12\").gain(0.6).hpf(50).room(0.15), s(\"hh*16\").bank(\"EmuSP12\").gain(perlin.range(0.12,0.3)).hpf(4000).pan(sine.range(0.35,0.65).slow(4)), note(\"<a1 f1 d2 e1>\").struct(\"x ~ ~ x ~ ~ x ~\").s(\"sawtooth\").lpf(sine.range(200,700).slow(8)).distort(1.5).attack(0.005).release(0.2).gain(0.22), note(\"<a1 f1 d2 e1>\").s(\"sine\").gain(0.3), note(\"<[a2,e3] [f2,c3] [d3,a3] [e2,b2]>\").struct(\"x ~ ~ ~ ~ ~ x ~\").s(\"gm_distortion_guitar\").lpf(1800).gain(0.16).room(0.3), note(\"<[a3,c4,e4] [f3,a3,c4] [d3,f3,a3] [e3,gs3,b3]>\").s(\"gm_string_ensemble_1\").attack(0.8).sustain(0.8).release(2).lpf(1600).gain(0.14).room(0.5), note(\"<[a4 ~ c5 ~ b4 ~ gs4 ~] [a4 ~ ~ f4 ~ e4 ~ ~] [d5 ~ c5 ~ a4 ~ f4 ~] [e4 ~ gs4 ~ b4 ~ ~ ~]>\").s(\"gm_steel_drums\").gain(0.3).room(0.4).delay(0.25).delaytime(0.363).jux(rev), note(\"e5 ~ ~ ~ ~ ~ gs5 ~\").s(\"gm_steel_drums\").slow(4).gain(0.12).room(0.7).off(0.375, x => x.gain(0.06).pan(0.85)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Monday rang with a ceasefire nobody planned,",
-        "Kyiv said yes, then asked for terms.",
-        "Moscow kept quiet, the oil price dipped,",
-        "Brent still hovering where it burns."
+        "The ceasefire hasn't called us back,",
+        "Brent climbs the ladder, then sits down.",
+        "Seoul lost six by lunchtime,",
+        "chip screens bleeding red all over town."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Riyadh's runway took the second hit,",
-        "missiles from the north fell into the sea.",
-        "Miners in Sudan, a fever moving east,",
-        "Simon turning on the Pacific's knee."
+        "Riyadh counts the lights above the sand,",
+        "London names a plot and names a hand.",
+        "Sudan waits on rain that doesn't fall,",
+        "Adwa wakes with soldiers at the wall."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Details to follow, guarantees to come,",
-        "hold the good news loosely in your hand.",
-        "Thirteen children walking out in Brazil —",
-        "some days that's the only thing that stands."
+        "Six percent by morning, nothing left to hold,",
+        "the relief we borrowed came back cold.",
+        "But Kiribati lifts a cup in Fiji —",
+        "some small islands never do what they're told."
       ]
     }
   ]
