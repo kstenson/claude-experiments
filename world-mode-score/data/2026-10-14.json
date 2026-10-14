@@ -1,0 +1,120 @@
+{
+  "date": "2026-10-14",
+  "score": 41,
+  "label": "Uneasy",
+  "emoji": "🌥️",
+  "summary": "The Gulf is still the heaviest weight. Houthi forces struck Aramco facilities hours after a Saudi-led coalition hit an oil site in Sanaa, and the WHO reported cholera cases surging in Yemen. A Russian missile hit a Kyiv power plant, further dimming hopes for an energy ceasefire. Deaths from storms in Mexico rose to five. Markets steadied after Tuesday's Asian sell-off: Singapore's economy grew more than 5% on AI demand, though Brent crude stayed near $106. There were small openings for diplomacy. A UN official saw a window for peace in DR Congo, and Colombia's peace tribunal charged former FARC members over crimes against Indigenous people. Science supplied the brightest news, including the first drug in 30 years for a deadly brain disease, and an Italian biomethane plant came online. The weighted formula gave 41; no editorial adjustment.",
+  "dimensions": {
+    "conflict": 28,
+    "economy": 45,
+    "climate": 42,
+    "humanInterest": 40,
+    "techProgress": 64
+  },
+  "regions": {
+    "northAmerica": 43,
+    "southAmerica": 50,
+    "europe": 40,
+    "africa": 36,
+    "middleEast": 20,
+    "asia": 44,
+    "oceania": 47
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Houthis strike Aramco hours after Saudi-led coalition hits Sanaa oil site",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/13/houthis-threaten-saudi-arabias-aramco-facilities-and-airports",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Cholera cases surge in Yemen as conflict intensifies, WHO says",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/13/cholera-cases-surge-in-yemen-as-conflict-intensifies-who-says",
+      "dimension": "humanInterest",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Russian missile hits Kyiv power plant, Zelenskyy says",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/10/14/russian-missile-hits-kyiv-power-plant-with-no-early-warning-from-allies-zelensky-says",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Germans among those airlifted to safety as storms kill five in Mexico",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/10/13/german-nationals-among-those-airlifted-to-safety-as-storms-kill-five-in-mexico",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Pakistan: Passenger train derailment kills at least five, injures more than 30",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/video/2026/10/13/pakistan-passenger-train-derailment-kills-at-least-five-injures-more-than-30",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Earth Sciences NZ outlook says elevated cyclone risk for parts of Pacific",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/pacific/1886695/earth-sciences-nz-outlook-says-elevated-cyclone-risk-for-parts-of-pacific",
+      "dimension": "climate",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "Singapore's economy grows more than 5 percent amid AI boom",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/10/14/singapores-economy-grows-more-than-5-percent-amid-ai-boom",
+      "dimension": "economy",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "UN official says 'window of opportunity' for peace in DR Congo",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/14/un-official-says-window-of-opportunity-for-peace-in-dr-congo",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "Colombia peace tribunal charges ex-FARC members with anti-Indigenous crimes",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/14/colombia-peace-tribunal-charges-ex-farc-members-with-anti-indigenous-crimes",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "After 30 Years, Scientists Finally Have a Drug for a Deadly Brain Disease",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/releases/2026/10/261007042111.htm",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Italian Bio-methane Plant Comes Online, Providing Renewable Gas to Over 3,000 Homes",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/italian-biomethane-plant-comes-online-providing-renewable-gas-supply-to-over-3000-homes/",
+      "dimension": "climate",
+      "region": "europe"
+    }
+  ],
+  "sources_consulted": [
+    "Al Jazeera",
+    "Euronews",
+    "RNZ",
+    "Trading Economics",
+    "ScienceDaily",
+    "Good News Network"
+  ]
+}
