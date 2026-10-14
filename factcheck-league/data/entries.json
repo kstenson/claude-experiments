@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-10-13",
+    "lastUpdated": "2026-10-14",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -4125,7 +4125,7 @@
     {
       "id": "2026-10-13",
       "date": "2026-10-13",
-      "headline": true,
+      "headline": false,
       "topic": "Whether the EU deals will add over £10bn a year by 2040",
       "claim": "Together, these deals will add the equivalent of over 10 billion pounds per year to the UK economy by 2040, with the potential to add significantly more.",
       "speaker": "Andy Burnham",
@@ -4165,6 +4165,49 @@
         {
           "title": "Politics.co.uk — Burnham says status quo 'not good enough'",
           "url": "https://www.politics.co.uk/2026/10/burnham-says-status-quo-not-good-enough-as-he-sets-out-plan-for-uk-eu-summit/"
+        }
+      ]
+    },
+    {
+      "id": "2026-10-14",
+      "date": "2026-10-14",
+      "headline": true,
+      "topic": "Whether employment is higher than in all but one Tory year",
+      "claim": "The employment rate in the UK today is higher than in every year but one of the Conservatives' 14 years in power.",
+      "speaker": "Pat McFadden",
+      "party": "Labour",
+      "role": "Work and Pensions Secretary",
+      "discussionScore": 58,
+      "discussionNote": "Made twice at Work and Pensions questions on 12 October, the Commons' first day back, and fact-checked by Full Fact on 13 October. A quieter news day, but the government's main jobs line ahead of the Budget.",
+      "score": 35,
+      "verdict": "Mostly False",
+      "explanation": "The employment rate is near its historical highs, but the specific comparison is wrong. ONS figures put the 16-64 rate at 75.1% for May-July 2026. Two Conservative years were higher, 2018 (75.5%) and 2019 (76.1%), not one. Three more, 2020, 2022 and 2023, were 75.1% too, so today is level with them rather than above. Strictly, the rate is higher than in about nine of the fourteen years. The rate is also unchanged from 2025, so it does not show improvement under Labour. Survey quality problems since the pandemic add uncertainty either way.",
+      "evidence": [
+        "Hansard, 12 October: McFadden said the rate is higher than in \"all but one of the 14 years\" of Conservative government, then repeated it.",
+        "ONS LF24 series (16-64 employment rate): 75.1% for May-July 2026, the latest release.",
+        "ONS annual rates: 2018 75.5%, 2019 76.1%, both above today.",
+        "ONS annual rates for 2020, 2022 and 2023 are all 75.1%, the same as today at one decimal place.",
+        "Years clearly below today: 2010-2017 (70.3-74.9%), 2021 (74.8%) and 2024 (74.8%).",
+        "The ONS warns Labour Force Survey estimates need caution because response rates fell after the pandemic.",
+        "Full Fact reached the same conclusion; DWP had not responded when it published."
+      ],
+      "confidence": "High — straightforward reading of the official ONS series, matching Full Fact's check.",
+      "sources": [
+        {
+          "title": "Hansard — Work and Pensions oral questions, 12 October 2026",
+          "url": "https://hansard.parliament.uk/commons/2026-10-12/debates/15636901-5310-4E40-8D76-1716973F6FE4/OralAnswersToQuestions"
+        },
+        {
+          "title": "ONS — Employment rate, aged 16-64 (LF24)",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/timeseries/lf24/lms"
+        },
+        {
+          "title": "ONS — Labour Force Survey quality update: July 2026",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/articles/labourforcesurveyqualityupdate/july2026"
+        },
+        {
+          "title": "Full Fact — Employment rate under Labour vs the Conservative years",
+          "url": "https://fullfact.org/economy/pat-mcfadden-employment-rate/"
         }
       ]
     }
