@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Straight on a Staircase — Experiment 089</title>
+<meta name="description" content="Bresenham's 1962 line algorithm, one cell at a time: draw a straight line on a grid of squares using nothing but integer adds and one comparison per step — then push it into moiré fans and times-table string art." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none; cursor: crosshair;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 30%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.wide { flex: 2 1 55%; }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  #rNote { min-height: 3.2em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+  }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 18px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.orig { background: rgba(233,233,240,0.4); }
+  .legend i.rdp { background: #a9a9ff; box-shadow: 0 0 6px #7c7cff; }
+  .legend i.tube { height: 10px; background: rgba(124,124,255,0.22); border-radius: 5px; }
+  .legend i.naive { background: #ff7cc3; }
+  .legend .off { opacity: 0.35; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .legend, .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+
+  /* ---- Experiment 089 additions ---- */
+  .meter { grid-column: 1 / -1; position: relative; height: 12px; border-radius: 6px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .meter .zero { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(233,233,240,0.55); }
+  .meter .fill { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; background: #7c7cff; transition: left 0.15s ease, width 0.15s ease, background 0.15s ease; }
+  .meter-cap { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 0.66rem; color: #7f7f99; margin-top: -2px; }
+  .modepane { display: none; gap: 9px; }
+  .modepane.on { display: grid; }
+  .legend i.cell { width: 12px; height: 12px; border-radius: 3px; background: #7c7cff; margin: 0 3px; }
+  .legend i.cand { width: 12px; height: 12px; border-radius: 3px; border: 1.5px dashed #ff9fd2; margin: 0 3px; }
+  .legend i.true { height: 2px; background: #e9e9f0; }
+  .legend i.mid { width: 7px; height: 7px; border-radius: 50%; background: #ffcf6b; margin: 0 5.5px; }
+  .legend i.err { width: 3px; height: 12px; background: #ff7cc3; margin: 0 7.5px; }
+  .legend i.vi { width: 12px; height: 12px; border-radius: 2px; background: #7c7cff; margin: 0 3px; }
+  .legend i.pk { width: 12px; height: 12px; border-radius: 2px; background: #ff7cc3; margin: 0 3px; }
+  .legend i.heat { height: 10px; border-radius: 3px; background: linear-gradient(90deg, #1c1c48, #7c7cff, #ff7cc3, #fff3fa); }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+  <button id="showUi">☰ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Straight on a Staircase</h1>
+    <p class="sub">Experiment № 089 · October 14, 2026</p>
+
+    <div class="controls">
+      <div class="seg" id="modes">
+        <button data-m="line" class="on">One line</button>
+        <button data-m="fan">Moiré fan</button>
+        <button data-m="times">Times table</button>
+      </div>
+
+      <div class="code" id="code">
+        <span class="c">// Bresenham, 1962 — slope between 0 and 1:</span><br />
+        D = 2·dy − dx<br />
+        for each x: plot(x, y)<br />
+        &nbsp;&nbsp;if <em>D &gt; 0</em>: y += 1; D −= 2·dx<br />
+        &nbsp;&nbsp;D += 2·dy &nbsp;<span class="c">// that's all</span>
+      </div>
+
+      <div class="row">
+        <label>Cell size <b id="cellV">26 px</b></label>
+        <input type="range" id="cell" min="2" max="48" value="26" />
+      </div>
+
+      <div class="modepane on" id="paneLine">
+        <div class="btn-row">
+          <button class="btn wide" id="play">▶ Draw it</button>
+          <button class="btn" id="step">Step</button>
+          <button class="btn pink" id="shuffle">Random line</button>
+        </div>
+        <div class="row">
+          <label>Pace <b id="paceV">6 cells/s</b></label>
+          <input type="range" id="pace" min="0" max="100" value="40" />
+        </div>
+        <div class="toggles">
+          <div class="toggle violet on" id="tTrue"><i></i>true line</div>
+          <div class="toggle rose on" id="tErr"><i></i>miss per cell</div>
+        </div>
+      </div>
+
+      <div class="modepane" id="paneFan">
+        <div class="row">
+          <label>Spoke spacing <b id="spaceV">every cell</b></label>
+          <input type="range" id="space" min="1" max="8" value="1" />
+        </div>
+        <div class="btn-row">
+          <button class="btn wide" id="playFan">❚❚ Hold still</button>
+          <button class="btn pink" id="shuffleFan">Jump</button>
+        </div>
+      </div>
+
+      <div class="modepane" id="paneTimes">
+        <div class="row">
+          <label>Pins <b id="pinsV">240</b></label>
+          <input type="range" id="pins" min="24" max="600" value="240" />
+        </div>
+        <div class="row">
+          <label>Multiplier <b id="multV">2.00</b></label>
+          <input type="range" id="mult" min="200" max="9900" value="200" />
+        </div>
+        <div class="btn-row">
+          <button class="btn wide" id="playTimes">❚❚ Hold still</button>
+          <button class="btn pink" id="shuffleTimes">Surprise me</button>
+        </div>
+      </div>
+
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="legend" id="legend"></div>
+  <p class="hint" id="hint">drag anywhere to move the nearer end · space plays · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 089 · The story</p>
+      <h2>Straight on a Staircase</h2>
+
+      <h3>Why I picked it</h3>
+      <p>In 1962 Jack Bresenham was at IBM, trying to get a computer to drive a pen plotter. The pen could only move one step at a time, in one of eight directions, and the computer had no time to spare for multiplying or dividing. The question was humble: which steps, in which order, make a straight line? His answer, published in the IBM Systems Journal in 1965, is still running inside nearly everything that draws on a grid of pixels.</p>
+      <p>Eighty-eight experiments in, this collection has drawn a great many lines without once asking how. That felt overdue. Every other page here rests on the thing this one shows.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The whole algorithm is one running number. Each step along the long axis, you add the rise. When the total spills past zero, you take one step up as well and subtract the run. There is no slope anywhere, no fraction and no rounding, yet turn on <em>miss per cell</em> and every lit square sits within half a cell of the true line. The readout checks it against floating-point rounding at every cell and they never disagree. Whole numbers were enough all along.</p>
+      <p>The other two modes are what happens when the honest staircase meets something it can't represent. Fan a few thousand lines out from one point and neighbouring lines share cells, so their stairs interfere into swirling moiré that isn't in the geometry at all. Join pins around a circle by a times table and the overlapping stairs pile up into cardioids, nephroids and roses.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A lot of problems that look like they need fractions only need a comparison. If you can turn a question into "is this quantity past a threshold yet?" and keep a running total of how far off you are, you can often swap division for addition, and approximate guesses for an exact answer. And the moiré is worth keeping in mind too: any time you sample a smooth world onto a grid, some of the patterns you see belong to the grid, not the world.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Bresenham's line algorithm ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const stage = $('stage');
+    const ui = $('ui');
+    const cv = document.createElement('canvas');
+    stage.appendChild(cv);
+    const ctx = cv.getContext('2d');
+    const off = document.createElement('canvas');
+    const octx = off.getContext('2d');
+    let img = null;
+
+    const VIOLET = [124, 124, 255], PINK = [255, 124, 195], BG = [9, 9, 18];
+
+    // Heat palette for the times table: dark ink → violet → pink → near white.
+    const HEAT = (() => {
+      const stops = [[0, [9, 9, 18]], [0.18, [40, 40, 110]], [0.45, [124, 124, 255]], [0.75, [255, 124, 195]], [1, [255, 243, 250]]];
+      const lut = new Uint8Array(256 * 3);
+      for (let i = 0; i < 256; i++) {
+        const t = i / 255;
+        let j = 0;
+        while (j < stops.length - 2 && t > stops[j + 1][0]) j++;
+        const [t0, c0] = stops[j], [t1, c1] = stops[j + 1];
+        const f = (t - t0) / (t1 - t0);
+        for (let k = 0; k < 3; k++) lut[i * 3 + k] = Math.round(c0[k] + (c1[k] - c0[k]) * f);
+      }
+      return lut;
+    })();
+
+    let W = 0, H = 0, DPR = 1;
+    let cs = 26, cols = 1, rows = 1, ox = 0, oy = 0;
+    let mode = 'line';
+    const cellFor = { line: 26, fan: 4, times: 3 };
+
+    // ---------- the algorithm ----------
+    // Classic integer Bresenham, generalised to all eight octants by choosing a
+    // driving axis (the longer one) and stepping its signs. Returns every cell
+    // plus the decision variable D used at each transition.
+    function bresenham(x0, y0, x1, y1) {
+      const dx = x1 - x0, dy = y1 - y0;
+      const sx = dx < 0 ? -1 : 1, sy = dy < 0 ? -1 : 1;
+      const ax = Math.abs(dx), ay = Math.abs(dy);
+      const steep = ay > ax;
+      const L = steep ? ay : ax, S = steep ? ax : ay;
+      let D = 2 * S - L, v = 0;
+      const cells = [], Ds = [], diag = [];
+      for (let u = 0; u <= L; u++) {
+        cells.push(steep ? [x0 + v * sx, y0 + u * sy] : [x0 + u * sx, y0 + v * sy]);
+        if (u < L) {
+          Ds.push(D);
+          const d = D > 0;
+          diag.push(d);
+          if (d) { v++; D -= 2 * L; }
+          D += 2 * S;
+        }
+      }
+      return { cells, Ds, diag, L, S, sx, sy, steep, x0, y0 };
+    }
+
+    // The fast path used by the art modes: same algorithm, no bookkeeping.
+    function plotLine(x0, y0, x1, y1, plot) {
+      const ax = Math.abs(x1 - x0), ay = -Math.abs(y1 - y0);
+      const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+      let err = ax + ay, n = 0;
+      for (;;) {
+        plot(x0, y0); n++;
+        if (x0 === x1 && y0 === y1) return n;
+        const e2 = 2 * err;
+        if (e2 >= ay) { err += ay; x0 += sx; }
+        if (e2 <= ax) { err += ax; y0 += sy; }
+      }
+    }
+
+    // ---------- layout ----------
+    function layout() {
+      cols = Math.max(4, Math.floor(W / cs));
+      rows = Math.max(4, Math.floor(H / cs));
+      ox = Math.floor((W - cols * cs) / 2);
+      oy = Math.floor((H - rows * cs) / 2);
+      off.width = cols; off.height = rows;
+      img = octx.createImageData(cols, rows);
+      fanBuf = new Uint8Array(cols * rows);
+      heat = new Uint16Array(cols * rows);
+    }
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      layout();
+      dirty = true;
+    }
+    const toCell = (px, py) => [
+      Math.max(0, Math.min(cols - 1, Math.floor((px - ox) / cs))),
+      Math.max(0, Math.min(rows - 1, Math.floor((py - oy) / cs))),
+    ];
+    const cx = (x) => ox + (x + 0.5) * cs;
+    const cy = (y) => oy + (y + 0.5) * cs;
+
+    function blit() {
+      octx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(off, ox, oy, cols * cs, rows * cs);
+    }
+    function gridLines(alpha) {
+      if (cs < 7) return;
+      ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= cols; i++) { const x = ox + i * cs + 0.5; ctx.moveTo(x, oy); ctx.lineTo(x, oy + rows * cs); }
+      for (let j = 0; j <= rows; j++) { const y = oy + j * cs + 0.5; ctx.moveTo(ox, y); ctx.lineTo(ox + cols * cs, y); }
+      ctx.stroke();
+    }
+
+    // ---------- mode 1: one line, step by step ----------
+    // Endpoints are kept as fractions of the screen so they survive resizes and cell-size changes.
+    let A = null, B = null, line = null, shown = 0;
+    let playing = false, acc = 0, pace = 6;
+    let showTrue = true, showErr = true;
+    let mismatches = 0;
+
+    function defaultEnds() {
+      const wide = W > 700;
+      A = { x: wide ? 0.42 : 0.12, y: wide ? 0.78 : 0.40 };
+      B = { x: wide ? 0.9 : 0.88, y: wide ? 0.3 : 0.12 };
+    }
+    function rebuild(keepShown) {
+      const [x0, y0] = toCell(A.x * W, A.y * H), [x1, y1] = toCell(B.x * W, B.y * H);
+      line = bresenham(x0, y0, x1, y1);
+      // Cross-check every cell against plain floating-point rounding.
+      mismatches = 0;
+      const { L, S } = line;
+      let v = 0;
+      for (let u = 0; u <= L; u++) {
+        const f = L === 0 ? 0 : Math.ceil(u * S / L - 0.5);
+        if (u > 0 && line.diag[u - 1]) v++;
+        if (f !== v) mismatches++;
+      }
+      shown = keepShown ? Math.min(shown, line.cells.length) : line.cells.length;
+      dirty = true;
+    }
+    // offsets (driving u, minor v) → cell coords (floats allowed)
+    function uv(u, v) {
+      const l = line;
+      return l.steep ? [l.x0 + v * l.sx, l.y0 + u * l.sy] : [l.x0 + u * l.sx, l.y0 + v * l.sy];
+    }
+
+    function drawLine() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(255,255,255,0.025)';
+      ctx.fillRect(ox, oy, cols * cs, rows * cs);
+      gridLines(0.06);
+      const { cells, L, S } = line;
+      const pad = cs >= 10 ? 1.5 : 0.5;
+      const r = Math.min(4, cs * 0.18);
+
+      // lit cells
+      for (let i = 0; i < shown; i++) {
+        const [x, y] = cells[i];
+        const fresh = i === shown - 1 && shown < cells.length;
+        const t = cells.length > 1 ? i / (cells.length - 1) : 0;
+        const c = fresh ? [255, 207, 107] : [
+          Math.round(VIOLET[0] + (PINK[0] - VIOLET[0]) * t),
+          Math.round(VIOLET[1] + (PINK[1] - VIOLET[1]) * t),
+          Math.round(VIOLET[2] + (PINK[2] - VIOLET[2]) * t),
+        ];
+        ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+        roundRect(ox + x * cs + pad, oy + y * cs + pad, cs - 2 * pad, cs - 2 * pad, r);
+        ctx.fill();
+      }
+
+      // the true line
+      const [sx0, sy0] = cells[0], [sx1, sy1] = cells[cells.length - 1];
+      if (showTrue) {
+        ctx.strokeStyle = 'rgba(233,233,240,0.85)';
+        ctx.lineWidth = Math.max(1, Math.min(2, cs / 12));
+        ctx.beginPath(); ctx.moveTo(cx(sx0), cy(sy0)); ctx.lineTo(cx(sx1), cy(sy1)); ctx.stroke();
+      }
+
+      // miss per cell: vertical (minor-axis) gap from cell centre to the line
+      if (showErr && cs >= 5) {
+        ctx.strokeStyle = '#ff7cc3';
+        ctx.lineWidth = Math.max(1.5, cs / 9);
+        ctx.lineCap = 'round';
+        let v = 0;
+        ctx.beginPath();
+        for (let u = 0; u < shown; u++) {
+          if (u > 0 && line.diag[u - 1]) v++;
+          const exact = L === 0 ? 0 : u * S / L;
+          const [ax, ay] = uv(u, v), [bx, by] = uv(u, exact);
+          ctx.moveTo(cx(ax), cy(ay)); ctx.lineTo(cx(bx), cy(by));
+        }
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+
+      // the pending decision: two candidates and the midpoint between them
+      if (shown < cells.length && cs >= 6) {
+        const u = shown - 1;
+        let v = 0;
+        for (let i = 0; i < u; i++) if (line.diag[i]) v++;
+        const [s1x, s1y] = uv(u + 1, v), [d1x, d1y] = uv(u + 1, v + 1);
+        ctx.setLineDash([4, 3]);
+        ctx.lineWidth = 1.5;
+        const diag = line.diag[u];
+        ctx.strokeStyle = diag ? 'rgba(255,159,210,0.45)' : '#ff9fd2';
+        roundRect(ox + s1x * cs + pad, oy + s1y * cs + pad, cs - 2 * pad, cs - 2 * pad, r); ctx.stroke();
+        ctx.strokeStyle = diag ? '#ff9fd2' : 'rgba(255,159,210,0.45)';
+        roundRect(ox + d1x * cs + pad, oy + d1y * cs + pad, cs - 2 * pad, cs - 2 * pad, r); ctx.stroke();
+        ctx.setLineDash([]);
+        const [mx, my] = uv(u + 1, v + 0.5);
+        ctx.fillStyle = '#ffcf6b';
+        ctx.beginPath(); ctx.arc(cx(mx), cy(my), Math.max(2.5, cs * 0.12), 0, Math.PI * 2); ctx.fill();
+        const [tx, ty] = uv(u + 1, L === 0 ? 0 : (u + 1) * S / L);
+        ctx.fillStyle = '#e9e9f0';
+        ctx.beginPath(); ctx.arc(cx(tx), cy(ty), Math.max(2, cs * 0.08), 0, Math.PI * 2); ctx.fill();
+      }
+
+      // endpoint handles
+      for (const [x, y] of [cells[0], cells[cells.length - 1]]) {
+        ctx.strokeStyle = 'rgba(233,233,240,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx(x), cy(y), Math.max(7, cs * 0.62), 0, Math.PI * 2); ctx.stroke();
+      }
+    }
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+      else ctx.rect(x, y, w, h);
+    }
+
+    function readLine() {
+      const { cells, L, S, Ds, diag } = line;
+      const n = cells.length;
+      const i = shown - 1;
+      let worst = 0, v = 0;
+      for (let u = 0; u < shown; u++) {
+        if (u > 0 && diag[u - 1]) v++;
+        worst = Math.max(worst, Math.abs(v - (L === 0 ? 0 : u * S / L)));
+      }
+      const pending = shown < n;
+      const D = pending ? Ds[i] : null;
+      const lo = -2 * L, hi = 2 * S;
+      const span = Math.max(1, hi - lo);
+      const zeroAt = (-lo / span) * 100;
+      let fillL = zeroAt, fillW = 0, fillC = '#7c7cff';
+      if (pending) {
+        const at = ((D - lo) / span) * 100;
+        fillL = Math.min(at, zeroAt); fillW = Math.abs(at - zeroAt);
+        fillC = D > 0 ? '#ff7cc3' : '#7c7cff';
+      }
+      const dir = line.steep ? 'vertical' : 'horizontal';
+      $('readout').innerHTML = `
+        <span class="k">long axis · short axis</span><span class="v">${L} · ${S}</span>
+        <span class="k">cell</span><span class="v">${shown} of ${n}</span>
+        <span class="k">decision D</span><span class="v ${pending ? (D > 0 ? 'pinkv' : 'violet') : ''}">${pending ? (D > 0 ? '+' : '') + D : '—'}</span>
+        <span class="k">next move</span><span class="v ${pending ? (diag[i] ? 'pinkv' : 'violet') : ''}">${pending ? (diag[i] ? 'diagonal' : 'straight') : 'done'}</span>
+        <div class="meter"><span class="fill" style="left:${fillL}%;width:${fillW}%;background:${fillC}"></span><span class="zero" style="left:${zeroAt}%"></span></div>
+        <div class="meter-cap"><span>−2·${L}</span><span>0</span><span>+2·${S}</span></div>
+        <hr />
+        <span class="k">worst miss so far</span><span class="v pinkv">${worst.toFixed(3)} cell</span>
+        <span class="k">cells ≠ float rounding</span><span class="v violet">${mismatches}</span>
+        <span class="k">multiplies per step</span><span class="v">0</span>
+        <hr />
+        <span class="full">${pending
+          ? `The yellow dot sits halfway between the two candidates. ${diag[i]
+              ? `D is positive, so the line passes beyond it: step <b class="p">diagonally</b> and subtract 2·${L}.`
+              : `D isn't positive, so the line passes short of it: step <b class="v">straight</b> along the ${dir} axis.`} Either way, add 2·${S}.`
+          : `Every cell lies within <b class="p">half a cell</b> of the true line, from additions and sign checks alone. Drag either end, or press Draw it to replay.`}</span>`;
+    }
+
+    // ---------- mode 2: moiré fan ----------
+    let fanBuf = null, fanO = null, fanHold = false, fanT = 0, spacing = 1, lastTouch = -1e9, fanCells = 0, fanLines = 0;
+    function drawFan(now) {
+      if (!fanHold && now - lastTouch > 2500) {
+        fanT += 0.0035;
+        fanO = [
+          Math.round(cols * (0.5 + 0.34 * Math.sin(fanT * 1.3))),
+          Math.round(rows * (0.5 + 0.34 * Math.sin(fanT * 1.9 + 1))),
+        ];
+      }
+      const [o0, o1] = fanO;
+      fanBuf.fill(0);
+      let idx = 0, cells = 0, lines = 0;
+      const plot = (x, y) => { fanBuf[y * cols + x] = col; };
+      let col = 1;
+      const spoke = (x, y) => {
+        if (idx++ % spacing !== 0) return;
+        col = (lines & 1) ? 2 : 1;
+        cells += plotLine(o0, o1, x, y, plot);
+        lines++;
+      };
+      for (let x = 0; x < cols - 1; x++) spoke(x, 0);
+      for (let y = 0; y < rows - 1; y++) spoke(cols - 1, y);
+      for (let x = cols - 1; x > 0; x--) spoke(x, rows - 1);
+      for (let y = rows - 1; y > 0; y--) spoke(0, y);
+      const d = img.data;
+      for (let i = 0, p = 0; i < fanBuf.length; i++, p += 4) {
+        const c = fanBuf[i] === 1 ? VIOLET : fanBuf[i] === 2 ? PINK : BG;
+        d[p] = c[0]; d[p + 1] = c[1]; d[p + 2] = c[2]; d[p + 3] = 255;
+      }
+      ctx.fillStyle = '#05050a'; ctx.fillRect(0, 0, W, H);
+      blit();
+      gridLines(0.1);
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx(o0), cy(o1), Math.max(6, cs * 1.5), 0, Math.PI * 2); ctx.stroke();
+      fanCells = cells; fanLines = lines;
+    }
+    function readFan() {
+      $('readout').innerHTML = `
+        <span class="k">grid</span><span class="v">${cols} × ${rows} cells</span>
+        <span class="k">spokes this frame</span><span class="v violet">${fanLines.toLocaleString()}</span>
+        <span class="k">cells plotted</span><span class="v pinkv">${fanCells.toLocaleString()}</span>
+        <span class="k">multiplies</span><span class="v">0</span>
+        <hr />
+        <span class="full">Every spoke alternates <b class="v">violet</b> and <b class="p">pink</b>, so a perfect renderer would show an even fan. Each spoke is a correct staircase, but neighbours share cells near the hub and their steps fall into step with each other, so the curves you see are the <b>grid's</b> doing. Drag to move the hub; widen the cells to make it worse.</span>`;
+    }
+
+    // ---------- mode 3: times table string art ----------
+    let heat = null, pins = 240, mult = 2, timesHold = false, timesCells = 0;
+    function drawTimes() {
+      if (!timesHold) {
+        mult += 0.0025 * (1 + mult / 20);
+        if (mult > 99) mult = 2;
+        syncMult();
+      }
+      heat.fill(0);
+      // On wide screens, centre the circle in the space right of the panel.
+      const left = W > 700 && !ui.classList.contains('hidden') ? Math.min(cols * 0.4, (380 - ox) / cs) : 0;
+      // On phones the panel sits at the bottom, so use the top half instead.
+      const top = W <= 700 && !ui.classList.contains('hidden') ? rows * 0.54 : rows;
+      const R = Math.min(cols - left, top) * 0.46;
+      const c0 = left + (cols - left) / 2, c1 = top / 2;
+      const P = (a) => [
+        Math.max(0, Math.min(cols - 1, Math.round(c0 + R * Math.cos(a) - 0.5))),
+        Math.max(0, Math.min(rows - 1, Math.round(c1 + R * Math.sin(a) - 0.5))),
+      ];
+      let cells = 0;
+      const plot = (x, y) => { heat[y * cols + x]++; };
+      for (let i = 0; i < pins; i++) {
+        const [x0, y0] = P(Math.PI * 2 * i / pins + Math.PI);
+        const [x1, y1] = P(Math.PI * 2 * ((i * mult) % pins) / pins + Math.PI);
+        cells += plotLine(x0, y0, x1, y1, plot);
+      }
+      let max = 1;
+      for (let i = 0; i < heat.length; i++) if (heat[i] > max) max = heat[i];
+      const norm = 1 / Math.log(1 + max);
+      const d = img.data;
+      for (let i = 0, p = 0; i < heat.length; i++, p += 4) {
+        const h = heat[i];
+        const k = h ? Math.min(255, Math.round(40 + 215 * Math.log(1 + h) * norm)) * 3 : 0;
+        d[p] = HEAT[k]; d[p + 1] = HEAT[k + 1]; d[p + 2] = HEAT[k + 2]; d[p + 3] = 255;
+      }
+      ctx.fillStyle = '#05050a'; ctx.fillRect(0, 0, W, H);
+      blit();
+      gridLines(0.08);
+      timesCells = cells;
+      timesMax = max;
+    }
+    let timesMax = 1;
+    function readTimes() {
+      const named = { 2: 'a cardioid', 3: 'a nephroid', 4: 'a three-cusped epicycloid', 5: 'four cusps' }[Math.round(mult)];
+      const near = Math.abs(mult - Math.round(mult)) < 0.02 && named;
+      $('readout').innerHTML = `
+        <span class="k">rule</span><span class="v">pin i → pin ${mult.toFixed(2)}·i</span>
+        <span class="k">lines</span><span class="v violet">${pins}</span>
+        <span class="k">cells plotted</span><span class="v pinkv">${timesCells.toLocaleString()}</span>
+        <span class="k">busiest cell</span><span class="v">${timesMax} lines</span>
+        <hr />
+        <span class="full">${near ? `At ×${Math.round(mult)} the envelope is <b class="p">${named}</b>. ` : ''}Each pin is joined to the pin at its multiple, every line rasterised by the same integer staircase. Brightness is how many staircases cross a cell: nothing draws the curve, it's where the stairs pile up. Drag sideways to scrub the multiplier.</span>`;
+    }
+    function syncMult() {
+      $('mult').value = Math.round(Math.min(99, mult) * 100);
+      $('multV').textContent = mult.toFixed(2);
+    }
+
+    // ---------- legend / hint / code per mode ----------
+    const LEGEND = {
+      line: `<div><i class="cell"></i>a lit cell, start violet → end pink</div>
+             <div><i class="true"></i>the true line, centre to centre</div>
+             <div><i class="cand"></i>the two cells it could step to next</div>
+             <div><i class="mid"></i>the midpoint between them</div>
+             <div><i class="err"></i>miss: cell centre to the line (≤ ½)</div>`,
+      fan: `<div><i class="vi"></i>odd spokes</div><div><i class="pk"></i>even spokes</div>`,
+      times: `<div><i class="heat"></i>staircases crossing a cell: few → many</div>`,
+    };
+    const HINT = {
+      line: 'drag anywhere to move the nearer end · space plays · H hides the panel',
+      fan: 'drag to move the hub · it drifts on its own when left alone · H hides the panel',
+      times: 'drag sideways to scrub the multiplier · space holds it · H hides the panel',
+    };
+    const CODE = {
+      line: `<span class="c">// Bresenham, 1962 — slope between 0 and 1:</span><br />D = 2·dy − dx<br />for each x: plot(x, y)<br />&nbsp;&nbsp;if <em>D &gt; 0</em>: y += 1; D −= 2·dx<br />&nbsp;&nbsp;D += 2·dy &nbsp;<span class="c">// that's all</span>`,
+      fan: `<span class="c">// one hub, a spoke to every edge cell:</span><br />for each border cell b:<br />&nbsp;&nbsp;<u>bresenham</u>(hub, b, colour = <em>i mod 2</em>)`,
+      times: `<span class="c">// a times table on a circle of n pins:</span><br />for i in 0 … n−1:<br />&nbsp;&nbsp;<u>bresenham</u>(pin(i), pin(<em>m·i</em> mod n))<br />&nbsp;&nbsp;<span class="c">// each cell counts its crossings</span>`,
+    };
+
+    function setMode(m) {
+      cellFor[mode] = cs;
+      mode = m;
+      for (const b of document.querySelectorAll('#modes button')) b.classList.toggle('on', b.dataset.m === m);
+      $('paneLine').classList.toggle('on', m === 'line');
+      $('paneFan').classList.toggle('on', m === 'fan');
+      $('paneTimes').classList.toggle('on', m === 'times');
+      $('legend').innerHTML = LEGEND[m];
+      $('hint').textContent = HINT[m];
+      $('code').innerHTML = CODE[m];
+      setCell(cellFor[m]);
+    }
+    function setCell(v) {
+      cs = v;
+      $('cell').value = v;
+      $('cellV').textContent = v + ' px';
+      layout();
+      if (mode === 'line') rebuild(false);
+      if (mode === 'fan' && fanO) fanO = [Math.min(cols - 1, fanO[0]), Math.min(rows - 1, fanO[1])];
+      if (!fanO) fanO = [Math.floor(cols / 2), Math.floor(rows / 2)];
+      dirty = true;
+    }
+
+    // ---------- controls ----------
+    for (const b of document.querySelectorAll('#modes button')) b.addEventListener('click', () => setMode(b.dataset.m));
+    $('cell').addEventListener('input', (e) => setCell(+e.target.value));
+    function setPlaying(p) {
+      playing = p;
+      $('play').textContent = p ? '❚❚ Pause' : '▶ Draw it';
+    }
+    $('play').addEventListener('click', () => {
+      if (playing) { setPlaying(false); return; }
+      if (shown >= line.cells.length) shown = 1;
+      acc = 0;
+      setPlaying(true);
+      dirty = true;
+    });
+    $('step').addEventListener('click', () => {
+      setPlaying(false);
+      shown = shown >= line.cells.length ? 1 : shown + 1;
+      dirty = true;
+    });
+    $('shuffle').addEventListener('click', () => {
+      const wide = W > 700;
+      const rx = () => (wide ? 0.36 : 0.06) + Math.random() * (wide ? 0.6 : 0.88);
+      const ry = () => (wide ? 0.06 : 0.04) + Math.random() * (wide ? 0.88 : 0.44);
+      A = { x: rx(), y: ry() }; B = { x: rx(), y: ry() };
+      rebuild(false);
+      shown = 1; acc = 0; setPlaying(true);
+    });
+    const paceFrom = (v) => Math.round(Math.pow(10, v / 100 * 2.3) * 1.2 * 10) / 10;
+    $('pace').addEventListener('input', (e) => {
+      pace = paceFrom(+e.target.value);
+      $('paceV').textContent = pace + ' cells/s';
+    });
+    pace = paceFrom(40); $('paceV').textContent = pace + ' cells/s';
+    $('tTrue').addEventListener('click', () => { showTrue = !showTrue; $('tTrue').classList.toggle('on', showTrue); dirty = true; });
+    $('tErr').addEventListener('click', () => { showErr = !showErr; $('tErr').classList.toggle('on', showErr); dirty = true; });
+
+    $('space').addEventListener('input', (e) => {
+      spacing = +e.target.value;
+      $('spaceV').textContent = spacing === 1 ? 'every cell' : `every ${spacing}th cell`.replace('2th', '2nd').replace('3th', '3rd');
+      dirty = true;
+    });
+    function setFanHold(h) { fanHold = h; $('playFan').textContent = h ? '▶ Drift' : '❚❚ Hold still'; }
+    $('playFan').addEventListener('click', () => setFanHold(!fanHold));
+    $('shuffleFan').addEventListener('click', () => { fanT = Math.random() * 1000; lastTouch = -1e9; dirty = true; });
+
+    $('pins').addEventListener('input', (e) => { pins = +e.target.value; $('pinsV').textContent = pins; dirty = true; });
+    $('mult').addEventListener('input', (e) => { mult = +e.target.value / 100; syncMult(); setTimesHold(true); dirty = true; });
+    function setTimesHold(h) { timesHold = h; $('playTimes').textContent = h ? '▶ Drift' : '❚❚ Hold still'; }
+    $('playTimes').addEventListener('click', () => setTimesHold(!timesHold));
+    $('shuffleTimes').addEventListener('click', () => {
+      const picks = [2, 3, 4, 5, 7, 9, 17, 21, 26, 34, 41, 51, 61, 73, 86, 91];
+      mult = picks[Math.floor(Math.random() * picks.length)] + (Math.random() < 0.4 ? 0.5 : 0);
+      pins = [120, 200, 240, 300, 360, 480][Math.floor(Math.random() * 6)];
+      $('pins').value = pins; $('pinsV').textContent = pins;
+      syncMult(); setTimesHold(true); dirty = true;
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key !== ' ' || story.classList.contains('open')) return;
+      e.preventDefault();
+      if (mode === 'line') $('play').click();
+      else if (mode === 'fan') setFanHold(!fanHold);
+      else setTimesHold(!timesHold);
+    });
+
+    // panel collapse
+    $('collapse').addEventListener('click', () => { ui.classList.add('hidden'); $('showUi').classList.add('on'); });
+    $('showUi').addEventListener('click', () => { ui.classList.remove('hidden'); $('showUi').classList.remove('on'); });
+    new MutationObserver(() => { $('showUi').classList.toggle('on', ui.classList.contains('hidden')); dirty = true; }).observe(ui, { attributes: true, attributeFilter: ['class'] });
+
+    // ---------- pointer ----------
+    let drag = null;
+    cv.addEventListener('pointerdown', (e) => {
+      cv.setPointerCapture(e.pointerId);
+      const p = { x: e.clientX, y: e.clientY };
+      if (mode === 'line') {
+        const dA = Math.hypot(p.x - A.x * W, p.y - A.y * H), dB = Math.hypot(p.x - B.x * W, p.y - B.y * H);
+        drag = dA < dB ? 'A' : 'B';
+        setPlaying(false);
+        const f = { x: p.x / W, y: p.y / H };
+        if (drag === 'A') A = f; else B = f;
+        rebuild(false);
+      } else if (mode === 'fan') {
+        drag = 'fan'; fanO = toCell(p.x, p.y); lastTouch = performance.now(); dirty = true;
+      } else {
+        drag = { x: p.x, m: mult }; setTimesHold(true);
+      }
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const p = { x: e.clientX, y: e.clientY };
+      if (mode === 'line') {
+        const f = { x: p.x / W, y: p.y / H };
+        if (drag === 'A') A = f; else B = f;
+        rebuild(false);
+      } else if (mode === 'fan') {
+        fanO = toCell(p.x, p.y); lastTouch = performance.now(); dirty = true;
+      } else if (typeof drag === 'object') {
+        mult = Math.max(2, Math.min(99, drag.m + (p.x - drag.x) / W * 12));
+        syncMult(); dirty = true;
+      }
+    });
+    const end = () => { drag = null; };
+    cv.addEventListener('pointerup', end);
+    cv.addEventListener('pointercancel', end);
+
+    // ---------- loop ----------
+    let dirty = true, last = performance.now(), lastRead = 0;
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      if (mode === 'line') {
+        if (playing) {
+          acc += dt * pace;
+          while (acc >= 1) {
+            acc -= 1;
+            if (shown < line.cells.length) shown++;
+            if (shown >= line.cells.length) { setPlaying(false); acc = 0; break; }
+          }
+          dirty = true;
+        }
+        if (dirty) { drawLine(); readLine(); dirty = false; }
+      } else if (mode === 'fan') {
+        const moving = !fanHold && now - lastTouch > 2500;
+        if (moving || dirty) { drawFan(now); dirty = false; }
+        if (now - lastRead > 200) { readFan(); lastRead = now; }
+      } else {
+        if (!timesHold || dirty) { drawTimes(); dirty = false; }
+        if (now - lastRead > 200) { readTimes(); lastRead = now; }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', () => { resize(); if (mode === 'line') rebuild(false); });
+    resize();
+    defaultEnds();
+    fanO = [Math.floor(cols / 2), Math.floor(rows / 2)];
+    setMode('line');
+    shown = 1;
+    setPlaying(true);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
