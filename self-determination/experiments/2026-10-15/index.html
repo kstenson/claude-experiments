@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Said It Before — Experiment 090</title>
+<meta name="description" content="Lempel and Ziv's 1977 compressor, one pointer at a time: replace anything already said with 'go back this far, copy this many, then add one letter' — drawn as arcs leaping back across the text, then decoded from the pointers alone." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none; cursor: crosshair;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 30%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.wide { flex: 2 1 55%; }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  #rNote { min-height: 3.2em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+  }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 18px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.orig { background: rgba(233,233,240,0.4); }
+  .legend i.rdp { background: #a9a9ff; box-shadow: 0 0 6px #7c7cff; }
+  .legend i.tube { height: 10px; background: rgba(124,124,255,0.22); border-radius: 5px; }
+  .legend i.naive { background: #ff7cc3; }
+  .legend .off { opacity: 0.35; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .legend, .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+
+  /* ---- Experiment 090 additions ---- */
+  .seg.five button { font-size: 0.72rem; padding: 7px 2px; }
+  textarea#mine {
+    display: none; width: 100%; min-height: 84px; resize: vertical;
+    background: rgba(255,255,255,0.04); color: #e9e9f0;
+    border: 1px solid rgba(124,124,255,0.35); border-radius: 10px;
+    padding: 8px 10px; font: 0.76rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    outline: none;
+  }
+  textarea#mine.on { display: block; }
+  textarea#mine:focus { border-color: rgba(124,124,255,0.7); }
+  .bars { grid-column: 1 / -1; display: grid; gap: 4px; margin-top: 2px; }
+  .bar { position: relative; height: 9px; border-radius: 5px; background: rgba(255,255,255,0.05); overflow: hidden; }
+  .bar span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; transition: width 0.15s ease; }
+  .bar.raw span { background: rgba(233,233,240,0.45); }
+  .bar.lz span { background: linear-gradient(90deg, #7c7cff, #ff7cc3); }
+  .bar.lz.over span { background: #ff7cc3; }
+  .legend i.near { width: 12px; height: 12px; border-radius: 3px; background: #7c7cff; margin: 0 3px; }
+  .legend i.far { width: 12px; height: 12px; border-radius: 3px; background: #ff7cc3; margin: 0 3px; }
+  .legend i.lit { width: 12px; height: 12px; border-radius: 3px; background: #ffffff; margin: 0 3px; }
+  .legend i.win { width: 12px; height: 12px; border-radius: 3px; background: rgba(124,124,255,0.22); margin: 0 3px; }
+  .legend i.trace { height: 2px; background: #ffe9a8; box-shadow: 0 0 6px #ffcf6b; }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+  <button id="showUi">☰ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Said It Before</h1>
+    <p class="sub">Experiment № 090 · October 15, 2026</p>
+
+    <div class="controls">
+      <div class="seg five" id="sources">
+        <button data-s="rhyme" class="on">Rhyme</button>
+        <button data-s="code">Code</button>
+        <button data-s="laugh">Laughter</button>
+        <button data-s="noise">Noise</button>
+        <button data-s="mine">Yours</button>
+      </div>
+      <textarea id="mine" maxlength="3000" spellcheck="false" placeholder="Type or paste anything — repetition is what it feeds on."></textarea>
+
+      <div class="code">
+        <span class="c">// Lempel &amp; Ziv, 1977 — at each position i:</span><br />
+        look back up to <u>window</u> letters<br />
+        find the longest run that matches here<br />
+        emit <em>(back d, copy l, next c)</em><br />
+        i += l + 1 &nbsp;<span class="c">// and repeat</span>
+      </div>
+
+      <div class="seg" id="views">
+        <button data-v="text" class="on">Text</button>
+        <button data-v="arcs">Arc diagram</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn wide" id="play">❚❚ Pause</button>
+        <button class="btn" id="step">Step</button>
+        <button class="btn" id="finish">Finish</button>
+        <button class="btn pink wide" id="decode">⟲ Decode from the pointers</button>
+      </div>
+
+      <div class="row">
+        <label>Window <b id="winV">1024 letters</b></label>
+        <input type="range" id="win" min="3" max="12" value="10" />
+      </div>
+      <div class="row">
+        <label>Pace <b id="paceV">19 tokens/s</b></label>
+        <input type="range" id="pace" min="0" max="100" value="35" />
+      </div>
+
+      <div class="toggles">
+        <div class="toggle violet on" id="tArcs"><i></i>arcs</div>
+        <div class="toggle rose on" id="tWin"><i></i>search window</div>
+      </div>
+
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="near"></i>copied from close by</div>
+    <div><i class="far"></i>copied from far back</div>
+    <div><i class="lit"></i>new letter (literal)</div>
+    <div><i class="win"></i>search window</div>
+    <div><i class="trace"></i>hover trace to the original</div>
+  </div>
+  <p class="hint" id="hint">hover any letter to trace it back to where it was first written · space plays · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 090 · The story</p>
+      <h2>Said It Before</h2>
+
+      <h3>Why I picked it</h3>
+      <p>In 1977 Abraham Lempel and Jacob Ziv published a short paper in the IEEE Transactions on Information Theory with a deliberately dry title, "A Universal Algorithm for Sequential Data Compression." The idea inside it is in almost every file you have ever downloaded. ZIP, gzip, PNG and the compression on the web pages you load are all descendants of it, usually with Huffman's codes stacked on top to squeeze the pointers.</p>
+      <p>This collection already has Huffman and the Burrows–Wheeler transform, both of which work on letter statistics. Neither of them has the plainer idea underneath: most of what anyone writes, they have already written, so say "like before" instead.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>It keeps no dictionary. The text already written <em>is</em> the dictionary, and the decoder builds the same one for free just by writing out what it decodes. Press decode and the page wipes itself, then rebuilds every letter using nothing but the list of pointers. No table travels with the message, because none is needed.</p>
+      <p>My favourite part is in the Laughter source. A row of "hahaha" takes a couple of tokens to get going, and after that a single instruction covers it: go back two, copy the next thirty-odd letters. The copy is longer than the distance, so it reads letters it is still in the middle of writing. That looks like a bug and is in fact the cleverest part. It is how one pointer can stand for any amount of repetition. Switch to Noise and the arcs vanish and the output comes out <em>bigger</em> than the input. That's the honest part. A compressor can only find structure that is actually there.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Compression is mostly noticing that you've said it before. A long text that is cheap to describe is one that keeps pointing back at itself, which is why the rhyme shrinks and the noise doesn't. It also explains a trick worth keeping: you often don't have to send someone a shared reference. If you both build it the same way from what has already gone between you, it is already there on both ends.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.tagName === 'TEXTAREA') return;
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- LZ77 ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const stage = $('stage');
+    const ui = $('ui');
+    const cv = document.createElement('canvas');
+    stage.appendChild(cv);
+    const ctx = cv.getContext('2d');
+    const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+
+    const MAXLEN = 255;          // copy lengths fit in one byte
+    const SOURCES = {
+      rhyme:
+`This is the seed.
+This is the rain that woke the seed.
+This is the cloud that dropped the rain that woke the seed.
+This is the wind that pushed the cloud that dropped the rain that woke the seed.
+This is the sea that fed the wind that pushed the cloud that dropped the rain that woke the seed.
+This is the moon that pulled the sea that fed the wind that pushed the cloud that dropped the rain that woke the seed.
+And this is the tree that grew from the seed that the rain woke, under the cloud, in the wind, by the sea, beneath the moon.`,
+      code:
+`function blur(src, dst, w, h) {
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      let sum = 0;
+      sum += src[i - w - 1] + src[i - w] + src[i - w + 1];
+      sum += src[i - 1]     + src[i]     + src[i + 1];
+      sum += src[i + w - 1] + src[i + w] + src[i + w + 1];
+      dst[i] = sum / 9;
+    }
+  }
+}
+
+function sharpen(src, dst, w, h) {
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      let sum = 5 * src[i];
+      sum -= src[i - w] + src[i - 1] + src[i + 1] + src[i + w];
+      dst[i] = sum;
+    }
+  }
+}`,
+      laugh:
+`ha ha ha ha ha ha ha ha ha ha ha ha ha ha!
+hahahahahahahahahahahahahahahahahahahaha.
+Nooooooooooooooooooooooooooooooooooooooo.
+abcabcabcabcabcabcabcabcabcabcabcabcabc
+tick tock tick tock tick tock tick tock tick tock
+zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+ha ha ha, tick tock, abc, zzz. Nooo!`,
+    };
+
+    function noise(n) {
+      const a = 'abcdefghijklmnopqrstuvwxyz      ';
+      let s = '';
+      for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)];
+      return s;
+    }
+
+    let W = 0, H = 0, DPR = 1;
+    let srcKey = 'rhyme';
+    let text = SOURCES.rhyme;
+    let mine = 'Type here. Type here again. Say it again, and again, and again — the more you repeat yourself, the less it costs.';
+    let win = 1024;
+    let tokens = [], tokOf = new Int32Array(0);
+    let view = 'text';
+    let phase = 'encode';
+    let k = 0, acc = 0;          // encode: tokens finished, progress into the next one
+    let dch = 0, dacc = 0;       // decode: characters rebuilt
+    let out = [];
+    let verified = null;
+    let playing = true;
+    let rate = 19;
+    let showArcs = true, showWin = true;
+    let hover = -1;
+    let dirty = true;
+
+    // ---------- the algorithm ----------
+    function parse() {
+      const s = text, n = s.length;
+      tokens = [];
+      tokOf = new Int32Array(n);
+      let cmp = 0, i = 0;
+      while (i < n) {
+        let bestL = 0, bestD = 0;
+        const lo = Math.max(0, i - win);
+        const maxL = Math.min(MAXLEN, n - 1 - i);   // always leave a "next" letter
+        if (maxL > 0) {
+          // Scan nearest first; only a strictly longer match replaces the best,
+          // so ties go to the closest copy (small distances are cheapest later).
+          for (let j = i - 1; j >= lo; j--) {
+            let l = 0;
+            // j + l may run past i: the copy is allowed to overlap itself.
+            while (l < maxL && s.charCodeAt(j + l) === s.charCodeAt(i + l)) l++;
+            cmp += l + 1;
+            if (l > bestL) { bestL = l; bestD = i - j; if (l === maxL) break; }
+          }
+        }
+        const t = { pos: i, d: bestD, l: bestL, c: s[i + bestL], cmp };
+        for (let q = i; q <= i + bestL; q++) tokOf[q] = tokens.length;
+        tokens.push(t);
+        i += bestL + 1;
+      }
+    }
+
+    const offBits = () => Math.round(Math.log2(win));
+    const tokBits = () => offBits() + 8 + 8;
+
+    // ---------- layout ----------
+    let R = { x: 0, y: 0, w: 0, h: 0 };
+    let fs = 14, cw = 8, lh = 20;
+    let px = new Float32Array(0), py = new Float32Array(0);
+
+    function region() {
+      if (W <= 700) return { x: 14, y: 16, w: W - 28, h: H * 0.54 - 24 };
+      const left = Math.min(400, Math.max(24, W * 0.36));
+      return { x: left, y: 52, w: W - left - 32, h: H - 52 - 150 };
+    }
+
+    function wrap(cols, store) {
+      const s = text, n = s.length;
+      let col = 0, row = 0;
+      for (let i = 0; i < n; i++) {
+        const ch = s[i];
+        if (ch === '\n') {
+          if (store) { px[i] = col; py[i] = row; }
+          row++; col = 0; continue;
+        }
+        if (ch !== ' ' && (i === 0 || s[i - 1] === ' ' || s[i - 1] === '\n')) {
+          let wl = 0;
+          while (i + wl < n && s[i + wl] !== ' ' && s[i + wl] !== '\n') wl++;
+          if (col > 0 && col + wl > cols) { row++; col = 0; }
+        }
+        if (col >= cols) {
+          if (ch === ' ') { if (store) { px[i] = col; py[i] = row; } col++; continue; }
+          row++; col = 0;
+        }
+        if (store) { px[i] = col; py[i] = row; }
+        col++;
+      }
+      return row + 1;
+    }
+
+    function layoutText() {
+      R = region();
+      const n = text.length;
+      px = new Float32Array(n); py = new Float32Array(n);
+      let cols = 8, rows = 1;
+      for (fs = 22; fs >= 6; fs -= 0.5) {
+        ctx.font = `${fs}px ${MONO}`;
+        cw = ctx.measureText('M').width;
+        lh = fs * 1.55;
+        cols = Math.max(8, Math.floor(R.w / cw));
+        rows = wrap(cols, false);
+        if (rows * lh <= R.h) break;
+      }
+      wrap(cols, true);
+      const usedW = Math.min(R.w, cols * cw);
+      const ox = R.x + Math.max(0, (R.w - usedW) / 2) * 0.0;
+      const oy = R.y + Math.max(0, (R.h - rows * lh) / 2);
+      for (let i = 0; i < n; i++) { px[i] = ox + px[i] * cw; py[i] = oy + py[i] * lh; }
+      dirty = true;
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      layoutText();
+    }
+
+    // ---------- colours ----------
+    function mix(d) {
+      const t = win > 1 ? Math.min(1, Math.log(Math.max(1, d)) / Math.log(win)) : 0;
+      return [124 + 131 * t, 124 + 10 * Math.sin(t * Math.PI), 255 - 60 * t];
+    }
+    const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+
+    // ---------- state helpers ----------
+    function current() {
+      const n = text.length;
+      if (phase === 'encode') return k < tokens.length ? tokens[k] : null;
+      return dch < n ? tokens[tokOf[dch]] : null;
+    }
+    function known() { return phase === 'encode' ? (k < tokens.length ? tokens[k].pos : text.length) : dch; }
+    function charAt(i) { return phase === 'decode' ? out[i] : text[i]; }
+
+    function trace(i) {
+      const chain = [i];
+      for (let guard = 0; guard < 100000; guard++) {
+        const t = tokens[tokOf[i]];
+        if (i >= t.pos + t.l) break;
+        i -= t.d;
+        chain.push(i);
+      }
+      return chain;
+    }
+
+    function decodeOne() {
+      const t = tokens[tokOf[dch]];
+      // Decode uses the token list only — never the original text.
+      out[dch] = dch < t.pos + t.l ? out[dch - t.d] : t.c;
+      dch++;
+      if (dch >= text.length) { verified = out.join('') === text; playing = false; }
+    }
+
+    // ---------- drawing ----------
+    function quadPath(x1, y1, x2, y2, upto) {
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const bulge = Math.min(len * 0.38 + 8, 220);
+      const cx = mx + (dy / len) * bulge, cy = my + (-dx / len) * bulge;
+      const N = 28, end = Math.max(1, Math.round(N * upto));
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      for (let s = 1; s <= end; s++) {
+        const t = s / N, u = 1 - t;
+        ctx.lineTo(u * u * x1 + 2 * u * t * cx + t * t * x2, u * u * y1 + 2 * u * t * cy + t * t * y2);
+      }
+    }
+
+    function spanRects(a, l) {
+      const rs = [];
+      let cur = null;
+      for (let i = a; i < a + l; i++) {
+        if (text[i] === '\n') { cur = null; continue; }
+        if (cur && py[i] === cur.y && Math.abs(px[i] - (cur.x + cur.w)) < 0.5) cur.w += cw;
+        else { cur = { x: px[i], y: py[i], w: cw }; rs.push(cur); }
+      }
+      return rs;
+    }
+
+    function charCenter(i) { return [px[i] + cw / 2, py[i] + lh * 0.12]; }
+
+    function drawTextView(cur, lim) {
+      const n = text.length;
+      // search window
+      if (showWin && cur) {
+        ctx.fillStyle = 'rgba(124,124,255,0.085)';
+        for (const r of spanRects(Math.max(0, cur.pos - win), cur.pos - Math.max(0, cur.pos - win))) ctx.fillRect(r.x, r.y, r.w, lh);
+      }
+      // copy tints
+      const done = phase === 'encode' ? k : tokens.length;
+      for (let q = 0; q < done; q++) {
+        const t = tokens[q];
+        if (!t.l) continue;
+        if (phase === 'decode' && t.pos >= dch) break;
+        const lmax = phase === 'decode' ? Math.min(t.l, dch - t.pos) : t.l;
+        ctx.fillStyle = rgba(mix(t.d), 0.13);
+        for (const r of spanRects(t.pos, lmax)) ctx.fillRect(r.x + 0.5, r.y + 1, r.w - 1, lh - 2);
+      }
+      // letters
+      ctx.font = `${fs}px ${MONO}`;
+      ctx.textBaseline = 'top';
+      const ty = (lh - fs) / 2;
+      for (let i = 0; i < n; i++) {
+        const ch = text[i];
+        if (ch === '\n' || ch === ' ') continue;
+        if (i >= lim) {
+          if (phase === 'decode') {
+            ctx.fillStyle = 'rgba(233,233,240,0.07)';
+            ctx.fillRect(px[i] + cw * 0.2, py[i] + lh * 0.72, cw * 0.6, 1);
+          } else {
+            ctx.fillStyle = 'rgba(233,233,240,0.26)';
+            ctx.fillText(ch, px[i], py[i] + ty);
+          }
+          continue;
+        }
+        const t = tokens[tokOf[i]];
+        ctx.fillStyle = i === t.pos + t.l ? '#ffffff' : rgba(mix(t.d), 0.95);
+        ctx.fillText(charAt(i), px[i], py[i] + ty);
+      }
+      // arcs
+      if (showArcs) {
+        ctx.globalCompositeOperation = 'lighter';
+        for (let q = 0; q < done; q++) {
+          const t = tokens[q];
+          if (!t.l) continue;
+          if (phase === 'decode' && t.pos + t.l > dch) break;
+          const h = Math.floor(t.l / 2);
+          const [x1, y1] = charCenter(t.pos - t.d + h), [x2, y2] = charCenter(t.pos + h);
+          quadPath(x1, y1, x2, y2, 1);
+          ctx.strokeStyle = rgba(mix(t.d), 0.32);
+          ctx.lineWidth = 0.7 + Math.sqrt(t.l) * 0.45;
+          ctx.stroke();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      // the token being worked on
+      if (cur) {
+        const p = phase === 'encode' ? Math.min(1, acc) : 1;
+        if (cur.l) {
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = 'rgba(255,124,195,0.9)';
+          for (const r of spanRects(cur.pos - cur.d, cur.l)) ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, lh - 1);
+          ctx.strokeStyle = 'rgba(169,169,255,0.95)';
+          for (const r of spanRects(cur.pos, cur.l)) ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, lh - 1);
+          let a, b;
+          if (phase === 'decode' && dch < cur.pos + cur.l) { a = dch - cur.d; b = dch; }
+          else { const h = Math.floor(cur.l / 2); a = cur.pos - cur.d + h; b = cur.pos + h; }
+          const [x1, y1] = charCenter(a), [x2, y2] = charCenter(b);
+          quadPath(x1, y1, x2, y2, p);
+          ctx.strokeStyle = 'rgba(255,233,168,0.95)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        const li = cur.pos + cur.l;
+        if (text[li] !== '\n') {
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(px[li] + 0.5, py[li] + 0.5, cw - 1, lh - 1);
+        }
+      }
+      // hover trace
+      if (hover >= 0 && hover < lim) {
+        const chain = trace(hover);
+        ctx.strokeStyle = 'rgba(255,233,168,0.95)';
+        ctx.lineWidth = 1.6;
+        ctx.shadowColor = '#ffcf6b'; ctx.shadowBlur = 8;
+        for (let c = 0; c + 1 < chain.length; c++) {
+          const [x1, y1] = charCenter(chain[c + 1]), [x2, y2] = charCenter(chain[c]);
+          quadPath(x1, y1, x2, y2, 1);
+          ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+        for (let c = 0; c < chain.length; c++) {
+          const i = chain[c];
+          ctx.strokeStyle = c === chain.length - 1 ? '#ffffff' : 'rgba(255,233,168,0.9)';
+          ctx.strokeRect(px[i] + 0.5, py[i] + 0.5, cw - 1, lh - 1);
+        }
+      }
+    }
+
+    function drawArcView(cur, lim) {
+      const n = text.length;
+      if (!n) return;
+      const sx = R.w / n;
+      const base = R.y + R.h - 34;
+      const X = (i) => R.x + i * sx;
+      let maxR = 1;
+      for (const t of tokens) if (t.l) maxR = Math.max(maxR, (t.d + t.l) * sx / 2);
+      const ky = Math.min(1.8, (base - R.y - 6) / maxR);
+
+      const band = (t, lmax) => {
+        const s = t.pos - t.d;
+        const a0 = X(s), a1 = X(t.pos + lmax), b0 = X(s + lmax), b1 = X(t.pos);
+        const ro = (a1 - a0) / 2;
+        ctx.beginPath();
+        ctx.ellipse(a0 + ro, base, ro, ro * ky, 0, Math.PI, 0, false);
+        if (b1 > b0) {
+          const ri = (b1 - b0) / 2;
+          ctx.lineTo(b1, base);
+          ctx.ellipse(b0 + ri, base, ri, ri * ky, 0, 0, Math.PI, true);
+        }
+        ctx.closePath();
+      };
+
+      // window
+      if (showWin && cur) {
+        const w0 = X(Math.max(0, cur.pos - win)), w1 = X(cur.pos);
+        ctx.fillStyle = 'rgba(124,124,255,0.07)';
+        ctx.fillRect(w0, R.y, w1 - w0, base - R.y);
+        ctx.fillStyle = 'rgba(124,124,255,0.45)';
+        ctx.fillRect(w0, base + 2, w1 - w0, 3);
+      }
+      // bands
+      if (showArcs) {
+        ctx.globalCompositeOperation = 'lighter';
+        const done = phase === 'encode' ? k : tokens.length;
+        for (let q = 0; q < done; q++) {
+          const t = tokens[q];
+          if (!t.l) continue;
+          if (phase === 'decode' && t.pos >= dch) break;
+          const lmax = phase === 'decode' ? Math.min(t.l, dch - t.pos) : t.l;
+          const c = mix(t.d);
+          band(t, lmax);
+          ctx.fillStyle = rgba(c, 0.13);
+          ctx.fill();
+          ctx.strokeStyle = rgba(c, 0.38);
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      if (cur && cur.l) {
+        const lmax = phase === 'decode' ? Math.max(1, Math.min(cur.l, dch - cur.pos)) : cur.l;
+        band(cur, lmax);
+        ctx.fillStyle = 'rgba(255,233,168,0.22)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,233,168,0.95)';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+      }
+      // letter strip
+      const fsA = Math.min(13, sx / 0.62);
+      ctx.font = `${fsA}px ${MONO}`;
+      ctx.textBaseline = 'top';
+      for (let i = 0; i < n; i++) {
+        let col;
+        if (i >= lim) col = phase === 'decode' ? 'rgba(233,233,240,0.05)' : 'rgba(233,233,240,0.2)';
+        else {
+          const t = tokens[tokOf[i]];
+          col = i === t.pos + t.l ? '#ffffff' : rgba(mix(t.d), 0.95);
+        }
+        ctx.fillStyle = col;
+        if (fsA >= 6) {
+          const ch = i < lim || phase === 'encode' ? charAt(i) || text[i] : '';
+          if (ch && ch !== ' ' && ch !== '\n') ctx.fillText(ch, X(i) + (sx - fsA * 0.6) / 2, base + 9);
+        } else {
+          ctx.fillRect(X(i), base + 9, Math.max(1, sx), text[i] === ' ' || text[i] === '\n' ? 2 : 12);
+        }
+      }
+      // cursor
+      if (lim < n) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(X(lim) - 1, base - 6, 2, 30);
+      }
+      // hover
+      if (hover >= 0 && hover < lim) {
+        const chain = trace(hover);
+        ctx.strokeStyle = 'rgba(255,233,168,0.95)';
+        ctx.lineWidth = 1.6;
+        ctx.shadowColor = '#ffcf6b'; ctx.shadowBlur = 8;
+        for (let c = 0; c + 1 < chain.length; c++) {
+          const a = X(chain[c + 1] + 0.5), b = X(chain[c] + 0.5), r = (b - a) / 2;
+          ctx.beginPath();
+          ctx.ellipse(a + r, base, r, r * ky, 0, Math.PI, 0, false);
+          ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff3d0';
+        for (const i of chain) { ctx.beginPath(); ctx.arc(X(i + 0.5), base, 3, 0, Math.PI * 2); ctx.fill(); }
+      }
+    }
+
+    function draw() {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      const g = ctx.createRadialGradient(W * 0.7, H * 0.35, 0, W * 0.7, H * 0.35, Math.max(W, H) * 0.8);
+      g.addColorStop(0, 'rgba(124,124,255,0.05)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      const cur = current(), lim = known();
+      if (view === 'text') drawTextView(cur, lim); else drawArcView(cur, lim);
+    }
+
+    // ---------- readout ----------
+    const esc = (c) => c === '\n' ? '↵' : c === ' ' ? '␣' : c.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    function readout() {
+      const n = text.length;
+      const done = phase === 'encode' ? k : tokens.length;
+      const covered = phase === 'encode' ? (k < tokens.length ? tokens[k].pos : n) : n;
+      let copies = 0, best = null;
+      for (let q = 0; q < done; q++) { const t = tokens[q]; if (t.l) { copies++; if (!best || t.l > best.l) best = t; } }
+      const rawB = covered, lzB = Math.ceil(done * tokBits() / 8);
+      const cmp = done ? tokens[done - 1].cmp : 0;
+      const ratio = rawB ? lzB / rawB : 0;
+      const cur = current();
+      let note;
+      if (hover >= 0 && hover < known()) {
+        const chain = trace(hover);
+        const c = esc(charAt(hover));
+        note = chain.length === 1
+          ? `‘<b>${c}</b>’ at ${hover} was written fresh here — a literal.`
+          : `‘<b>${c}</b>’ at ${hover} was copied <b class="v">${chain.length - 1}</b> time${chain.length > 2 ? 's' : ''}; it was first written at <b class="p">${chain[chain.length - 1]}</b>.`;
+      } else if (phase === 'decode' && dch >= n) {
+        note = verified
+          ? `<b>✓ Rebuilt all ${n} letters from ${tokens.length} pointers</b> — identical to the original, and no dictionary was sent.`
+          : `<b class="p">Mismatch</b> — that should never happen.`;
+      } else if (phase === 'decode') {
+        const t = cur;
+        note = dch < t.pos + t.l
+          ? `Writing ${dch}: copy the letter <b class="v">${t.d}</b> back${t.l > t.d ? ' — a letter this same copy wrote a moment ago' : ''}.`
+          : `Writing ${dch}: the token's new letter, ‘<b>${esc(t.c)}</b>’.`;
+      } else if (cur) {
+        note = cur.l
+          ? `At ${cur.pos}: look back <b class="v">${cur.d}</b>, copy <b class="v">${cur.l}</b>, then add ‘<b>${esc(cur.c)}</b>’.${cur.l > cur.d ? ' <b class="p">The copy overlaps itself</b> — it reads letters it is still writing.' : ''}`
+          : `At ${cur.pos}: nothing in the window matches, so write ‘<b>${esc(cur.c)}</b>’ as it is.`;
+      } else {
+        note = ratio < 1
+          ? `Done: <b>${n}</b> letters became <b class="v">${tokens.length}</b> tokens. Hover a letter to trace it, or decode it back.`
+          : `Done — and it came out <b class="p">bigger</b>. There was nothing here to point back at.`;
+      }
+      const over = ratio > 1;
+      $('readout').innerHTML = `
+        <span class="k">Letters in</span><span class="v">${covered} / ${n}</span>
+        <span class="k">Tokens out</span><span class="v violet">${done}</span>
+        <span class="k">Copies · longest</span><span class="v">${copies} · ${best ? best.l + ' from ' + best.d + ' back' : '—'}</span>
+        <span class="k">Comparisons</span><span class="v">${cmp.toLocaleString()}</span>
+        <hr />
+        <span class="k">Raw · 8 bits/letter</span><span class="v">${rawB} B</span>
+        <span class="k">LZ77 · ${tokBits()} bits/token</span><span class="v ${over ? 'pinkv' : 'violet'}">${lzB} B${rawB ? ' · ' + Math.round(ratio * 100) + '%' : ''}</span>
+        <div class="bars">
+          <div class="bar raw"><span style="width:${rawB ? (over ? 100 / ratio : 100) : 0}%"></span></div>
+          <div class="bar lz${over ? ' over' : ''}"><span style="width:${rawB ? (over ? 100 : ratio * 100) : 0}%"></span></div>
+        </div>
+        <hr />
+        <div class="full" id="rNote">${note}</div>`;
+    }
+
+    // ---------- controls ----------
+    function syncPlay() {
+      $('play').textContent = playing ? '❚❚ Pause' : (phase === 'encode' ? '▶ Compress' : '▶ Decode');
+      $('decode').textContent = phase === 'encode' ? '⟲ Decode from the pointers' : '↺ Compress again';
+    }
+
+    function restartEncode(play) {
+      phase = 'encode'; k = 0; acc = 0; verified = null; out = []; dch = 0;
+      playing = play; syncPlay(); dirty = true;
+    }
+
+    function load(key) {
+      srcKey = key;
+      if (key === 'noise') text = noise(640);
+      else if (key === 'mine') text = mine;
+      else text = SOURCES[key];
+      $('mine').classList.toggle('on', key === 'mine');
+      if (key === 'mine') $('mine').value = mine;
+      parse(); layoutText(); hover = -1;
+      restartEncode(true);
+    }
+
+    $('sources').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      for (const x of $('sources').children) x.classList.toggle('on', x === b);
+      load(b.dataset.s);
+    });
+    $('mine').addEventListener('input', () => {
+      mine = $('mine').value.slice(0, 3000) || ' ';
+      text = mine; parse(); layoutText(); hover = -1;
+      phase = 'encode'; k = tokens.length; acc = 0; playing = false; syncPlay(); dirty = true;
+    });
+    $('views').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      for (const x of $('views').children) x.classList.toggle('on', x === b);
+      view = b.dataset.v; hover = -1; dirty = true;
+    });
+
+    $('play').addEventListener('click', () => {
+      if (phase === 'encode' && k >= tokens.length) { k = 0; acc = 0; }
+      if (phase === 'decode' && dch >= text.length) { dch = 0; out = []; verified = null; }
+      playing = !playing; syncPlay(); dirty = true;
+    });
+    $('step').addEventListener('click', () => {
+      playing = false;
+      if (phase === 'encode') {
+        if (k >= tokens.length) { k = 0; }
+        else k++;
+        acc = 0;
+      } else if (dch < text.length) {
+        const t = tokens[tokOf[dch]];
+        while (dch < text.length && dch <= t.pos + t.l) decodeOne();
+      } else { dch = 0; out = []; verified = null; }
+      syncPlay(); dirty = true;
+    });
+    $('finish').addEventListener('click', () => {
+      playing = false;
+      if (phase === 'encode') { k = tokens.length; acc = 0; }
+      else while (dch < text.length) decodeOne();
+      syncPlay(); dirty = true;
+    });
+    $('decode').addEventListener('click', () => {
+      if (phase === 'encode') {
+        phase = 'decode'; k = tokens.length; dch = 0; dacc = 0; out = []; verified = null;
+        playing = true;
+      } else restartEncode(true);
+      syncPlay(); dirty = true;
+    });
+
+    $('win').addEventListener('input', () => {
+      win = 1 << +$('win').value;
+      $('winV').textContent = `${win} letters`;
+      parse();
+      phase = 'encode'; k = tokens.length; acc = 0; out = []; dch = 0; verified = null;
+      playing = false; syncPlay(); dirty = true;
+    });
+    $('pace').addEventListener('input', () => {
+      rate = 1.5 * Math.pow(1.075, +$('pace').value);
+      $('paceV').textContent = `${rate < 10 ? rate.toFixed(1) : Math.round(rate)} tokens/s`;
+    });
+    const toggle = (id, fn) => $(id).addEventListener('click', () => { $(id).classList.toggle('on'); fn($(id).classList.contains('on')); dirty = true; });
+    toggle('tArcs', (v) => { showArcs = v; });
+    toggle('tWin', (v) => { showWin = v; });
+
+    // hover / touch
+    function hit(mx, my) {
+      const n = text.length;
+      if (view === 'text') {
+        for (let i = 0; i < n; i++) {
+          if (mx >= px[i] && mx < px[i] + cw && my >= py[i] && my < py[i] + lh && text[i] !== '\n') return i;
+        }
+        return -1;
+      }
+      const base = R.y + R.h - 34;
+      if (mx < R.x || mx > R.x + R.w || my < R.y || my > base + 40) return -1;
+      return Math.max(0, Math.min(n - 1, Math.floor((mx - R.x) / (R.w / n))));
+    }
+    cv.addEventListener('pointermove', (e) => { const h = hit(e.clientX, e.clientY); if (h !== hover) { hover = h; dirty = true; } });
+    cv.addEventListener('pointerdown', (e) => { hover = hit(e.clientX, e.clientY); dirty = true; });
+    cv.addEventListener('pointerleave', () => { hover = -1; dirty = true; });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target && e.target.tagName === 'TEXTAREA') return;
+      if (story.classList.contains('open')) return;
+      if (e.key === ' ') { e.preventDefault(); $('play').click(); }
+      else if (e.key.toLowerCase() === 's') $('step').click();
+    });
+
+    // panel collapse
+    $('collapse').addEventListener('click', () => { ui.classList.add('hidden'); $('showUi').classList.add('on'); });
+    $('showUi').addEventListener('click', () => { ui.classList.remove('hidden'); $('showUi').classList.remove('on'); });
+    new MutationObserver(() => { $('showUi').classList.toggle('on', ui.classList.contains('hidden')); dirty = true; }).observe(ui, { attributes: true, attributeFilter: ['class'] });
+
+    // ---------- loop ----------
+    let last = performance.now(), lastReadout = 0;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (playing) {
+        if (phase === 'encode') {
+          acc += dt * rate;
+          while (acc >= 1 && k < tokens.length) { k++; acc -= 1; }
+          if (k >= tokens.length) { acc = 0; playing = false; syncPlay(); }
+        } else {
+          dacc += dt * rate * 3;
+          while (dacc >= 1 && dch < text.length) { decodeOne(); dacc -= 1; }
+          if (dch >= text.length) { dacc = 0; playing = false; syncPlay(); }
+        }
+        dirty = true;
+      }
+      if (dirty) {
+        draw();
+        if (!playing || now - lastReadout > 90) { readout(); lastReadout = now; }
+        dirty = false;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    parse();
+    layoutText();
+    syncPlay();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
