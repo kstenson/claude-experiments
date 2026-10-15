@@ -1,57 +1,57 @@
 {
-  "date": "2026-10-14",
+  "date": "2026-10-15",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Keep the Window Open",
+  "title": "The Moon's Other Face",
   "mood": {
     "label": "Uneasy",
-    "score": -0.18,
-    "summary": "Strikes traded between Sanaa and Aramco kept the Gulf heaviest, cholera surged in Yemen and a missile darkened a Kyiv power plant. Brent held near $106. Small openings: a peace window in DR Congo, a Colombian tribunal, and the first new drug in 30 years for a deadly brain disease.",
+    "score": -0.2,
+    "summary": "Ships sank in Hormuz, missiles hit Kyiv homes and North Korea fired from under the sea. Inflation rose, Ebola reached Kenya again and floods hit Istanbul and Santiago. Quieter light: Africa gaining resilience, an answer to the Moon's two faces, a Samoan song making history.",
     "palette": {
-      "bg": "#12131a",
-      "bg2": "#1f2130",
-      "accent": "#c9a24a",
-      "accent2": "#7f9fd1",
-      "text": "#ebe7de"
+      "bg": "#0f1417",
+      "bg2": "#1c2529",
+      "accent": "#d77a5b",
+      "accent2": "#8fb8b0",
+      "text": "#e9e4dc"
     }
   },
   "style": {
-    "genre": "dark electronic — sitar, Rhodes, TR-808",
-    "key": "E",
-    "scale": "phrygian",
-    "bpm": 102,
-    "swing": 0.05
+    "genre": "cold-wave post-punk — vibraphone, bass guitar, LinnDrum",
+    "key": "B",
+    "scale": "harmonic minor",
+    "bpm": 108,
+    "swing": 0
   },
   "sampleSources": [
-    "Strudel default library (GM, VCSL, RolandTR808)"
+    "Strudel default library (GM, VCSL, AkaiLinn)"
   ],
-  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ ~ ~ sd ~ ~ ~, ~ rim ~ ~ ~ rim ~ rim\").bank(\"RolandTR808\").gain(0.6).room(0.15), s(\"hh*8\").bank(\"RolandTR808\").gain(perlin.range(0.1,0.25)).hpf(5000).pan(sine.range(0.3,0.7).slow(6)), note(\"<e1 f1 e1 d1>\").struct(\"x ~ x ~ ~ x ~ ~\").s(\"gm_synth_bass_1\").lpf(sine.range(300,900).slow(8)).gain(0.4), note(\"<e1 f1 e1 d1>\").s(\"sine\").gain(0.25), note(\"<[e3,g3,b3] [f3,a3,c4] [e3,g3,b3] [d3,f3,a3]>\").s(\"gm_epiano1\").attack(0.05).release(1.5).lpf(sine.range(800,2000).slow(12)).gain(0.22).room(0.5), note(\"[e2,b2]\").s(\"sawtooth\").attack(1).sustain(0.8).release(3).lpf(500).gain(0.08).slow(2), note(\"<[e4 f4 ~ g4 ~ f4 e4 ~] [f4 ~ a4 ~ g4 f4 ~ ~] [b4 ~ a4 g4 ~ f4 ~ e4] [d4 ~ f4 ~ e4 ~ ~ ~]>\").s(\"gm_sitar\").gain(0.32).room(0.4).delay(0.25).delaytime(0.441).jux(rev), note(\"~ ~ ~ ~ b5 ~ ~ ~\").s(\"vibraphone\").slow(2).gain(0.14).room(0.7).off(0.25, x => x.gain(0.07).pan(0.8)))",
+  "pattern": "stack(s(\"bd ~ bd ~ bd ~ bd ~, ~ ~ sd ~ ~ ~ sd ~, hh*8\").bank(\"AkaiLinn\").gain(0.55).room(0.2), s(\"~ ~ ~ ~ ~ ~ ~ cp\").bank(\"AkaiLinn\").slow(2).gain(0.3).room(0.5), note(\"<[b1 b1 b2 b1 fs2 b1 d2 b1] [g1 g1 g2 g1 d2 g1 b1 g1] [e1 e1 e2 e1 b1 e1 g1 e1] [fs1 fs1 fs2 fs1 as1 fs1 cs2 fs1]>\").s(\"gm_electric_bass_pick\").lpf(sine.range(600,1400).slow(8)).gain(0.45), note(\"<[b3,d4,fs4] [g3,b3,d4] [e3,g3,b3] [fs3,as3,cs4]>\").struct(\"~ x ~ x ~ x ~ x\").s(\"gm_electric_guitar_clean\").gain(0.18).delay(0.3).delaytime(0.278).pan(0.35), note(\"<[fs4 ~ d4 ~ b3 ~ cs4 d4] [d4 ~ b3 ~ g3 ~ ~ ~] [e4 ~ g4 ~ fs4 e4 ~ d4] [cs4 ~ as3 ~ fs4 ~ ~ ~]>\").s(\"vibraphone\").gain(0.32).room(0.5).jux(rev), note(\"[b2,fs3]\").s(\"sawtooth\").attack(1.5).sustain(0.8).release(3).lpf(sine.range(400,900).slow(16)).gain(0.07).slow(2), note(\"~ ~ ~ as5 ~ ~ b5 ~\").s(\"vibraphone\").slow(4).gain(0.12).room(0.8).off(0.25, x => x.gain(0.06).pan(0.8)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Sanaa burns, and then Aramco answers,",
-        "the sirens trade their lines across the sea.",
-        "In Yemen the water carries fever,",
-        "Kyiv goes dark with no warning on the screen."
+        "Cargo goes down in the narrow strait,",
+        "Kyiv wakes up to a broken wall.",
+        "Something rises from under the sea,",
+        "and prices climb before the fall."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Five lost to the Mexico rain,",
-        "a train lies down in Pakistan.",
-        "Brent sits still at one-oh-six,",
-        "Singapore counts what the chips began."
+        "A second fever in Nairobi's ward,",
+        "Istanbul rain takes a boy away.",
+        "Hail on Santiago's roofs,",
+        "the markets flinch and look away."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "There's a window, someone says, in the Congo,",
-        "an old wrong finally named in Bogotá's light.",
-        "Thirty years to find one cure —",
-        "keep the window open tonight."
+        "But the Moon shows why it has two faces,",
+        "Africa learns to hold the flood,",
+        "and a Samoan love song carries on —",
+        "the other face is turning up."
       ]
     }
   ]
