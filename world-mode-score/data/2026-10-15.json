@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-15",
+  "score": 40,
+  "label": "Uneasy",
+  "emoji": "🌥️",
+  "summary": "The Gulf war still sets the tone. Cargo ships were reported sunk in the Strait of Hormuz and the Houthis claimed an attack on Riyadh. Russian missiles hit homes and a power plant in Kyiv, and North Korea tested two submarine-launched missiles. US inflation rose to 3.7% in September and stocks slipped on fears of a rate rise, though China's exports surged on AI demand. Kenya confirmed a second Ebola case while DR Congo's outbreak passed 9,000 cases. Floods killed a teenager in Istanbul, and hail and flooding hit Santiago. There was quieter good news: a study found Africa is gaining disaster resilience faster than anywhere else, scientists offered an explanation for the Moon's two faces, and a Samoan-language song made history in New Zealand. The weighted formula gave 40; no editorial adjustment.",
+  "dimensions": {
+    "conflict": 26,
+    "economy": 42,
+    "climate": 42,
+    "humanInterest": 38,
+    "techProgress": 62
+  },
+  "regions": {
+    "northAmerica": 40,
+    "southAmerica": 46,
+    "europe": 38,
+    "africa": 36,
+    "middleEast": 18,
+    "asia": 42,
+    "oceania": 50
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Iran war updates: Cargo ships sunk in Hormuz, Houthis claim Riyadh attack",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/10/14/iran-war-live-saudi-coalition-hits-houthi-sites-aramco-office-hit-in-east",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Ukraine: Russian missiles hit Kyiv homes and power plant, killing 3 and injuring 22",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/video/2026/10/14/ukraine-russian-missiles-hit-kyiv-homes-and-power-plant-killing-3-and-injuring-22",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "North Korea tests two submarine-launched missiles, state media reports",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/15/north-korea-tests-two-submarine-launched-missiles-state-media-reports",
+      "dimension": "conflict",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "US inflation rises before midterm elections, fuelling rate hike fears",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/10/14/us-inflation-rises-before-midterm-elections-fuelling-rate-hike-fears",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Kenya's Health Ministry confirms second Ebola case",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/14/kenyas-health-ministry-confirms-second-ebola-case",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Teenager dies as heavy rain floods Istanbul",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/15/teenager-dies-as-heavy-rain-floods-istanbul",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Storm chaos in Santiago as hail, floods and power cuts slam Chile's capital",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/video/2026/10/14/storm-chaos-in-santiago-as-hail-floods-and-power-cuts-slam-chiles-capital",
+      "dimension": "climate",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "China's exports surge amid AI-driven demand",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/10/14/chinas-exports-sugrge",
+      "dimension": "economy",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Africa sees world's fastest gains in disaster resilience, study shows",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/10/14/africa-records-worlds-fastest-gains-in-disaster-resilience-new-study-shows",
+      "dimension": "climate",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "Scientists May Have Finally Solved the Mystery of the Moon's Two Faces",
+      "source": "ScienceDaily",
+      "url": "https://www.sciencedaily.com/releases/2026/10/261012185019.htm",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Samoan love song makes history at the 2026 Silver Scroll Awards",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/life/music/samoan-love-song-makes-history-at-the-2026-silver-scroll-awards",
+      "dimension": "humanInterest",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "Pittsburgh Water Launches Debt Forgiveness Program to Help Families with Rising Costs",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/pittsburgh-water-launches-debt-forgiveness-program-to-help-families-with-rising-costs/",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    }
+  ],
+  "sources_consulted": [
+    "Al Jazeera",
+    "Euronews",
+    "RNZ",
+    "ScienceDaily",
+    "Good News Network"
+  ]
+}
