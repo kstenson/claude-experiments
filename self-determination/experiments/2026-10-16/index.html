@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Any Three Will Do — Experiment 091</title>
+<meta name="description" content="Shamir's 1979 secret sharing: hide a number as the height where a curve crosses zero, hand out points on the curve, and any k of them rebuild it by Lagrange interpolation while k − 1 leave every secret equally possible." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  .stage canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; touch-action: none; cursor: crosshair;
+  }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 30%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.wide { flex: 2 1 55%; }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+  #rNote { min-height: 3.2em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+  }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 18px; height: 3px; border-radius: 2px; flex: none; display: block; }
+  .legend i.orig { background: rgba(233,233,240,0.4); }
+  .legend i.rdp { background: #a9a9ff; box-shadow: 0 0 6px #7c7cff; }
+  .legend i.tube { height: 10px; background: rgba(124,124,255,0.22); border-radius: 5px; }
+  .legend i.naive { background: #ff7cc3; }
+  .legend .off { opacity: 0.35; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .legend, .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+
+
+  /* ---- Experiment 091 additions ---- */
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    flex: 1 1 0; min-width: 34px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14);
+    color: #9a9ab0; border-radius: 10px; padding: 7px 0;
+    font: 600 0.78rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    cursor: pointer; transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  .chip:hover { color: #e9e9f0; }
+  .chip.on { background: rgba(124,124,255,0.26); border-color: rgba(169,169,255,0.75); color: #ffffff; box-shadow: 0 0 10px rgba(124,124,255,0.35); }
+  .word { display: grid; gap: 6px; padding: 9px 11px; border-radius: 11px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); }
+  .word .lbl { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; }
+  .word input {
+    width: 100%; background: rgba(255,255,255,0.04); color: #e9e9f0;
+    border: 1px solid rgba(124,124,255,0.35); border-radius: 9px;
+    padding: 7px 9px; font: 0.8rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; outline: none;
+  }
+  .word input:focus { border-color: rgba(124,124,255,0.7); }
+  .slines { font: 0.66rem/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #5f5f78; word-break: break-all; cursor: pointer; }
+  .slines div { padding: 0 4px; border-radius: 5px; }
+  .slines div:hover { background: rgba(255,255,255,0.04); }
+  .slines div.on { color: #cfcfff; background: rgba(124,124,255,0.1); }
+  .slines b { color: #8f8fa6; font-weight: 600; margin-right: 6px; }
+  .slines div.on b { color: #b0b0ff; }
+  .rebuilt { font: 0.8rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #9a9ab0; display: flex; gap: 8px; align-items: baseline; }
+  .rebuilt span { color: #ff9fd2; word-break: break-all; }
+  .rebuilt span.ok { color: #ffe9a8; }
+  .legend i.dealer { background: none; border-top: 2px dashed rgba(233,233,240,0.45); height: 0; }
+  .legend i.rebuild { background: #a9a9ff; box-shadow: 0 0 6px #7c7cff; }
+  .legend i.fan { background: rgba(255,124,195,0.55); }
+  .legend i.held { width: 11px; height: 11px; border-radius: 50%; background: #a9a9ff; margin: 0 3px; box-shadow: 0 0 6px #7c7cff; }
+  .legend i.loose { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(233,233,240,0.7); margin: 0 3px; }
+  .legend i.secret { width: 11px; height: 11px; border-radius: 50%; background: #ffe9a8; margin: 0 3px; box-shadow: 0 0 6px #ffcf6b; }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+  <button id="showUi">☰ controls</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Any Three Will Do</h1>
+    <p class="sub">Experiment № 091 · October 16, 2026</p>
+
+    <div class="controls">
+      <div class="code">
+        <span class="c">// Shamir, 1979 — split secret s, any k of n:</span><br />
+        f(x) = <em>s</em> + a₁x + … + a<sub>k−1</sub>x<sup>k−1</sup> <span class="c">// random a's</span><br />
+        share i = <u>(i, f(i))</u> for i = 1 … n<br />
+        k shares → Lagrange → f(<em>0</em>) = s<br />
+        k − 1 shares → <span class="c">every s still fits</span>
+      </div>
+
+      <div class="seg" id="views">
+        <button data-v="real" class="on">Real line</button>
+        <button data-v="field">Mod 31</button>
+      </div>
+
+      <div class="row">
+        <label>Shares you hold <b id="heldV">2 of 5</b></label>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="row">
+        <label>Shares dealt · n <b id="nV">5</b></label>
+        <input type="range" id="n" min="2" max="8" value="5" />
+      </div>
+      <div class="row">
+        <label>Threshold · k <b id="kV">3</b></label>
+        <input type="range" id="k" min="2" max="5" value="3" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn pink wide" id="deal">✦ Deal a new secret</button>
+        <button class="btn" id="anyK">Any k</button>
+        <button class="btn" id="drop">Drop all</button>
+      </div>
+
+      <div class="toggles">
+        <div class="toggle violet on" id="tPieces"><i></i>Lagrange pieces</div>
+        <div class="toggle rose" id="tDealer"><i></i>dealer's curve</div>
+      </div>
+
+      <div class="readout" id="readout"></div>
+
+      <div class="word">
+        <span class="lbl">Split a word · byte by byte in GF(256)</span>
+        <input id="secretWord" maxlength="16" spellcheck="false" value="open sesame" />
+        <div class="slines" id="slines"></div>
+        <div class="rebuilt">rebuilt <span id="rebuilt">—</span></div>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="held"></i>a share you hold</div>
+    <div><i class="loose"></i>a share someone else holds</div>
+    <div><i class="rebuild"></i>curve rebuilt from k shares</div>
+    <div><i class="fan"></i>curves that still fit (k − 1 or fewer)</div>
+    <div><i class="secret"></i>the secret, at x = 0</div>
+    <div><i class="dealer"></i>dealer's curve (if shown)</div>
+  </div>
+  <p class="hint" id="hint">tap a share to hold it · 1–8 toggle shares · N deals a new secret · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 091 · The story</p>
+      <h2>Any Three Will Do</h2>
+
+      <h3>Why I picked it</h3>
+      <p>In November 1979 Adi Shamir, the S in RSA, published a two-page note in Communications of the ACM called "How to Share a Secret." The problem was practical: a key too important to trust to one person and too important to lose if one person goes missing. His answer fits on an index card, and it is still running. When you set up HashiCorp Vault, the default is to split its master key into five shares with a threshold of three, which is the exact setup this page opens with.</p>
+      <p>Most of this collection is about finding things: shortest paths, best matches, hidden structure. I wanted one about the opposite, a piece of mathematics whose whole job is to make sure something <em>can't</em> be found until enough people agree.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>It reuses a fact from school. Two points fix a line, three fix a parabola, k points fix a curve of degree k − 1. Shamir just reads it backwards. Put the secret where the curve crosses the y-axis, hand out other points on it, and the threshold is built into geometry rather than into any rule someone has to enforce.</p>
+      <p>The moment I like best is holding two shares out of three. The pink fan is every parabola through your two points, and it sweeps across the whole y-axis. Each possible secret has its own curve, and each one fits perfectly. Then you tap the third share and the fan collapses into one violet curve. Switch to Mod 31 for the airtight version: there the count is exact, with the same number of polynomials for every one of the 31 secrets, so two shares carry literally zero information. That part surprised me most. Not "very little". None.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Keeping a secret doesn't have to mean hiding the answer. Here it means leaving every answer equally true until the last piece arrives. And the same trick spreads trust around: no single holder can betray the secret, and no single loss can destroy it. If you ever have to put something precious in the hands of a group, it's a good question to ask what the smallest number of people who can act is, and the largest number who can't.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) return;
+    if (e.key.toLowerCase() === 'h') document.getElementById('ui').classList.toggle('hidden');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Shamir's secret sharing ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const stage = $('stage');
+    const ui = $('ui');
+    const cv = document.createElement('canvas');
+    stage.appendChild(cv);
+    const ctx = cv.getContext('2d');
+    const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+    const P = 31;                       // the small prime field for the "Mod 31" view
+
+    let W = 0, H = 0, DPR = 1;
+    let n = 5, k = 3;
+    let view = 'real';
+    let held = new Set([1, 4]);
+    let showPieces = true, showDealer = false;
+    let t0 = performance.now();
+    let morph = 1, morphAt = -1e9, lastKey = '';
+    let dealtAt = -10;
+
+    // ---------- real-number Lagrange ----------
+    function lag(pts, x) {
+      let s = 0;
+      for (let i = 0; i < pts.length; i++) {
+        let w = 1;
+        for (let j = 0; j < pts.length; j++) if (j !== i) w *= (x - pts[j][0]) / (pts[i][0] - pts[j][0]);
+        s += pts[i][1] * w;
+      }
+      return s;
+    }
+    function basis(pts, i, x) {
+      let w = 1;
+      for (let j = 0; j < pts.length; j++) if (j !== i) w *= (x - pts[j][0]) / (pts[i][0] - pts[j][0]);
+      return w;
+    }
+
+    // ---------- mod-p arithmetic ----------
+    const md = (a) => ((a % P) + P) % P;
+    function pw(a, e) { let r = 1; a = md(a); while (e > 0) { if (e & 1) r = (r * a) % P; a = (a * a) % P; e >>= 1; } return r; }
+    const inv = (a) => pw(a, P - 2);
+    function lagMod(pts, x) {
+      let s = 0;
+      for (let i = 0; i < pts.length; i++) {
+        let w = 1;
+        for (let j = 0; j < pts.length; j++) if (j !== i) w = (w * md(x - pts[j][0]) % P) * inv(md(pts[i][0] - pts[j][0])) % P;
+        s = (s + pts[i][1] * w) % P;
+      }
+      return s;
+    }
+
+    // ---------- GF(256) for the word splitter ----------
+    const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+    (() => {
+      let x = 1;
+      for (let i = 0; i < 255; i++) {
+        EXP[i] = x; LOG[x] = i;
+        const xt = ((x << 1) ^ (x & 0x80 ? 0x1b : 0)) & 0xff;   // x·2
+        x = x ^ xt;                                            // x·3, a generator
+      }
+      for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+    })();
+    const gmul = (a, b) => (a && b) ? EXP[LOG[a] + LOG[b]] : 0;
+    const gdiv = (a, b) => a ? EXP[(LOG[a] - LOG[b] + 255) % 255] : 0;
+    function gEval(c, x) { let y = 0; for (let j = c.length - 1; j >= 0; j--) y = gmul(y, x) ^ c[j]; return y; }
+    function gAtZero(pts) {
+      let s = 0;
+      for (let i = 0; i < pts.length; i++) {
+        let w = 1;
+        for (let j = 0; j < pts.length; j++) if (j !== i) w = gmul(w, gdiv(pts[j][0], pts[j][0] ^ pts[i][0]));
+        s ^= gmul(pts[i][1], w);
+      }
+      return s;
+    }
+
+    // ---------- the dealer ----------
+    let S = 50, dealer = [];           // real: points that define the dealer's polynomial
+    let cF = [];                       // field: coefficients mod P, cF[0] is the secret
+    let wordBytes = new Uint8Array(0), wordCoef = [], wordShares = [];
+    let ymin = 0, ymax = 100;
+    const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+    const fReal = (x) => lag(dealer, x);
+    const fField = (x) => { let y = 0; for (let j = cF.length - 1; j >= 0; j--) y = (y * x + cF[j]) % P; return y; };
+
+    function dealReal() {
+      S = rint(25, 75);
+      dealer = [[0, S]];
+      for (let a = 1; a < k; a++) dealer.push([n * a / (k - 1) * 0.92 + 0.3, rint(8, 92)]);
+      let lo = Infinity, hi = -Infinity;
+      for (let s = 0; s <= 200; s++) {
+        const x = -0.5 + (n + 1) * s / 200, y = fReal(x);
+        lo = Math.min(lo, y); hi = Math.max(hi, y);
+      }
+      lo = Math.min(lo, 0); hi = Math.max(hi, 100);
+      const pad = (hi - lo) * 0.1;
+      ymin = lo - pad; ymax = hi + pad;
+    }
+    function dealField() {
+      cF = [];
+      for (let j = 0; j < k; j++) cF.push(rint(0, P - 1));
+      if (k > 1 && cF[k - 1] === 0) cF[k - 1] = rint(1, P - 1);
+    }
+    function dealWord() {
+      wordBytes = new TextEncoder().encode($('secretWord').value).slice(0, 16);
+      wordCoef = [];
+      for (const b of wordBytes) {
+        const c = [b];
+        for (let j = 1; j < k; j++) c.push(rint(0, 255));
+        wordCoef.push(c);
+      }
+      shareWord();
+    }
+    function shareWord() {
+      wordShares = [];
+      for (let i = 1; i <= n; i++) wordShares[i] = wordCoef.map((c) => gEval(c, i));
+    }
+    function dealAll() {
+      dealReal(); dealField(); dealWord();
+      dealtAt = (performance.now() - t0) / 1000;
+      lastKey = ''; dirtyUI();
+    }
+
+    // ---------- layout ----------
+    let R = { x: 0, y: 0, w: 0, h: 0 };
+    function region() {
+      if (W <= 700) return { x: 26, y: 38, w: W - 48, h: H * 0.54 - 64 };
+      const left = Math.min(410, Math.max(24, W * 0.36)) + 30;
+      return { x: left, y: 64, w: W - left - 60, h: H - 64 - 200 };
+    }
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      R = region();
+    }
+
+    const xmin = () => -0.6, xmax = () => n + 0.6;
+    const X = (x) => R.x + (x - xmin()) / (xmax() - xmin()) * R.w;
+    const Y = (y) => R.y + R.h - (y - ymin) / (ymax - ymin) * R.h;
+
+    // field grid geometry
+    function grid() {
+      const size = Math.max(60, Math.min(R.w, R.h));
+      const c = size / P;
+      return { x0: R.x + (R.w - size) / 2, y0: R.y + (R.h - size) / 2, c, size };
+    }
+    const GX = (g, x) => g.x0 + (x + 0.5) * g.c;
+    const GY = (g, y) => g.y0 + g.size - (y + 0.5) * g.c;
+
+    function sharePos(i) {
+      if (view === 'real') return [X(i), Y(fReal(i))];
+      const g = grid();
+      return [GX(g, i), GY(g, fField(i))];
+    }
+
+    // ---------- helpers ----------
+    const heldList = () => [...held].sort((a, b) => a - b);
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+    const VIO = [169, 169, 255], PINK = [255, 124, 195], GOLD = [255, 233, 168];
+    function hash(a, b) { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); }
+
+    function plot(fn, color, width, upto, dash) {
+      const N = 220, a = xmin(), b = xmax();
+      const end = Math.max(1, Math.round(N * (upto == null ? 1 : upto)));
+      ctx.beginPath();
+      for (let s = 0; s <= end; s++) {
+        const x = a + (b - a) * s / N;
+        let y = Y(fn(x));
+        y = Math.max(-4000, Math.min(4000, y));
+        if (s === 0) ctx.moveTo(X(x), y); else ctx.lineTo(X(x), y);
+      }
+      ctx.strokeStyle = color; ctx.lineWidth = width;
+      ctx.setLineDash(dash || []);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function dot(x, y, r, fill, glow) {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      if (glow) { ctx.shadowColor = glow; ctx.shadowBlur = 12; }
+      ctx.fillStyle = fill; ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    function ring(x, y, r, stroke, w) {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = stroke; ctx.lineWidth = w || 1.6; ctx.stroke();
+    }
+
+    // ---------- drawing: real line ----------
+    function drawReal(t) {
+      const hl = heldList(), m = hl.length;
+      const pts = hl.map((i) => [i, fReal(i)]);
+
+      // frame + axes
+      ctx.font = `11px ${MONO}`; ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+      for (let i = 1; i <= n; i++) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(X(i), R.y); ctx.lineTo(X(i), R.y + R.h); ctx.stroke();
+        ctx.fillStyle = held.has(i) ? '#b0b0ff' : 'rgba(233,233,240,0.4)';
+        ctx.fillText('x = ' + i, X(i), R.y + R.h + 8);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.beginPath(); ctx.moveTo(R.x, Y(0)); ctx.lineTo(R.x + R.w, Y(0)); ctx.stroke();
+      // the secret line
+      ctx.strokeStyle = 'rgba(255,233,168,0.4)'; ctx.lineWidth = 1.4;
+      ctx.setLineDash([4, 5]);
+      ctx.beginPath(); ctx.moveTo(X(0), R.y); ctx.lineTo(X(0), R.y + R.h); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,233,168,0.75)';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('x = 0 · the secret lives here', X(0) - 4, R.y - 10);
+      // y ticks
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      const step = (ymax - ymin) > 250 ? 100 : (ymax - ymin) > 120 ? 50 : 25;
+      for (let v = Math.ceil(ymin / step) * step; v <= ymax; v += step) {
+        ctx.fillStyle = 'rgba(233,233,240,0.28)';
+        ctx.fillText(String(v), R.x - 8, Y(v));
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(R.x, Y(v), R.w, 1);
+      }
+
+      ctx.save();
+      ctx.beginPath(); ctx.rect(R.x - 2, R.y - 2, R.w + 4, R.h + 4); ctx.clip();
+
+      if (showDealer) plot(fReal, 'rgba(233,233,240,0.45)', 1.4, 1, [6, 6]);
+
+      let secretY = null, secretCol = GOLD;
+      if (m >= k) {
+        const used = pts.slice(0, k);
+        const f = (x) => lag(used, x);
+        if (showPieces) {
+          ctx.globalCompositeOperation = 'lighter';
+          for (let i = 0; i < k; i++) {
+            plot((x) => used[i][1] * basis(used, i, x), rgba(PINK, 0.32), 1.1, morph);
+          }
+          ctx.globalCompositeOperation = 'source-over';
+        }
+        ctx.shadowColor = '#7c7cff'; ctx.shadowBlur = 10;
+        plot(f, rgba(VIO, 0.95), 2.6, morph);
+        ctx.shadowBlur = 0;
+        if (morph >= 1) secretY = f(0);
+      } else {
+        const need = k - 1 - m;
+        const NC = 26;
+        ctx.globalCompositeOperation = 'lighter';
+        for (let c = 0; c < NC; c++) {
+          const s = ymin + (c + 0.5) / NC * (ymax - ymin);
+          const ex = [];
+          for (let e = 0; e < need; e++) ex.push([e + 0.5, ymin + (0.15 + 0.7 * hash(c, e)) * (ymax - ymin)]);
+          const fp = [...pts, [0, s], ...ex];
+          plot((x) => lag(fp, x), rgba(PINK, 0.16), 1, 1);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        const mid = (ymin + ymax) / 2, span = ymax - ymin;
+        const s = mid + 0.4 * span * Math.sin(t * 0.7);
+        const ex = [];
+        for (let e = 0; e < need; e++) ex.push([e + 0.5, mid + 0.3 * span * Math.sin(t * 0.5 + e * 2.1)]);
+        const fp = [...pts, [0, s], ...ex];
+        plot((x) => lag(fp, x), rgba(PINK, 0.95), 2, 1);
+        secretY = s; secretCol = PINK;
+      }
+      ctx.restore();
+
+      // secret marker
+      if (showDealer) ring(X(0), Y(S), 9, 'rgba(233,233,240,0.6)', 1.4);
+      if (secretY != null) {
+        const sx = X(0), sy = Y(secretY);
+        if (sy > R.y - 6 && sy < R.y + R.h + 6) {
+          dot(sx, sy, 6.5, rgba(secretCol, 1), rgba(secretCol, 0.9));
+          ctx.font = `600 13px ${MONO}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = rgba(secretCol, 1);
+          ctx.fillText(m >= k ? secretY.toFixed(2) : '?', sx - 12, sy);
+        }
+      }
+
+      // shares
+      drawShares(t);
+    }
+
+    // ---------- drawing: mod 31 ----------
+    function drawField(t) {
+      const g = grid();
+      const hl = heldList(), m = hl.length;
+      const pts = hl.map((i) => [i, fField(i)]);
+      const cr = Math.max(1, g.c * 0.09);
+
+      // lattice
+      ctx.fillStyle = 'rgba(233,233,240,0.12)';
+      for (let x = 0; x < P; x++) for (let y = 0; y < P; y++) ctx.fillRect(GX(g, x) - cr / 2, GY(g, y) - cr / 2, cr, cr);
+      // secret column
+      ctx.fillStyle = 'rgba(255,233,168,0.06)';
+      ctx.fillRect(g.x0, g.y0, g.c, g.size);
+      // share columns
+      for (let i = 1; i <= n; i++) {
+        ctx.fillStyle = held.has(i) ? 'rgba(124,124,255,0.09)' : 'rgba(255,255,255,0.025)';
+        ctx.fillRect(g.x0 + i * g.c, g.y0, g.c, g.size);
+      }
+      ctx.font = `11px ${MONO}`; ctx.fillStyle = 'rgba(233,233,240,0.35)';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      for (const v of [0, 10, 20, 30]) ctx.fillText(String(v), GX(g, v), g.y0 + g.size + 6);
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      for (const v of [0, 10, 20, 30]) ctx.fillText(String(v), g.x0 - 6, GY(g, v));
+      ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillStyle = 'rgba(255,233,168,0.75)';
+      ctx.fillText('x = 0 · the secret', g.x0, g.y0 - 6);
+      ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(233,233,240,0.35)';
+      ctx.fillText('everything mod 31', g.x0 + g.size, g.y0 - 6);
+
+      const r = Math.max(2.2, g.c * 0.3);
+      if (showDealer) {
+        for (let x = 0; x < P; x++) ring(GX(g, x), GY(g, fField(x)), r + 1.5, 'rgba(233,233,240,0.5)', 1);
+      }
+
+      if (m >= k) {
+        const used = pts.slice(0, k);
+        const upto = Math.ceil(morph * P);
+        for (let x = 0; x < upto; x++) dot(GX(g, x), GY(g, lagMod(used, x)), r, rgba(VIO, 0.9), x === 0 ? null : null);
+        if (morph >= 1) {
+          const s = lagMod(used, 0);
+          dot(GX(g, 0), GY(g, s), r * 1.5, '#ffe9a8', '#ffcf6b');
+        }
+      } else {
+        // every value in the secret column is still possible
+        const pulse = 0.35 + 0.2 * Math.sin(t * 3);
+        for (let y = 0; y < P; y++) dot(GX(g, 0), GY(g, y), r * 0.8, rgba(PINK, pulse));
+        const need = k - 1 - m;
+        const s = Math.floor(t * 1.6) % P;
+        const ex = [];
+        for (let e = 0; e < need; e++) ex.push([P - 1 - e, (s * 7 + e * 11 + 3 + Math.floor(t * 0.4) * 5) % P]);
+        const fp = [...pts, [0, s], ...ex];
+        for (let x = 0; x < P; x++) dot(GX(g, x), GY(g, lagMod(fp, x)), r * 0.85, rgba(PINK, 0.85));
+        dot(GX(g, 0), GY(g, s), r * 1.4, '#ff9fd2', '#ff7cc3');
+      }
+      drawShares(t);
+    }
+
+    function drawShares(t) {
+      const age = t - dealtAt;
+      for (let i = 1; i <= n; i++) {
+        const [x, y] = sharePos(i);
+        const a = Math.max(0, Math.min(1, (age - i * 0.08) * 3));
+        if (a <= 0) continue;
+        ctx.globalAlpha = a;
+        if (held.has(i)) {
+          dot(x, y, 7.5, '#a9a9ff', '#7c7cff');
+          ring(x, y, 11.5, 'rgba(169,169,255,0.5)', 1.2);
+        } else {
+          dot(x, y, 6.5, '#05050a');
+          ring(x, y, 6.5, 'rgba(233,233,240,0.75)', 2);
+        }
+        ctx.font = `600 11px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = held.has(i) ? '#cfcfff' : 'rgba(233,233,240,0.55)';
+        ctx.fillText('#' + i, x, y - 14);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function draw(t) {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      const g = ctx.createRadialGradient(W * 0.68, H * 0.38, 0, W * 0.68, H * 0.38, Math.max(W, H) * 0.8);
+      g.addColorStop(0, 'rgba(124,124,255,0.055)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      if (view === 'real') drawReal(t); else drawField(t);
+    }
+
+    // ---------- readout ----------
+    const f1 = (v) => (Math.abs(v) < 0.005 ? 0 : v).toFixed(1);
+    const f2 = (v) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2).replace(/\.?0+$/, '');
+    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    function readout() {
+      const hl = heldList(), m = hl.length;
+      let rows = `
+        <span class="k">Threshold</span><span class="v">${k} of ${n}</span>
+        <span class="k">Shares held</span><span class="v violet">${m ? hl.map((i) => '#' + i).join(' ') : 'none'}</span>`;
+      let note;
+      if (view === 'real') {
+        if (m >= k) {
+          const used = hl.slice(0, k).map((i) => [i, fReal(i)]);
+          const v = lag(used, 0);
+          rows += `<span class="k">Rebuilt f(0)</span><span class="v violet">${v.toFixed(2)}</span>`;
+          rows += `<span class="k">Dealer's secret</span><span class="v">${showDealer ? S : 'hidden'}</span>`;
+          const terms = used.map((p, i) => `<b>${f1(p[1])}</b>×(${f2(basis(used, i, 0))})`).join(' + ');
+          note = `Secret = Σ yᵢ·Lᵢ(0) = ${terms}. Each weight Lᵢ is a curve that is 1 at its own share and 0 at the others${showPieces ? ' (the faint pink pieces)' : ''}.`;
+          if (m > k) note += ` Your other ${m - k} share${m - k > 1 ? 's sit' : ' sits'} on the same curve.`;
+        } else {
+          rows += `<span class="k">Rebuilt f(0)</span><span class="v pinkv">anything</span>`;
+          rows += `<span class="k">Dealer's secret</span><span class="v">${showDealer ? S : 'hidden'}</span>`;
+          note = m === k - 1
+            ? `${m ? `Your ${m} share${m > 1 ? 's' : ''} and` : 'Just'} one guess at x = 0 already fix a curve of degree ${k - 1}, for <b class="p">every</b> guess. Hold one more share and the fan collapses. (On the real line the shapes still hint; Mod 31 is the airtight version.)`
+            : `${k - m} more shares needed. Even with a guessed secret, the curve has ${k - 1 - m} more degree${k - 1 - m > 1 ? 's' : ''} of freedom to wander.`;
+        }
+      } else {
+        if (m >= k) {
+          const used = hl.slice(0, k).map((i) => [i, fField(i)]);
+          const v = lagMod(used, 0);
+          rows += `<span class="k">Rebuilt f(0) mod 31</span><span class="v violet">${v}</span>`;
+          rows += `<span class="k">Secrets still possible</span><span class="v">1 of 31</span>`;
+          note = `Same Lagrange formula, but every division becomes multiplying by an inverse mod 31. Rebuilt <b class="v">${v}</b>${showDealer ? (v === cF[0] ? ' — the dealer\'s secret ✓' : '') : ''}. The dots look random; that is the point.`;
+        } else {
+          const e = k - 1 - m;
+          rows += `<span class="k">Rebuilt f(0) mod 31</span><span class="v pinkv">any of 31</span>`;
+          rows += `<span class="k">Secrets still possible</span><span class="v pinkv">31 of 31</span>`;
+          const count = e === 0 ? 'exactly one polynomial passes' : e === 1 ? '31 polynomials pass' : `31<sup>${e}</sup> polynomials pass`;
+          note = `Pick any secret s from 0 to 30: ${count} through your ${m || 'zero'} share${m === 1 ? '' : 's'} with f(0) = s. The count is the same for every s, so what you hold says <b class="p">nothing</b> about it.`;
+        }
+      }
+      rows += `<hr /><div class="full">${note}</div>`;
+      $('readout').innerHTML = rows;
+    }
+
+    function renderWord() {
+      const hl = heldList(), m = hl.length;
+      const hex = (b) => b.toString(16).padStart(2, '0');
+      let s = '';
+      for (let i = 1; i <= n; i++) {
+        s += `<div data-i="${i}" class="${held.has(i) ? 'on' : ''}"><b>#${i}</b>${(wordShares[i] || []).map(hex).join('')}</div>`;
+      }
+      $('slines').innerHTML = s;
+      const out = $('rebuilt');
+      if (!m || !wordBytes.length) { out.textContent = '—'; out.className = ''; return; }
+      const bytes = new Uint8Array(wordBytes.length);
+      for (let b = 0; b < wordBytes.length; b++) bytes[b] = gAtZero(hl.map((i) => [i, wordShares[i][b]]));
+      if (m >= k) {
+        out.textContent = new TextDecoder().decode(bytes);
+        out.className = 'ok';
+      } else {
+        out.textContent = [...bytes].map((b) => (b >= 33 && b <= 126) ? String.fromCharCode(b) : '·').join('');
+        out.className = '';
+      }
+    }
+
+    function renderChips() {
+      let s = '';
+      for (let i = 1; i <= n; i++) s += `<button class="chip${held.has(i) ? ' on' : ''}" data-i="${i}">#${i}</button>`;
+      $('chips').innerHTML = s;
+      $('heldV').textContent = `${held.size} of ${n}`;
+    }
+
+    function dirtyUI() {
+      renderChips(); renderWord(); readout();
+      const key = view + '|' + k + '|' + heldList().slice(0, k).join(',') + '|' + (held.size >= k);
+      if (key !== lastKey) { if (held.size >= k) { morph = 0; morphAt = performance.now(); } lastKey = key; }
+    }
+
+    // ---------- controls ----------
+    function toggleShare(i) {
+      if (i < 1 || i > n) return;
+      if (held.has(i)) held.delete(i); else held.add(i);
+      dirtyUI();
+    }
+
+    $('chips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) toggleShare(+b.dataset.i); });
+    $('slines').addEventListener('click', (e) => { const d = e.target.closest('div[data-i]'); if (d) toggleShare(+d.dataset.i); });
+    $('views').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      for (const x of $('views').children) x.classList.toggle('on', x === b);
+      view = b.dataset.v; dealtAt = (performance.now() - t0) / 1000; dirtyUI();
+    });
+    $('n').addEventListener('input', () => {
+      n = +$('n').value;
+      if (k > n) k = n;
+      $('k').max = n; $('k').value = k;
+      $('nV').textContent = n; $('kV').textContent = k;
+      for (const i of [...held]) if (i > n) held.delete(i);
+      dealAll();
+    });
+    $('k').addEventListener('input', () => {
+      k = +$('k').value; $('kV').textContent = k;
+      dealAll();
+    });
+    $('deal').addEventListener('click', dealAll);
+    $('anyK').addEventListener('click', () => {
+      const all = [];
+      for (let i = 1; i <= n; i++) all.push(i);
+      for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+      held = new Set(all.slice(0, k));
+      dirtyUI();
+    });
+    $('drop').addEventListener('click', () => { held = new Set(); dirtyUI(); });
+    $('secretWord').addEventListener('input', () => { dealWord(); renderWord(); });
+    const toggle = (id, fn) => $(id).addEventListener('click', () => { $(id).classList.toggle('on'); fn($(id).classList.contains('on')); readout(); });
+    toggle('tPieces', (v) => { showPieces = v; });
+    toggle('tDealer', (v) => { showDealer = v; });
+
+    function hit(mx, my) {
+      let best = -1, bd = 22 * 22;
+      for (let i = 1; i <= n; i++) {
+        const [x, y] = sharePos(i);
+        const d = (x - mx) ** 2 + (y - my) ** 2;
+        if (d < bd) { bd = d; best = i; }
+      }
+      return best;
+    }
+    cv.addEventListener('pointerdown', (e) => { const i = hit(e.clientX, e.clientY); if (i > 0) toggleShare(i); });
+    cv.addEventListener('pointermove', (e) => { cv.style.cursor = hit(e.clientX, e.clientY) > 0 ? 'pointer' : 'default'; });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) return;
+      if (story.classList.contains('open')) return;
+      if (/^[1-8]$/.test(e.key)) toggleShare(+e.key);
+      else if (e.key.toLowerCase() === 'n') dealAll();
+    });
+
+    // panel collapse
+    $('collapse').addEventListener('click', () => { ui.classList.add('hidden'); $('showUi').classList.add('on'); });
+    $('showUi').addEventListener('click', () => { ui.classList.remove('hidden'); $('showUi').classList.remove('on'); });
+    new MutationObserver(() => { $('showUi').classList.toggle('on', ui.classList.contains('hidden')); }).observe(ui, { attributes: true, attributeFilter: ['class'] });
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      morph = Math.min(1, (now - morphAt) / 600);
+      draw((now - t0) / 1000);
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    dealAll();
+    morph = 1; morphAt = -1e9;
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
