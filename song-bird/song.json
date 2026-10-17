@@ -1,55 +1,55 @@
 {
-  "date": "2026-10-16",
+  "date": "2026-10-17",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Count Them Twice",
+  "title": "A Bridge of Grass",
   "mood": {
     "label": "Heavy going",
-    "score": -0.24,
-    "summary": "A day weighed by lost children — a school roof in Pakistan, a shooting in Oregon — with a tanker burning near Hormuz, orange haze over Indonesia and thin Arctic ice. Small lights: Somalia sets elections, the Elwha tribe nears its land, Sentinel-3C opens its eyes.",
+    "score": -0.22,
+    "summary": "A heavy day: the Iran war spreading through the Gulf and Yemen, factories burning in Odesa, hunger in Gaza, a sunken boat off Gambia and floods near Istanbul. Small lights: a Tigray interim government, solar for Lebanon, and a wildlife bridge that works.",
     "palette": {
-      "bg": "#16110f",
-      "bg2": "#2a1d18",
-      "accent": "#d9824a",
-      "accent2": "#8fb3c4",
-      "text": "#efe6df"
+      "bg": "#0f1418",
+      "bg2": "#1c2630",
+      "accent": "#c9a85a",
+      "accent2": "#7fae8e",
+      "text": "#e6ebee"
     }
   },
   "style": {
-    "genre": "piano nocturne — piano, cello, strings",
-    "key": "F#",
-    "scale": "aeolian",
-    "bpm": 64,
+    "genre": "cinematic strings — harp, oboe, tremolo strings, timpani",
+    "key": "C#",
+    "scale": "phrygian",
+    "bpm": 72,
     "swing": 0
   },
-  "sampleSources": ["Strudel default library (piano, GM, RolandTR707)"],
-  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ rim\").bank(\"RolandTR707\").gain(0.22).lpf(900).room(0.6).rsize(4), note(\"<fs2 d2 a2 e2>\").s(\"gm_cello\").attack(0.5).sustain(0.9).release(2.5).gain(0.32).lpf(1200).room(0.5), note(\"<[fs2 cs3 a3 cs4 fs4 cs4 a3 cs3] [d2 a2 fs3 a3 d4 a3 fs3 a2] [a1 e2 cs3 e3 a3 e3 cs3 e2] [e2 b2 gs3 b3 e4 b3 gs3 b2]>\").s(\"piano\").gain(sine.range(0.22,0.36).slow(8)).room(0.55).rsize(5).lpf(sine.range(1400,3200).slow(16)), note(\"<[~ a4 ~ gs4 fs4 ~ ~ ~] [~ fs4 ~ e4 d4 ~ ~ ~] [~ e4 ~ cs4 e4 ~ fs4 ~] [gs4 ~ ~ b4 ~ ~ ~ ~]>\").s(\"piano\").gain(0.42).room(0.6).rsize(5).delay(0.25).delaytime(0.469).off(0.5, x => x.gain(0.12).pan(0.75)), note(\"<[fs4,a4,cs5] [d4,fs4,a4] [cs4,e4,a4] [b3,e4,gs4]>\").s(\"gm_string_ensemble_1\").attack(1.8).sustain(0.8).release(3).lpf(sine.range(500,1500).slow(20)).gain(0.14).room(0.7).rsize(6))",
+  "sampleSources": ["Strudel default library (GM harp, oboe, strings, timpani)"],
+  "pattern": "stack(note(\"cs2\").s(\"sine\").attack(3).sustain(1).release(4).gain(0.18).lpf(400), note(\"<cs2 d2 b1 cs2> ~ ~ ~ ~ ~ [~ gs1] ~\").s(\"gm_timpani\").gain(0.3).room(0.6).rsize(5), note(\"<[cs3 gs3 cs4 e4 gs4 e4 cs4 gs3] [d3 a3 d4 fs4 a4 fs4 d4 a3] [b2 fs3 b3 d4 fs4 d4 b3 fs3] [cs3 gs3 cs4 d4 e4 d4 cs4 gs3]>\").s(\"gm_orchestral_harp\").gain(sine.range(0.26,0.4).slow(8)).room(0.55).rsize(5).jux(rev), note(\"<[cs3,e3,gs3] [d3,fs3,a3] [b2,d3,fs3] [cs3,e3,gs3]>\").s(\"gm_tremolo_strings\").attack(1.5).sustain(0.8).release(3).lpf(sine.range(600,1800).slow(16)).gain(0.16).room(0.7).rsize(6), note(\"<[e4 ~ d4 cs4 ~ ~ ~ ~] [~ fs4 ~ e4 d4 ~ ~ ~] [d4 ~ ~ b3 ~ cs4 ~ ~] [gs4 ~ ~ fs4 e4 d4 cs4 ~]>\").s(\"gm_oboe\").attack(0.08).release(1.2).gain(0.34).room(0.5).delay(0.2).delaytime(0.417).off(0.5, x => x.gain(0.1).pan(0.8)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "The roof gave way on the morning lesson,",
-        "thirty-two coats still on the hooks.",
-        "In Oregon a bell rang out for no one,",
-        "three small desks with open books."
+        "Rain came down like eighty years at once,",
+        "the streets near Istanbul ran brown.",
+        "In Odesa the factories burned till dawn,",
+        "in Gaza there was nothing left to hand round."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Indonesia's sky turned orange,",
-        "a tanker burned where the oil goes through,",
-        "Kyiv ran short of things to stop the sky with,",
-        "and the northern ice grew thin and blue."
+        "A boat went under off the Gambian coast,",
+        "twelve names the tide won't give us back.",
+        "Kenya counts a third one in a quiet ward,",
+        "the Gulf lights up along the same old track."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Hold the small hands, count them twice,",
-        "the Elwha's running wide and free —",
-        "a people one signature from home,",
-        "a new eye sending back the sea."
+        "But the deer cross over on a bridge of grass,",
+        "nine in ten make it home —",
+        "someone's building sunlight for Lebanon,",
+        "someone's teaching the plastic to go."
       ]
     }
   ]
