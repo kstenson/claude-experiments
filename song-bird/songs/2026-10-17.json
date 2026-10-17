@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-17",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "A Bridge of Grass",
+  "mood": {
+    "label": "Heavy going",
+    "score": -0.22,
+    "summary": "A heavy day: the Iran war spreading through the Gulf and Yemen, factories burning in Odesa, hunger in Gaza, a sunken boat off Gambia and floods near Istanbul. Small lights: a Tigray interim government, solar for Lebanon, and a wildlife bridge that works.",
+    "palette": {
+      "bg": "#0f1418",
+      "bg2": "#1c2630",
+      "accent": "#c9a85a",
+      "accent2": "#7fae8e",
+      "text": "#e6ebee"
+    }
+  },
+  "style": {
+    "genre": "cinematic strings — harp, oboe, tremolo strings, timpani",
+    "key": "C#",
+    "scale": "phrygian",
+    "bpm": 72,
+    "swing": 0
+  },
+  "sampleSources": ["Strudel default library (GM harp, oboe, strings, timpani)"],
+  "pattern": "stack(note(\"cs2\").s(\"sine\").attack(3).sustain(1).release(4).gain(0.18).lpf(400), note(\"<cs2 d2 b1 cs2> ~ ~ ~ ~ ~ [~ gs1] ~\").s(\"gm_timpani\").gain(0.3).room(0.6).rsize(5), note(\"<[cs3 gs3 cs4 e4 gs4 e4 cs4 gs3] [d3 a3 d4 fs4 a4 fs4 d4 a3] [b2 fs3 b3 d4 fs4 d4 b3 fs3] [cs3 gs3 cs4 d4 e4 d4 cs4 gs3]>\").s(\"gm_orchestral_harp\").gain(sine.range(0.26,0.4).slow(8)).room(0.55).rsize(5).jux(rev), note(\"<[cs3,e3,gs3] [d3,fs3,a3] [b2,d3,fs3] [cs3,e3,gs3]>\").s(\"gm_tremolo_strings\").attack(1.5).sustain(0.8).release(3).lpf(sine.range(600,1800).slow(16)).gain(0.16).room(0.7).rsize(6), note(\"<[e4 ~ d4 cs4 ~ ~ ~ ~] [~ fs4 ~ e4 d4 ~ ~ ~] [d4 ~ ~ b3 ~ cs4 ~ ~] [gs4 ~ ~ fs4 e4 d4 cs4 ~]>\").s(\"gm_oboe\").attack(0.08).release(1.2).gain(0.34).room(0.5).delay(0.2).delaytime(0.417).off(0.5, x => x.gain(0.1).pan(0.8)))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Rain came down like eighty years at once,",
+        "the streets near Istanbul ran brown.",
+        "In Odesa the factories burned till dawn,",
+        "in Gaza there was nothing left to hand round."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "A boat went under off the Gambian coast,",
+        "twelve names the tide won't give us back.",
+        "Kenya counts a third one in a quiet ward,",
+        "the Gulf lights up along the same old track."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "But the deer cross over on a bridge of grass,",
+        "nine in ten make it home —",
+        "someone's building sunlight for Lebanon,",
+        "someone's teaching the plastic to go."
+      ]
+    }
+  ]
+}
