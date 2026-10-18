@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Square What's Left — Experiment 093</title>
+<meta name="description" content="Euclid's algorithm drawn as a rectangle: cut off the biggest square that fits, then do the same to whatever is left. The last square is the greatest common divisor." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: default; }
+  canvas.resize { cursor: nwse-resize; }
+  canvas.pick { cursor: crosshair; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .row label input[type=number] {
+    width: 64px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #e9e9f0; border-radius: 7px; padding: 3px 6px; font-size: 0.8rem; text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .row label input[type=number]:focus { outline: none; border-color: rgba(124,124,255,0.6); }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input.pinkr::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input.pinkr::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 30%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 10px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.small { flex: 1 1 22%; padding: 7px 6px; font-size: 0.74rem; }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.v { color: #b0b0ff; }
+  .readout .full b.p { color: #ff9fd2; }
+
+  .eqs {
+    max-height: 168px; overflow-y: auto;
+    padding: 7px 9px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem; line-height: 1.5; color: #7f7f99;
+    font-variant-numeric: tabular-nums;
+  }
+  .eqs div { padding: 1px 6px; border-radius: 6px; white-space: nowrap; transition: background 0.2s ease, color 0.2s ease; }
+  .eqs div.done { color: #cfcfe6; }
+  .eqs div.hot { background: rgba(124,124,255,0.2); color: #fff; }
+  .eqs div.last { color: #ff9fd2; }
+  .eqs div i { font-style: normal; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .only-sq, .only-fd { display: contents; }
+  .ui[data-mode=field] .only-sq { display: none; }
+  .ui[data-mode=squares] .only-fd { display: none; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 10px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: right;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 44vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <button id="showUi">show panel</button>
+
+  <div class="ui" id="ui" data-mode="squares">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Square What's Left</h1>
+    <p class="sub">Experiment № 093 · October 18, 2026</p>
+
+    <div class="controls">
+      <div class="seg" id="mode">
+        <button data-mode="squares" class="on">One pair</button>
+        <button data-mode="field">Every pair</button>
+      </div>
+
+      <div class="only-sq">
+        <div class="row">
+          <label>width a <input type="number" id="aN" min="1" max="1200" value="1071" /></label>
+          <input type="range" id="aR" min="1" max="1200" value="1071" />
+        </div>
+        <div class="row">
+          <label>height b <input type="number" id="bN" min="1" max="1200" value="462" /></label>
+          <input type="range" id="bR" class="pinkr" min="1" max="1200" value="462" />
+        </div>
+
+        <div class="btn-row">
+          <button class="btn small" id="pEuclid" title="Euclid's own example, Elements VII.2">Euclid</button>
+          <button class="btn small" id="pFib" title="Consecutive Fibonacci numbers: the slowest possible">Fibonacci</button>
+          <button class="btn small" id="pLop" title="Huge quotient: division wins big">Lopsided</button>
+          <button class="btn small" id="pRand">Random</button>
+        </div>
+
+        <div class="row">
+          <label>Time per division <b id="speedV">0.7 s</b></label>
+          <input type="range" id="speed" min="0" max="100" value="45" />
+        </div>
+
+        <div class="btn-row">
+          <button class="btn" id="bPlay">Pause</button>
+          <button class="btn" id="bStep">Step</button>
+          <button class="btn pink" id="bReplay">Replay</button>
+        </div>
+
+        <div class="eqs" id="eqs"></div>
+
+        <div class="readout">
+          <span class="k">greatest common divisor</span><span class="v pinkv" id="rG">—</span>
+          <span class="k">division steps</span><span class="v violet" id="rDiv">—</span>
+          <span class="k">subtractions instead</span><span class="v" id="rSub">—</span>
+          <span class="k">slowest pair this small</span><span class="v" id="rLame">—</span>
+          <hr />
+          <span class="k">a / b reduced</span><span class="v" id="rFrac">—</span>
+          <span class="k">continued fraction</span><span class="v" id="rCF">—</span>
+          <span class="full" id="rBez">—</span>
+        </div>
+      </div>
+
+      <div class="only-fd">
+        <div class="seg" id="colour">
+          <button data-c="steps" class="on">Steps</button>
+          <button data-c="gcd">gcd</button>
+          <button data-c="ratio">Quotient</button>
+        </div>
+        <div class="row">
+          <label>Pairs up to <b id="nV">160</b></label>
+          <input type="range" id="nR" min="24" max="400" value="160" />
+        </div>
+        <div class="toggles">
+          <div class="toggle rose" id="tGold"><i></i>Golden lines</div>
+          <div class="toggle violet on" id="tInset"><i></i>Hover preview</div>
+        </div>
+        <div class="readout">
+          <span class="k">pairs drawn</span><span class="v" id="fPairs">—</span>
+          <span class="k">share with gcd 1</span><span class="v violet" id="fCop">—</span>
+          <span class="k">6 / π²</span><span class="v" id="fPi">0.6079</span>
+          <span class="k">most steps</span><span class="v pinkv" id="fMax">—</span>
+          <hr />
+          <span class="full" id="fNote">Each cell (a, b) is one run of the algorithm. Hover to read it; click to open that pair.</span>
+        </div>
+      </div>
+
+      <div class="code"><span class="c">// Euclid, Elements VII.2, c. 300 BC</span><br/>
+        while <u>b</u> ≠ 0:<br/>
+        &nbsp;&nbsp;cut <em>⌊a / b⌋</em> squares of side <u>b</u><br/>
+        &nbsp;&nbsp;(a, b) ← (b, <em>a mod b</em>)<br/>
+        return a <span class="c">// the last square's side</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint" id="hint">drag the corner handle to reshape · hover a square for its step · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 093 · The story</p>
+      <h2>Square What's Left</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Ninety-two experiments in, I realised I had skipped the oldest one in the book. Euclid's procedure for the greatest common divisor sits in Book VII of the <em>Elements</em>, around 300 BC, and it is still running today inside every fraction simplifier, every music-notation program working out a tuplet, and every RSA key ever generated. Knuth calls it the granddaddy of algorithms because it is the oldest non-trivial one still in daily use. I'd always known it as a two-line loop with a <code>mod</code> in it. I had never actually seen it, and it turns out it has a picture.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The picture is a rectangle. Cut off the biggest square that fits, as many times as it fits, and you're left with a thinner rectangle sideways. Do the same to that. The squares keep shrinking until one finally fits exactly, and its side is the answer: the largest tile that could have covered the original rectangle with nothing left over. When the animation finishes, the pink grid shows exactly that. I also love that the two counters disagree so wildly. Try "Lopsided": the picture is a row of 499 squares and then two tiny ones, which is 501 subtractions but only two divisions. That difference between subtracting and dividing is the whole reason the algorithm is fast. Then switch to "Every pair" and run it on 160,000 pairs at once. Lines of every slope light up wherever the numbers share a factor, and the slowest pairs crowd along two lines at the golden ratio.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The worst case is the Fibonacci numbers, and that's a lovely fact: the slowest pair is the one whose quotient is 1 at every step, a rectangle that cuts off a single square each time and stays as close to golden as it can. Gabriel Lamé proved in 1844 that this is the worst it ever gets, so the number of steps grows only with the number of digits, never with the size of the numbers. That's why it's worth knowing. A computer can find the gcd of two 600-digit numbers in a few thousand steps, and the extended version, the one that also gives you the <em>s</em> and <em>t</em> in the readout, is how RSA finds its private key. Running it backwards is also how you reduce a fraction, find the gears that best approximate a ratio, or see why a calendar needs leap years. A 2,300-year-old trick about rectangles is still holding up a lot of the modern world.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  function setPanel(visible) {
+    ui.classList.toggle('hidden', !visible);
+    showUi.classList.toggle('on', !visible);
+    window.dispatchEvent(new Event('panelchange'));
+  }
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  document.getElementById('collapse').addEventListener('click', () => setPanel(false));
+  showUi.addEventListener('click', () => setPanel(true));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if (e.key.toLowerCase() === 'h') setPanel(ui.classList.contains('hidden'));
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Euclid's algorithm as a dissection into squares ----
+  (() => {
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+    let W = 0, H = 0, dpr = 1;
+
+    const MAXV = 1200;
+    let mode = 'squares';
+    let A = 1071, B = 462;
+    let plan = null;           // the dissection for (A, B)
+    let t = 0;                 // animation progress, in division steps
+    let playing = true;
+    let stepDur = 0.7;         // seconds per division step
+    let hoverStep = -1;
+    let mouse = null;
+    let drag = null;           // { scale, x0, y0 }
+    let lastTime = 0;
+
+    // field mode
+    let fieldN = 160, fieldColour = 'steps', showGold = false, showInset = true;
+    let fieldImg = null, fieldDirty = true, fieldStats = null;
+    let fieldHover = null;     // {a, b}
+
+    // ---------- the algorithm ----------
+    function gcd(a, b) { while (b) { const r = a % b; a = b; b = r; } return a; }
+    function divSteps(a, b) {
+      // count like the dissection does: always divide the longer side by the shorter
+      if (a < b) { const s = a; a = b; b = s; }
+      let n = 0;
+      while (b) { const r = a % b; a = b; b = r; n++; } return n; }
+
+    function buildPlan(a, b) {
+      const steps = [];
+      let x = 0, y = 0, w = a, h = b;
+      let subs = 0;
+      while (w > 0 && h > 0) {
+        const squares = [];
+        let q, s, big, small, r;
+        if (w >= h) {
+          s = h; q = Math.floor(w / h); big = w; small = h;
+          for (let i = 0; i < q; i++) squares.push({ x: x + i * s, y, s });
+          x += q * s; w -= q * s; r = w;
+        } else {
+          s = w; q = Math.floor(h / w); big = h; small = w;
+          for (let i = 0; i < q; i++) squares.push({ x, y: y + i * s, s });
+          y += q * s; h -= q * s; r = h;
+        }
+        subs += q;
+        steps.push({ big, small, q, r, s, squares, rem: { x, y, w, h } });
+      }
+      const g = steps[steps.length - 1].s;
+      // extended Euclid: g = s·a + t·b
+      let r0 = a, r1 = b, s0 = 1, s1 = 0, t0 = 0, t1 = 1;
+      while (r1) {
+        const q = Math.floor(r0 / r1);
+        [r0, r1] = [r1, r0 - q * r1];
+        [s0, s1] = [s1, s0 - q * s1];
+        [t0, t1] = [t1, t0 - q * t1];
+      }
+      return { a, b, g, steps, subs, bez: { s: s0, t: t0 } };
+    }
+
+    function lameBound(a, b) {
+      const m = Math.min(a, b);
+      let f1 = 1, f2 = 2;           // consecutive Fibonacci numbers, f1 ≤ m
+      while (f2 <= m) { const n = f1 + f2; f1 = f2; f2 = n; }
+      return { steps: divSteps(f2, f1), pair: [f2, f1] };
+    }
+
+    // ---------- colours ----------
+    const V = [124, 124, 255], P = [255, 124, 195];
+    function mix(c1, c2, k) { return [0, 1, 2].map((i) => Math.round(c1[i] + (c2[i] - c1[i]) * k)); }
+    function stepColour(i, n) { return mix(V, P, n <= 1 ? 0 : i / (n - 1)); }
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+    // ---------- layout ----------
+    function area() {
+      if (W <= 700) {
+        const panelTop = ui.classList.contains('hidden') ? H - 60 : ui.getBoundingClientRect().top;
+        return { x: 14, y: 16, w: W - 28, h: Math.max(120, panelTop - 32) };
+      }
+      const left = ui.classList.contains('hidden') ? 40 : ui.getBoundingClientRect().right + 36;
+      return { x: left, y: 56, w: Math.max(120, W - left - 40), h: H - 56 - 40 };
+    }
+
+    function fit(a, b) {
+      const ar = area();
+      const s = Math.min(ar.w / a, ar.h / b);
+      const x0 = ar.x + (ar.w - a * s) / 2;
+      const y0 = ar.y + (ar.h - b * s) / 2;
+      return { s, x0, y0 };
+    }
+
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    }
+
+    // ---------- state changes ----------
+    function setPair(a, b, animate = true) {
+      A = Math.max(1, Math.min(MAXV, Math.round(a) || 1));
+      B = Math.max(1, Math.min(MAXV, Math.round(b) || 1));
+      plan = buildPlan(A, B);
+      $('aN').value = A; $('aR').value = A;
+      $('bN').value = B; $('bR').value = B;
+      t = animate ? 0 : plan.steps.length + 1;
+      if (animate) { playing = true; $('bPlay').textContent = 'Pause'; }
+      buildEqs();
+      updateReadout();
+    }
+
+    function buildEqs() {
+      const box = $('eqs');
+      box.innerHTML = '';
+      const n = plan.steps.length;
+      plan.steps.forEach((st, i) => {
+        const d = document.createElement('div');
+        const c = stepColour(i, n);
+        d.innerHTML = `<i style="background:${rgba(c, 0.85)}"></i>${st.big} = ${st.q} × ${st.small} + ${st.r}`;
+        d.dataset.i = i;
+        d.addEventListener('mouseenter', () => { hoverStep = i; });
+        d.addEventListener('mouseleave', () => { hoverStep = -1; });
+        box.appendChild(d);
+      });
+    }
+
+    let lastEqState = '';
+    function updateEqClasses() {
+      const n = plan.steps.length;
+      const doneN = Math.min(n, Math.floor(t));
+      const state = doneN + ':' + hoverStep;
+      if (state === lastEqState) return;
+      lastEqState = state;
+      const kids = $('eqs').children;
+      for (let i = 0; i < kids.length; i++) {
+        kids[i].classList.toggle('done', i < doneN || (i === doneN && t > doneN));
+        kids[i].classList.toggle('hot', i === hoverStep || (hoverStep < 0 && i === doneN && t < n));
+        kids[i].classList.toggle('last', i === n - 1 && t >= n);
+      }
+      const hot = kids[hoverStep >= 0 ? hoverStep : Math.min(doneN, n - 1)];
+      if (hot && hoverStep < 0) {
+        const box = $('eqs');
+        const top = hot.offsetTop - box.offsetTop;
+        if (top < box.scrollTop || top > box.scrollTop + box.clientHeight - 20) box.scrollTop = top - 40;
+      }
+    }
+
+    function updateReadout() {
+      const p = plan;
+      $('rG').textContent = p.g;
+      $('rDiv').textContent = p.steps.length;
+      $('rSub').textContent = p.subs;
+      const lb = lameBound(A, B);
+      $('rLame').textContent = `${lb.steps}  (${lb.pair[0]}, ${lb.pair[1]})`;
+      $('rFrac').textContent = p.g === 1 ? 'lowest already' : `${A / p.g} / ${B / p.g}`;
+      const qs = p.steps.map((s) => s.q);
+      let cf;
+      if (A >= B) cf = qs.length > 1 ? `[${qs[0]}; ${qs.slice(1).join(', ')}]` : `[${qs[0]}]`;
+      else cf = `[0; ${qs.join(', ')}]`;
+      if (cf.length > 30) cf = cf.slice(0, 28) + '…]';
+      $('rCF').textContent = cf;
+      const s = p.bez.s, tt = p.bez.t;
+      $('rBez').innerHTML = `Extended version: <b class="p">${p.g}</b> = <b class="v">${s}</b> × ${A} ${tt < 0 ? '−' : '+'} <b class="v">${Math.abs(tt)}</b> × ${B}. Those two multipliers are how RSA finds a private key.`;
+    }
+
+    // ---------- squares mode drawing ----------
+    function drawSquares(dt) {
+      const n = plan.steps.length;
+      if (playing && !drag && t < n + 1) {
+        t = Math.min(n + 1, t + (stepDur <= 0 ? 1e9 : dt / stepDur));
+        if (t >= n + 1) { playing = false; $('bPlay').textContent = 'Play'; }
+      }
+      const { s: sc, x0, y0 } = drag ? drag : fit(A, B);
+      const X = (u) => x0 + u * sc, Y = (v) => y0 + v * sc;
+
+      // the whole rectangle
+      ctx.fillStyle = 'rgba(255,255,255,0.025)';
+      ctx.fillRect(X(0), Y(0), A * sc, B * sc);
+
+      for (let i = 0; i < n; i++) {
+        const st = plan.steps[i];
+        const prog = t - i;
+        if (prog <= 0) break;
+        const c = stepColour(i, n);
+        const shown = Math.min(st.q, prog >= 1 ? st.q : prog * st.q);
+        const hot = hoverStep === i;
+        const dim = hoverStep >= 0 && !hot;
+        const px = st.s * sc;
+        for (let j = 0; j < st.q; j++) {
+          const k = Math.max(0, Math.min(1, shown - j));
+          if (k <= 0) break;
+          const q = st.squares[j];
+          const grow = 0.85 + 0.15 * k;
+          const cx = X(q.x + q.s / 2), cy = Y(q.y + q.s / 2);
+          const half = (px * grow) / 2;
+          ctx.fillStyle = rgba(c, (dim ? 0.06 : hot ? 0.42 : 0.2) * k);
+          ctx.fillRect(cx - half, cy - half, half * 2, half * 2);
+          if (px >= 2.5) {
+            ctx.strokeStyle = rgba(c, (dim ? 0.25 : 0.9) * k);
+            ctx.lineWidth = hot ? 2 : 1.2;
+            ctx.strokeRect(cx - half + 0.5, cy - half + 0.5, half * 2 - 1, half * 2 - 1);
+          }
+        }
+        // a thin line along a run of squares too small to outline
+        if (px < 2.5 && shown > 0) {
+          const first = st.squares[0];
+          const len = shown * st.s;
+          ctx.fillStyle = rgba(c, dim ? 0.2 : 0.75);
+          if (st.squares.length > 1 && st.squares[1].x !== first.x) ctx.fillRect(X(first.x), Y(first.y), len * sc, Math.max(1, px));
+          else ctx.fillRect(X(first.x), Y(first.y), Math.max(1, px), len * sc);
+        }
+        // labels
+        if (prog > 0.3 && px >= 30 && !dim) {
+          const q0 = st.squares[0];
+          ctx.fillStyle = rgba([233, 233, 240], Math.min(1, prog) * 0.9);
+          ctx.font = `600 ${Math.min(26, Math.max(11, px * 0.16))}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(String(st.s), X(q0.x + q0.s / 2), Y(q0.y + q0.s / 2));
+          if (st.q > 1 && px >= 44) {
+            ctx.font = `${Math.min(14, Math.max(10, px * 0.09))}px ui-sans-serif, system-ui, sans-serif`;
+            ctx.fillStyle = rgba(c, 0.95);
+            ctx.fillText(`× ${st.q}`, X(q0.x + q0.s / 2), Y(q0.y + q0.s / 2) + Math.min(26, Math.max(11, px * 0.16)));
+          }
+        }
+      }
+
+      // the remainder still to be cut
+      const cur = Math.floor(t);
+      if (cur < n) {
+        const before = cur === 0 ? { x: 0, y: 0, w: A, h: B } : plan.steps[cur - 1].rem;
+        ctx.save();
+        ctx.setLineDash([6, 5]);
+        ctx.lineDashOffset = -performance.now() / 60;
+        ctx.strokeStyle = 'rgba(233,233,240,0.55)';
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(X(before.x) + 0.5, Y(before.y) + 0.5, before.w * sc - 1, before.h * sc - 1);
+        ctx.restore();
+      }
+
+      // reveal: the gcd tiles the whole rectangle
+      const reveal = Math.max(0, Math.min(1, t - n));
+      if (reveal > 0) {
+        const g = plan.g, gp = g * sc;
+        if (gp >= 4 && (A / g) * (B / g) < 40000) {
+          ctx.strokeStyle = `rgba(255,124,195,${0.32 * reveal})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let u = g; u < A; u += g) { ctx.moveTo(X(u) + 0.5, Y(0)); ctx.lineTo(X(u) + 0.5, Y(B)); }
+          for (let v = g; v < B; v += g) { ctx.moveTo(X(0), Y(v) + 0.5); ctx.lineTo(X(A), Y(v) + 0.5); }
+          ctx.stroke();
+        }
+        const last = plan.steps[n - 1].squares[plan.steps[n - 1].q - 1];
+        ctx.save();
+        ctx.shadowColor = '#ff7cc3'; ctx.shadowBlur = 18 * reveal;
+        ctx.strokeStyle = `rgba(255,159,210,${reveal})`;
+        ctx.lineWidth = 2;
+        const lp = Math.max(3, last.s * sc);
+        ctx.strokeRect(X(last.x), Y(last.y), lp, lp);
+        ctx.restore();
+      }
+
+      // outline + resize handle
+      ctx.strokeStyle = 'rgba(233,233,240,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(X(0), Y(0), A * sc, B * sc);
+      const hx = X(A), hy = Y(B);
+      const nearH = mouse && Math.hypot(mouse.x - hx, mouse.y - hy) < 22;
+      ctx.beginPath(); ctx.arc(hx, hy, nearH || drag ? 9 : 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#7c7cff'; ctx.shadowColor = '#7c7cff'; ctx.shadowBlur = 12;
+      ctx.fill(); ctx.shadowBlur = 0;
+
+      // dimension labels
+      ctx.fillStyle = 'rgba(154,154,176,0.9)';
+      ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(`a = ${A}`, X(A / 2), Y(0) - 8);
+      ctx.save();
+      ctx.translate(X(0) - 10, Y(B / 2)); ctx.rotate(-Math.PI / 2);
+      ctx.fillText(`b = ${B}`, 0, 0);
+      ctx.restore();
+
+      // reveal caption
+      if (reveal > 0.2) {
+        ctx.fillStyle = `rgba(255,159,210,${reveal})`;
+        ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        const tiles = (A / plan.g) * (B / plan.g);
+        ctx.fillText(`gcd ${plan.g}: ${A / plan.g} × ${B / plan.g} = ${tiles.toLocaleString()} tiles of side ${plan.g} fill it exactly`, X(A / 2), Y(B) + 12);
+      }
+
+      updateEqClasses();
+    }
+
+    function squareStepAt(mx, my) {
+      const { s: sc, x0, y0 } = fit(A, B);
+      const u = (mx - x0) / sc, v = (my - y0) / sc;
+      if (u < 0 || v < 0 || u >= A || v >= B) return -1;
+      const n = Math.min(plan.steps.length, Math.ceil(t));
+      for (let i = 0; i < n; i++) {
+        const st = plan.steps[i];
+        const f = st.squares[0], l = st.squares[st.q - 1];
+        if (u >= f.x && v >= f.y && u < l.x + l.s && v < l.y + l.s) return i;
+      }
+      return -1;
+    }
+
+    // ---------- field mode ----------
+    function buildField() {
+      const N = fieldN;
+      const img = new ImageData(N, N);
+      const d = img.data;
+      let cop = 0, maxS = 0, maxAt = null;
+      const steps = new Uint8Array(N * N);
+      for (let b = 1; b <= N; b++) for (let a = 1; a <= N; a++) {
+        const s = divSteps(a, b);
+        steps[(b - 1) * N + (a - 1)] = s;
+        if (s > maxS || (s === maxS && maxAt && a + b < maxAt[0] + maxAt[1])) { maxS = s; maxAt = [a, b]; }
+      }
+      for (let b = 1; b <= N; b++) for (let a = 1; a <= N; a++) {
+        const g = gcd(a, b);
+        if (g === 1) cop++;
+        const s = steps[(b - 1) * N + (a - 1)];
+        let c, al = 255;
+        if (fieldColour === 'steps') {
+          const k = Math.pow((s - 1) / Math.max(1, maxS - 1), 1.7);
+          c = k < 0.6 ? mix([18, 18, 40], V, k / 0.6) : mix(V, P, (k - 0.6) / 0.4);
+          if (k > 0.93) c = mix(c, [255, 235, 248], (k - 0.93) / 0.07);
+        } else if (fieldColour === 'gcd') {
+          if (g === 1) c = [20, 20, 38];
+          else {
+            const k = Math.min(1, Math.log(g) / Math.log(Math.max(2, N / 3)));
+            c = k < 0.5 ? mix([70, 70, 170], V, k * 2) : mix(V, P, (k - 0.5) * 2);
+            if (g === a || g === b) c = mix(c, [255, 255, 255], 0.25);
+          }
+        } else {
+          // first quotient: how many of the biggest square fit
+          const lo = Math.min(a, b), hi = Math.max(a, b);
+          const q = Math.floor(hi / lo);
+          const k = Math.min(1, Math.log(q) / Math.log(12));
+          const side = a >= b ? V : P;
+          c = mix([16, 16, 30], side, 0.25 + 0.75 * (1 - k));
+          if (q === 1) c = mix(c, [240, 240, 255], 0.15);
+        }
+        const yImg = N - b;             // b grows upward
+        const o = (yImg * N + (a - 1)) * 4;
+        d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = al;
+      }
+      const off = document.createElement('canvas');
+      off.width = N; off.height = N;
+      off.getContext('2d').putImageData(img, 0, 0);
+      fieldImg = off;
+      fieldStats = { cop: cop / (N * N), maxS, maxAt };
+      $('fPairs').textContent = (N * N).toLocaleString();
+      $('fCop').textContent = fieldStats.cop.toFixed(4);
+      $('fMax').textContent = `${maxS} at (${maxAt[0]}, ${maxAt[1]})`;
+      fieldDirty = false;
+    }
+
+    function fieldGeom() {
+      const ar = area();
+      let S = Math.min(ar.w, ar.h - 24);
+      const insetSide = ar.w - S >= 200;
+      if (insetSide) S = Math.min(S, ar.w - 220);
+      const fx = ar.x + (insetSide ? 0 : (ar.w - S) / 2) + 18;
+      const fy = ar.y + (ar.h - 24 - S) / 2;
+      S -= 18;
+      return { ar, S, fx, fy, insetSide };
+    }
+
+    function drawField() {
+      if (fieldDirty) buildField();
+      const g = fieldGeom();
+      const N = fieldN, cell = g.S / N;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(fieldImg, g.fx, g.fy, g.S, g.S);
+      ctx.imageSmoothingEnabled = true;
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(g.fx - 0.5, g.fy - 0.5, g.S + 1, g.S + 1);
+
+      if (showGold) {
+        const phi = (1 + Math.sqrt(5)) / 2;
+        ctx.save();
+        ctx.beginPath(); ctx.rect(g.fx, g.fy, g.S, g.S); ctx.clip();
+        const P0 = (a, b) => [g.fx + a * cell, g.fy + g.S - b * cell];
+        ctx.beginPath();
+        let p = P0(0, 0); ctx.moveTo(p[0], p[1]); p = P0(N, N / phi); ctx.lineTo(p[0], p[1]);
+        p = P0(0, 0); ctx.moveTo(p[0], p[1]); p = P0(N / phi, N); ctx.lineTo(p[0], p[1]);
+        ctx.strokeStyle = 'rgba(5,5,10,0.7)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.setLineDash([7, 5]);
+        ctx.strokeStyle = 'rgba(255,190,228,0.95)';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = 'rgba(255,214,236,0.95)';
+        ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        let q = P0(N * 0.5, N * 0.5 / phi);
+        ctx.fillText('b = a / φ', q[0] + 4, q[1] + 6);
+        q = P0(N * 0.5 / phi, N * 0.5);
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText('b = a · φ', q[0] - 6, q[1] - 2);
+      }
+
+      // axes
+      ctx.fillStyle = 'rgba(154,154,176,0.9)';
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('1', g.fx, g.fy + g.S + 5);
+      ctx.textAlign = 'right';
+      ctx.fillText(`a = ${N}`, g.fx + g.S, g.fy + g.S + 5);
+      ctx.textAlign = 'center';
+      ctx.fillText('width a →', g.fx + g.S / 2, g.fy + g.S + 5);
+      ctx.save();
+      ctx.translate(g.fx - 6, g.fy + g.S / 2); ctx.rotate(-Math.PI / 2);
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('height b →', 0, 0);
+      ctx.textAlign = 'right'; ctx.fillText(`b = ${N}`, g.S / 2, 0);
+      ctx.restore();
+
+      // hover
+      if (fieldHover) {
+        const { a, b } = fieldHover;
+        const x = g.fx + (a - 1) * cell, y = g.fy + g.S - b * cell;
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+        const pad = Math.max(0, 3 - cell / 2);
+        ctx.strokeRect(x - pad, y - pad, cell + pad * 2, cell + pad * 2);
+        if (showInset) drawInset(g, a, b);
+      }
+    }
+
+    function drawInset(g, a, b) {
+      const p = buildPlan(a, b);
+      let box;
+      if (g.insetSide) {
+        const w = Math.min(320, g.ar.x + g.ar.w - (g.fx + g.S) - 24);
+        box = { x: g.fx + g.S + 24, y: g.fy, w, h: Math.min(g.S, w * 1.1) };
+      } else {
+        const w = g.S * 0.42;
+        box = { x: g.fx + g.S - w - 8, y: g.fy + 8, w, h: w };
+        ctx.fillStyle = 'rgba(10,10,18,0.82)';
+        ctx.fillRect(box.x - 6, box.y - 6, box.w + 12, box.h + 12);
+      }
+      const top = 40;
+      const sc = Math.min(box.w / a, (box.h - top) / b);
+      const x0 = box.x + (box.w - a * sc) / 2, y0 = box.y + top;
+      const n = p.steps.length;
+      p.steps.forEach((st, i) => {
+        const c = stepColour(i, n);
+        const px = st.s * sc;
+        st.squares.forEach((q) => {
+          ctx.fillStyle = rgba(c, 0.25);
+          ctx.fillRect(x0 + q.x * sc, y0 + q.y * sc, px, px);
+          if (px >= 2.5) {
+            ctx.strokeStyle = rgba(c, 0.9); ctx.lineWidth = 1;
+            ctx.strokeRect(x0 + q.x * sc + 0.5, y0 + q.y * sc + 0.5, px - 1, px - 1);
+          }
+        });
+      });
+      ctx.strokeStyle = 'rgba(233,233,240,0.5)'; ctx.lineWidth = 1;
+      ctx.strokeRect(x0, y0, a * sc, b * sc);
+      ctx.fillStyle = '#e9e9f0';
+      ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(`(${a}, ${b})`, box.x, box.y);
+      ctx.font = '11.5px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = '#9a9ab0';
+      ctx.fillText(`${n} step${n === 1 ? '' : 's'} · gcd ${p.g} · quotients ${p.steps.map((s) => s.q).join(' ')}`.slice(0, 60), box.x, box.y + 18);
+    }
+
+    function fieldCellAt(mx, my) {
+      const g = fieldGeom();
+      const cell = g.S / fieldN;
+      const a = Math.floor((mx - g.fx) / cell) + 1;
+      const b = Math.floor((g.fy + g.S - my) / cell) + 1;
+      if (a < 1 || b < 1 || a > fieldN || b > fieldN) return null;
+      return { a, b };
+    }
+
+    function updateFieldNote() {
+      if (!fieldHover) {
+        $('fNote').innerHTML = fieldColour === 'steps'
+          ? 'Brightness is how many division steps Euclid needs. The brightest ridges hug the <b class="p">golden lines</b>: that is where the Fibonacci pairs live.'
+          : fieldColour === 'gcd'
+          ? 'Dark cells share no factor. Every bright ray is a line through the origin of pairs that share one, and the darkness fills about <b class="v">6/π²</b> of the square.'
+          : 'Colour shows the first quotient: how many of the biggest square fit before the first turn. Violet when a is wider, pink when b is taller.';
+        return;
+      }
+      const { a, b } = fieldHover;
+      const g = gcd(a, b), s = divSteps(a, b);
+      $('fNote').innerHTML = `<b>(${a}, ${b})</b>: <b class="v">${s}</b> step${s === 1 ? '' : 's'}, gcd <b class="p">${g}</b>. Click to open this pair.`;
+    }
+
+    // ---------- loop ----------
+    function frame(now) {
+      const dt = Math.min(0.1, (now - (lastTime || now)) / 1000);
+      lastTime = now;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      if (mode === 'squares') drawSquares(dt); else drawField();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- input ----------
+    function pos(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+
+    cv.addEventListener('pointerdown', (e) => {
+      const p = pos(e);
+      mouse = p;
+      if (mode === 'squares') {
+        const f = fit(A, B);
+        const hx = f.x0 + A * f.s, hy = f.y0 + B * f.s;
+        if (Math.hypot(p.x - hx, p.y - hy) < 26) {
+          drag = { s: f.s, x0: f.x0, y0: f.y0 };
+          cv.setPointerCapture(e.pointerId);
+          e.preventDefault();
+        }
+      } else {
+        const c = fieldCellAt(p.x, p.y);
+        if (c) {
+          if (e.pointerType !== 'mouse' && (!fieldHover || fieldHover.a !== c.a || fieldHover.b !== c.b)) {
+            fieldHover = c; updateFieldNote(); return;     // first tap previews
+          }
+          setMode('squares');
+          setPair(c.a, c.b, true);
+        }
+      }
+    });
+
+    cv.addEventListener('pointermove', (e) => {
+      const p = pos(e);
+      mouse = p;
+      if (mode === 'squares') {
+        if (drag) {
+          const ar = area();
+          const maxA = Math.min(MAXV, Math.floor((ar.x + ar.w - drag.x0) / drag.s));
+          const maxB = Math.min(MAXV, Math.floor((ar.y + ar.h - drag.y0) / drag.s));
+          const a = Math.max(1, Math.min(maxA, Math.round((p.x - drag.x0) / drag.s)));
+          const b = Math.max(1, Math.min(maxB, Math.round((p.y - drag.y0) / drag.s)));
+          if (a !== A || b !== B) setPair(a, b, false);
+          return;
+        }
+        const f = fit(A, B);
+        const near = Math.hypot(p.x - (f.x0 + A * f.s), p.y - (f.y0 + B * f.s)) < 22;
+        cv.className = near ? 'resize' : '';
+        if (e.pointerType === 'mouse') hoverStep = squareStepAt(p.x, p.y);
+      } else {
+        const c = fieldCellAt(p.x, p.y);
+        cv.className = c ? 'pick' : '';
+        if (e.pointerType === 'mouse' || c) {
+          const changed = !c !== !fieldHover || (c && (c.a !== fieldHover.a || c.b !== fieldHover.b));
+          if (changed) { fieldHover = c; updateFieldNote(); }
+        }
+      }
+    });
+
+    function endDrag() {
+      if (drag) { drag = null; t = plan.steps.length + 1; }
+    }
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+    cv.addEventListener('pointerleave', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      mouse = null; hoverStep = -1;
+      if (mode === 'field' && fieldHover) { fieldHover = null; updateFieldNote(); }
+    });
+
+    // ---------- controls ----------
+    function setMode(m) {
+      mode = m;
+      ui.dataset.mode = m;
+      document.querySelectorAll('#mode button').forEach((b) => b.classList.toggle('on', b.dataset.mode === m));
+      $('hint').textContent = m === 'squares'
+        ? 'drag the corner handle to reshape · hover a square for its step · H hides the panel'
+        : 'hover any cell to preview its run · click to open that pair · H hides the panel';
+      hoverStep = -1; cv.className = '';
+      if (m === 'field') updateFieldNote();
+    }
+    document.querySelectorAll('#mode button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+    $('aR').addEventListener('input', () => setPair(+$('aR').value, B, false));
+    $('bR').addEventListener('input', () => setPair(A, +$('bR').value, false));
+    $('aR').addEventListener('change', () => setPair(A, B, true));
+    $('bR').addEventListener('change', () => setPair(A, B, true));
+    $('aN').addEventListener('change', () => setPair(+$('aN').value, B, true));
+    $('bN').addEventListener('change', () => setPair(A, +$('bN').value, true));
+
+    $('pEuclid').addEventListener('click', () => setPair(1071, 462, true));
+    $('pFib').addEventListener('click', () => setPair(987, 610, true));
+    $('pLop').addEventListener('click', () => setPair(999, 2, true));
+    $('pRand').addEventListener('click', () => {
+      const g = [1, 1, 1, 2, 3, 6, 12, 21][Math.floor(Math.random() * 8)];
+      const lim = Math.floor(MAXV / g);
+      setPair(g * (20 + Math.floor(Math.random() * (lim - 20))), g * (10 + Math.floor(Math.random() * (lim - 10))), true);
+    });
+
+    function setSpeed() {
+      const v = +$('speed').value;
+      stepDur = v >= 100 ? 0 : Math.round(3 * Math.pow(0.02, v / 100) * 100) / 100;
+      $('speedV').textContent = stepDur === 0 ? 'instant' : `${stepDur.toFixed(2)} s`;
+    }
+    $('speed').addEventListener('input', setSpeed);
+
+    $('bPlay').addEventListener('click', () => {
+      if (t >= plan.steps.length + 1) { t = 0; playing = true; }
+      else playing = !playing;
+      $('bPlay').textContent = playing ? 'Pause' : 'Play';
+    });
+    $('bStep').addEventListener('click', () => {
+      playing = false; $('bPlay').textContent = 'Play';
+      if (t >= plan.steps.length + 1) t = 0;
+      t = Math.min(plan.steps.length + 1, Math.floor(t + 1e-9) + 1);
+    });
+    $('bReplay').addEventListener('click', () => { t = 0; playing = true; $('bPlay').textContent = 'Pause'; });
+
+    document.querySelectorAll('#colour button').forEach((b) => b.addEventListener('click', () => {
+      fieldColour = b.dataset.c;
+      document.querySelectorAll('#colour button').forEach((x) => x.classList.toggle('on', x === b));
+      fieldDirty = true; updateFieldNote();
+    }));
+    $('nR').addEventListener('input', () => { fieldN = +$('nR').value; $('nV').textContent = fieldN; fieldDirty = true; fieldHover = null; updateFieldNote(); });
+    $('tGold').addEventListener('click', () => { showGold = !showGold; $('tGold').classList.toggle('on', showGold); });
+    $('tInset').addEventListener('click', () => { showInset = !showInset; $('tInset').classList.toggle('on', showInset); });
+
+    window.addEventListener('resize', resize);
+    resize();
+    setSpeed();
+    setPair(A, B, true);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
