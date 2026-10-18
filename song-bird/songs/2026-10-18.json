@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-18",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Nobody Owns the Light",
+  "mood": {
+    "label": "Uneasy",
+    "score": -0.18,
+    "summary": "An uneasy day: tankers hit in Hormuz as Washington and Tehran both claim the strait, Ukraine blacked out, diplomats attacked in the West Bank, France burning over prices. Against it: coral recovering fast, the Pope home from surgery, solar booming in the Philippines.",
+    "palette": {
+      "bg": "#11161b",
+      "bg2": "#22252e",
+      "accent": "#d98f4e",
+      "accent2": "#5fa8a0",
+      "text": "#e7eaec"
+    }
+  },
+  "style": {
+    "genre": "dark electronic — kalimba, muted guitar, TR-606",
+    "key": "Ab",
+    "scale": "harmonic minor",
+    "bpm": 112,
+    "swing": 0.08
+  },
+  "sampleSources": ["Strudel default library (GM kalimba, muted electric guitar, Roland TR-606)"],
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ ~ ~ sd ~ ~ ~, hh*8\").bank(\"RolandTR606\").gain(0.6), s(\"~ rim ~ ~ ~ ~ rim [~ rim]\").bank(\"RolandTR606\").gain(0.28).pan(0.7), note(\"<[af1 ~ af1 af2 ~ af1 ~ ef2] [e1 ~ e1 e2 ~ e1 ~ b1] [df2 ~ df2 df3 ~ df2 ~ af1] [ef2 ~ ef2 ef3 ~ g1 ~ bf1]>\").s(\"sawtooth\").lpf(sine.range(300,900).slow(8)).attack(0.01).decay(0.2).sustain(0.5).release(0.2).gain(0.32), note(\"<[af3,b3,ef4] [af3,b3,e4] [af3,df4,e4] [g3,bf3,ef4]>\").struct(\"~ x ~ x ~ x ~ x\").s(\"gm_electric_guitar_muted\").gain(0.3).room(0.3).pan(0.35), note(\"<[af2,ef3] [e2,b2] [df3,af3] [ef3,bf3]>\").s(\"triangle\").attack(1).sustain(0.8).release(2).lpf(1200).gain(0.12).room(0.6).rsize(4), note(\"<[ef5 ~ g4 af4 ~ b4 ~ ~] [~ e5 ~ ef5 b4 ~ af4 ~] [df5 ~ ~ e5 ~ df5 b4 ~] [bf4 ~ g4 ~ ef5 ~ ~ ~]>\").s(\"gm_kalimba\").gain(0.42).room(0.35).delay(0.3).delaytime(0.402).jux(rev))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Two flags say they own the same strait,",
+        "tankers burning where the channel bends.",
+        "A million homes in Ukraine gone dark,",
+        "Limoges in flames before the evening ends."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Diplomats chased down a West Bank road,",
+        "Kenya counts to seven, keeping still.",
+        "The IMF says the poor pay first,",
+        "the prices climbing up the hill."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "But the coral's coming back to colour,",
+        "the Pope walked home through Roman stone,",
+        "Manila's roofs are drinking sunlight —",
+        "nobody owns the light alone."
+      ]
+    }
+  ]
+}
