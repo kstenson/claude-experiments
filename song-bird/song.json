@@ -1,55 +1,55 @@
 {
-  "date": "2026-10-18",
+  "date": "2026-10-19",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Nobody Owns the Light",
+  "title": "Hold the Small Lights",
   "mood": {
     "label": "Uneasy",
     "score": -0.18,
-    "summary": "An uneasy day: tankers hit in Hormuz as Washington and Tehran both claim the strait, Ukraine blacked out, diplomats attacked in the West Bank, France burning over prices. Against it: coral recovering fast, the Pope home from surgery, solar booming in the Philippines.",
+    "summary": "Uneasy: Yemen's war spilling into Saudi Arabia, a thousand Ukrainian drones setting St Petersburg's oil alight, Gaza's shipments halted, Kabila joining Congo's rebels, France counting riot damage, Ebola at eight in Kenya. Against it: China growing 4.5%, the Pope among crowds, a new quantum state, sanctuaries for leatherbacks.",
     "palette": {
-      "bg": "#11161b",
-      "bg2": "#22252e",
-      "accent": "#d98f4e",
-      "accent2": "#5fa8a0",
-      "text": "#e7eaec"
+      "bg": "#14121a",
+      "bg2": "#2a2333",
+      "accent": "#c9b458",
+      "accent2": "#8a6fb3",
+      "text": "#ece8f0"
     }
   },
   "style": {
-    "genre": "dark electronic — kalimba, muted guitar, TR-606",
-    "key": "Ab",
-    "scale": "harmonic minor",
-    "bpm": 112,
-    "swing": 0.08
+    "genre": "industrial post-punk — glockenspiel, picked bass, TR-707",
+    "key": "Eb",
+    "scale": "phrygian",
+    "bpm": 100,
+    "swing": 0
   },
-  "sampleSources": ["Strudel default library (GM kalimba, muted electric guitar, Roland TR-606)"],
-  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ ~ ~ sd ~ ~ ~, hh*8\").bank(\"RolandTR606\").gain(0.6), s(\"~ rim ~ ~ ~ ~ rim [~ rim]\").bank(\"RolandTR606\").gain(0.28).pan(0.7), note(\"<[af1 ~ af1 af2 ~ af1 ~ ef2] [e1 ~ e1 e2 ~ e1 ~ b1] [df2 ~ df2 df3 ~ df2 ~ af1] [ef2 ~ ef2 ef3 ~ g1 ~ bf1]>\").s(\"sawtooth\").lpf(sine.range(300,900).slow(8)).attack(0.01).decay(0.2).sustain(0.5).release(0.2).gain(0.32), note(\"<[af3,b3,ef4] [af3,b3,e4] [af3,df4,e4] [g3,bf3,ef4]>\").struct(\"~ x ~ x ~ x ~ x\").s(\"gm_electric_guitar_muted\").gain(0.3).room(0.3).pan(0.35), note(\"<[af2,ef3] [e2,b2] [df3,af3] [ef3,bf3]>\").s(\"triangle\").attack(1).sustain(0.8).release(2).lpf(1200).gain(0.12).room(0.6).rsize(4), note(\"<[ef5 ~ g4 af4 ~ b4 ~ ~] [~ e5 ~ ef5 b4 ~ af4 ~] [df5 ~ ~ e5 ~ df5 b4 ~] [bf4 ~ g4 ~ ef5 ~ ~ ~]>\").s(\"gm_kalimba\").gain(0.42).room(0.35).delay(0.3).delaytime(0.402).jux(rev))",
+  "sampleSources": ["Strudel default library (VCSL glockenspiel, GM picked bass, GM string ensemble, Roland TR-707)"],
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~, [hh hh] [hh oh] [hh hh] [hh oh]\").bank(\"RolandTR707\").gain(0.62), s(\"~ ~ ~ ~ ~ cp ~ [~ cp]\").bank(\"RolandTR707\").gain(0.25).room(0.4).pan(0.65), note(\"<[ef2 ef2 ~ ef2 bf1 ~ ef2 e2] [e2 e2 ~ e2 b1 ~ e2 gf2] [df2 df2 ~ df2 af1 ~ df2 e2] [af1 af1 ~ af1 ef2 ~ e2 ef2]>\").s(\"gm_electric_bass_pick\").lpf(sine.range(500,1400).slow(16)).gain(0.55), note(\"<[ef3,gf3,bf3] [e3,af3,b3] [df3,e3,af3] [ef3,af3,b3]>\").s(\"gm_string_ensemble_1\").attack(0.6).release(1.5).lpf(1800).gain(0.18).room(0.5).rsize(3), note(\"<[ef3,bf3] [e3,b3] [df3,af3] [af2,ef3]>\").struct(\"x ~ ~ x ~ ~ x ~\").s(\"square\").lpf(700).distort(1.5).gain(0.1).pan(0.3), note(\"<[bf5 ~ ~ gf5 ~ e5 ~ ~] [~ b5 ~ af5 e5 ~ ~ ~] [af5 ~ e5 ~ df5 ~ e5 ~] [ef5 ~ ~ ~ gf5 ~ ef5 ~]>\").s(\"glockenspiel\").gain(0.4).room(0.4).delay(0.35).delaytime(0.45).off(0.25, x => x.add(note(-12)).gain(0.15)).jux(rev))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Two flags say they own the same strait,",
-        "tankers burning where the channel bends.",
-        "A million homes in Ukraine gone dark,",
-        "Limoges in flames before the evening ends."
+        "A thousand drones at St Petersburg,",
+        "the oil tanks burning through the night.",
+        "Houthi fire across the Saudi line,",
+        "Gaza's trucks held out of sight."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Diplomats chased down a West Bank road,",
-        "Kenya counts to seven, keeping still.",
-        "The IMF says the poor pay first,",
-        "the prices climbing up the hill."
+        "Kabila walks into the rebels' camp,",
+        "Paris sweeps the glass from every street.",
+        "Kenya counts to eight and holds its breath,",
+        "four soldiers lost to a barracks' heat."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "But the coral's coming back to colour,",
-        "the Pope walked home through Roman stone,",
-        "Manila's roofs are drinking sunlight —",
-        "nobody owns the light alone."
+        "But the crowds came out to greet the Pope,",
+        "and somewhere physicists found a brand-new sea,",
+        "the turtles may yet get their harbour —",
+        "hold the small lights, hold them steadily."
       ]
     }
   ]
