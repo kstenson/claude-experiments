@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-19",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Hold the Small Lights",
+  "mood": {
+    "label": "Uneasy",
+    "score": -0.18,
+    "summary": "Uneasy: Yemen's war spilling into Saudi Arabia, a thousand Ukrainian drones setting St Petersburg's oil alight, Gaza's shipments halted, Kabila joining Congo's rebels, France counting riot damage, Ebola at eight in Kenya. Against it: China growing 4.5%, the Pope among crowds, a new quantum state, sanctuaries for leatherbacks.",
+    "palette": {
+      "bg": "#14121a",
+      "bg2": "#2a2333",
+      "accent": "#c9b458",
+      "accent2": "#8a6fb3",
+      "text": "#ece8f0"
+    }
+  },
+  "style": {
+    "genre": "industrial post-punk — glockenspiel, picked bass, TR-707",
+    "key": "Eb",
+    "scale": "phrygian",
+    "bpm": 100,
+    "swing": 0
+  },
+  "sampleSources": ["Strudel default library (VCSL glockenspiel, GM picked bass, GM string ensemble, Roland TR-707)"],
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~, [hh hh] [hh oh] [hh hh] [hh oh]\").bank(\"RolandTR707\").gain(0.62), s(\"~ ~ ~ ~ ~ cp ~ [~ cp]\").bank(\"RolandTR707\").gain(0.25).room(0.4).pan(0.65), note(\"<[ef2 ef2 ~ ef2 bf1 ~ ef2 e2] [e2 e2 ~ e2 b1 ~ e2 gf2] [df2 df2 ~ df2 af1 ~ df2 e2] [af1 af1 ~ af1 ef2 ~ e2 ef2]>\").s(\"gm_electric_bass_pick\").lpf(sine.range(500,1400).slow(16)).gain(0.55), note(\"<[ef3,gf3,bf3] [e3,af3,b3] [df3,e3,af3] [ef3,af3,b3]>\").s(\"gm_string_ensemble_1\").attack(0.6).release(1.5).lpf(1800).gain(0.18).room(0.5).rsize(3), note(\"<[ef3,bf3] [e3,b3] [df3,af3] [af2,ef3]>\").struct(\"x ~ ~ x ~ ~ x ~\").s(\"square\").lpf(700).distort(1.5).gain(0.1).pan(0.3), note(\"<[bf5 ~ ~ gf5 ~ e5 ~ ~] [~ b5 ~ af5 e5 ~ ~ ~] [af5 ~ e5 ~ df5 ~ e5 ~] [ef5 ~ ~ ~ gf5 ~ ef5 ~]>\").s(\"glockenspiel\").gain(0.4).room(0.4).delay(0.35).delaytime(0.45).off(0.25, x => x.add(note(-12)).gain(0.15)).jux(rev))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "A thousand drones at St Petersburg,",
+        "the oil tanks burning through the night.",
+        "Houthi fire across the Saudi line,",
+        "Gaza's trucks held out of sight."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Kabila walks into the rebels' camp,",
+        "Paris sweeps the glass from every street.",
+        "Kenya counts to eight and holds its breath,",
+        "four soldiers lost to a barracks' heat."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "But the crowds came out to greet the Pope,",
+        "and somewhere physicists found a brand-new sea,",
+        "the turtles may yet get their harbour —",
+        "hold the small lights, hold them steadily."
+      ]
+    }
+  ]
+}
