@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-10-18",
+    "lastUpdated": "2026-10-19",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -4363,7 +4363,7 @@
     {
       "id": "2026-10-18",
       "date": "2026-10-18",
-      "headline": true,
+      "headline": false,
       "topic": "Whether the Reform figures filmed by ITV were all suspended or asked to resign",
       "claim": "The individuals that you're referring to today were suspended or were asked to resign, and that has happened",
       "speaker": "Robert Jenrick",
@@ -4407,6 +4407,56 @@
         {
           "title": "Yahoo News — Reform activist suspended over Muslims remark",
           "url": "https://www.yahoo.com/news/politics/articles/reform-activist-suspended-reportedly-saying-205108796.html"
+        }
+      ]
+    },
+    {
+      "id": "2026-10-19",
+      "date": "2026-10-19",
+      "headline": true,
+      "topic": "Whether 174,000 more young people are unemployed under Labour",
+      "claim": "Labour have \"killed jobs\" for young people, with more than 174,000 more young people unemployed (as reported; no verbatim transcript of the figure)",
+      "speaker": "Helen Whately",
+      "party": "Conservative",
+      "role": "Shadow Work and Pensions Secretary",
+      "discussionScore": 55,
+      "discussionNote": "Made on BBC's Sunday with Laura Kuenssberg on 18 October, as the Tories push youth jobs ahead of the 28 October Budget and before Tuesday's ONS jobs figures.",
+      "score": 72,
+      "verdict": "Mostly True",
+      "explanation": "The figure checks out. ONS Labour Force Survey data puts unemployed 16–24-year-olds at about 751,000 in May–July 2026. In April–June 2024, the last quarter before the election, it was about 577,000. That is a rise of 174,000. The youth unemployment rate rose from 13.5% to 16.4%, the highest since 2014. But the baseline flatters the rise. April–June 2024 was a low point, and like-for-like comparisons give 126,000–162,000. Youth LFS estimates are volatile and the survey has known quality problems. Blaming Labour for 'killing' jobs is arguable but contested, since the wider economy also weakened. The number is right, the framing is generous.",
+      "evidence": [
+        "ONS LFS: unemployed 16–24s were about 577,000 in April–June 2024 and about 751,000 in May–July 2026, a rise of 174,000.",
+        "Same-season comparisons are smaller: +162,000 (April–June to April–June) and +126,000 (May–July to May–July).",
+        "ONS: youth unemployment rate 13.5% in April–June 2024, 16.4% in May–July 2026.",
+        "Commons Library: 16.4% in May–July 2026 is the highest youth unemployment rate since 2014.",
+        "The ONS warns LFS estimates are less reliable because of low response; youth subgroups are especially volatile.",
+        "Employer NICs and minimum wage rises are cited as causes, but independent attribution versus wider economic weakness is unsettled."
+      ],
+      "confidence": "High on the arithmetic (ONS series YBVH, YBVK, MGWY); medium on causation.",
+      "sources": [
+        {
+          "title": "City AM — Back businesses to employ more Neets, Tory shadow minister says",
+          "url": "https://www.cityam.com/back-businesses-to-employ-more-neets-tory-shadow-minister-says/"
+        },
+        {
+          "title": "Spectator — Sunday shows round-up",
+          "url": "https://spectator.com/article/sunday-shows-round-up-polanski-defends-zionism-motion/"
+        },
+        {
+          "title": "ONS — Unemployed aged 18–24 (YBVK)",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/ybvk/lms"
+        },
+        {
+          "title": "ONS — Unemployed aged 16–17 (YBVH)",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/ybvh/lms"
+        },
+        {
+          "title": "ONS — Unemployment rate aged 16–24 (MGWY)",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgwy/lms"
+        },
+        {
+          "title": "House of Commons Library — Youth unemployment statistics",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/sn05871/"
         }
       ]
     }
