@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Leftmost Pile — Experiment 094</title>
+<meta name="description" content="Patience sorting: deal a deck onto the leftmost pile whose top card is bigger, and the number of piles is exactly the longest increasing subsequence hidden in the deck." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  canvas.add { cursor: copy; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input.pinkr::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input.pinkr::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+  .seg.pinks button.on { background: rgba(255,124,195,0.2); color: #ffe3f2; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 6px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.on i { background: rgba(124,124,255,0.4); }
+  .toggle.on i::after { background: #a9a9ff; }
+  .toggle.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.v { color: #b0b0ff; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6; white-space: pre;
+    overflow-x: auto;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .only-deal, .only-ulam { display: contents; }
+  .ui[data-mode=ulam] .only-deal { display: none; }
+  .ui[data-mode=deal] .only-ulam { display: none; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 10px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: right;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 44vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <button id="showUi">show panel</button>
+
+  <div class="ui" id="ui" data-mode="deal">
+    <button class="collapse" id="hideUi" title="hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>The Leftmost Pile</h1>
+    <p class="sub">Experiment № 094 · October 19, 2026</p>
+
+    <div class="controls">
+      <div class="seg" id="modeSeg">
+        <button data-mode="deal" class="on">Deal one deck</button>
+        <button data-mode="ulam">A thousand decks</button>
+      </div>
+
+      <div class="only-deal">
+        <div class="row">
+          <label>Cards in the deck <b id="nVal">24</b></label>
+          <input type="range" id="nIn" min="5" max="1500" value="24" />
+        </div>
+        <div class="seg pinks" id="srcSeg">
+          <button data-src="shuffle" class="on">Shuffled</button>
+          <button data-src="nearly">Nearly sorted</button>
+          <button data-src="descend">Backwards</button>
+          <button data-src="waves">Waves</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="stepBtn">Step ›</button>
+          <button class="btn" id="playBtn">Play</button>
+          <button class="btn" id="restartBtn">Redeal</button>
+          <button class="btn pink" id="newBtn">New deck</button>
+        </div>
+        <div class="row">
+          <label>Deal speed (cards) <b id="spVal">1.7 /s</b></label>
+          <input type="range" id="spIn" class="pinkr" min="0" max="100" value="18" />
+        </div>
+        <div class="toggles">
+          <div class="toggle on" id="tStrands"><i></i>pile strands</div>
+          <div class="toggle on" id="tPointers"><i></i>back pointers</div>
+          <div class="toggle rose on" id="tClimb"><i></i>longest climb</div>
+          <div class="toggle on" id="tProbes"><i></i>binary search</div>
+        </div>
+        <div class="readout" id="dealOut"></div>
+        <div class="code"><span class="c">// patience sorting</span>
+for x in deck:
+  p = <u>leftmost pile with top ≥ x</u>  <span class="c">// binary search</span>
+  back[x] = top of pile p − 1
+  put x on pile p   <span class="c">// or start a new pile</span>
+<em>longest increasing run = number of piles</em></div>
+      </div>
+
+      <div class="only-ulam">
+        <div class="row">
+          <label>Largest deck <b id="nmVal">1000</b></label>
+          <input type="range" id="nmIn" min="100" max="4000" step="50" value="1000" />
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="ulamPlay">Pause</button>
+          <button class="btn pink" id="ulamClear">Clear</button>
+        </div>
+        <div class="readout" id="ulamOut"></div>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint" id="hint">tap the top chart to deal your own card · space plays · → steps · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 094 · The story</p>
+      <h2>The Leftmost Pile</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I had done a sort (quicksort) and a dynamic program (edit distance), but never the problem that sits between them: find the longest run of cards, not necessarily adjacent, that only goes up. There are 2<sup>n</sup> subsequences to check, and the textbook answer is a quadratic table. Then there is this: a solitaire game, played in the 1960s and written up by Colin Mallows, in which you just deal cards onto piles and count the piles at the end. It is the same answer, in n log n, and nobody has to remember anything but the top cards. Git's "patience diff" still uses it to line up unique lines between two files.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The proof fits in two sentences, and you can watch both of them. Every pile runs downhill, top to bottom, so a climb can never use two cards from the same pile: there are at least as many piles as the longest climb. And each card keeps one pointer to whatever was on top of the pile to its left when it landed, so following pointers back from the last pile walks a climb that touches every pile: at most as many piles as the climb. Those are the coloured downhill strands and the one bright uphill line in the top chart. Two different questions, "how few falling piles can I deal into?" and "how long a rising chain is hidden here?", turn out to have one number between them.</p>
+      <p>Then the second mode surprised me more than the first. Shuffle a deck of n and the climb is almost always close to 2√n, which Vershik, Kerov, Logan and Shepp proved in 1977, answering a question Ulam asked in 1961. The leftovers, shrunk by n<sup>1/6</sup>, settle into the Tracy–Widom shape that also describes the largest eigenvalue of a big random matrix (Baik, Deift and Johansson, 1999). A card game and random matrices draw the same lopsided bell.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When the best thing is too expensive to search for, look for the matching smallest thing on the other side. Any way of splitting the deck into falling piles caps the climb, and any climb proves you need that many piles. When the two meet, each one proves the other is optimal, and you can stop looking. Greedy got there by always choosing the leftmost pile that fits, which leaves the most room for the cards still to come.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring ----
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  function setPanel(visible) {
+    ui.classList.toggle('hidden', !visible);
+    showUi.classList.toggle('on', !visible);
+    window.dispatchEvent(new Event('panelchange'));
+  }
+  document.getElementById('hideUi').addEventListener('click', () => setPanel(false));
+  showUi.addEventListener('click', () => setPanel(true));
+
+  // ---- THE EXPERIMENT ----
+  (() => {
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, DPR = 1;
+
+    const S = {
+      mode: 'deal',
+      src: 'shuffle',
+      n: 24,
+      seq: [],          // card values in (0,1)
+      rank: [],         // display numbers 1..n
+      pile: [], back: [], probes: [], firstOf: [], pileList: [],
+      t: 0, target: 0, playing: false,
+      speed: 2,
+      strands: true, pointers: true, climb: true, showProbes: true,
+      ulamPlaying: true, nMax: 1000, trials: [], hist: new Array(70).fill(0), histN: 0,
+      sumZ: 0, sumZ2: 0,
+    };
+
+    // ---------- deck sources ----------
+    function makeDeck(n, src) {
+      const a = [];
+      if (src === 'shuffle') {
+        for (let i = 0; i < n; i++) a.push((i + 0.5) / n);
+        for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; }
+      } else if (src === 'nearly' || src === 'descend') {
+        for (let i = 0; i < n; i++) a.push((i + 0.5) / n);
+        const swaps = Math.max(1, Math.round(n / 7));
+        for (let s = 0; s < swaps; s++) {
+          const i = (Math.random() * n) | 0;
+          const j = Math.min(n - 1, i + 1 + ((Math.random() * Math.max(2, n / 12)) | 0));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        if (src === 'descend') a.reverse();
+      } else { // waves: rising tide with ripples
+        const k = 2 + Math.random() * 3, ph = Math.random() * 6.28;
+        const raw = [];
+        for (let i = 0; i < n; i++) {
+          const u = i / Math.max(1, n - 1);
+          raw.push(0.55 * u + 0.28 * Math.sin(u * k * 6.283 + ph) + 0.04 * (Math.random() - 0.5));
+        }
+        const order = raw.map((v, i) => i).sort((x, y) => raw[x] - raw[y]);
+        for (let r = 0; r < n; r++) a[order[r]] = (r + 0.5) / n;
+      }
+      return a;
+    }
+
+    // ---------- patience sorting ----------
+    function solve() {
+      const seq = S.seq, n = seq.length;
+      const tops = [];
+      S.pile = new Array(n); S.back = new Array(n); S.probes = new Array(n);
+      S.pileList = []; S.firstOf = [];
+      for (let k = 0; k < n; k++) {
+        const x = seq[k];
+        let lo = 0, hi = tops.length;
+        const pr = [];
+        while (lo < hi) {
+          const mid = (lo + hi) >> 1;
+          const go = seq[tops[mid]] >= x;
+          pr.push({ p: mid, left: go });
+          if (go) hi = mid; else lo = mid + 1;
+        }
+        S.pile[k] = lo;
+        S.back[k] = lo > 0 ? tops[lo - 1] : -1;
+        S.probes[k] = pr;
+        if (lo === tops.length) { S.pileList.push([]); S.firstOf.push(k); }
+        tops[lo] = k;
+        S.pileList[lo].push(k);
+      }
+      // display ranks
+      const idx = seq.map((v, i) => i).sort((x, y) => seq[x] - seq[y]);
+      S.rank = new Array(n);
+      idx.forEach((i, r) => { S.rank[i] = r + 1; });
+    }
+
+    function newDeck() {
+      S.seq = makeDeck(S.n, S.src);
+      solve();
+      S.t = 0; S.target = S.playing ? S.seq.length : 0;
+    }
+
+    // state at time i (cards 0..i-1 dealt)
+    function topsAt(i) {
+      const tops = [];
+      for (let p = 0; p < S.pileList.length; p++) {
+        if (S.firstOf[p] >= i) break;
+        const L = S.pileList[p];
+        let lo = 0, hi = L.length; // last index with L[j] < i
+        while (lo < hi) { const m = (lo + hi) >> 1; if (L[m] < i) lo = m + 1; else hi = m; }
+        tops.push(L[lo - 1]);
+      }
+      return tops;
+    }
+    function heightAt(p, i) {
+      const L = S.pileList[p]; let lo = 0, hi = L.length;
+      while (lo < hi) { const m = (lo + hi) >> 1; if (L[m] < i) lo = m + 1; else hi = m; }
+      return lo;
+    }
+    function chainAt(i) {
+      const tops = topsAt(i);
+      const set = new Set();
+      const chain = [];
+      if (!tops.length) return { chain, set };
+      let k = tops[tops.length - 1];
+      while (k >= 0) { chain.push(k); set.add(k); k = S.back[k]; }
+      chain.reverse();
+      return { chain, set };
+    }
+    function ldsLen(i) { // longest strictly decreasing among first i
+      const tails = [];
+      for (let k = 0; k < i; k++) {
+        const x = -S.seq[k];
+        let lo = 0, hi = tails.length;
+        while (lo < hi) { const m = (lo + hi) >> 1; if (tails[m] >= x) hi = m; else lo = m + 1; }
+        tails[lo] = x;
+      }
+      return tails.length;
+    }
+    function lisFast(arr) {
+      const tails = [];
+      for (let k = 0; k < arr.length; k++) {
+        const x = arr[k];
+        let lo = 0, hi = tails.length;
+        while (lo < hi) { const m = (lo + hi) >> 1; if (tails[m] >= x) hi = m; else lo = m + 1; }
+        tails[lo] = x;
+      }
+      return tails.length;
+    }
+
+    // ---------- colour ----------
+    function pileHue(p, P) {
+      const u = P > 1 ? p / (P - 1) : 0;
+      return 245 + u * 150; // violet → pink → amber
+    }
+    const hsl = (h, s, l, a = 1) => `hsla(${h % 360},${s}%,${l}%,${a})`;
+
+    // ---------- layout ----------
+    let R = null;
+    function layout() {
+      const mobile = W <= 700;
+      const panelOn = !ui.classList.contains('hidden');
+      let x0, y0, x1, y1;
+      if (mobile) {
+        x0 = 14; x1 = W - 14; y0 = 16;
+        y1 = panelOn ? H - Math.min(H * 0.44, ui.offsetHeight) - 26 : H - 60;
+      } else {
+        x0 = panelOn ? 24 + ui.offsetWidth + 40 : 40;
+        x1 = W - 40; y0 = 52; y1 = H - 32;
+      }
+      if (x1 - x0 < 200) x0 = Math.max(14, x1 - 200);
+      x1 = Math.max(x1, x0 + 40); y1 = Math.max(y1, y0 + 160);
+      const h = y1 - y0;
+      const scH = Math.max(80, h * 0.42);
+      R = {
+        x0, y0, x1, y1,
+        sc: { x: x0, y: y0 + 18, w: x1 - x0, h: scH - 18 },
+        pl: { x: x0, y: y0 + scH + 46, w: x1 - x0, h: Math.max(60, h - scH - 46) },
+      };
+    }
+
+    function resize() {
+      DPR = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      layout();
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('panelchange', () => setTimeout(layout, 20));
+
+    // scatter coordinates
+    function scPos(k) {
+      const n = S.seq.length, r = R.sc;
+      const x = r.x + (n <= 1 ? r.w / 2 : (k + 0.5) / n * r.w);
+      const y = r.y + r.h - S.seq[k] * r.h;
+      return [x, y];
+    }
+
+    // pile geometry
+    function pileGeom() {
+      const P = Math.max(1, S.pileList.length);
+      const r = R.pl;
+      const cw = Math.min(56, r.w / P);
+      const cardW = Math.max(2, cw * 0.84);
+      const cardH = Math.min(cardW * 1.32, 64, r.h * 0.5);
+      let maxH = 1;
+      for (const L of S.pileList) maxH = Math.max(maxH, L.length);
+      const off = maxH > 1 ? Math.min(cardH * 0.42, (r.h - cardH) / (maxH - 1)) : 0;
+      const totalW = cw * P;
+      const left = r.x + (r.w - totalW) / 2;
+      return { P, cw, cardW, cardH, off, left };
+    }
+    function slotPos(g, p, j) {
+      return [g.left + p * g.cw + (g.cw - g.cardW) / 2, R.pl.y + j * g.off];
+    }
+
+    function rrect(x, y, w, h, r) {
+      w = Math.max(0.5, w); h = Math.max(0.5, h);
+      r = Math.max(0, Math.min(r, w / 2, h / 2));
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawCard(g, x, y, k, P, opts) {
+      const hue = pileHue(S.pile[k], P);
+      const w = g.cardW, h = g.cardH;
+      rrect(x, y, w, h, Math.min(7, w * 0.18));
+      ctx.fillStyle = opts.top ? hsl(hue, 45, 16) : hsl(hue, 30, 10);
+      ctx.fill();
+      ctx.lineWidth = opts.inClimb ? 2 : 1;
+      ctx.strokeStyle = opts.inClimb ? '#ffd1ea' : hsl(hue, 80, opts.top ? 68 : 52, opts.top ? 1 : 0.75);
+      if (opts.inClimb) { ctx.shadowColor = '#ff7cc3'; ctx.shadowBlur = 10; }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      if (w >= 18) {
+        ctx.fillStyle = opts.top || opts.flying ? '#fff' : hsl(hue, 60, 78, 0.85);
+        const fs = Math.min(15, w * 0.42);
+        ctx.font = `600 ${fs}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(String(S.rank[k]), x + w / 2, y + Math.max(3, h * 0.08));
+      }
+    }
+
+    const ease = (u) => u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+    const lerp = (a, b, u) => a + (b - a) * u;
+
+    // ---------- draw: deal mode ----------
+    function drawDeal() {
+      const n = S.seq.length;
+      const i = Math.floor(S.t + 1e-9);          // cards fully dealt
+      const f = S.t - i;
+      const animate = S.speed <= 14 && n <= 400 && f > 0 && i < n;
+      const g = pileGeom();
+      const P = g.P;
+      const { chain, set } = chainAt(i);
+
+      // section labels
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(200,200,230,0.5)';
+      ctx.fillText('THE DECK  ·  position →   value ↑', R.sc.x, R.sc.y - 8);
+      ctx.fillText(`THE PILES  ·  ${topsAt(i).length} so far`, R.pl.x, R.pl.y - 14);
+
+      // scatter frame
+      const r = R.sc;
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
+      rrect(r.x - 6, r.y - 6, r.w + 12, r.h + 12, 10); ctx.stroke();
+
+      const dotR = Math.max(1.3, Math.min(6, r.w / n * 0.32));
+
+      // strands: connect dealt cards in each pile
+      if (S.strands) {
+        ctx.lineWidth = n > 300 ? 0.8 : 1.4;
+        for (let p = 0; p < S.pileList.length; p++) {
+          const L = S.pileList[p];
+          if (L[0] >= i) break;
+          ctx.strokeStyle = hsl(pileHue(p, P), 85, 64, n > 300 ? 0.45 : 0.55);
+          ctx.beginPath();
+          let started = false;
+          for (const k of L) {
+            if (k >= i) break;
+            const [x, y] = scPos(k);
+            if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+      }
+      // back pointers
+      if (S.pointers && n <= 600) {
+        ctx.lineWidth = 0.8;
+        ctx.setLineDash([2, 3]);
+        for (let k = 0; k < i; k++) {
+          const b = S.back[k]; if (b < 0) continue;
+          const [x, y] = scPos(k), [bx, by] = scPos(b);
+          ctx.strokeStyle = hsl(pileHue(S.pile[k], P), 60, 70, 0.22);
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(bx, by); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      }
+      // climb
+      if (S.climb && chain.length > 1) {
+        ctx.save();
+        ctx.shadowColor = '#ff7cc3'; ctx.shadowBlur = 14;
+        ctx.strokeStyle = 'rgba(255,214,236,0.95)'; ctx.lineWidth = n > 300 ? 1.6 : 2.4;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        chain.forEach((k, j) => { const [x, y] = scPos(k); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+        ctx.stroke();
+        ctx.restore();
+      }
+      // dots
+      for (let k = 0; k < n; k++) {
+        const [x, y] = scPos(k);
+        ctx.beginPath(); ctx.arc(x, y, dotR, 0, 6.2832);
+        if (k < i) {
+          ctx.fillStyle = S.climb && set.has(k) ? '#ffe3f2' : hsl(pileHue(S.pile[k], P), 85, 66);
+        } else if (k === i && animate) {
+          ctx.fillStyle = '#ffffff';
+        } else {
+          ctx.fillStyle = 'rgba(160,160,190,0.22)';
+        }
+        ctx.fill();
+      }
+      // cursor on the card being dealt
+      if (i < n) {
+        const [x, y] = scPos(i);
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, r.y - 4); ctx.lineTo(x, r.y + r.h + 4); ctx.stroke();
+      }
+
+      // ---- piles ----
+      // empty columns guide
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      for (let p = 0; p < P; p++) {
+        const [x, y] = slotPos(g, p, 0);
+        rrect(x, y, g.cardW, g.cardH, Math.min(7, g.cardW * 0.18)); ctx.stroke();
+      }
+      for (let p = 0; p < S.pileList.length; p++) {
+        const L = S.pileList[p];
+        const hcount = heightAt(p, i);
+        for (let j = 0; j < hcount; j++) {
+          const k = L[j];
+          const [x, y] = slotPos(g, p, j);
+          drawCard(g, x, y, k, P, { top: j === hcount - 1, inClimb: S.climb && set.has(k) });
+        }
+      }
+
+      // ---- the card in flight ----
+      if (animate) {
+        const k = i;
+        const pr = S.probes[k];
+        const dest = slotPos(g, S.pile[k], heightAt(S.pile[k], i));
+        const [sx, sy] = scPos(k);
+        const start = [sx - g.cardW / 2, sy - g.cardH / 2];
+        const hoverY = R.pl.y - g.cardH - 22;
+        const hov = (p) => [g.left + p * g.cw + (g.cw - g.cardW) / 2, hoverY];
+        const pts = [start];
+        if (S.showProbes) for (const q of pr) pts.push(hov(q.p));
+        else pts.push(hov(S.pile[k]));
+        pts.push(dest);
+        // timing: segment 0 (lift) 0..0.25, probe hops 0.25..0.72, drop 0.72..1
+        let pos, probeIdx = -1;
+        const hops = pts.length - 2; // number of hover points
+        if (f < 0.25) {
+          const u = ease(f / 0.25);
+          pos = [lerp(pts[0][0], pts[1][0], u), lerp(pts[0][1], pts[1][1], u)];
+          probeIdx = 0;
+        } else if (f < 0.72) {
+          const u = (f - 0.25) / 0.47 * hops;
+          const a = Math.min(hops - 1, Math.floor(u));
+          const local = u - a;
+          // dwell on each hover point, then slide to next
+          const slide = ease(Math.max(0, (local - 0.55) / 0.45));
+          const A = pts[1 + a], B = a + 1 < hops ? pts[2 + a] : pts[1 + a];
+          pos = [lerp(A[0], B[0], slide), lerp(A[1], B[1], slide)];
+          probeIdx = slide > 0.5 && a + 1 < hops ? a + 1 : a;
+        } else {
+          const u = ease((f - 0.72) / 0.28);
+          const A = pts[pts.length - 2];
+          pos = [lerp(A[0], dest[0], u), lerp(A[1], dest[1], u)];
+          probeIdx = -1;
+        }
+        // probe highlight
+        if (S.showProbes && probeIdx >= 0 && probeIdx < pr.length) {
+          const q = pr[probeIdx];
+          const tops = topsAt(i);
+          const tk = tops[q.p];
+          const [tx, ty] = slotPos(g, q.p, heightAt(q.p, i) - 1);
+          ctx.save();
+          ctx.strokeStyle = '#b0b0ff'; ctx.lineWidth = 2;
+          ctx.shadowColor = '#7c7cff'; ctx.shadowBlur = 12;
+          rrect(tx - 3, ty - 3, g.cardW + 6, g.cardH + 6, 8); ctx.stroke();
+          ctx.restore();
+          ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillStyle = q.left ? '#b0b0ff' : '#ffb3dc';
+          const msg = `${S.rank[k]} ${q.left ? '≤' : '>'} ${S.rank[tk]}  ${q.left ? '← go left' : 'go right →'}`;
+          const mx = Math.min(R.x1 - 60, Math.max(R.x0 + 60, pos[0] + g.cardW / 2));
+          ctx.fillText(msg, mx, hoverY - 8);
+        }
+        drawCard(g, pos[0], pos[1], k, P, { top: true, flying: true, inClimb: false });
+      }
+
+      // finished banner
+      if (i >= n && n > 0) {
+        ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#ff9fd2';
+        ctx.fillText(`${P} piles = a climb of ${P}`, R.pl.x + R.pl.w, R.pl.y - 14);
+      }
+    }
+
+    // ---------- Ulam mode ----------
+    const TW_MEAN = -1.7711;
+    function ulamTick() {
+      if (!S.ulamPlaying) return;
+      const budget = 60000; // element-ops per frame
+      let used = 0;
+      while (used < budget) {
+        const n = 10 + ((Math.random() * (S.nMax - 10)) | 0);
+        const a = new Float64Array(n);
+        for (let k = 0; k < n; k++) a[k] = Math.random();
+        const L = lisFast(a);
+        S.trials.push(n, L);
+        if (n >= 100) {
+          const z = (L - 2 * Math.sqrt(n)) / Math.pow(n, 1 / 6);
+          const b = Math.floor((z + 5) / 7 * S.hist.length);
+          if (b >= 0 && b < S.hist.length) S.hist[b]++;
+          S.histN++; S.sumZ += z; S.sumZ2 += z * z;
+        }
+        used += n;
+      }
+      if (S.trials.length > 60000) S.trials.splice(0, S.trials.length - 60000);
+    }
+    function drawUlam() {
+      const x0 = R.x0, x1 = R.x1, y0 = R.y0 + 20, y1 = R.y1 - 24;
+      const w = x1 - x0, h = y1 - y0;
+      const N = S.nMax;
+      const Lmax = 2 * Math.sqrt(N) * 1.12;
+      const X = (n) => x0 + n / N * w;
+      const Y = (L) => y1 - L / Lmax * h;
+
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = 'rgba(200,200,230,0.5)';
+      ctx.fillText('LONGEST CLIMB IN A SHUFFLED DECK  ·  deck size →   climb ↑', x0, y0 - 8);
+
+      // grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(200,200,230,0.4)'; ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      const stepN = N <= 500 ? 100 : N <= 1500 ? 250 : 500;
+      for (let n = 0; n <= N; n += stepN) {
+        ctx.beginPath(); ctx.moveTo(X(n), y0); ctx.lineTo(X(n), y1); ctx.stroke();
+        ctx.textAlign = 'center'; ctx.fillText(String(n), X(n), y1 + 14);
+      }
+      const stepL = Lmax > 100 ? 25 : Lmax > 50 ? 10 : 5;
+      for (let L = 0; L <= Lmax; L += stepL) {
+        ctx.beginPath(); ctx.moveTo(x0, Y(L)); ctx.lineTo(x1, Y(L)); ctx.stroke();
+        ctx.textAlign = 'right'; ctx.fillText(String(L), x0 - 6, Y(L) + 3);
+      }
+
+      // points
+      const T = S.trials;
+      ctx.fillStyle = 'rgba(176,176,255,0.42)';
+      for (let j = 0; j < T.length; j += 2) {
+        if (T[j] > N) continue;
+        ctx.fillRect(X(T[j]) - 1, Y(T[j + 1]) - 1, 2, 2);
+      }
+      // curves
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = 'rgba(233,233,240,0.7)';
+      ctx.beginPath();
+      for (let n = 1; n <= N; n += N / 200) { const p = [X(n), Y(2 * Math.sqrt(n))]; n === 1 ? ctx.moveTo(...p) : ctx.lineTo(...p); }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.save();
+      ctx.strokeStyle = '#ff7cc3'; ctx.shadowColor = '#ff7cc3'; ctx.shadowBlur = 8;
+      ctx.beginPath();
+      let first = true;
+      for (let n = 20; n <= N; n += N / 200) {
+        const p = [X(n), Y(2 * Math.sqrt(n) + TW_MEAN * Math.pow(n, 1 / 6))];
+        first ? ctx.moveTo(...p) : ctx.lineTo(...p); first = false;
+      }
+      ctx.stroke();
+      ctx.restore();
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(233,233,240,0.8)';
+      ctx.fillText('2√n', X(N) - 4, Y(2 * Math.sqrt(N)) - 8);
+      ctx.fillStyle = '#ff9fd2';
+      ctx.fillText('2√n − 1.77·n^⅙', X(N) - 4, Y(2 * Math.sqrt(N) + TW_MEAN * Math.pow(N, 1 / 6)) + 16);
+
+      // histogram inset (top-left is always empty)
+      const iw = Math.min(260, w * 0.46), ih = Math.min(150, h * 0.36);
+      const ix = x0 + 12, iy = y0 + 10;
+      rrect(ix, iy, iw, ih, 12);
+      ctx.fillStyle = 'rgba(14,14,24,0.85)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.stroke();
+      ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(200,200,230,0.6)';
+      ctx.fillText('(climb − 2√n) ÷ n^⅙   for decks ≥ 100', ix + 10, iy + 16);
+      const hx = ix + 10, hw = iw - 20, hy1 = iy + ih - 20, hh = ih - 62;
+      const B = S.hist.length;
+      let mx = 1; for (const c of S.hist) mx = Math.max(mx, c);
+      for (let b = 0; b < B; b++) {
+        const c = S.hist[b]; if (!c) continue;
+        const bh = c / mx * hh;
+        const z = -5 + (b + 0.5) / B * 7;
+        ctx.fillStyle = z < TW_MEAN ? 'rgba(124,124,255,0.75)' : 'rgba(255,124,195,0.75)';
+        ctx.fillRect(hx + b / B * hw + 0.5, hy1 - bh, hw / B - 1, bh);
+      }
+      const zx = (z) => hx + (z + 5) / 7 * hw;
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(zx(TW_MEAN), hy1 - hh - 4); ctx.lineTo(zx(TW_MEAN), hy1); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(200,200,230,0.5)'; ctx.font = '9px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      for (let z = -4; z <= 2; z += 2) ctx.fillText(String(z), zx(z), hy1 + 12);
+      ctx.fillText('Tracy–Widom mean', zx(TW_MEAN), hy1 - hh - 7);
+    }
+
+    // ---------- readouts ----------
+    const dealOut = document.getElementById('dealOut');
+    const ulamOut = document.getElementById('ulamOut');
+    let lastKey = '';
+    function updateDealReadout() {
+      const n = S.seq.length;
+      const i = Math.min(n, Math.floor(S.t + 1e-9));
+      const key = i + ':' + n + ':' + S.pileList.length;
+      if (key === lastKey) return;
+      lastKey = key;
+      const piles = topsAt(i).length;
+      const lds = ldsLen(i);
+      let bin = 0, lin = 0;
+      for (let k = 0; k < i; k++) {
+        bin += S.probes[k].length;
+        // a linear scan from the left compares until it finds the pile (or runs off the end)
+        const pilesBefore = (() => { let c = 0; for (const fk of S.firstOf) { if (fk < k) c++; else break; } return c; })();
+        lin += Math.min(S.pile[k] + 1, pilesBefore);
+      }
+      const done = i >= n;
+      dealOut.innerHTML = `
+        <span class="k">cards dealt</span><span class="v">${i} / ${n}</span>
+        <span class="k">piles</span><span class="v violet">${piles}</span>
+        <span class="k">longest climb</span><span class="v pinkv">${piles}</span>
+        <span class="k">longest fall</span><span class="v">${lds}</span>
+        <hr>
+        <span class="k">comparisons</span><span class="v">${bin} <span style="color:#8f8fa6;font-weight:400">vs ${lin} scanning</span></span>
+        <span class="full">Climb × fall = <b class="p">${piles}</b> × <b>${lds}</b> = <b>${piles * lds}</b> ≥ <b>${i}</b> cards, always (Erdős–Szekeres): every deck hides a long rise or a long fall.${done && S.src === 'shuffle' ? ` For a shuffled deck expect about <b class="v">2√n ≈ ${(2 * Math.sqrt(n)).toFixed(1)}</b>, a bit less in practice.` : ''}</span>`;
+    }
+    let lastU = -1;
+    function updateUlamReadout() {
+      const cnt = S.trials.length / 2;
+      if (cnt === lastU) return;
+      lastU = cnt;
+      const m = S.histN ? S.sumZ / S.histN : 0;
+      const sd = S.histN > 1 ? Math.sqrt(Math.max(0, S.sumZ2 / S.histN - m * m)) : 0;
+      ulamOut.innerHTML = `
+        <span class="k">decks dealt</span><span class="v">${S.histN.toLocaleString()}</span>
+        <span class="k">mean (climb − 2√n) ÷ n^⅙</span><span class="v pinkv">${m.toFixed(2)}</span>
+        <span class="k">spread</span><span class="v">${sd.toFixed(2)}</span>
+        <hr>
+        <span class="full">Every dot is one shuffled deck, solved by patience in n log n. The climb hugs <b>2√n</b> and falls short by a little more than <b class="p">1.77·n^⅙</b>; theory says the scaled shortfall tends to the Tracy–Widom law (mean −1.77, spread 0.90). Small decks drift a bit above it.</span>`;
+    }
+
+    // ---------- controls ----------
+    const $ = (id) => document.getElementById(id);
+    function syncPlay() { $('playBtn').textContent = S.playing ? 'Pause' : (S.t >= S.seq.length ? 'Replay' : 'Play'); }
+
+    $('modeSeg').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      S.mode = b.dataset.mode;
+      ui.dataset.mode = S.mode;
+      [...$('modeSeg').children].forEach((x) => x.classList.toggle('on', x === b));
+      $('hint').textContent = S.mode === 'deal'
+        ? 'tap the top chart to deal your own card · space plays · → steps · H hides the panel'
+        : 'each dot is one shuffled deck · H hides the panel';
+      setTimeout(layout, 20);
+    });
+    $('srcSeg').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      S.src = b.dataset.src;
+      [...$('srcSeg').children].forEach((x) => x.classList.toggle('on', x === b));
+      newDeck(); syncPlay();
+    });
+    $('nIn').addEventListener('input', (e) => {
+      S.n = +e.target.value; $('nVal').textContent = S.n;
+      newDeck(); syncPlay();
+    });
+    function speedFrom(v) { return Math.round(0.5 * Math.pow(1000, v / 100) * 10) / 10; }
+    function setSpeed(v) {
+      S.speed = speedFrom(v);
+      $('spVal').textContent = (S.speed < 10 ? S.speed.toFixed(1) : Math.round(S.speed)) + ' /s';
+    }
+    $('spIn').addEventListener('input', (e) => setSpeed(+e.target.value));
+    function step() {
+      S.playing = false;
+      S.target = Math.min(S.seq.length, Math.floor(S.t + 1e-9) + 1);
+      syncPlay();
+    }
+    function togglePlay() {
+      if (S.t >= S.seq.length) { S.t = 0; }
+      S.playing = !S.playing;
+      S.target = S.playing ? S.seq.length : Math.ceil(S.t - 1e-9);
+      syncPlay();
+    }
+    $('stepBtn').addEventListener('click', step);
+    $('playBtn').addEventListener('click', togglePlay);
+    $('restartBtn').addEventListener('click', () => { S.t = 0; S.target = S.playing ? S.seq.length : 0; syncPlay(); });
+    $('newBtn').addEventListener('click', () => { newDeck(); syncPlay(); });
+    const toggles = { tStrands: 'strands', tPointers: 'pointers', tClimb: 'climb', tProbes: 'showProbes' };
+    for (const id in toggles) {
+      $(id).addEventListener('click', () => {
+        S[toggles[id]] = !S[toggles[id]];
+        $(id).classList.toggle('on', S[toggles[id]]);
+      });
+    }
+    $('nmIn').addEventListener('input', (e) => { S.nMax = +e.target.value; $('nmVal').textContent = S.nMax; });
+    $('ulamPlay').addEventListener('click', () => { S.ulamPlaying = !S.ulamPlaying; $('ulamPlay').textContent = S.ulamPlaying ? 'Pause' : 'Run'; });
+    $('ulamClear').addEventListener('click', () => {
+      S.trials = []; S.hist.fill(0); S.histN = 0; S.sumZ = 0; S.sumZ2 = 0; lastU = -1;
+    });
+
+    // tap the deck chart to append a card
+    function inScatter(x, y) {
+      const r = R.sc;
+      return S.mode === 'deal' && x >= r.x - 8 && x <= r.x + r.w + 8 && y >= r.y - 8 && y <= r.y + r.h + 8;
+    }
+    cv.addEventListener('pointermove', (e) => cv.classList.toggle('add', inScatter(e.clientX, e.clientY)));
+    cv.addEventListener('pointerdown', (e) => {
+      if (!inScatter(e.clientX, e.clientY)) return;
+      if (S.seq.length >= 1500) return;
+      let v = 1 - (e.clientY - R.sc.y) / R.sc.h;
+      v = Math.min(0.999, Math.max(0.001, v));
+      while (S.seq.includes(v)) v += 1e-6;
+      // finish the current deal first so the new card is the next one to fly
+      const wasDone = S.t >= S.seq.length - 1e-9;
+      S.seq.push(v);
+      S.n = S.seq.length;
+      $('nIn').value = Math.min(1500, S.n); $('nVal').textContent = S.n;
+      solve();
+      if (wasDone) { S.target = S.seq.length; }
+      else if (S.playing) S.target = S.seq.length;
+      lastKey = '';
+      syncPlay();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'h') setPanel(ui.classList.contains('hidden'));
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (story.classList.contains('open') || S.mode !== 'deal') return;
+      if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); step(); }
+      if (e.key.toLowerCase() === 'r') { S.t = 0; S.target = S.playing ? S.seq.length : 0; syncPlay(); }
+    });
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      if (W !== window.innerWidth || H !== window.innerHeight) resize();
+      if (W < 50 || H < 50) { requestAnimationFrame(frame); return; }
+      ctx.clearRect(0, 0, W, H);
+      // soft backdrop glow
+      const gr = ctx.createRadialGradient(W * 0.7, H * 0.25, 0, W * 0.7, H * 0.25, Math.max(W, H) * 0.7);
+      gr.addColorStop(0, 'rgba(124,124,255,0.06)'); gr.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+
+      if (S.mode === 'deal') {
+        const rate = S.playing ? S.speed : Math.max(S.speed, 0.9);
+        if (S.t < S.target) S.t = Math.min(S.target, S.t + dt * rate);
+        if (S.playing && S.t >= S.seq.length) { S.playing = false; syncPlay(); }
+        drawDeal();
+        updateDealReadout();
+      } else {
+        ulamTick();
+        drawUlam();
+        updateUlamReadout();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    setSpeed(18);
+    newDeck();
+    // start with a gentle autoplay so the page is alive on arrival
+    S.playing = true; S.target = S.seq.length; syncPlay();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
