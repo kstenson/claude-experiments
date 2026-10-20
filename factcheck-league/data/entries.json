@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-10-19",
+    "lastUpdated": "2026-10-20",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -4413,7 +4413,7 @@
     {
       "id": "2026-10-19",
       "date": "2026-10-19",
-      "headline": true,
+      "headline": false,
       "topic": "Whether 174,000 more young people are unemployed under Labour",
       "claim": "Labour have \"killed jobs\" for young people, with more than 174,000 more young people unemployed (as reported; no verbatim transcript of the figure)",
       "speaker": "Helen Whately",
@@ -4457,6 +4457,56 @@
         {
           "title": "House of Commons Library — Youth unemployment statistics",
           "url": "https://commonslibrary.parliament.uk/research-briefings/sn05871/"
+        }
+      ]
+    },
+    {
+      "id": "2026-10-20",
+      "date": "2026-10-20",
+      "headline": true,
+      "topic": "Whether the UK pays more to borrow than anyone else in the G7",
+      "claim": "\"The UK is paying more to borrow than anyone else in the G7. We are paying over a percent more than Greece and Spain. We are paying nearly 2% more than Germany.\" (pre-released speech text)",
+      "speaker": "Kemi Badenoch",
+      "party": "Conservative",
+      "role": "Leader of the Opposition",
+      "discussionScore": 60,
+      "discussionNote": "The core line of Badenoch's pre-Budget speech in London on 20 October, briefed to PA, LBC and others overnight, a week before John Healey's 28 October Budget.",
+      "score": 82,
+      "verdict": "Mostly True",
+      "explanation": "The comparisons hold. On 19–20 October the UK 10-year gilt yielded about 5.43%. That is above the US (5.13%), France (4.93%), Italy (4.57%), Canada (3.96%), Germany (3.45%) and Japan (2.90%), so it is the highest in the G7. The gap is about 1.0 point over Greece, 1.3 over Spain and 2.0 over Germany. The 30-year gilt passed 6% on 1 October, the highest since 1998, and is now about 5.9%. The surrounding line, that every pound borrowed costs £2 in under 12 years, is looser. It assumes 6% compounding. Gilts pay simple coupons, and the 10-year rate implies about 13 years. The Greece margin is thin and moves daily.",
+      "evidence": [
+        "Trading Economics, 19–20 October: UK 10-year 5.43%, US 5.13%, France 4.93%, Italy 4.57%, Canada 3.96%, Germany 3.45%, Japan 2.90%.",
+        "Same data: Greece 4.39% and Spain 4.10%, so the UK pays about 1.04 and 1.34 points more.",
+        "UK-Germany 10-year spread is about 1.98 points, matching \"nearly 2%\".",
+        "The 30-year gilt broke 6% on 1 October 2026, its highest since 1998 (LSEG data).",
+        "Doubling in under 12 years needs about 6% compound interest; at 5.43% it takes about 13 years.",
+        "Badenoch herself attributes part of the rise to the Ukraine and Iran wars pushing rates up globally."
+      ],
+      "confidence": "High on the yield comparisons (market data on the day); they move daily and the Greece gap is narrow.",
+      "sources": [
+        {
+          "title": "AOL/PA — Healey should adopt cuts at Budget, Badenoch to say",
+          "url": "https://aol.co.uk/articles/healey-adopt-cuts-budget-live-210000000.html"
+        },
+        {
+          "title": "LBC — Badenoch to take aim at fictional spending cuts",
+          "url": "https://www.lbc.co.uk/article/kemi-badenoch-labour-budget-5Hjdk87_2/"
+        },
+        {
+          "title": "Trading Economics — Government bond yields by country",
+          "url": "https://tradingeconomics.com/bonds"
+        },
+        {
+          "title": "Trading Economics — UK 10-year gilt yield",
+          "url": "https://tradingeconomics.com/united-kingdom/government-bond-yield"
+        },
+        {
+          "title": "UK 30-year gilt yield breaches 6% for first time since 1998",
+          "url": "https://www.roic.ai/news/uk-30-year-gilt-yield-breaches-6-for-first-time-since-1998-10-01-2026"
+        },
+        {
+          "title": "Euronews — Europe's debt map flips",
+          "url": "https://www.euronews.com/2026/10/15/europes-debt-map-flips-belgium-borrows-like-greece-france-pays-more-than-italy"
         }
       ]
     }
