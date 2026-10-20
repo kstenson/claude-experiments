@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Dullest Way Down — Experiment 095</title>
+<meta name="description" content="Seam carving: shrink a picture by repeatedly deleting the dullest connected path of pixels from top to bottom, found by dynamic programming, so the interesting parts survive." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  canvas.paint { cursor: crosshair; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .lab { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #77778e; margin-bottom: -4px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input.pinkr::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input.pinkr::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+  .seg.pinks button.on { background: rgba(255,124,195,0.2); color: #ffe3f2; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 6px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.on i { background: rgba(124,124,255,0.4); }
+  .toggle.on i::after { background: #a9a9ff; }
+  .toggle.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.v { color: #b0b0ff; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6; white-space: pre;
+    overflow-x: auto;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 10px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: right;
+  }
+  #file { display: none; }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 44vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <button id="showUi">show panel</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="hideUi" title="hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>The Dullest Way Down</h1>
+    <p class="sub">Experiment № 095 · October 20, 2026</p>
+
+    <div class="controls">
+      <div class="row">
+        <label>Width <b id="wVal">440 px · 100%</b></label>
+        <input type="range" id="wIn" class="pinkr" min="0" max="300" value="0" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="playBtn">Pause</button>
+        <button class="btn" id="fullBtn">Full width</button>
+        <button class="btn pink" id="sceneBtn">New scene</button>
+        <button class="btn pink" id="loadBtn">Your picture</button>
+      </div>
+      <input type="file" id="file" accept="image/*" />
+
+      <p class="lab">Show</p>
+      <div class="seg" id="viewSeg">
+        <button data-view="carved" class="on">Carved</button>
+        <button data-view="seams">Seams</button>
+        <button data-view="energy">Energy</button>
+        <button data-view="valleys">Valleys</button>
+      </div>
+      <div class="seg pinks" id="sceneSeg">
+        <button data-scene="harbour" class="on">Harbour</button>
+        <button data-scene="desert">Desert</button>
+        <button data-scene="city">City</button>
+      </div>
+
+      <p class="lab">Brush</p>
+      <div class="seg pinks" id="brushSeg">
+        <button data-brush="look" class="on">Off</button>
+        <button data-brush="protect">Protect</button>
+        <button data-brush="remove">Remove</button>
+        <button data-brush="erase">Erase</button>
+      </div>
+
+      <p class="lab">Cost of a seam</p>
+      <div class="seg" id="energySeg">
+        <button data-energy="backward">Edges it crosses</button>
+        <button data-energy="forward" class="on">Edges it makes</button>
+      </div>
+
+      <div class="toggles">
+        <div class="toggle rose on" id="tNext"><i></i>next seam</div>
+        <div class="toggle on" id="tCompare"><i></i>vs squash &amp; crop</div>
+      </div>
+
+      <div class="readout" id="out"></div>
+
+      <div class="code"><span class="c">// one seam, top to bottom</span>
+e = <u>how busy each pixel is</u>  <span class="c">// + your paint</span>
+for each row y, column x:
+  M[y][x] = e[y][x] + <em>min</em>(M[y−1][x−1],
+                        M[y−1][x],
+                        M[y−1][x+1])
+seam = cheapest cell in the last row,
+       followed back up the arrows
+delete it — every row loses one pixel</div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint" id="hint">drag the width · pick a brush and paint on the picture · space plays · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 095 · The story</p>
+      <h2>The Dullest Way Down</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I remember the 2007 SIGGRAPH video by Shai Avidan and Ariel Shamir going round: a beach photo being dragged narrower while the people on it stayed the same size and the empty sand between them simply wasn't there any more. It looked like an editing trick that needed someone to understand the picture. It turned out to need about fifteen lines and no understanding at all, and a version of it shipped in Photoshop as Content-Aware Scale a year or so later. I had already done edit distance as a dynamic program on a grid of letters; this is the same idea on a grid of pixels, and you can see the table.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The "Valleys" view is the dynamic program's table drawn as a picture. Every cell has asked one tiny question, "which of the three cells above me was cheapest to reach?", and the result is a landscape of dark channels running down through the sky and the water, steering around the lighthouse. The best seam is just the bottom of the deepest channel. Nobody told it what a lighthouse is. It only knows that the lighthouse is busy, and the sky isn't.</p>
+      <p>I also like where it breaks. Drag the city narrow and once the gaps between buildings are used up, the seams have to go through windows, and the towers start to shear. The second cost button is the fix from the follow-up paper (Rubinstein, Shamir and Avidan, 2008): instead of charging a seam for the edges it crosses, charge it for the new edges it creates when the two sides close up. Toggle between them on a diagonal and watch the jaggies come and go.</p>
+
+      <h3>Something you might take away</h3>
+      <p>"Keep what matters" sounds like it needs judgment. Here it's done the other way round: never decide what's important, just find what nobody would miss, one pixel per row, and take that away. Repeat it and the important parts are what's left. When it gets something wrong, one stroke of the Protect brush is enough to fix it. The algorithm can't know what you care about, but a single number per pixel is all it needs to be told.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay & panel wiring ----
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  const hint = document.getElementById('hint');
+  function setUiHidden(h) {
+    ui.classList.toggle('hidden', h);
+    showUi.classList.toggle('on', h);
+    if (typeof onLayout === 'function') onLayout();
+  }
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  document.getElementById('hideUi').addEventListener('click', () => setUiHidden(true));
+  showUi.addEventListener('click', () => setUiHidden(false));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  let onLayout = null;
+
+  // ---- THE EXPERIMENT ----
+  (() => {
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const small = document.createElement('canvas');
+    const sctx = small.getContext('2d');
+    const orig = document.createElement('canvas');
+    const octx = orig.getContext('2d');
+
+    const MAXW = 440, MAXH = 280;
+    const PAINT = 4000;      // cost added (or removed) per painted pixel
+    const BIG = 1 << 30;
+    const BRUSH_R = 9;
+
+    // ---- image + carving state ----
+    let W0 = 0, H = 0, N = 0;
+    let rgb = null;              // original pixels, RGBA
+    let lum0, E0, mask, removal; // per original pixel
+    let colPre;                  // prefix sums of E0 by column, for crop comparison
+    let meanE = 1;
+    let cIdx, cLum, M, B;        // working arrays for the shrinking image (stride W0)
+    let curW = 0, computed = 0, maxSeams = 0;
+    let cumE = [0];
+    let energyMode = 'forward';
+
+    // ---- view state ----
+    let view = 'carved';
+    let brush = 'look';
+    let showNext = true, compare = true;
+    let k = 0;                   // target number of seams removed (float while playing)
+    let playing = true, dir = 1, dwell = 0;
+    let scene = 'harbour';
+    let seed = 1;
+    let dirty = true;
+    let lastKk = -1;
+
+    // display caches
+    let kept = null, keptW = 0;  // mapping of displayed pixel -> original index
+    let panels = [];             // on-screen rects for hit-testing
+
+    // ------------------------------------------------------------------
+    //  Random + scenes
+    // ------------------------------------------------------------------
+    function mulberry(a) {
+      return () => {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function gradV(c, y0, y1, stops) {
+      const g = c.createLinearGradient(0, y0, 0, y1);
+      stops.forEach(([o, col]) => g.addColorStop(o, col));
+      return g;
+    }
+    function glow(c, x, y, r, col) {
+      const g = c.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = g; c.fillRect(x - r, y - r, 2 * r, 2 * r);
+    }
+    function stars(c, W, top, rnd, n) {
+      for (let i = 0; i < n; i++) {
+        const a = 0.25 + rnd() * 0.75;
+        c.fillStyle = `rgba(255,${230 + rnd() * 25 | 0},255,${a})`;
+        const s = rnd() < 0.12 ? 2 : 1;
+        c.fillRect(rnd() * W | 0, rnd() * top | 0, s, s);
+      }
+    }
+    function moon(c, x, y, r, rnd) {
+      glow(c, x, y, r * 3.2, 'rgba(255,225,240,0.28)');
+      c.fillStyle = '#fff1e6';
+      c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+      c.fillStyle = 'rgba(200,170,190,0.45)';
+      for (let i = 0; i < 4; i++) {
+        const a = rnd() * 6.28, d = rnd() * r * 0.6;
+        c.beginPath(); c.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, r * (0.1 + rnd() * 0.14), 0, 6.28); c.fill();
+      }
+    }
+    function slots(rnd, n, W) {
+      // n x positions spread across the width, shuffled
+      const xs = [];
+      for (let i = 0; i < n; i++) xs.push(W * (0.14 + 0.72 * (i + 0.5) / n) + (rnd() - 0.5) * W * 0.08);
+      for (let i = xs.length - 1; i > 0; i--) { const j = rnd() * (i + 1) | 0; [xs[i], xs[j]] = [xs[j], xs[i]]; }
+      return xs;
+    }
+
+    function drawHarbour(c, W, H, rnd) {
+      const hz = H * 0.6;
+      c.fillStyle = gradV(c, 0, hz, [[0, '#120f33'], [0.5, '#35296a'], [0.85, '#a8588d'], [1, '#f2a0a2']]);
+      c.fillRect(0, 0, W, hz);
+      stars(c, W, hz * 0.55, rnd, 90);
+      const [lx, bx, mx] = slots(rnd, 3, W);
+      moon(c, mx, H * 0.2, 15, rnd);
+      // low ridge
+      c.fillStyle = '#3a2a62';
+      c.beginPath(); c.moveTo(0, hz);
+      const p1 = rnd() * 6, p2 = rnd() * 6;
+      for (let x = 0; x <= W; x += 4) c.lineTo(x, hz - 6 - 5 * Math.sin(x * 0.02 + p1) - 4 * Math.sin(x * 0.051 + p2));
+      c.lineTo(W, hz); c.fill();
+      // sea
+      c.fillStyle = gradV(c, hz, H, [[0, '#4a3474'], [1, '#0d0b20']]);
+      c.fillRect(0, hz, W, H - hz);
+      // moon path
+      for (let i = 0; i < 18; i++) {
+        const y = hz + 4 + i * (H - hz - 8) / 18;
+        const w = 18 - i * 0.5 + rnd() * 8;
+        c.fillStyle = `rgba(255,225,235,${0.32 - i * 0.015})`;
+        c.fillRect(mx - w / 2 + (rnd() - 0.5) * 6, y, w, 1.5);
+      }
+      // lighthouse on a rock
+      c.fillStyle = '#17122b';
+      c.beginPath(); c.moveTo(lx - 46, hz + 22); c.lineTo(lx - 30, hz - 2); c.lineTo(lx - 8, hz - 8);
+      c.lineTo(lx + 18, hz - 6); c.lineTo(lx + 38, hz + 4); c.lineTo(lx + 50, hz + 22); c.closePath(); c.fill();
+      const tb = hz - 7, tt = hz - 84;
+      c.save();
+      c.beginPath(); c.moveTo(lx - 12, tb); c.lineTo(lx - 7, tt); c.lineTo(lx + 7, tt); c.lineTo(lx + 12, tb); c.closePath(); c.clip();
+      for (let y = tb, i = 0; y > tt - 14; y -= 13, i++) {
+        c.fillStyle = i % 2 ? '#f3eef2' : '#e0476b';
+        c.fillRect(lx - 14, y - 13, 28, 13);
+      }
+      c.restore();
+      c.fillStyle = '#1d1730'; c.fillRect(lx - 11, tt - 3, 22, 4);
+      // beam
+      c.fillStyle = 'rgba(255,236,170,0.13)';
+      const side = rnd() < 0.5 ? -1 : 1;
+      c.beginPath(); c.moveTo(lx, tt - 9); c.lineTo(lx + side * 150, tt - 34); c.lineTo(lx + side * 150, tt + 12); c.closePath(); c.fill();
+      glow(c, lx, tt - 9, 26, 'rgba(255,230,150,0.55)');
+      c.fillStyle = '#ffe28a'; c.fillRect(lx - 6, tt - 15, 12, 12);
+      c.fillStyle = '#7a1f3c';
+      c.beginPath(); c.moveTo(lx - 9, tt - 15); c.lineTo(lx, tt - 25); c.lineTo(lx + 9, tt - 15); c.closePath(); c.fill();
+      // sailboat
+      const by = hz + 34;
+      c.fillStyle = 'rgba(240,210,230,0.12)';
+      c.fillRect(bx - 22, by + 6, 44, 10);
+      c.fillStyle = '#1c1530';
+      c.beginPath(); c.moveTo(bx - 30, by - 4); c.lineTo(bx + 30, by - 4); c.lineTo(bx + 22, by + 6); c.lineTo(bx - 22, by + 6); c.closePath(); c.fill();
+      c.strokeStyle = '#2a2140'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(bx, by - 4); c.lineTo(bx, by - 62); c.stroke();
+      c.fillStyle = '#f6e9f0';
+      c.beginPath(); c.moveTo(bx + 2, by - 60); c.lineTo(bx + 2, by - 8); c.lineTo(bx + 30, by - 8); c.closePath(); c.fill();
+      c.fillStyle = '#e8b9d4';
+      c.beginPath(); c.moveTo(bx - 2, by - 52); c.lineTo(bx - 2, by - 8); c.lineTo(bx - 24, by - 8); c.closePath(); c.fill();
+    }
+
+    function drawDesert(c, W, H, rnd) {
+      const hz = H * 0.66;
+      c.fillStyle = gradV(c, 0, hz, [[0, '#24185a'], [0.55, '#b2507e'], [1, '#ffc189']]);
+      c.fillRect(0, 0, W, hz);
+      stars(c, W, hz * 0.3, rnd, 30);
+      const [px, tx, sx] = slots(rnd, 3, W);
+      // striped sun
+      const sy = hz - 26, sr = 34;
+      glow(c, sx, sy, sr * 2.4, 'rgba(255,200,150,0.35)');
+      c.save();
+      c.beginPath(); c.arc(sx, sy, sr, 0, 6.29); c.clip();
+      c.fillStyle = gradV(c, sy - sr, sy + sr, [[0, '#fff1a8'], [1, '#ff7c9a']]);
+      c.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+      c.fillStyle = '#d9688a';
+      for (let i = 0; i < 5; i++) c.fillRect(sx - sr, sy + 4 + i * 6.5, sr * 2, 1.5 + i * 0.7);
+      c.restore();
+      // pyramids
+      const pyr = (x, base, h, lit, shade) => {
+        c.fillStyle = lit;
+        c.beginPath(); c.moveTo(x - base / 2, hz + 2); c.lineTo(x, hz + 2 - h); c.lineTo(x + base * 0.12, hz + 2); c.closePath(); c.fill();
+        c.fillStyle = shade;
+        c.beginPath(); c.moveTo(x + base * 0.12, hz + 2); c.lineTo(x, hz + 2 - h); c.lineTo(x + base / 2, hz + 2); c.closePath(); c.fill();
+      };
+      pyr(px + 34, 70, 42, '#d98a73', '#8e4360');
+      pyr(px - 6, 110, 72, '#efa77d', '#9a4a62');
+      // palms
+      const palm = (x, h, lean) => {
+        c.strokeStyle = '#3b1f3c'; c.lineWidth = 4; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(x, hz + 6);
+        c.quadraticCurveTo(x + lean * 0.3, hz - h * 0.5, x + lean, hz - h); c.stroke();
+        c.lineWidth = 3;
+        const tx2 = x + lean, ty2 = hz - h;
+        for (let i = 0; i < 7; i++) {
+          const a = -Math.PI + i * Math.PI / 6 + (rnd() - 0.5) * 0.3;
+          const L = 20 + rnd() * 8;
+          c.beginPath(); c.moveTo(tx2, ty2);
+          c.quadraticCurveTo(tx2 + Math.cos(a) * L * 0.6, ty2 + Math.sin(a) * L * 0.6 - 6, tx2 + Math.cos(a) * L, ty2 + Math.sin(a) * L * 0.5 + 8);
+          c.stroke();
+        }
+      };
+      palm(tx - 12, 62, 8);
+      palm(tx + 12, 48, -6);
+      // dunes
+      const dune = (base, amp, f, col) => {
+        const ph = rnd() * 6;
+        c.fillStyle = col;
+        c.beginPath(); c.moveTo(0, H);
+        for (let x = 0; x <= W; x += 4) c.lineTo(x, base - amp * Math.sin(x * f + ph) - amp * 0.4 * Math.sin(x * f * 2.3 + ph));
+        c.lineTo(W, H); c.closePath(); c.fill();
+      };
+      dune(hz + 6, 4, 0.02, '#a9506e');
+      dune(hz + 26, 7, 0.013, '#7c3a64');
+      dune(hz + 52, 9, 0.009, '#4c2350');
+    }
+
+    function drawCity(c, W, H, rnd) {
+      const hz = H * 0.74;
+      c.fillStyle = gradV(c, 0, hz, [[0, '#090920'], [0.7, '#2a1d55'], [1, '#6a3473']]);
+      c.fillRect(0, 0, W, hz);
+      stars(c, W, hz * 0.5, rnd, 70);
+      const [ax, bx2, mx] = slots(rnd, 3, W);
+      moon(c, mx, H * 0.18, 13, rnd);
+      c.fillStyle = gradV(c, hz, H, [[0, '#1d1640'], [1, '#07071a']]);
+      c.fillRect(0, hz, W, H - hz);
+      const cluster = (cx, n, tall) => {
+        let x = cx - n * 13;
+        for (let i = 0; i < n; i++) {
+          const w = 18 + rnd() * 16 | 0;
+          const h = (0.35 + rnd() * 0.65) * tall | 0;
+          const col = ['#191736', '#221e46', '#1c1a3e', '#2a2350'][rnd() * 4 | 0];
+          c.fillStyle = col; c.fillRect(x, hz - h, w, h);
+          if (rnd() < 0.3) { c.fillRect(x + w / 2 - 1, hz - h - 12, 2, 12); c.fillStyle = '#ff7c9a'; c.fillRect(x + w / 2 - 1, hz - h - 14, 2, 2); }
+          for (let wy = hz - h + 5; wy < hz - 5; wy += 7) {
+            for (let wx = x + 3; wx < x + w - 4; wx += 5) {
+              if (rnd() < 0.42) {
+                c.fillStyle = rnd() < 0.8 ? 'rgba(255,214,130,0.9)' : 'rgba(180,180,255,0.85)';
+                c.fillRect(wx, wy, 2, 3);
+                c.fillStyle = 'rgba(255,214,150,0.18)';
+                c.fillRect(wx, hz + (hz - wy) * 0.35 + 2, 2, 1);
+              }
+            }
+          }
+          x += w + (rnd() < 0.3 ? 2 : 0);
+        }
+      };
+      cluster(ax, 5, 130);
+      cluster(bx2, 4, 100);
+    }
+
+    const SCENES = { harbour: drawHarbour, desert: drawDesert, city: drawCity };
+
+    function makeScene(name) {
+      const W = MAXW, Hh = 260;
+      orig.width = W; orig.height = Hh;
+      const rnd = mulberry(seed * 7919 + name.length * 31);
+      octx.clearRect(0, 0, W, Hh);
+      SCENES[name](octx, W, Hh, rnd);
+      const id = octx.getImageData(0, 0, W, Hh);
+      // a little film grain so flat areas have no perfect ties
+      const d = id.data, g = mulberry(seed * 131 + 7);
+      for (let i = 0; i < d.length; i += 4) {
+        const n = (g() - 0.5) * 6;
+        d[i] += n; d[i + 1] += n; d[i + 2] += n;
+      }
+      octx.putImageData(id, 0, 0);
+      setImage(id);
+    }
+
+    function loadPicture(file) {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(MAXW / img.width, MAXH / img.height, 1);
+        const W = Math.max(40, Math.round(img.width * s)), Hh = Math.max(30, Math.round(img.height * s));
+        orig.width = W; orig.height = Hh;
+        octx.drawImage(img, 0, 0, W, Hh);
+        URL.revokeObjectURL(url);
+        setImage(octx.getImageData(0, 0, W, Hh));
+        scene = 'yours';
+        document.querySelectorAll('#sceneSeg button').forEach(b => b.classList.remove('on'));
+      };
+      img.src = url;
+    }
+
+    // ------------------------------------------------------------------
+    //  Carving
+    // ------------------------------------------------------------------
+    function setImage(id) {
+      W0 = id.width; H = id.height; N = W0 * H;
+      rgb = id.data;
+      lum0 = new Float32Array(N);
+      for (let i = 0; i < N; i++) lum0[i] = 0.3 * rgb[4 * i] + 0.59 * rgb[4 * i + 1] + 0.11 * rgb[4 * i + 2];
+      E0 = new Float32Array(N);
+      let tot = 0;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W0; x++) {
+        const i = y * W0 + x;
+        const L = lum0[i - (x > 0 ? 1 : 0)], R = lum0[i + (x < W0 - 1 ? 1 : 0)];
+        const U = lum0[i - (y > 0 ? W0 : 0)], D = lum0[i + (y < H - 1 ? W0 : 0)];
+        const e = Math.abs(R - L) + Math.abs(D - U);
+        E0[i] = e; tot += e;
+      }
+      meanE = tot / N || 1;
+      colPre = new Float64Array(W0 + 1);
+      for (let x = 0; x < W0; x++) {
+        let s = 0; for (let y = 0; y < H; y++) s += E0[y * W0 + x];
+        colPre[x + 1] = colPre[x] + s;
+      }
+      mask = new Int8Array(N);
+      removal = new Int32Array(N);
+      cIdx = new Int32Array(N); cLum = new Float32Array(N);
+      M = new Float32Array(N); B = new Int8Array(N);
+      maxSeams = Math.floor(W0 * 0.7);
+      wIn.max = maxSeams;
+      k = Math.min(k, maxSeams);
+      restartCarve();
+    }
+
+    function restartCarve() {
+      for (let i = 0; i < N; i++) cIdx[i] = i;
+      cLum.set(lum0);
+      removal.fill(BIG);
+      curW = W0; computed = 0; cumE = [0];
+      dirty = true; lastKk = -1;
+    }
+
+    // Fills M (cumulative cost) and B (arrow to the row above) for a w-wide image
+    // whose rows live at stride W0 in lumA, with per-pixel paint given by penOf(i).
+    function runDP(lumA, idxA, w, MM, BB, mode) {
+      for (let y = 0; y < H; y++) {
+        const r = y * W0, rp = r - W0, rn = r + W0;
+        for (let x = 0; x < w; x++) {
+          const i = r + x;
+          const L = lumA[x > 0 ? i - 1 : i], R = lumA[x < w - 1 ? i + 1 : i];
+          const pen = mask[idxA[i]] * PAINT;
+          if (mode === 'forward') {
+            const cU = Math.abs(R - L);
+            if (y === 0) { MM[i] = cU + pen; BB[i] = 0; continue; }
+            const U = lumA[rp + x];
+            let best = MM[rp + x] + cU, b = 0;
+            if (x > 0) { const v = MM[rp + x - 1] + cU + Math.abs(U - L); if (v < best) { best = v; b = -1; } }
+            if (x < w - 1) { const v = MM[rp + x + 1] + cU + Math.abs(U - R); if (v < best) { best = v; b = 1; } }
+            MM[i] = best + pen; BB[i] = b;
+          } else {
+            const U = y > 0 ? lumA[rp + x] : lumA[i];
+            const D = y < H - 1 ? lumA[rn + x] : lumA[i];
+            const e = Math.abs(R - L) + Math.abs(D - U) + pen;
+            if (y === 0) { MM[i] = e; BB[i] = 0; continue; }
+            let best = MM[rp + x], b = 0;
+            if (x > 0 && MM[rp + x - 1] < best) { best = MM[rp + x - 1]; b = -1; }
+            if (x < w - 1 && MM[rp + x + 1] < best) { best = MM[rp + x + 1]; b = 1; }
+            MM[i] = best + e; BB[i] = b;
+          }
+        }
+      }
+    }
+
+    function carveOne() {
+      const w = curW;
+      runDP(cLum, cIdx, w, M, B, energyMode);
+      let r = (H - 1) * W0, bx = 0, bv = Infinity;
+      for (let x = 0; x < w; x++) if (M[r + x] < bv) { bv = M[r + x]; bx = x; }
+      const kk = computed;
+      let es = 0;
+      for (let y = H - 1; y >= 0; y--) {
+        r = y * W0;
+        const i = r + bx;
+        const o = cIdx[i];
+        removal[o] = kk; es += E0[o];
+        const b = B[i];
+        cIdx.copyWithin(i, i + 1, r + w);
+        cLum.copyWithin(i, i + 1, r + w);
+        bx = Math.max(0, Math.min(w - 1, bx + b));
+      }
+      cumE.push(cumE[kk] + es);
+      computed++; curW--;
+    }
+
+    function carveSome(budgetMs) {
+      if (computed >= maxSeams) return false;
+      const t0 = performance.now();
+      while (computed < maxSeams && performance.now() - t0 < budgetMs) carveOne();
+      return true;
+    }
+
+    // ------------------------------------------------------------------
+    //  Display buffers
+    // ------------------------------------------------------------------
+    const VIO = [124, 124, 255], PNK = [255, 124, 195];
+    function cmap(t, out, j) {
+      // dark ink -> violet -> pink -> near white
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      let r, g, b;
+      if (t < 0.4) { const u = t / 0.4; r = 8 + u * 72; g = 8 + u * 58; b = 20 + u * 170; }
+      else if (t < 0.75) { const u = (t - 0.4) / 0.35; r = 80 + u * 175; g = 66 + u * 58; b = 190 + u * 5; }
+      else { const u = (t - 0.75) / 0.25; r = 255; g = 124 + u * 116; b = 195 + u * 55; }
+      out[j] = r; out[j + 1] = g; out[j + 2] = b; out[j + 3] = 255;
+    }
+
+    let tmpM = null, tmpB = null, tmpLum = null, tmpIdx = null;
+
+    function tintMask(o, d, j) {
+      const m = mask[o];
+      if (m === 1) { d[j] = d[j] * 0.55 + VIO[0] * 0.45; d[j + 1] = d[j + 1] * 0.55 + VIO[1] * 0.45; d[j + 2] = d[j + 2] * 0.55 + VIO[2] * 0.45; }
+      else if (m === -1) { d[j] = d[j] * 0.5 + PNK[0] * 0.5; d[j + 1] = d[j + 1] * 0.5 + PNK[1] * 0.5; d[j + 2] = d[j + 2] * 0.5 + PNK[2] * 0.5; }
+    }
+
+    // Builds the carved picture (or its energy / valley map) at kk seams removed.
+    function buildCarved(kk, mode) {
+      const w = W0 - kk;
+      if (!kept || kept.length !== w * H) kept = new Int32Array(w * H);
+      keptW = w;
+      for (let y = 0; y < H; y++) {
+        let j = 0; const r = y * W0, rr = y * w;
+        for (let x = 0; x < W0 && j < w; x++) if (removal[r + x] >= kk) kept[rr + j++] = r + x;
+      }
+      small.width = w; small.height = H;
+      const id = sctx.createImageData(w, H), d = id.data;
+      const nextOn = showNext && kk < computed;
+      if (mode === 'carved') {
+        for (let p = 0; p < w * H; p++) {
+          const o = kept[p], j = 4 * p;
+          d[j] = rgb[4 * o]; d[j + 1] = rgb[4 * o + 1]; d[j + 2] = rgb[4 * o + 2]; d[j + 3] = 255;
+          tintMask(o, d, j);
+        }
+      } else if (mode === 'energy') {
+        for (let y = 0; y < H; y++) for (let x = 0; x < w; x++) {
+          const p = y * w + x;
+          const L = lum0[kept[p - (x > 0 ? 1 : 0)]], R = lum0[kept[p + (x < w - 1 ? 1 : 0)]];
+          const U = lum0[kept[p - (y > 0 ? w : 0)]], D = lum0[kept[p + (y < H - 1 ? w : 0)]];
+          const e = Math.abs(R - L) + Math.abs(D - U);
+          cmap(Math.sqrt(e / 140), d, 4 * p);
+          tintMask(kept[p], d, 4 * p);
+        }
+      } else { // valleys: the DP table itself
+        if (!tmpM || tmpM.length !== N) { tmpM = new Float32Array(N); tmpB = new Int8Array(N); tmpLum = new Float32Array(N); tmpIdx = new Int32Array(N); }
+        for (let y = 0; y < H; y++) for (let x = 0; x < w; x++) {
+          const o = kept[y * w + x];
+          tmpLum[y * W0 + x] = lum0[o]; tmpIdx[y * W0 + x] = o;
+        }
+        runDP(tmpLum, tmpIdx, w, tmpM, tmpB, energyMode);
+        for (let y = 0; y < H; y++) {
+          const r = y * W0;
+          let lo = Infinity, hi = -Infinity;
+          for (let x = 0; x < w; x++) { const v = tmpM[r + x]; if (v < lo) lo = v; if (v > hi) hi = v; }
+          const span = Math.min(hi - lo, 900 + y * 6) || 1;
+          for (let x = 0; x < w; x++) cmap(Math.pow((tmpM[r + x] - lo) / span, 0.45), d, 4 * (y * w + x));
+        }
+      }
+      if (nextOn) {
+        for (let p = 0; p < w * H; p++) if (removal[kept[p]] === kk) {
+          const j = 4 * p; d[j] = 255; d[j + 1] = 150; d[j + 2] = 210;
+        }
+      }
+      sctx.putImageData(id, 0, 0);
+    }
+
+    function buildSeams(kk) {
+      small.width = W0; small.height = H;
+      const id = sctx.createImageData(W0, H), d = id.data;
+      const nextOn = showNext && kk < computed;
+      for (let o = 0; o < N; o++) {
+        const j = 4 * o, r = removal[o];
+        let R = rgb[j], G = rgb[j + 1], Bc = rgb[j + 2];
+        if (r < kk) {
+          const t = r / Math.max(1, maxSeams);
+          const cr = VIO[0] + (PNK[0] - VIO[0]) * t, cg = VIO[1] + (PNK[1] - VIO[1]) * t, cb = VIO[2] + (PNK[2] - VIO[2]) * t;
+          R = R * 0.25 + cr * 0.75; G = G * 0.25 + cg * 0.75; Bc = Bc * 0.25 + cb * 0.75;
+        } else if (nextOn && r === kk) { R = 255; G = 245; Bc = 250; }
+        d[j] = R; d[j + 1] = G; d[j + 2] = Bc; d[j + 3] = 255;
+        tintMask(o, d, j);
+      }
+      sctx.putImageData(id, 0, 0);
+    }
+
+    // ------------------------------------------------------------------
+    //  Layout + drawing
+    // ------------------------------------------------------------------
+    let DPR = 1, VW = 0, VH = 0;
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      VW = window.innerWidth; VH = window.innerHeight;
+      cv.width = VW * DPR; cv.height = VH * DPR;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      dirty = true;
+    }
+    window.addEventListener('resize', resize);
+    onLayout = () => { dirty = true; };
+
+    function area() {
+      const mobile = VW <= 700;
+      const hidden = ui.classList.contains('hidden');
+      if (mobile) {
+        const bottom = hidden ? VH - 60 : VH - Math.min(VH * 0.44, ui.offsetHeight) - 30;
+        return { x: 14, y: 16, w: VW - 28, h: Math.max(120, bottom - 16) };
+      }
+      const left = hidden ? 40 : 24 + ui.offsetWidth + 36;
+      return { x: left, y: 52, w: Math.max(160, VW - left - 40), h: VH - 92 };
+    }
+
+    function label(text, x, y, col) {
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = col || 'rgba(233,233,240,0.55)';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(text, x, y);
+    }
+
+    function frameRect(x, y, w, h) {
+      ctx.save();
+      ctx.setLineDash([4, 5]);
+      ctx.strokeStyle = 'rgba(154,154,176,0.35)'; ctx.lineWidth = 1;
+      ctx.strokeRect(Math.round(x) - 0.5, Math.round(y) - 0.5, Math.round(w) + 1, Math.round(h) + 1);
+      ctx.restore();
+    }
+
+    function drawImg(src, sw, x, y, s) {
+      ctx.imageSmoothingEnabled = s < 2.2;
+      ctx.drawImage(src, 0, 0, sw, H, x, y, sw * s, H * s);
+    }
+
+    function render() {
+      ctx.fillStyle = '#05050a'; ctx.fillRect(0, 0, VW, VH);
+      if (!W0) return;
+      const kk = Math.min(Math.round(k), computed);
+      const w = W0 - kk;
+      const A = area();
+      panels = [];
+      const multi = compare && view !== 'seams';
+      const labH = 20, gap = 16;
+      const rows = multi ? 3 : 1;
+      const s = Math.min(A.w / W0, (A.h - rows * labH - (rows - 1) * gap) / (rows * H));
+      const fw = W0 * s, fh = H * s;
+      const fx = A.x + (A.w - fw) / 2;
+      let y = A.y + (A.h - (rows * (fh + labH) + (rows - 1) * gap)) / 2;
+
+      if (view === 'seams') {
+        buildSeams(kk);
+        frameRect(fx, y, fw, fh);
+        drawImg(small, W0, fx, y, s);
+        panels.push({ x: fx, y, w: fw, h: fh, s, kind: 'orig' });
+        label(`original ${W0} × ${H} · ${kk} seams found so far, coloured in the order they were taken`, fx + fw / 2, y + fh + 6);
+        return;
+      }
+
+      buildCarved(kk, view);
+      const cx = fx + (fw - w * s) / 2;
+      frameRect(fx, y, fw, fh);
+      drawImg(small, w, cx, y, s);
+      panels.push({ x: cx, y, w: w * s, h: fh, s, kind: 'carved' });
+      const name = view === 'carved' ? 'seam carved' : view === 'energy' ? 'energy · how busy each pixel is' : 'valleys · cheapest way down to each pixel';
+      label(`${name} · ${w} × ${H}`, fx + fw / 2, y + fh + 6, 'rgba(255,170,215,0.8)');
+
+      if (multi) {
+        // squash
+        y += fh + labH + gap;
+        frameRect(fx, y, fw, fh);
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(orig, 0, 0, W0, H, cx, y, w * s, fh);
+        label(`squashed · ${w} × ${H}`, fx + fw / 2, y + fh + 6);
+        // crop
+        y += fh + labH + gap;
+        frameRect(fx, y, fw, fh);
+        const left = Math.floor(kk / 2);
+        ctx.drawImage(orig, left, 0, w, H, cx, y, w * s, fh);
+        label(`cropped · ${w} × ${H}`, fx + fw / 2, y + fh + 6);
+      }
+    }
+
+    // ------------------------------------------------------------------
+    //  Readout
+    // ------------------------------------------------------------------
+    const out = document.getElementById('out');
+    const wIn = document.getElementById('wIn');
+    const wVal = document.getElementById('wVal');
+    let lastOut = '';
+    function updateReadout() {
+      const kk = Math.min(Math.round(k), computed);
+      const w = W0 - kk;
+      wVal.textContent = `${w} px · ${Math.round(100 * w / W0)}%`;
+      let carvedR = '—', cropR = '—';
+      if (kk > 0) {
+        carvedR = (cumE[kk] / (kk * H) / meanE).toFixed(2) + '×';
+        const left = Math.floor(kk / 2), right = kk - left;
+        const cropSum = colPre[left] + (colPre[W0] - colPre[W0 - right]);
+        cropR = (cropSum / (kk * H) / meanE).toFixed(2) + '×';
+      }
+      const busy = computed < maxSeams;
+      const html =
+        `<span class="k">picture</span><span class="v">${W0} × ${H}</span>` +
+        `<span class="k">seams removed</span><span class="v pinkv">${kk}</span>` +
+        `<span class="k">seams ready</span><span class="v violet">${busy ? 'carving… ' : ''}${computed} / ${maxSeams}</span>` +
+        `<hr>` +
+        `<span class="k">busyness thrown away</span><span class="v"></span>` +
+        `<span class="k">· by the seams</span><span class="v pinkv">${carvedR}</span>` +
+        `<span class="k">· by a centre crop</span><span class="v">${cropR}</span>` +
+        `<span class="full">Average energy of the pixels each method deletes, against the picture's average. Seams take the <b class="p">dullest</b> pixels first, so the number stays low until there is nothing dull left.</span>`;
+      if (html !== lastOut) { out.innerHTML = html; lastOut = html; }
+      if (document.activeElement !== wIn) wIn.value = Math.round(k);
+    }
+
+    // ------------------------------------------------------------------
+    //  Controls
+    // ------------------------------------------------------------------
+    const playBtn = document.getElementById('playBtn');
+    function setPlaying(p) { playing = p; playBtn.textContent = p ? 'Pause' : 'Play'; }
+    playBtn.addEventListener('click', () => setPlaying(!playing));
+    document.getElementById('fullBtn').addEventListener('click', () => { k = 0; dir = 1; setPlaying(false); dirty = true; });
+    wIn.addEventListener('input', () => { k = +wIn.value; setPlaying(false); dirty = true; });
+
+    function segWire(id, attr, fn) {
+      const seg = document.getElementById(id);
+      seg.addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b) return;
+        seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        fn(b.dataset[attr]);
+      });
+    }
+    segWire('viewSeg', 'view', (v) => { view = v; dirty = true; });
+    segWire('sceneSeg', 'scene', (v) => { scene = v; makeScene(scene); });
+    segWire('brushSeg', 'brush', (v) => {
+      brush = v;
+      cv.classList.toggle('paint', v !== 'look');
+      if (v !== 'look') setPlaying(false);
+    });
+    segWire('energySeg', 'energy', (v) => { energyMode = v; restartCarve(); });
+
+    document.getElementById('sceneBtn').addEventListener('click', () => {
+      seed++;
+      if (scene === 'yours') {
+        scene = 'harbour';
+        document.querySelectorAll('#sceneSeg button').forEach(b => b.classList.toggle('on', b.dataset.scene === 'harbour'));
+      }
+      makeScene(scene);
+    });
+    const fileIn = document.getElementById('file');
+    document.getElementById('loadBtn').addEventListener('click', () => fileIn.click());
+    fileIn.addEventListener('change', () => { if (fileIn.files[0]) loadPicture(fileIn.files[0]); fileIn.value = ''; });
+
+    function toggleWire(id, fn) {
+      const t = document.getElementById(id);
+      t.addEventListener('click', () => { t.classList.toggle('on'); fn(t.classList.contains('on')); dirty = true; });
+    }
+    toggleWire('tNext', (v) => { showNext = v; });
+    toggleWire('tCompare', (v) => { compare = v; });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      const key = e.key.toLowerCase();
+      if (key === 'h') setUiHidden(!ui.classList.contains('hidden'));
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (e.key === ' ') { e.preventDefault(); setPlaying(!playing); }
+      if (e.key === 'ArrowRight') { k = Math.min(maxSeams, Math.round(k) + 1); setPlaying(false); dirty = true; }
+      if (e.key === 'ArrowLeft') { k = Math.max(0, Math.round(k) - 1); setPlaying(false); dirty = true; }
+    });
+
+    // ---- painting ----
+    let painting = false, painted = false;
+    function paintAt(sx, sy) {
+      const P = panels[0];
+      if (!P) return;
+      const ix = (sx - P.x) / P.s, iy = (sy - P.y) / P.s;
+      if (iy < 0 || iy >= H || ix < 0) return;
+      let ox, oy = Math.floor(iy);
+      if (P.kind === 'orig') { if (ix >= W0) return; ox = Math.floor(ix); }
+      else {
+        if (ix >= keptW) return;
+        ox = kept[oy * keptW + Math.floor(ix)] % W0;
+      }
+      const val = brush === 'protect' ? 1 : brush === 'remove' ? -1 : 0;
+      for (let dy = -BRUSH_R; dy <= BRUSH_R; dy++) {
+        const yy = oy + dy; if (yy < 0 || yy >= H) continue;
+        for (let dx = -BRUSH_R; dx <= BRUSH_R; dx++) {
+          if (dx * dx + dy * dy > BRUSH_R * BRUSH_R) continue;
+          const xx = ox + dx; if (xx < 0 || xx >= W0) continue;
+          const o = yy * W0 + xx;
+          if (mask[o] !== val) { mask[o] = val; painted = true; }
+        }
+      }
+      dirty = true;
+    }
+    function evPos(e) { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+    cv.addEventListener('pointerdown', (e) => {
+      if (brush === 'look') return;
+      painting = true; painted = false;
+      cv.setPointerCapture(e.pointerId);
+      paintAt(...evPos(e));
+    });
+    cv.addEventListener('pointermove', (e) => { if (painting) paintAt(...evPos(e)); });
+    const endPaint = () => {
+      if (!painting) return;
+      painting = false;
+      if (painted) restartCarve();
+    };
+    cv.addEventListener('pointerup', endPaint);
+    cv.addEventListener('pointercancel', endPaint);
+
+    // ------------------------------------------------------------------
+    //  Loop
+    // ------------------------------------------------------------------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!painting) carveSome(11);
+
+      if (playing && maxSeams > 0) {
+        if (dwell > 0) dwell -= dt;
+        else {
+          const speed = maxSeams / 4.2; // seams per second
+          const target = k + dir * speed * dt;
+          if (dir > 0) {
+            k = Math.min(target, computed, maxSeams);
+            if (k >= maxSeams) { dir = -1; dwell = 1.1; }
+          } else {
+            k = Math.max(0, target);
+            if (k <= 0) { dir = 1; dwell = 1.1; }
+          }
+          dirty = true;
+        }
+      }
+
+      const kk = Math.min(Math.round(k), computed);
+      if (kk !== lastKk) { dirty = true; lastKk = kk; }
+      if (dirty) { render(); dirty = false; }
+      updateReadout();
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    makeScene(scene);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
