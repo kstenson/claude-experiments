@@ -1,55 +1,55 @@
 {
-  "date": "2026-10-20",
+  "date": "2026-10-21",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Out Toward Phobos",
+  "title": "The Strait Stays Shut",
   "mood": {
     "label": "Uneasy",
     "score": -0.2,
-    "summary": "Uneasy: drones killing 160 across Sudan, Houthi attacks in Yemen, Riyadh's investment forum cancelled, Gaza food aid cut, floods in eastern Spain, an Australian MP gravely hurt. Against it: Japan launched for Phobos, Brazil ended the six-day week, Mozambique saved a butterfly forest.",
+    "summary": "Uneasy: mines set tankers ablaze in Hormuz and peace looks distant, Yemen's displaced pass 250,000, Nigeria confirms Ebola, floods in Marseille. Steadier notes: Alberta rejected separation, Jersey widened marine protections, The Gambia will pay reparations.",
     "palette": {
-      "bg": "#0f1418",
-      "bg2": "#1d2a31",
-      "accent": "#d98a4a",
-      "accent2": "#5fa3a8",
-      "text": "#e6eef0"
+      "bg": "#14101a",
+      "bg2": "#2a2033",
+      "accent": "#c4566b",
+      "accent2": "#8a9bd6",
+      "text": "#ece6f0"
     }
   },
   "style": {
-    "genre": "liquid drum-and-bass — harp, clarinet, sub bass, HR-16",
-    "key": "Bb",
-    "scale": "harmonic minor",
-    "bpm": 122,
+    "genre": "darkwave — clean chorus guitar, cello, TR-909",
+    "key": "F",
+    "scale": "phrygian",
+    "bpm": 116,
     "swing": 0
   },
-  "sampleSources": ["Strudel default library (VCSL harp, GM clarinet, Alesis HR-16)"],
-  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ [~ sd]\").bank(\"AlesisHR16\").gain(0.65), s(\"hh*16\").bank(\"AlesisHR16\").gain(\"0.3 0.15 0.22 0.15\").pan(sine.range(0.35,0.65).slow(4)), s(\"~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ rim\").bank(\"AlesisHR16\").gain(0.3).room(0.5).delay(0.3).delaytime(0.37), note(\"<[bf1 ~ ~ ~ ~ ~ bf1 ~ ~ ~ df2 ~ ~ ~ ~ ~] [gf1 ~ ~ ~ ~ ~ gf1 ~ ~ ~ bf1 ~ ~ ~ ~ ~] [ef1 ~ ~ ~ ~ ~ ef1 ~ ~ ~ gf1 ~ ~ ~ ~ ~] [f1 ~ ~ ~ ~ ~ f1 ~ ~ ~ a1 ~ ~ c2 ~ ~]>\").s(\"sine\").lpf(260).sustain(0.8).release(0.3).gain(0.7), note(\"<[bf2,df3,f3] [gf2,bf2,df3] [ef3,gf3,bf3] [f2,a2,c3]>\").s(\"sawtooth\").attack(0.8).release(2).lpf(sine.range(500,1500).slow(16)).gain(0.12).room(0.6).rsize(4), note(\"<[bf3 df4 f4 bf4 f4 df4 ~ ~] [gf3 bf3 df4 gf4 df4 bf3 ~ ~] [ef4 gf4 bf4 ef5 bf4 gf4 ~ ~] [f3 a3 c4 f4 a4 c5 ~ ~]>\").s(\"harp\").gain(0.42).room(0.5).pan(0.4).jux(rev), note(\"<[f4 ~ ~ ~ gf4 ~ f4 ~] [df4 ~ ~ ~ ~ ~ bf3 ~] [gf4 ~ f4 ~ ef4 ~ ~ ~] [a3 ~ ~ ~ c4 ~ ~ ~]>\").s(\"gm_clarinet\").attack(0.05).release(0.8).gain(0.32).room(0.45).delay(0.25).delaytime(0.49).off(0.5, x => x.add(note(12)).gain(0.1)))",
+  "sampleSources": ["Strudel default library (GM clean electric guitar, GM cello, Roland TR-909)"],
+  "pattern": "stack(s(\"bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ bd ~, ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~\").bank(\"RolandTR909\").gain(0.62), s(\"~ hh ~ hh ~ hh ~ [hh oh]\").bank(\"RolandTR909\").gain(0.25).pan(sine.range(0.3,0.7).slow(8)), s(\"~ ~ ~ ~ ~ ~ cp ~\").bank(\"RolandTR909\").gain(0.2).room(0.6).rsize(4), note(\"<[f1 f1 f2 f1 f1 f1 f2 f1] [gf1 gf1 gf2 gf1 gf1 gf1 gf2 gf1] [ef1 ef1 ef2 ef1 ef1 ef1 ef2 ef1] [df1 df1 df2 df1 c1 c1 c2 c1]>\").s(\"sawtooth\").lpf(sine.range(300,900).slow(16)).decay(0.15).sustain(0.3).gain(0.42), note(\"<[f3,af3,c4] [gf3,bf3,df4] [ef3,gf3,bf3] [df3,f3,af3]>\").s(\"square\").attack(1).release(2.5).lpf(1200).gain(0.08).room(0.7).rsize(5), note(\"<[f4 c5 af4 c5 f4 c5 af4 gf4] [gf4 df5 bf4 df5 gf4 df5 bf4 af4] [ef4 bf4 gf4 bf4 ef4 bf4 gf4 f4] [df4 af4 f4 af4 c4 gf4 ef4 gf4]>\").s(\"gm_electric_guitar_clean\").gain(0.34).room(0.5).delay(0.35).delaytime(0.387).jux(rev), note(\"<[c4 ~ ~ ~ df4 ~ c4 ~] [bf3 ~ ~ ~ ~ ~ af3 ~] [gf3 ~ af3 ~ bf3 ~ ~ ~] [af3 ~ ~ ~ gf3 ~ ~ ~]>\").s(\"gm_cello\").attack(0.1).release(1.2).gain(0.36).room(0.45).off(0.25, x => x.add(note(12)).gain(0.12)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Drones over Sudan after dark,",
-        "a hundred and sixty gone,",
-        "the bread runs short in Gaza now,",
-        "Riyadh cancels its show at dawn."
+        "Mines in the water off Hormuz,",
+        "the tankers burning low,",
+        "Washington says peace is hard,",
+        "Tehran says the strait stays closed."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Rain comes down on Spain's east coast,",
-        "four lost beneath the flood,",
-        "Europe sums what Kyiv still needs,",
-        "a car as weapon, an MP's blood."
+        "Yemen walks away from home,",
+        "a quarter million gone,",
+        "Ebola crosses into Nigeria,",
+        "Marseille's streets run on."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "But a rocket's climbing out toward Phobos,",
-        "Brazil gave back the seventh day,",
-        "two hundred kinds of butterfly",
-        "keep a mountain no one takes away."
+        "But Alberta chose to stay,",
+        "Jersey shields its sea,",
+        "and the Gambia will pay its debt",
+        "to the ones it would not free."
       ]
     }
   ]
