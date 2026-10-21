@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Put Back Exactly — Experiment 096</title>
+<meta name="description" content="Knuth's Dancing Links (Algorithm X) tiling boards with the twelve pentominoes, live: every option it rules out is unlinked, and every one it brings back returns to exactly where it was." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  #cv { display: block; width: 100%; height: 100%; touch-action: manipulation; }
+
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .lab { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #77778e; margin-bottom: -4px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #ff7cc3; cursor: pointer;
+    box-shadow: 0 0 10px rgba(255,124,195,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #ff7cc3; cursor: pointer;
+    box-shadow: 0 0 10px rgba(255,124,195,0.7);
+  }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.74rem; padding: 7px 3px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+  .seg.pinks button.on { background: rgba(255,124,195,0.2); color: #ffe3f2; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 6px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.74rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 9px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); background: #a9a9ff; }
+  .toggle.on i { background: rgba(124,124,255,0.4); }
+  .toggle.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; min-height: 2.3em; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  .readout .full b.p { color: #ff9fd2; }
+  .readout .full b.v { color: #b0b0ff; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.6; color: #cfcfe6; white-space: pre;
+    overflow-x: auto;
+  }
+  .code .c { color: #7f7f99; }
+  .code em { font-style: normal; color: #ff9fd2; }
+  .code u { text-decoration: none; color: #b0b0ff; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 10px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    max-width: calc(100vw - 440px);
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: right;
+  }
+  @media (max-width: 1180px) { .hint { display: none; } }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 42vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <button id="showUi">show panel</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="hideUi" title="hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Put Back Exactly</h1>
+    <p class="sub">Experiment № 096 · October 21, 2026</p>
+
+    <div class="controls">
+      <div class="btn-row">
+        <button class="btn" id="playBtn">Pause</button>
+        <button class="btn" id="stepBtn">Step</button>
+        <button class="btn pink" id="restartBtn">Restart</button>
+      </div>
+
+      <div class="row">
+        <label>Speed <b id="spVal"></b></label>
+        <input type="range" id="spIn" min="0" max="12" value="6" />
+      </div>
+
+      <p class="lab">Board</p>
+      <div class="seg pinks" id="boardSeg">
+        <button data-board="6x10" class="on">6×10</button>
+        <button data-board="5x12">5×12</button>
+        <button data-board="4x15">4×15</button>
+        <button data-board="3x20">3×20</button>
+        <button data-board="8x8">8×8</button>
+      </div>
+
+      <p class="lab">Branch on</p>
+      <div class="seg" id="ruleSeg">
+        <button data-rule="mrv" class="on">Fewest options</button>
+        <button data-rule="cell">Top-left gap</button>
+        <button data-rule="piece">Next piece</button>
+      </div>
+
+      <div class="toggles">
+        <div class="toggle rose on" id="tLinger"><i></i>pause on tilings</div>
+        <div class="toggle" id="tShuffle"><i></i>shuffle options</div>
+      </div>
+
+      <div class="readout" id="out"></div>
+
+      <div class="code"><span class="c">// Algorithm X, on dancing links</span>
+search():
+  if no columns left: <em>a tiling!</em>
+  c = column with <u>fewest rows</u>
+  cover(c)
+  for each row r through c:
+    cover r's other columns
+    search()
+    uncover them, in reverse
+  uncover(c)
+
+<span class="c">// cover unlinks node x…</span>
+L[R[x]] = L[x];  R[L[x]] = R[x]
+<span class="c">// …but x still knows its neighbours,</span>
+<span class="c">// so putting it back is just</span>
+L[R[x]] = <em>x</em>;     R[L[x]] = <em>x</em></div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint" id="hint">numbers count the ways each gap can still be filled · the ring is where it branches next · on 8×8, click to move the hole · space plays · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 096 · The story</p>
+      <h2>Put Back Exactly</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Donald Knuth gave a lecture in 2000 called "Dancing Links", about a trick he credits to Hitotumatu and Noshita in 1979, and the title is the whole idea. When you delete a node from a doubly linked list, the neighbours forget it, but the node doesn't forget them. So if you ever want to undo the deletion, and you undo things in exactly the reverse order you did them, two assignments put it back with nothing to search for and nothing to copy. Backtracking is precisely that kind of undo, so Knuth built his exact-cover solver, Algorithm X, out of lists that unlink and relink themselves thousands of times a second. I had done plenty of searches in this collection, but never one where the undo was the interesting part.</p>
+      <p>Pentominoes are his own favourite demonstration, and they have a history worth honouring. Dana Scott had a computer tile an 8×8 board with a hole in the middle in 1958 (65 ways), and Colin and Jenifer Haselgrove counted the 2,339 ways to fill a 6×10 rectangle in 1960.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The numbers in the empty squares. Each one is how many placements could still cover that square, given everything already on the board, and the solver keeps them correct for free, because they are just the lengths of the lists it is unlinking. Watch a square drop to 1, or 0, after a careless placement: with "Fewest options" the solver goes straight there, because a square that can be filled in only one way should be filled now, and a square that can't be filled means the whole branch is dead, however promising the rest looks.</p>
+      <p>Then switch to "Next piece", which does what most of us would do by hand: take the pieces out of the box in order and try each one everywhere. It never looks at the starving squares, so it can't see a doomed board until the very end. The same solver, with one line changed, goes from a tiling every few seconds to almost nothing at all.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Two things, really. One is that "where should I look next?" can matter more than how fast you look: always go to the place with the fewest choices. The other is about undoing. A lot of cleverness goes into remembering what changed so you can reverse it. Here nothing is remembered; the removed thing simply keeps hold of where it came from, and if you put things back in the opposite order to the way you took them out, it all goes back exactly as it was.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay & panel wiring ----
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  function setPanel(hidden) {
+    ui.classList.toggle('hidden', hidden);
+    showUi.classList.toggle('on', hidden);
+    window.dispatchEvent(new Event('panelchange'));
+  }
+  document.getElementById('hideUi').addEventListener('click', () => setPanel(true));
+  showUi.addEventListener('click', () => setPanel(false));
+
+  // ---- Dancing Links ----
+  (() => {
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const out = document.getElementById('out');
+
+    // The twelve pentominoes, as [x, y] cells.
+    const PIECES = [
+      ['F', [[1,0],[2,0],[0,1],[1,1],[1,2]]],
+      ['I', [[0,0],[1,0],[2,0],[3,0],[4,0]]],
+      ['L', [[0,0],[0,1],[0,2],[0,3],[1,3]]],
+      ['N', [[0,0],[1,0],[1,1],[2,1],[3,1]]],
+      ['P', [[0,0],[1,0],[0,1],[1,1],[0,2]]],
+      ['T', [[0,0],[1,0],[2,0],[1,1],[1,2]]],
+      ['U', [[0,0],[2,0],[0,1],[1,1],[2,1]]],
+      ['V', [[0,0],[0,1],[0,2],[1,2],[2,2]]],
+      ['W', [[0,0],[0,1],[1,1],[1,2],[2,2]]],
+      ['X', [[1,0],[0,1],[1,1],[2,1],[1,2]]],
+      ['Y', [[0,0],[0,1],[0,2],[0,3],[1,1]]],
+      ['Z', [[0,0],[1,0],[1,1],[1,2],[2,2]]],
+    ];
+    const COLORS = ['#7c7cff','#ff7cc3','#5fd3c6','#ffb86b','#a98bff','#ff8f8f',
+                    '#7cc4ff','#e3d36a','#d58cff','#6be39a','#ffa8d8','#9fb0ff'];
+    const TRANSFORMS = [
+      (x, y) => [x, y], (x, y) => [-x, y], (x, y) => [x, -y], (x, y) => [-x, -y],
+      (x, y) => [y, x], (x, y) => [-y, x], (x, y) => [y, -x], (x, y) => [-y, -x],
+    ];
+    function normalize(cells) {
+      let mx = Infinity, my = Infinity;
+      for (const [x, y] of cells) { if (x < mx) mx = x; if (y < my) my = y; }
+      return cells.map(([x, y]) => [x - mx, y - my]).sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+    }
+    const ORIENTS = PIECES.map(([, cells]) => {
+      const seen = new Map();
+      for (const T of TRANSFORMS) {
+        const n = normalize(cells.map(([x, y]) => T(x, y)));
+        const key = n.join(';');
+        if (!seen.has(key)) seen.set(key, n);
+      }
+      return [...seen.values()];
+    });
+
+    const KNOWN = { '6x10': 2339, '5x12': 1010, '4x15': 368, '3x20': 2 };
+
+    // ---- state ----
+    let boardName = '6x10', hole = [3, 3];
+    let rule = 'mrv', linger = true, shuffle = false;
+    let running = true;
+    const SPEEDS = [1, 2, 4, 8, 15, 30, 60, 150, 400, 1500, 6000, 30000, Infinity];
+    let speedLevel = 6;
+
+    let BW, BH, cellIdx, cellXY, NC;            // board geometry
+    let rowPiece, rowCells;                      // options
+    let L, R, U, D, C, ROW, S, NCOL;             // links
+    let perms;                                   // board symmetries
+    let gen, stack, curCol, done;
+    let nodes, dead, updates, found, elapsed, distinct, thumbs, initialMax;
+    let lastPlaced = -1, ghost = null, flash = 0, holdUntil = 0, status = '';
+
+    function buildBoard() {
+      let w, h, blocked = () => false;
+      if (boardName === '8x8') {
+        w = 8; h = 8;
+        blocked = (x, y) => x >= hole[0] && x < hole[0] + 2 && y >= hole[1] && y < hole[1] + 2;
+      } else {
+        const [a, b] = boardName.split('x').map(Number);
+        h = a; w = b;
+      }
+      BW = w; BH = h;
+      cellIdx = new Int32Array(w * h).fill(-1);
+      cellXY = [];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if (blocked(x, y)) continue;
+        cellIdx[y * w + x] = cellXY.length;
+        cellXY.push([x, y]);
+      }
+      NC = cellXY.length;
+
+      // symmetries of the board, as permutations of cell indices
+      perms = [];
+      const keyset = new Set(cellXY.map(([x, y]) => x + ',' + y));
+      for (const T of TRANSFORMS) {
+        const mapped = cellXY.map(([x, y]) => T(x, y));
+        let mx = Infinity, my = Infinity;
+        for (const [x, y] of mapped) { if (x < mx) mx = x; if (y < my) my = y; }
+        let ok = true;
+        const perm = new Int32Array(NC);
+        for (let i = 0; i < NC; i++) {
+          const nx = mapped[i][0] - mx, ny = mapped[i][1] - my;
+          if (nx >= w || ny >= h || !keyset.has(nx + ',' + ny)) { ok = false; break; }
+          perm[i] = cellIdx[ny * w + nx];
+        }
+        if (ok) perms.push(perm);
+      }
+    }
+
+    function buildOptions() {
+      const opts = [];
+      for (let p = 0; p < 12; p++) {
+        for (const o of ORIENTS[p]) {
+          for (let oy = 0; oy < BH; oy++) for (let ox = 0; ox < BW; ox++) {
+            const cs = [];
+            let ok = true;
+            for (const [x, y] of o) {
+              const X = x + ox, Y = y + oy;
+              if (X >= BW || Y >= BH || cellIdx[Y * BW + X] < 0) { ok = false; break; }
+              cs.push(cellIdx[Y * BW + X]);
+            }
+            if (ok) opts.push([p, cs]);
+          }
+        }
+      }
+      if (shuffle) {
+        for (let i = opts.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = opts[i]; opts[i] = opts[j]; opts[j] = t;
+        }
+      }
+      rowPiece = opts.map((o) => o[0]);
+      rowCells = opts.map((o) => o[1]);
+    }
+
+    // Columns: 1..12 are the pieces, 13.. are the cells. Node 0 is the root.
+    function buildLinks() {
+      NCOL = 12 + NC;
+      const total = 1 + NCOL + rowPiece.length * 6;
+      L = new Int32Array(total); R = new Int32Array(total);
+      U = new Int32Array(total); D = new Int32Array(total);
+      C = new Int32Array(total); ROW = new Int32Array(total).fill(-1);
+      S = new Int32Array(NCOL + 1);
+      for (let c = 0; c <= NCOL; c++) {
+        L[c] = c === 0 ? NCOL : c - 1;
+        R[c] = c === NCOL ? 0 : c + 1;
+        U[c] = D[c] = c; C[c] = c;
+      }
+      let next = NCOL + 1;
+      for (let r = 0; r < rowPiece.length; r++) {
+        const cols = [rowPiece[r] + 1, ...rowCells[r].map((i) => 13 + i)];
+        let first = -1;
+        for (const c of cols) {
+          const n = next++;
+          C[n] = c; ROW[n] = r;
+          U[n] = U[c]; D[n] = c; D[U[c]] = n; U[c] = n; S[c]++;
+          if (first < 0) { first = n; L[n] = R[n] = n; }
+          else { L[n] = L[first]; R[n] = first; R[L[first]] = n; L[first] = n; }
+        }
+      }
+      initialMax = 1;
+      for (let c = 13; c <= NCOL; c++) if (S[c] > initialMax) initialMax = S[c];
+    }
+
+    function cover(c) {
+      R[L[c]] = R[c]; L[R[c]] = L[c];
+      for (let i = D[c]; i !== c; i = D[i]) {
+        for (let j = R[i]; j !== i; j = R[j]) {
+          D[U[j]] = D[j]; U[D[j]] = U[j]; S[C[j]]--; updates++;
+        }
+      }
+      updates++;
+    }
+    function uncover(c) {
+      for (let i = U[c]; i !== c; i = U[i]) {
+        for (let j = L[i]; j !== i; j = L[j]) {
+          S[C[j]]++; D[U[j]] = j; U[D[j]] = j;
+        }
+      }
+      R[L[c]] = c; L[R[c]] = c;
+    }
+
+    function choose() {
+      if (rule === 'piece') return R[0];
+      if (rule === 'cell') {
+        for (let c = R[0]; c !== 0; c = R[c]) if (c > 12) return c;
+        return R[0];
+      }
+      let best = R[0], bs = Infinity;
+      for (let c = R[0]; c !== 0; c = R[c]) {
+        if (S[c] < bs) { bs = S[c]; best = c; if (bs === 0) break; }
+      }
+      return best;
+    }
+
+    const PLACE = 1, REMOVE = 2, SOL = 3, DEAD = 4;
+    function* search() {
+      if (R[0] === 0) { yield SOL; return; }
+      const c = choose();
+      curCol = c;
+      if (S[c] === 0) { dead++; yield DEAD; return; }
+      cover(c);
+      for (let r = D[c]; r !== c; r = D[r]) {
+        stack.push(r);
+        for (let j = R[r]; j !== r; j = R[j]) cover(C[j]);
+        nodes++;
+        yield PLACE;
+        yield* search();
+        for (let j = L[r]; j !== r; j = L[j]) uncover(C[j]);
+        stack.pop();
+        curCol = c;
+        ghost = { r: ROW[r], t: performance.now() };
+        yield REMOVE;
+      }
+      uncover(c);
+    }
+
+    function restart() {
+      buildBoard(); buildOptions(); buildLinks();
+      stack = []; curCol = 0; done = false;
+      nodes = dead = updates = found = 0; elapsed = 0;
+      distinct = new Set(); thumbs = [];
+      lastPlaced = -1; ghost = null; holdUntil = 0;
+      status = 'Every placement of every piece is a row: <b>' + rowPiece.length.toLocaleString() +
+        '</b> rows, one piece column and five cell columns each.';
+      gen = search();
+      layout();
+    }
+
+    function letters() {
+      const g = new Array(NC);
+      for (const n of stack) {
+        const r = ROW[n];
+        for (const i of rowCells[r]) g[i] = PIECES[rowPiece[r]][0];
+      }
+      return g;
+    }
+    function canonical(g) {
+      let best = null;
+      for (const perm of perms) {
+        const o = new Array(NC);
+        for (let i = 0; i < NC; i++) o[perm[i]] = g[i];
+        const s = o.join('');
+        if (best === null || s < best) best = s;
+      }
+      return best;
+    }
+
+    function colName(c) {
+      if (c <= 0) return '';
+      if (c <= 12) return 'piece <b class="v">' + PIECES[c - 1][0] + '</b>';
+      const [x, y] = cellXY[c - 13];
+      return 'the square at column ' + (x + 1) + ', row ' + (y + 1);
+    }
+
+    function step() {
+      if (done) return 0;
+      const r = gen.next();
+      if (r.done) {
+        done = true; curCol = 0;
+        status = 'Search finished: every branch tried, all links back exactly where they started. <b class="p">' +
+          distinct.size.toLocaleString() + '</b> distinct tilings.';
+        return 0;
+      }
+      const ev = r.value;
+      if (ev === PLACE) {
+        const n = stack[stack.length - 1];
+        lastPlaced = ROW[n];
+        status = 'Placed <b class="v">' + PIECES[rowPiece[lastPlaced]][0] + '</b>, which unlinks every option that clashes with it.';
+      } else if (ev === REMOVE) {
+        lastPlaced = -1;
+        status = 'Backtrack: lift <b class="v">' + PIECES[rowPiece[ghost.r]][0] + '</b> and relink its rivals, in reverse order.';
+      } else if (ev === DEAD) {
+        status = 'Dead end: nothing can fill ' + colName(curCol) + ' any more.';
+      } else if (ev === SOL) {
+        found++;
+        const g = letters();
+        const key = canonical(g);
+        if (!distinct.has(key)) {
+          distinct.add(key);
+          thumbs.unshift(g);
+          if (thumbs.length > 40) thumbs.length = 40;
+          status = 'Tiling! <b class="p">#' + distinct.size + '</b> — new, not a turned or flipped copy of one already found.';
+        } else {
+          status = 'Tiling — but a rotation or reflection of one already found.';
+        }
+        flash = performance.now();
+      }
+      return ev;
+    }
+
+    // ---- layout & drawing ----
+    let W = 0, H = 0, dpr = 1, region, cs, bx, by, tray, thumbBox;
+    function layout() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = innerWidth; H = innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const mobile = W <= 700;
+      const hidden = ui.classList.contains('hidden');
+      if (mobile) {
+        region = { x: 12, y: 14, w: W - 24, h: (hidden ? H - 70 : H * 0.58 - 26) };
+      } else {
+        const left = hidden ? 40 : 24 + ui.offsetWidth + 32;
+        region = { x: left, y: 52, w: W - left - 32, h: H - 76 };
+      }
+      if (!BW) return;
+      const thH = mobile ? 50 : 86, trH = mobile ? 50 : 70, gap = mobile ? 10 : 22;
+      const bh = region.h - thH - trH - gap * 2;
+      cs = Math.max(8, Math.floor(Math.min(region.w / BW, bh / BH, 66)));
+      const bwPx = cs * BW, bhPx = cs * BH;
+      const blockH = bhPx + gap + trH + gap + thH;
+      const top = region.y + Math.max(0, (region.h - blockH) / 2);
+      bx = Math.round(region.x + (region.w - bwPx) / 2);
+      by = Math.round(top);
+      const trW = Math.min(region.w, Math.max(bwPx, 12 * 46));
+      tray = { x: region.x + (region.w - trW) / 2, y: by + bhPx + gap, w: trW, h: trH };
+      thumbBox = { x: region.x, y: tray.y + trH + gap, w: region.w, h: thH };
+    }
+
+    function rrect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // Draw a filled tiling (or partial) where g[i] is a piece index or -1.
+    function drawPieces(owner, ox, oy, s, isRows) {
+      const g = Math.max(0.6, s * 0.06);
+      for (let i = 0; i < NC; i++) {
+        const o = owner[i];
+        if (o < 0) continue;
+        const [x, y] = cellXY[i];
+        const p = isRows ? rowPiece[o] : o;
+        ctx.fillStyle = COLORS[p];
+        const px = ox + x * s, py = oy + y * s;
+        ctx.fillRect(px + g, py + g, s - 2 * g, s - 2 * g);
+        const same = (xx, yy) => {
+          if (xx >= BW || yy >= BH) return false;
+          const j = cellIdx[yy * BW + xx];
+          return j >= 0 && owner[j] === o;
+        };
+        if (same(x + 1, y)) ctx.fillRect(px + s - g, py + g, 2 * g, s - 2 * g);
+        if (same(x, y + 1)) ctx.fillRect(px + g, py + s - g, s - 2 * g, 2 * g);
+        if (same(x + 1, y) && same(x, y + 1) && same(x + 1, y + 1)) ctx.fillRect(px + s - g, py + s - g, 2 * g, 2 * g);
+      }
+    }
+
+    let liveOwner = null;
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+      if (!BW) return;
+      const bwPx = cs * BW, bhPx = cs * BH;
+
+      // board well
+      ctx.fillStyle = 'rgba(255,255,255,0.025)';
+      rrect(bx - 10, by - 10, bwPx + 20, bhPx + 20, 14); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1; ctx.stroke();
+
+      // who owns each cell right now
+      liveOwner = new Int32Array(NC).fill(-1);
+      for (const n of stack) { const r = ROW[n]; for (const i of rowCells[r]) liveOwner[i] = r; }
+
+      // empty cells, shaded by how many options still cover them
+      const showNum = cs >= 24;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '600 ' + Math.round(cs * 0.3) + 'px ui-sans-serif, system-ui, sans-serif';
+      for (let i = 0; i < NC; i++) {
+        if (liveOwner[i] >= 0) continue;
+        const [x, y] = cellXY[i];
+        const px = bx + x * cs, py = by + y * cs;
+        const n = S[13 + i];
+        const t = Math.min(1, n / initialMax);
+        const low = n <= 2;
+        if (n === 0) ctx.fillStyle = 'rgba(255,90,140,0.32)';
+        else if (low) ctx.fillStyle = 'rgba(255,124,195,' + (0.12 + (2 - n) * 0.07) + ')';
+        else ctx.fillStyle = 'rgba(124,124,255,' + (0.04 + 0.14 * t) + ')';
+        rrect(px + 2, py + 2, cs - 4, cs - 4, Math.min(6, cs * 0.18)); ctx.fill();
+        if (showNum) {
+          ctx.fillStyle = n === 0 ? '#ff6f9f' : low ? '#ffb3da' : 'rgba(200,200,255,' + (0.35 + 0.35 * t) + ')';
+          ctx.fillText(n === 0 ? '×' : String(n), px + cs / 2, py + cs / 2 + 1);
+        } else if (n === 0) {
+          ctx.fillStyle = '#ff6f9f';
+          ctx.fillRect(px + cs * 0.35, py + cs * 0.35, cs * 0.3, cs * 0.3);
+        }
+      }
+      // the hole on 8x8
+      if (boardName === '8x8') {
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.setLineDash([4, 4]);
+        rrect(bx + hole[0] * cs + 4, by + hole[1] * cs + 4, cs * 2 - 8, cs * 2 - 8, 8); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // placed pieces
+      drawPieces(liveOwner, bx, by, cs, true);
+      if (lastPlaced >= 0) {
+        ctx.save();
+        ctx.shadowColor = COLORS[rowPiece[lastPlaced]]; ctx.shadowBlur = 18;
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2;
+        for (const i of rowCells[lastPlaced]) {
+          const [x, y] = cellXY[i];
+          rrect(bx + x * cs + 3, by + y * cs + 3, cs - 6, cs - 6, 4); ctx.stroke();
+        }
+        ctx.restore();
+      }
+      // a lifted piece fades out where it was
+      if (ghost) {
+        const a = 1 - (now - ghost.t) / 450;
+        if (a > 0) {
+          ctx.strokeStyle = COLORS[rowPiece[ghost.r]]; ctx.globalAlpha = a * 0.9; ctx.lineWidth = 2;
+          ctx.setLineDash([3, 3]);
+          for (const i of rowCells[ghost.r]) {
+            const [x, y] = cellXY[i];
+            if (liveOwner[i] >= 0) continue;
+            rrect(bx + x * cs + 4, by + y * cs + 4, cs - 8, cs - 8, 4); ctx.stroke();
+          }
+          ctx.setLineDash([]); ctx.globalAlpha = 1;
+        }
+      }
+      // the column it is branching on
+      const pulse = 0.55 + 0.45 * Math.sin(now / 160);
+      if (curCol > 12 && !done) {
+        const [x, y] = cellXY[curCol - 13];
+        ctx.save();
+        ctx.strokeStyle = '#ff7cc3'; ctx.lineWidth = 2.5; ctx.globalAlpha = pulse;
+        ctx.shadowColor = '#ff7cc3'; ctx.shadowBlur = 14;
+        rrect(bx + x * cs + 1, by + y * cs + 1, cs - 2, cs - 2, 7); ctx.stroke();
+        ctx.restore();
+      }
+      // flash on a tiling
+      const fa = 1 - (now - flash) / 900;
+      if (fa > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#ff9fd2'; ctx.globalAlpha = fa; ctx.lineWidth = 3;
+        ctx.shadowColor = '#ff7cc3'; ctx.shadowBlur = 30;
+        rrect(bx - 10, by - 10, bwPx + 20, bhPx + 20, 14); ctx.stroke();
+        ctx.restore();
+      }
+
+      drawTray(now, pulse);
+      drawThumbs();
+    }
+
+    function drawTray(now, pulse) {
+      const used = new Set();
+      for (const n of stack) used.add(rowPiece[ROW[n]]);
+      const sw = tray.w / 12;
+      const ps = Math.max(3, Math.min((sw - 10) / 5, (tray.h - 22) / 4));
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.font = '600 ' + (W <= 700 ? 9 : 11) + 'px ui-sans-serif, system-ui, sans-serif';
+      for (let p = 0; p < 12; p++) {
+        const o = PIECES[p][1];
+        let mw = 0, mh = 0;
+        for (const [x, y] of o) { if (x > mw) mw = x; if (y > mh) mh = y; }
+        const cx = tray.x + sw * p + sw / 2;
+        const ox = cx - (mw + 1) * ps / 2, oy = tray.y + (tray.h - 16 - (mh + 1) * ps) / 2;
+        const isUsed = used.has(p);
+        ctx.globalAlpha = isUsed ? 0.22 : 0.95;
+        ctx.fillStyle = COLORS[p];
+        for (const [x, y] of o) ctx.fillRect(ox + x * ps + 0.5, oy + y * ps + 0.5, ps - 1, ps - 1);
+        ctx.globalAlpha = 1;
+        const n = S[p + 1];
+        ctx.fillStyle = isUsed ? 'rgba(255,255,255,0.25)' : 'rgba(220,220,240,0.7)';
+        ctx.fillText(isUsed ? PIECES[p][0] + ' ✓' : PIECES[p][0] + ' ' + n, cx, tray.y + tray.h - 2);
+        if (curCol === p + 1 && !done) {
+          ctx.save();
+          ctx.strokeStyle = '#ff7cc3'; ctx.lineWidth = 2; ctx.globalAlpha = pulse;
+          ctx.shadowColor = '#ff7cc3'; ctx.shadowBlur = 12;
+          rrect(cx - sw / 2 + 3, tray.y - 2, sw - 6, tray.h + 2, 8); ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+
+    function drawThumbs() {
+      const tc = Math.max(1.5, Math.min((thumbBox.h - 16) / BH, 6));
+      const tw = tc * BW, th = tc * BH;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.font = (W <= 700 ? 9 : 10.5) + 'px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      const label = thumbs.length ? 'newest distinct tilings' : 'distinct tilings will collect here';
+      const per = Math.max(1, Math.floor((thumbBox.w + 10) / (tw + 10)));
+      const n = Math.min(per, thumbs.length);
+      const rowW = n ? n * tw + (n - 1) * 10 : 0;
+      const sx = thumbBox.x + (thumbBox.w - Math.max(rowW, 0)) / 2;
+      ctx.fillText(label, thumbs.length ? sx : thumbBox.x + thumbBox.w / 2 - 80, thumbBox.y + 10);
+      const owner = new Int32Array(NC);
+      for (let k = 0; k < n; k++) {
+        const g = thumbs[k];
+        for (let i = 0; i < NC; i++) owner[i] = PIECES.findIndex((pp) => pp[0] === g[i]);
+        const ox = sx + k * (tw + 10), oy = thumbBox.y + 16;
+        ctx.globalAlpha = k === 0 ? 1 : Math.max(0.35, 1 - k * 0.06);
+        drawPieces(owner, ox, oy, tc, false);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // ---- readout ----
+    function fmtTime(s) {
+      if (s < 60) return s.toFixed(1) + ' s';
+      return Math.floor(s / 60) + ' m ' + String(Math.floor(s % 60)).padStart(2, '0') + ' s';
+    }
+    let lastOut = 0;
+    function renderOut(force) {
+      const now = performance.now();
+      if (!force && now - lastOut < 120) return;
+      lastOut = now;
+      const known = boardName === '8x8'
+        ? (hole[0] === 3 && hole[1] === 3 ? '65 (Scott, 1958)' : '—')
+        : KNOWN[boardName].toLocaleString() + (boardName === '6x10' ? ' (1960)' : '');
+      out.innerHTML =
+        '<span class="k">Pieces down</span><span class="v">' + stack.length + ' / 12</span>' +
+        '<span class="k">Placements tried</span><span class="v">' + nodes.toLocaleString() + '</span>' +
+        '<span class="k">Dead ends</span><span class="v">' + dead.toLocaleString() + '</span>' +
+        '<span class="k">Links unlinked</span><span class="v violet">' + updates.toLocaleString() + '</span>' +
+        '<hr>' +
+        '<span class="k">Tilings found</span><span class="v">' + found.toLocaleString() + '</span>' +
+        '<span class="k">Distinct</span><span class="v pinkv">' + distinct.size.toLocaleString() + '</span>' +
+        '<span class="k">Known total</span><span class="v">' + known + '</span>' +
+        '<span class="k">Searching for</span><span class="v">' + fmtTime(elapsed) + '</span>' +
+        '<hr><span class="full">' + status + '</span>';
+    }
+
+    // ---- loop ----
+    let last = performance.now(), acc = 0;
+    function frame(t) {
+      const dt = Math.min(0.1, (t - last) / 1000);
+      last = t;
+      const sps = SPEEDS[speedLevel];
+      if (running && !done) {
+        if (t >= holdUntil) {
+          elapsed += dt;
+          let n;
+          if (sps === Infinity) n = 1e9;
+          else { acc += sps * dt; n = Math.floor(acc); acc -= n; }
+          const t0 = performance.now();
+          for (let i = 0; i < n; i++) {
+            const ev = step();
+            if (done) { updateButtons(); break; }
+            if (ev === SOL && linger) { holdUntil = performance.now() + 1100; break; }
+            if ((i & 127) === 127 && performance.now() - t0 > 12) break;
+          }
+        }
+      }
+      draw(t);
+      renderOut(false);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- controls ----
+    const playBtn = document.getElementById('playBtn');
+    const stepBtn = document.getElementById('stepBtn');
+    function updateButtons() {
+      playBtn.textContent = done ? 'Done' : running ? 'Pause' : 'Play';
+      playBtn.disabled = done;
+      stepBtn.disabled = done || running;
+    }
+    function togglePlay() { if (done) return; running = !running; holdUntil = 0; updateButtons(); }
+    playBtn.addEventListener('click', togglePlay);
+    stepBtn.addEventListener('click', () => { if (!running) { holdUntil = 0; step(); updateButtons(); renderOut(true); } });
+    document.getElementById('restartBtn').addEventListener('click', () => { restart(); updateButtons(); renderOut(true); });
+
+    const spIn = document.getElementById('spIn'), spVal = document.getElementById('spVal');
+    function showSpeed() {
+      const s = SPEEDS[speedLevel];
+      spVal.textContent = s === Infinity ? 'as fast as it can' : s.toLocaleString() + ' steps / s';
+    }
+    spIn.addEventListener('input', () => { speedLevel = +spIn.value; acc = 0; showSpeed(); });
+
+    function seg(id, attr, fn) {
+      const el = document.getElementById(id);
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b) return;
+        el.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+        fn(b.dataset[attr]);
+      });
+    }
+    seg('boardSeg', 'board', (v) => { boardName = v; restart(); updateButtons(); renderOut(true); });
+    seg('ruleSeg', 'rule', (v) => { rule = v; restart(); updateButtons(); renderOut(true); });
+
+    function toggle(id, fn) {
+      const el = document.getElementById(id);
+      el.addEventListener('click', () => { el.classList.toggle('on'); fn(el.classList.contains('on')); });
+    }
+    toggle('tLinger', (on) => { linger = on; if (!on) holdUntil = 0; });
+    toggle('tShuffle', (on) => { shuffle = on; restart(); updateButtons(); renderOut(true); });
+
+    cv.addEventListener('pointerdown', (e) => {
+      if (boardName !== '8x8') return;
+      const x = Math.floor((e.clientX - bx) / cs), y = Math.floor((e.clientY - by) / cs);
+      if (x < 0 || y < 0 || x >= 8 || y >= 8) return;
+      hole = [Math.min(x, 6), Math.min(y, 6)];
+      restart(); updateButtons(); renderOut(true);
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' && e.key !== ' ') return;
+      if (e.key.toLowerCase() === 'h') setPanel(!ui.classList.contains('hidden'));
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+      if (e.key === 'ArrowRight' && !running) { step(); renderOut(true); }
+    });
+    window.addEventListener('resize', layout);
+    window.addEventListener('panelchange', () => setTimeout(layout, 20));
+
+    showSpeed();
+    restart();
+    updateButtons();
+    renderOut(true);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
