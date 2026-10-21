@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-21",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "The Strait Stays Shut",
+  "mood": {
+    "label": "Uneasy",
+    "score": -0.2,
+    "summary": "Uneasy: mines set tankers ablaze in Hormuz and peace looks distant, Yemen's displaced pass 250,000, Nigeria confirms Ebola, floods in Marseille. Steadier notes: Alberta rejected separation, Jersey widened marine protections, The Gambia will pay reparations.",
+    "palette": {
+      "bg": "#14101a",
+      "bg2": "#2a2033",
+      "accent": "#c4566b",
+      "accent2": "#8a9bd6",
+      "text": "#ece6f0"
+    }
+  },
+  "style": {
+    "genre": "darkwave — clean chorus guitar, cello, TR-909",
+    "key": "F",
+    "scale": "phrygian",
+    "bpm": 116,
+    "swing": 0
+  },
+  "sampleSources": ["Strudel default library (GM clean electric guitar, GM cello, Roland TR-909)"],
+  "pattern": "stack(s(\"bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ bd ~, ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~\").bank(\"RolandTR909\").gain(0.62), s(\"~ hh ~ hh ~ hh ~ [hh oh]\").bank(\"RolandTR909\").gain(0.25).pan(sine.range(0.3,0.7).slow(8)), s(\"~ ~ ~ ~ ~ ~ cp ~\").bank(\"RolandTR909\").gain(0.2).room(0.6).rsize(4), note(\"<[f1 f1 f2 f1 f1 f1 f2 f1] [gf1 gf1 gf2 gf1 gf1 gf1 gf2 gf1] [ef1 ef1 ef2 ef1 ef1 ef1 ef2 ef1] [df1 df1 df2 df1 c1 c1 c2 c1]>\").s(\"sawtooth\").lpf(sine.range(300,900).slow(16)).decay(0.15).sustain(0.3).gain(0.42), note(\"<[f3,af3,c4] [gf3,bf3,df4] [ef3,gf3,bf3] [df3,f3,af3]>\").s(\"square\").attack(1).release(2.5).lpf(1200).gain(0.08).room(0.7).rsize(5), note(\"<[f4 c5 af4 c5 f4 c5 af4 gf4] [gf4 df5 bf4 df5 gf4 df5 bf4 af4] [ef4 bf4 gf4 bf4 ef4 bf4 gf4 f4] [df4 af4 f4 af4 c4 gf4 ef4 gf4]>\").s(\"gm_electric_guitar_clean\").gain(0.34).room(0.5).delay(0.35).delaytime(0.387).jux(rev), note(\"<[c4 ~ ~ ~ df4 ~ c4 ~] [bf3 ~ ~ ~ ~ ~ af3 ~] [gf3 ~ af3 ~ bf3 ~ ~ ~] [af3 ~ ~ ~ gf3 ~ ~ ~]>\").s(\"gm_cello\").attack(0.1).release(1.2).gain(0.36).room(0.45).off(0.25, x => x.add(note(12)).gain(0.12)))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Mines in the water off Hormuz,",
+        "the tankers burning low,",
+        "Washington says peace is hard,",
+        "Tehran says the strait stays closed."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Yemen walks away from home,",
+        "a quarter million gone,",
+        "Ebola crosses into Nigeria,",
+        "Marseille's streets run on."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "But Alberta chose to stay,",
+        "Jersey shields its sea,",
+        "and the Gambia will pay its debt",
+        "to the ones it would not free."
+      ]
+    }
+  ]
+}
