@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pinned by Three — Experiment 097</title>
+<meta name="description" content="Welzl's 1991 smallest enclosing circle, live: shuffle the points, and the tightest circle around all of them is found in expected linear time by three nested loops that almost never run." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  canvas#cv.grab { cursor: grab; }
+  canvas#cv.grabbing { cursor: grabbing; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    flex: 1; background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+  .seg-label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; margin-bottom: -4px; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.72rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 8px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .strip-wrap {
+    padding: 8px 10px 6px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  }
+  .strip-wrap .cap { font-size: 0.7rem; color: #8f8fa6; letter-spacing: 0.04em; display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .strip-wrap .cap b { font-weight: 600; }
+  #strip { display: block; width: 100%; height: 46px; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.lilac { color: #cfa8ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  #rNote { min-height: 3.2em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code .l1 { color: #b0b0ff; }
+  .code .l2 { color: #cfa8ff; }
+  .code .l3 { color: #ff9fd2; }
+  .code div { padding: 0 4px; border-radius: 4px; transition: background 0.15s ease; }
+  .code div.hot { background: rgba(255,255,255,0.08); }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+  }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { width: 12px; height: 12px; border-radius: 50%; flex: none; display: block; }
+  .legend i.l1 { border: 2px solid #7c7cff; }
+  .legend i.l2 { border: 2px solid #b98cff; }
+  .legend i.l3 { border: 2px solid #ff7cc3; }
+  .legend i.pin { background: #ff7cc3; box-shadow: 0 0 8px #ff7cc3; width: 9px; height: 9px; margin: 0 1.5px; }
+  .legend i.probe { border: 2px dashed #e9e9ff; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: right;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .legend, .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <button id="showUi">show panel</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Pinned by Three</h1>
+    <p class="sub">Experiment № 097 · October 22, 2026</p>
+
+    <div class="controls">
+      <p class="seg-label">Visit the points</p>
+      <div class="seg" id="order">
+        <button data-order="shuffle" class="on">Shuffled</button>
+        <button data-order="sweep">Left → right</button>
+        <button data-order="out">Inside → out</button>
+      </div>
+
+      <div class="row">
+        <label>Pace <b id="speedV">—</b></label>
+        <input type="range" id="speed" min="0" max="100" value="34" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="bPlay">Pause</button>
+        <button class="btn" id="bStep">Step</button>
+        <button class="btn" id="bReplay">Reshuffle</button>
+      </div>
+
+      <div class="toggles">
+        <div class="toggle violet on" id="tTrails"><i></i>Trails</div>
+        <div class="toggle violet on" id="tLoop"><i></i>Loop</div>
+        <div class="toggle rose" id="tDrift"><i></i>Drift</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="bScatter">Scatter</button>
+        <button class="btn" id="bCluster">Clusters</button>
+        <button class="btn" id="bRing">Ring</button>
+        <button class="btn pink" id="bClear">Clear</button>
+      </div>
+
+      <div class="strip-wrap">
+        <div class="cap"><span>the order, and three fingers in it</span><span><b style="color:#b0b0ff">i</b> · <b style="color:#cfa8ff">j</b> · <b style="color:#ff9fd2">k</b></span></div>
+        <canvas id="strip"></canvas>
+      </div>
+
+      <div class="readout">
+        <span class="k">points</span><span class="v" id="rPts">0</span>
+        <span class="k">“is it inside?” tests</span><span class="v" id="rTests">0</span>
+        <span class="k">tests per point</span><span class="v violet" id="rPer">—</span>
+        <hr />
+        <span class="k">rebuilt on 1 point</span><span class="v violet" id="rL1">0</span>
+        <span class="k">rebuilt on 2 points</span><span class="v lilac" id="rL2">0</span>
+        <span class="k">rebuilt on 3 points</span><span class="v pinkv" id="rL3">0</span>
+        <hr />
+        <span class="k">brute force would test</span><span class="v" id="rBrute">—</span>
+        <span class="full" id="rNote">Shuffle the points and visit them in turn. A point already inside the circle costs one test and nothing else.</span>
+      </div>
+
+      <div class="code" id="code">
+        <div data-l="0"><span class="c">// Welzl 1991, iterative form</span></div>
+        <div data-l="0">shuffle P;  D ← circle on P₀</div>
+        <div data-l="1" class="l1">for i: if Pᵢ ∉ D: D ← circle on {Pᵢ}</div>
+        <div data-l="2" class="l2">&nbsp; for j &lt; i: if Pⱼ ∉ D: D ← on {Pᵢ,Pⱼ}</div>
+        <div data-l="3" class="l3">&nbsp;&nbsp; for k &lt; j: if Pₖ ∉ D: D ← on {Pᵢ,Pⱼ,Pₖ}</div>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><i class="l1"></i>circle rebuilt around 1 pinned point</div>
+    <div><i class="l2"></i>rebuilt with 2 pinned (a diameter)</div>
+    <div><i class="l3"></i>rebuilt with 3 pinned (a circumcircle)</div>
+    <div><i class="pin"></i>pinned to the edge</div>
+    <div><i class="probe"></i>the point being asked</div>
+  </div>
+
+  <p class="hint">tap empty space to add a point · drag a point to move it · tap a point to remove it · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 097 · The story</p>
+      <h2>Pinned by Three</h2>
+
+      <h3>Why I picked it</h3>
+      <p>The question is one a child could ask: what is the smallest circle that holds all these dots? It turns up everywhere, from where to put a radio mast that reaches every village to the bounding spheres a game engine checks before it bothers with real collision tests. The obvious answer is to try every circle through two or three of the points and keep the smallest one that holds the rest, which for a few hundred points means billions of checks. In 1991 Emo Welzl showed that if you simply shuffle the points first, three nested loops that look cubic finish in expected linear time. I wanted to see the loops that almost never run.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The trick reads like a joke. Walk through the points; if one falls outside the current circle, it must lie on the edge of the right circle for everything seen so far, so pin it there and start again with only the earlier points. Pin a second, and start again. A third pin fixes the circle outright. That sounds wasteful, but with a shuffled order the chance that the i-th point is one of the two or three that define the answer is only about 3 in i, so the expensive restarts get rarer the further you go. Watch the violet finger sweep the strip while the pink one hardly stirs. Then switch to “Inside → out” and every new point lands outside, every point triggers a full restart, and the test count climbs off the chart.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The randomness isn't there to make the answer approximate: the circle is exact every time, whatever the order. It's there so no particular arrangement of the data can make the work slow. An adversary who knows your algorithm can always feed it points sorted the worst way, but nobody can predict a coin you haven't tossed yet. And the final answer depends on only two or three points out of hundreds. Drag one of the grey points inside the circle and nothing changes at all. Most of the data never mattered; the trick is finding the few that do without looking hard at the rest.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  function setPanel(visible) {
+    ui.classList.toggle('hidden', !visible);
+    showUi.classList.toggle('on', !visible);
+  }
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  document.getElementById('collapse').addEventListener('click', () => setPanel(false));
+  showUi.addEventListener('click', () => setPanel(true));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if (e.key.toLowerCase() === 'h') setPanel(ui.classList.contains('hidden'));
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Welzl's smallest enclosing circle ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv');
+    const ctx = cv.getContext('2d');
+    const trails = document.createElement('canvas');
+    const tctx = trails.getContext('2d');
+    const strip = $('strip');
+    const sctx = strip.getContext('2d');
+    let W = 0, H = 0, dpr = 1;
+
+    const LEVEL_COL = ['#e9e9ff', '#7c7cff', '#b98cff', '#ff7cc3'];
+    const LEVEL_RGB = ['233,233,255', '124,124,255', '185,140,255', '255,124,195'];
+    const MAX_PTS = 400;
+
+    let pts = [];          // {x, y, vx, vy}
+    let order = [];        // indices into pts, in visiting order
+    let orderMode = 'shuffle';
+    let gen = null;        // running generator
+    let playing = true;
+    let showTrails = true;
+    let loop = true;
+    let drift = false;
+    let speed = 34;
+    let acc = 0;
+    let doneAt = 0;
+    let drag = null;
+    let hoverIdx = -1;
+
+    // what the renderer reads
+    const st = {
+      D: null, lvl: 0, i: -1, j: -1, k: -1, probe: -1, outside: false,
+      tests: 0, r1: 0, r2: 0, r3: 0, done: false, flash: 0,
+    };
+
+    // ---------- geometry ----------
+    const c1 = (a) => ({ x: a.x, y: a.y, r: 0 });
+    function c2(a, b) {
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, r: Math.hypot(a.x - b.x, a.y - b.y) / 2 };
+    }
+    function c3(a, b, c) {
+      const d = 2 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
+      if (Math.abs(d) < 1e-9) {
+        // collinear: the widest pair's diameter circle holds the third
+        const opts = [c2(a, b), c2(a, c), c2(b, c)];
+        return opts.reduce((m, o) => (o.r > m.r ? o : m));
+      }
+      const a2 = a.x * a.x + a.y * a.y, b2 = b.x * b.x + b.y * b.y, cc = c.x * c.x + c.y * c.y;
+      const x = (a2 * (b.y - c.y) + b2 * (c.y - a.y) + cc * (a.y - b.y)) / d;
+      const y = (a2 * (c.x - b.x) + b2 * (a.x - c.x) + cc * (b.x - a.x)) / d;
+      return { x, y, r: Math.hypot(a.x - x, a.y - y) };
+    }
+    const inside = (D, p) => Math.hypot(p.x - D.x, p.y - D.y) <= D.r + 1e-7 * (1 + D.r);
+
+    // ---------- orders ----------
+    function shuffled(n) {
+      const a = Array.from({ length: n }, (_, i) => i);
+      for (let i = n - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    function makeOrder() {
+      const n = pts.length;
+      if (orderMode === 'shuffle') return shuffled(n);
+      const idx = Array.from({ length: n }, (_, i) => i);
+      if (orderMode === 'sweep') return idx.sort((a, b) => pts[a].x - pts[b].x);
+      let cx = 0, cy = 0;
+      for (const p of pts) { cx += p.x; cy += p.y; }
+      cx /= n || 1; cy /= n || 1;
+      const d = (p) => (p.x - cx) ** 2 + (p.y - cy) ** 2;
+      return idx.sort((a, b) => d(pts[a]) - d(pts[b]));
+    }
+
+    // ---------- the algorithm, one test per step ----------
+    function resetStats() {
+      st.D = null; st.lvl = 0; st.i = st.j = st.k = -1; st.probe = -1; st.outside = false;
+      st.tests = 0; st.r1 = 0; st.r2 = 0; st.r3 = 0; st.done = false;
+    }
+    function rebuilt(D, lvl) {
+      st.D = D; st.lvl = lvl; st.flash = 1;
+      if (lvl === 1) st.r1++; else if (lvl === 2) st.r2++; else if (lvl === 3) st.r3++;
+      if (showTrails && D.r > 0.5) {
+        tctx.strokeStyle = `rgba(${LEVEL_RGB[lvl]},${lvl === 3 ? 0.22 : lvl === 2 ? 0.14 : 0.08})`;
+        tctx.lineWidth = 1;
+        tctx.beginPath(); tctx.arc(D.x, D.y, D.r, 0, Math.PI * 2); tctx.stroke();
+      }
+    }
+    function* welzl() {
+      resetStats();
+      const P = order.map((o) => pts[o]);
+      const n = P.length;
+      if (!n) { st.done = true; return; }
+      st.D = c1(P[0]); st.i = 0;
+      yield;
+      for (let i = 1; i < n; i++) {
+        st.i = i; st.j = -1; st.k = -1; st.lvl = 1; st.probe = i;
+        st.tests++; st.outside = !inside(st.D, P[i]);
+        yield;
+        if (!st.outside) continue;
+        rebuilt(c1(P[i]), 1);
+        for (let j = 0; j < i; j++) {
+          st.j = j; st.k = -1; st.lvl = 2; st.probe = j;
+          st.tests++; st.outside = !inside(st.D, P[j]);
+          yield;
+          if (!st.outside) continue;
+          rebuilt(c2(P[i], P[j]), 2);
+          for (let k = 0; k < j; k++) {
+            st.k = k; st.lvl = 3; st.probe = k;
+            st.tests++; st.outside = !inside(st.D, P[k]);
+            yield;
+            if (!st.outside) continue;
+            rebuilt(c3(P[i], P[j], P[k]), 3);
+            yield;
+          }
+          st.k = -1;
+        }
+        st.j = -1;
+      }
+      st.done = true; st.probe = -1; st.lvl = 0;
+    }
+    // the same thing all at once (for drags and drift)
+    function solveNow(withTrail) {
+      resetStats();
+      const P = order.map((o) => pts[o]);
+      const n = P.length;
+      let D = n ? c1(P[0]) : null;
+      for (let i = 1; i < n; i++) {
+        st.tests++;
+        if (inside(D, P[i])) continue;
+        D = c1(P[i]); st.r1++;
+        for (let j = 0; j < i; j++) {
+          st.tests++;
+          if (inside(D, P[j])) continue;
+          D = c2(P[i], P[j]); st.r2++;
+          for (let k = 0; k < j; k++) {
+            st.tests++;
+            if (inside(D, P[k])) continue;
+            D = c3(P[i], P[j], P[k]); st.r3++;
+          }
+        }
+      }
+      st.D = D; st.done = true; st.lvl = 0; st.probe = -1; st.i = st.j = st.k = -1;
+      if (withTrail && showTrails && D && D.r > 0.5) {
+        tctx.strokeStyle = 'rgba(255,124,195,0.05)';
+        tctx.lineWidth = 1;
+        tctx.beginPath(); tctx.arc(D.x, D.y, D.r, 0, Math.PI * 2); tctx.stroke();
+      }
+    }
+
+    // the points the final circle actually rests on
+    function supportOf(D) {
+      if (!D) return [];
+      const s = [];
+      for (let q = 0; q < pts.length; q++) {
+        const p = pts[q];
+        if (Math.abs(Math.hypot(p.x - D.x, p.y - D.y) - D.r) < 0.5 + 1e-6 * D.r) s.push(q);
+      }
+      return s;
+    }
+
+    function start(reorder = true) {
+      if (reorder || order.length !== pts.length) order = makeOrder();
+      gen = welzl();
+      acc = 0; doneAt = 0;
+      gen.next();
+      playing = true; $('bPlay').textContent = 'Pause';
+    }
+    function settle() {
+      // after an edit: recompute instantly, keep the order sensible
+      order = makeOrder();
+      gen = null;
+      solveNow(false);
+    }
+
+    // ---------- point sets ----------
+    function field() {
+      if (W <= 700) return { x0: 28, y0: 60, x1: W - 28, y1: Math.max(200, H * 0.5) };
+      return { x0: W > 980 ? 400 : 60, y0: 70, x1: W - 50, y1: H - 70 };
+    }
+    function gauss() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+    function clampPt(p) {
+      p.x = Math.max(8, Math.min(W - 8, p.x));
+      p.y = Math.max(8, Math.min(H - 8, p.y));
+      return p;
+    }
+    const mk = (x, y) => clampPt({ x, y, vx: 0, vy: 0 });
+    function scatter() {
+      const f = field(), cx = (f.x0 + f.x1) / 2, cy = (f.y0 + f.y1) / 2;
+      const rx = (f.x1 - f.x0) / 2 * 0.85, ry = (f.y1 - f.y0) / 2 * 0.85;
+      pts = [];
+      for (let n = 0; n < 90; n++) {
+        const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random());
+        pts.push(mk(cx + Math.cos(a) * r * rx, cy + Math.sin(a) * r * ry));
+      }
+    }
+    function clusters() {
+      const f = field();
+      pts = [];
+      const k = 3 + Math.floor(Math.random() * 3);
+      const s = Math.min(f.x1 - f.x0, f.y1 - f.y0);
+      for (let c = 0; c < k; c++) {
+        const cx = f.x0 + (0.15 + 0.7 * Math.random()) * (f.x1 - f.x0);
+        const cy = f.y0 + (0.15 + 0.7 * Math.random()) * (f.y1 - f.y0);
+        const sd = s * (0.03 + Math.random() * 0.06);
+        const m = 20 + Math.floor(Math.random() * 30);
+        for (let n = 0; n < m; n++) pts.push(mk(cx + gauss() * sd, cy + gauss() * sd));
+      }
+    }
+    function ring() {
+      const f = field(), cx = (f.x0 + f.x1) / 2, cy = (f.y0 + f.y1) / 2;
+      const R = Math.min(f.x1 - f.x0, f.y1 - f.y0) * 0.38;
+      pts = [];
+      for (let n = 0; n < 48; n++) {
+        const a = (n / 48) * Math.PI * 2;
+        const rr = R * (1 - Math.random() * 0.012);
+        pts.push(mk(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr));
+      }
+      for (let n = 0; n < 40; n++) {
+        const a = Math.random() * Math.PI * 2, r = R * 0.75 * Math.sqrt(Math.random());
+        pts.push(mk(cx + Math.cos(a) * r, cy + Math.sin(a) * r));
+      }
+    }
+    function clearTrails() { tctx.clearRect(0, 0, W, H); }
+
+    // ---------- pacing ----------
+    function stepsPerSec() { return Math.pow(10, -0.4 + (speed / 100) * 4.7); } // ~0.4 .. 20000
+    function speedLabel() {
+      const s = stepsPerSec();
+      return s < 10 ? `${s.toFixed(1)} tests/s` : `${Math.round(s).toLocaleString()} tests/s`;
+    }
+
+    // ---------- drawing ----------
+    function resize() {
+      const oldW = W, oldH = H;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      trails.width = W * dpr; trails.height = H * dpr;
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (oldW && oldH && pts.length) {
+        for (const p of pts) { p.x *= W / oldW; p.y *= H / oldH; clampPt(p); }
+        if (!gen) solveNow(false);
+      }
+      const r = strip.getBoundingClientRect();
+      strip.width = Math.max(10, r.width * dpr); strip.height = Math.max(10, r.height * dpr);
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function circle(D, stroke, width, fill, dash) {
+      if (!D) return;
+      ctx.beginPath();
+      ctx.arc(D.x, D.y, Math.max(D.r, 0.0001), 0, Math.PI * 2);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      ctx.setLineDash(dash || []);
+      ctx.strokeStyle = stroke; ctx.lineWidth = width; ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    function dot(p, r, col, glow) {
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = col;
+      if (glow) { ctx.shadowColor = col; ctx.shadowBlur = glow; }
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    function draw(t) {
+      ctx.clearRect(0, 0, W, H);
+      // soft vignette
+      const g = ctx.createRadialGradient(W * 0.6, H * 0.5, 0, W * 0.6, H * 0.5, Math.max(W, H) * 0.75);
+      g.addColorStop(0, '#0b0b16'); g.addColorStop(1, '#05050a');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      if (showTrails) ctx.drawImage(trails, 0, 0, W, H);
+
+      const P = order.length === pts.length ? order.map((o) => pts[o]) : pts;
+      const running = gen && !st.done;
+      const D = st.D;
+
+      // current circle
+      if (D) {
+        const lvl = running ? st.lvl : 0;
+        const col = st.done ? '#ff7cc3' : LEVEL_COL[Math.max(1, lvl)];
+        const rgb = st.done ? LEVEL_RGB[3] : LEVEL_RGB[Math.max(1, lvl)];
+        const pulse = st.done ? 0.5 + 0.5 * Math.sin(t / 600) : st.flash;
+        circle(D, col, 1.6 + pulse * 1.2, `rgba(${rgb},${0.04 + pulse * 0.04})`);
+        if (st.done) {
+          ctx.shadowColor = col; ctx.shadowBlur = 18;
+          circle(D, `rgba(${rgb},0.35)`, 3);
+          ctx.shadowBlur = 0;
+          dot(D, 2.2, 'rgba(255,255,255,0.6)');
+        }
+      }
+
+      // points
+      const seenUpTo = running ? st.i : P.length;
+      const prefix = running && st.lvl >= 2 ? st.i : -1; // during a restart, only P[0..i) matter
+      for (let q = 0; q < P.length; q++) {
+        const p = P[q];
+        let col = 'rgba(200,200,225,0.32)';
+        if (q <= seenUpTo) col = 'rgba(220,220,240,0.78)';
+        if (prefix >= 0 && q < prefix) col = 'rgba(232,232,250,0.9)';
+        dot(p, 2.6, col);
+      }
+
+      // pinned points
+      const pins = [];
+      if (running) {
+        // inside a restart, i is pinned to the edge; one level deeper, j is too
+        if (st.lvl >= 2) pins.push(P[st.i]);
+        if (st.lvl >= 3) pins.push(P[st.j]);
+      } else if (st.done) {
+        for (const q of supportOf(D)) pins.push(pts[q]);
+      }
+      for (const p of pins) {
+        if (!p) continue;
+        if (D && D.r > 0) {
+          ctx.strokeStyle = 'rgba(255,124,195,0.35)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(D.x, D.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+        }
+        dot(p, 5, '#ff7cc3', 14);
+        dot(p, 2, '#fff');
+      }
+
+      // the probe
+      if (running && st.probe >= 0 && P[st.probe]) {
+        const p = P[st.probe];
+        const col = st.outside ? '#ff7cc3' : '#e9e9ff';
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 9 + (st.outside ? 3 * st.flash : 0), 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+        if (stepsPerSec() < 30 && D) {
+          ctx.strokeStyle = st.outside ? 'rgba(255,124,195,0.5)' : 'rgba(233,233,255,0.25)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(D.x, D.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+        }
+        dot(p, 3.4, col, 8);
+      }
+
+      if (hoverIdx >= 0 && pts[hoverIdx]) {
+        const p = pts[hoverIdx];
+        ctx.strokeStyle = 'rgba(176,176,255,0.7)'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.stroke();
+      }
+
+      if (!pts.length) {
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.font = '14px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        const f = field();
+        ctx.fillText('tap anywhere to drop a point', (f.x0 + f.x1) / 2, (f.y0 + f.y1) / 2);
+        ctx.textAlign = 'start';
+      }
+    }
+
+    function drawStrip() {
+      const w = strip.width / dpr, h = strip.height / dpr;
+      sctx.clearRect(0, 0, w, h);
+      const n = pts.length;
+      if (!n) return;
+      const x = (q) => 4 + (q + 0.5) * ((w - 8) / n);
+      const bw = Math.max(1, (w - 8) / n - (n > 120 ? 0 : 1));
+      const running = gen && !st.done;
+      for (let q = 0; q < n; q++) {
+        let a = 0.18;
+        if (!running || q <= st.i) a = 0.5;
+        sctx.fillStyle = `rgba(220,220,240,${a})`;
+        sctx.fillRect(x(q) - bw / 2, 16, bw, 14);
+      }
+      if (!running) return;
+      const mark = (q, col, row, label) => {
+        if (q < 0) return;
+        const xx = x(q);
+        sctx.fillStyle = col;
+        sctx.fillRect(xx - Math.max(1, bw / 2), 16, Math.max(2, bw), 14);
+        sctx.beginPath();
+        if (row === 0) { sctx.moveTo(xx - 4, 4); sctx.lineTo(xx + 4, 4); sctx.lineTo(xx, 12); }
+        else { sctx.moveTo(xx - 4, 42); sctx.lineTo(xx + 4, 42); sctx.lineTo(xx, 34); }
+        sctx.fill();
+        sctx.font = '9px ui-monospace, Menlo, monospace';
+        sctx.fillText(label, Math.min(w - 8, xx + 6), row === 0 ? 11 : 44);
+      };
+      mark(st.i, '#b0b0ff', 0, 'i');
+      mark(st.j, '#cfa8ff', 1, 'j');
+      if (st.k >= 0) mark(st.k, '#ff9fd2', 1, 'k');
+    }
+
+    const fmt = (n) => Math.round(n).toLocaleString();
+    let lastNoteKey = '';
+    function readouts() {
+      const n = pts.length;
+      $('rPts').textContent = n;
+      $('rTests').textContent = fmt(st.tests);
+      $('rPer').textContent = n ? (st.tests / n).toFixed(2) : '—';
+      $('rL1').textContent = fmt(st.r1);
+      $('rL2').textContent = fmt(st.r2);
+      $('rL3').textContent = fmt(st.r3);
+      const brute = n >= 2 ? (n * (n - 1) / 2 + n * (n - 1) * (n - 2) / 6) * n : 0;
+      $('rBrute').textContent = brute ? fmt(brute) : '—';
+
+      const running = gen && !st.done;
+      const hot = running ? st.lvl : -1;
+      for (const el of document.querySelectorAll('#code div')) {
+        el.classList.toggle('hot', +el.dataset.l === hot);
+      }
+
+      let key, html;
+      if (!n) { key = 'empty'; html = 'Drop a few points, or pick a set above.'; }
+      else if (running && st.lvl === 1) {
+        key = 'l1' + st.outside;
+        html = st.outside
+          ? 'Point <b>i</b> is outside, so it must sit on the edge of the right circle for everything seen so far. Pin it and <b>start again</b> over the earlier points.'
+          : 'Point <b>i</b> is inside already. One test, nothing to do. With a shuffled order this is what almost always happens.';
+      } else if (running && st.lvl === 2) {
+        key = 'l2' + st.outside;
+        html = st.outside
+          ? 'Point <b>j</b> escaped a circle pinned to <b>i</b>. Now both must be on the edge: the new circle has them as a diameter.'
+          : 'Re-checking the earlier points against a circle that must touch <b>i</b>.';
+      } else if (running && st.lvl === 3) {
+        key = 'l3' + st.outside;
+        html = st.outside
+          ? 'Two pins and a third point outside: three points on a circle fix it completely. No more choices left.'
+          : 'Two points pinned. Checking whether the circle through them still holds the rest.';
+      } else {
+        const sup = supportOf(st.D).length;
+        key = 'done' + orderMode + sup + ':' + n + ':' + st.tests;
+        const ratio = n ? st.tests / n : 0;
+        html = orderMode === 'shuffle'
+          ? `Done: <b>${sup}</b> of ${n} points hold the circle up, found in about <b>${ratio.toFixed(1)}</b> tests per point. Drag a grey point inside and nothing changes.`
+          : `Done, and the circle is the same one, but this order made every new point land outside: <b>${ratio.toFixed(1)}</b> tests per point. Try Shuffled.`;
+      }
+      if (key !== lastNoteKey) { $('rNote').innerHTML = html; lastNoteKey = key; }
+    }
+
+    // ---------- main loop ----------
+    let last = performance.now();
+    function frame(t) {
+      const dt = Math.min(0.1, (t - last) / 1000); last = t;
+      st.flash *= Math.pow(0.02, dt);
+
+      if (drift && pts.length && !drag) {
+        for (const p of pts) {
+          p.vx = (p.vx + gauss() * 14 * dt) * 0.985;
+          p.vy = (p.vy + gauss() * 14 * dt) * 0.985;
+          p.x += p.vx * dt * 6; p.y += p.vy * dt * 6;
+          if (p.x < 10 || p.x > W - 10) p.vx *= -1;
+          if (p.y < 10 || p.y > H - 10) p.vy *= -1;
+          clampPt(p);
+        }
+        if (order.length !== pts.length) order = makeOrder();
+        gen = null;
+        solveNow(true);
+      } else if (gen && playing && !st.done) {
+        acc += stepsPerSec() * dt;
+        let steps = Math.floor(acc);
+        acc -= steps;
+        const budget = performance.now() + 10;
+        while (steps-- > 0 && !st.done) {
+          gen.next();
+          if ((steps & 255) === 0 && performance.now() > budget) { acc = 0; break; }
+        }
+        if (st.done) doneAt = t;
+      } else if (gen && st.done && loop && playing && !drag) {
+        if (!doneAt) doneAt = t;
+        if (t - doneAt > 2600) {
+          if (orderMode === 'shuffle') start(true); else doneAt = t + 1e9; // only reshuffle when shuffling
+        }
+      }
+
+      draw(t);
+      drawStrip();
+      readouts();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- pointer ----------
+    function hit(x, y, touch) {
+      const R = touch ? 18 : 11;
+      let best = -1, bd = R * R;
+      for (let q = 0; q < pts.length; q++) {
+        const d = (pts[q].x - x) ** 2 + (pts[q].y - y) ** 2;
+        if (d < bd) { bd = d; best = q; }
+      }
+      return best;
+    }
+    function pos(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+    cv.addEventListener('pointerdown', (e) => {
+      const p = pos(e);
+      const q = hit(p.x, p.y, e.pointerType === 'touch');
+      cv.setPointerCapture(e.pointerId);
+      if (q >= 0) {
+        drag = { q, moved: false, sx: p.x, sy: p.y };
+        cv.classList.add('grabbing');
+      } else {
+        if (pts.length >= MAX_PTS) return;
+        pts.push(mk(p.x, p.y));
+        settle();
+      }
+    });
+    cv.addEventListener('pointermove', (e) => {
+      const p = pos(e);
+      if (drag) {
+        if (!drag.moved && Math.hypot(p.x - drag.sx, p.y - drag.sy) > 4) drag.moved = true;
+        if (drag.moved) {
+          const pt = pts[drag.q];
+          pt.x = p.x; pt.y = p.y; pt.vx = 0; pt.vy = 0; clampPt(pt);
+          if ((gen && !st.done) || order.length !== pts.length) order = makeOrder();
+          gen = null;
+          solveNow(false);
+        }
+        return;
+      }
+      hoverIdx = hit(p.x, p.y, e.pointerType === 'touch');
+      cv.classList.toggle('grab', hoverIdx >= 0);
+    });
+    function endDrag() {
+      if (drag && !drag.moved) {
+        pts.splice(drag.q, 1);
+        settle();
+      }
+      drag = null; hoverIdx = -1;
+      cv.classList.remove('grabbing');
+    }
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+    cv.addEventListener('pointerleave', () => { if (!drag) { hoverIdx = -1; cv.classList.remove('grab'); } });
+
+    // ---------- controls ----------
+    function setDrift(on) {
+      drift = on;
+      $('tDrift').classList.toggle('on', on);
+      if (!on) start(true);
+    }
+    for (const b of document.querySelectorAll('#order button')) {
+      b.addEventListener('click', () => {
+        for (const o of document.querySelectorAll('#order button')) o.classList.toggle('on', o === b);
+        orderMode = b.dataset.order;
+        $('bReplay').textContent = orderMode === 'shuffle' ? 'Reshuffle' : 'Replay';
+        if (drift) setDrift(false);
+        clearTrails();
+        start(true);
+      });
+    }
+    const speedEl = $('speed');
+    speedEl.addEventListener('input', () => { speed = +speedEl.value; $('speedV').textContent = speedLabel(); });
+    $('speedV').textContent = speedLabel();
+
+    $('bPlay').addEventListener('click', () => {
+      if (drift) setDrift(false);
+      if (!gen || st.done) { start(true); return; }
+      playing = !playing;
+      $('bPlay').textContent = playing ? 'Pause' : 'Play';
+    });
+    $('bStep').addEventListener('click', () => {
+      if (drift) setDrift(false);
+      if (!gen || st.done) { start(true); }
+      playing = false; $('bPlay').textContent = 'Play';
+      if (!st.done) gen.next();
+    });
+    $('bReplay').addEventListener('click', () => { if (drift) setDrift(false); clearTrails(); start(true); });
+
+    function toggle(id, get, set) {
+      const el = $(id);
+      el.addEventListener('click', () => { set(!get()); el.classList.toggle('on', get()); });
+    }
+    toggle('tTrails', () => showTrails, (v) => { showTrails = v; if (!v) clearTrails(); });
+    toggle('tLoop', () => loop, (v) => { loop = v; });
+    $('tDrift').addEventListener('click', () => {
+      if (!drift) {
+        drift = true; $('tDrift').classList.add('on');
+        order = makeOrder(); clearTrails();
+      } else setDrift(false);
+    });
+
+    const preset = (fn) => () => { if (drift) { drift = false; $('tDrift').classList.remove('on'); } fn(); clearTrails(); start(true); };
+    $('bScatter').addEventListener('click', preset(scatter));
+    $('bCluster').addEventListener('click', preset(clusters));
+    $('bRing').addEventListener('click', preset(ring));
+    $('bClear').addEventListener('click', () => {
+      if (drift) { drift = false; $('tDrift').classList.remove('on'); }
+      pts = []; order = []; gen = null; resetStats(); st.done = true; clearTrails();
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    scatter();
+    start(true);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
