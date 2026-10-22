@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-22",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Strongest on Record",
+  "mood": {
+    "label": "Heavy going",
+    "score": -0.22,
+    "summary": "Heavy going: Washington denies Iran talks as the Guard turns offensive, a drone strike kills 153 at an Abyei market, and the UN warns of a record El Nino. Small lifts: Ukraine peace talks resume, Pope Leo recovers, Perseverance drives farther than any rover.",
+    "palette": {
+      "bg": "#0f1216",
+      "bg2": "#1f2730",
+      "accent": "#d08a4e",
+      "accent2": "#7fa8b8",
+      "text": "#e8e4dc"
+    }
+  },
+  "style": {
+    "genre": "drone post-rock — vibraphone, choir, fretless bass, CR-78",
+    "key": "C",
+    "scale": "aeolian",
+    "bpm": 70,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (VCSL vibraphone, GM choir aahs, GM fretless bass, GM tubular bells, Roland CR-78)"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ bd ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ rim ~ ~ ~\").bank(\"RolandCR78\").gain(0.5).room(0.5).rsize(4), s(\"hh*8\").bank(\"RolandCR78\").gain(perlin.range(0.08,0.2)).hpf(6000).pan(sine.range(0.35,0.65).slow(6)), note(\"<c2 af1 ef2 bf1>\").s(\"sine\").attack(2).release(3).gain(0.28).lpf(300), note(\"<[c2 ~ ~ g2 ~ ~ c2 ~] [af1 ~ ~ ef2 ~ ~ af1 ~] [ef2 ~ ~ bf2 ~ ~ g2 ~] [bf1 ~ ~ f2 ~ d2 ~ ~]>\").s(\"gm_fretless_bass\").gain(0.55).lpf(900), note(\"<[c4,ef4,g4] [c4,ef4,af4] [ef4,g4,bf4] [d4,f4,bf4]>\").s(\"gm_choir_aahs\").attack(1.2).release(3).gain(0.22).room(0.8).rsize(6).lpf(sine.range(900,2400).slow(16)), note(\"<[g4 ~ ef5 ~ d5 ~ c5 ~] [c5 ~ ~ ~ af4 ~ g4 ~] [bf4 ~ g4 ~ ef5 ~ ~ f5] [d5 ~ ~ c5 bf4 ~ ~ ~]>\").s(\"vibraphone\").gain(0.45).room(0.6).delay(0.3).delaytime(0.643).jux(rev), note(\"<~ ~ [~ ~ ~ ~ g5 ~ f5 ~] [ef5 ~ ~ ~ ~ ~ ~ ~]>\").s(\"gm_tubular_bells\").gain(0.16).room(0.9).rsize(8))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "No talks, the White House says,",
+        "the Guard turns its doctrine round,",
+        "and in Abyei the market stalls",
+        "lie scattered on the ground."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "The ocean runs a fever,",
+        "the strongest yet, they warn,",
+        "east Spain shovels out the mud,",
+        "the border speakers hum back on."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Still a rover rolls the farthest",
+        "any wheel has gone,",
+        "three chairs pulled back to one table,",
+        "and an old man walking on."
+      ]
+    }
+  ]
+}
