@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-10-22",
+    "lastUpdated": "2026-10-23",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -4563,7 +4563,7 @@
     {
       "id": "2026-10-22",
       "date": "2026-10-22",
-      "headline": true,
+      "headline": false,
       "topic": "Whether the Tories' flawed process caused the Jackdaw delay",
       "claim": "We have made a decision that her government messed up. That's why there was the delay, because they didn't do the process properly.",
       "speaker": "Andy Burnham",
@@ -4611,6 +4611,60 @@
         {
           "title": "Euronews — Shell's Jackdaw gas field approved",
           "url": "https://www.euronews.com/2022/06/01/shell-northsea-jackdaw"
+        }
+      ]
+    },
+    {
+      "id": "2026-10-23",
+      "date": "2026-10-23",
+      "headline": true,
+      "topic": "Whether large-calibre gun production is back in the UK for the first time in 20 years",
+      "claim": "…the return of large-calibre weapon production to UK soil for the first time in twenty years.",
+      "speaker": "Wes Streeting",
+      "party": "Labour",
+      "role": "Defence Secretary",
+      "discussionScore": 55,
+      "discussionNote": "The line of the day from Streeting's opening of Rheinmetall's Telford gun hall on 22 October, the MoD headline, and picked up by Sky News, the Shropshire Star and Xinhua.",
+      "score": 60,
+      "verdict": "Half True / Needs Context",
+      "explanation": "True for tank guns, stretched for artillery. The 120mm tank barrels Telford now makes were last produced in Britain at ROF Nottingham, which closed in 2001, so 'twenty years' undersells that gap if anything. But the speech and press release extend the claim to artillery barrels, and there the government's own framing has shifted: in 2024 an MoD minister promised artillery barrel manufacture 'for the first time in a decade', and reporting dated the lost capability to 2016. Nor is Telford first: BAE and Sheffield Forgemasters delivered UK-forged 105mm and 155mm barrels for Ukraine in July 2026, though they are finished abroad. Telford is the first full UK barrel-and-breech line in years; the 'first time in twenty years' framing needs both caveats.",
+      "evidence": [
+        "The Telford gun hall makes 120mm and 155mm barrels and breeches, supporting 100 jobs, and opened on 22 October 2026.",
+        "ROF Nottingham, sole maker of Challenger 2's L30 tank gun and AS90 barrels, closed in 2001.",
+        "In November 2024 MoD minister Maria Eagle said the plan would restore artillery barrel manufacturing 'for the first time in a decade'.",
+        "Trade press in May 2025 described the UK's large-calibre barrel capability as lost since 2016.",
+        "BAE admitted in 2023 the UK could no longer manufacture large-calibre gun barrels.",
+        "Sheffield Forgemasters forged 150 artillery barrels under a £61m BAE contract; the first went to Ukraine in July 2026 for finishing."
+      ],
+      "confidence": "Medium-high: the ROF Nottingham date and recent contracts are well documented; the exact end of Barrow artillery barrel work is not.",
+      "sources": [
+        {
+          "title": "GOV.UK — Tank barrel production returns to the UK for first time in 20 years",
+          "url": "https://www.gov.uk/government/news/british-jobs-boost-as-tank-barrel-production-returns-to-the-uk-for-first-time-in-20-years"
+        },
+        {
+          "title": "GOV.UK — Defence Secretary's speech at the opening of Telford Gun Hall",
+          "url": "https://www.gov.uk/government/speeches/defence-secretary-wes-streetings-speech-at-the-opening-of-telford-gun-hall"
+        },
+        {
+          "title": "UK Defence Journal — UK to produce artillery gun barrels using British steel",
+          "url": "https://ukdefencejournal.org.uk/uk-to-produce-artillery-gun-barrels-using-british-steel/"
+        },
+        {
+          "title": "UK Defence Journal — First British-made artillery barrels head to Ukraine",
+          "url": "https://ukdefencejournal.org.uk/first-british-made-artillery-barrels-head-to-ukraine/"
+        },
+        {
+          "title": "Shephard — UK no longer able to manufacture large-calibre gun barrels",
+          "url": "https://www.shephardmedia.com/news/landwarfareintl/uk-no-longer-able-to-manufacture-155mm-artillery-barrels-bae-systems-admits/"
+        },
+        {
+          "title": "Army Technology — Rheinmetall large calibre gun facility to start production",
+          "url": "https://www.army-technology.com/news/rheinmetall-large-calibre-gun-facility-to-start-production-in-2027/"
+        },
+        {
+          "title": "Wikipedia — ROF Nottingham",
+          "url": "https://en.wikipedia.org/wiki/ROF_Nottingham"
         }
       ]
     }
