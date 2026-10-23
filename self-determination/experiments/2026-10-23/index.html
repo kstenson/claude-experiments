@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Every Bridge Once — Experiment 098</title>
+<meta name="description" content="Hierholzer's 1873 algorithm, live: walk until you're stuck, back up to the first corner with an unused edge, start a new loop there, and splice every loop into one continuous stroke that uses each edge exactly once." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+  canvas#cv.hot { cursor: pointer; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+  .seg-label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; margin-bottom: -4px; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.3s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.pulse { animation: pulse 1.4s ease-in-out infinite; }
+  .btn:disabled { opacity: 0.4; cursor: default; animation: none; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 rgba(255,124,195,0); } 50% { box-shadow: 0 0 16px rgba(255,124,195,0.55); } }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.72rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 8px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .verdict {
+    padding: 9px 12px; border-radius: 11px;
+    font-size: 0.8rem; line-height: 1.45;
+    border: 1px solid rgba(124,124,255,0.35);
+    background: rgba(124,124,255,0.1); color: #dcdcff;
+  }
+  .verdict b { font-weight: 700; }
+  .verdict.path { border-color: rgba(185,140,255,0.45); background: rgba(185,140,255,0.1); color: #ead9ff; }
+  .verdict.bad { border-color: rgba(255,124,195,0.45); background: rgba(255,124,195,0.1); color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  #rNote { min-height: 4.6em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code .l1 { color: #b0b0ff; }
+  .code .l2 { color: #ff9fd2; }
+  .code div { padding: 0 4px; border-radius: 4px; transition: background 0.15s ease; }
+  .code div.hot { background: rgba(255,255,255,0.09); }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Legend ---- */
+  .legend {
+    position: fixed; right: 20px; bottom: 20px; z-index: 10;
+    display: grid; gap: 7px;
+    padding: 12px 14px; border-radius: 12px;
+    background: rgba(10,10,18,0.5);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.73rem; color: #9a9ab0;
+    pointer-events: none;
+  }
+  .legend div { display: flex; align-items: center; gap: 9px; }
+  .legend i { flex: none; display: block; }
+  .legend i.ln { width: 20px; height: 3px; border-radius: 2px; }
+  .legend i.unused { background: rgba(233,233,255,0.28); }
+  .legend i.walk { background: linear-gradient(90deg, #7c7cff 0 33%, #5fd4ff 33% 66%, #ffd27c 66%); }
+  .legend i.done { background: linear-gradient(90deg, #7c7cff, #b98cff, #ff7cc3); }
+  .legend i.dup { background: repeating-linear-gradient(90deg, #ff7cc3 0 4px, transparent 4px 7px); }
+  .legend i.odd { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ff7cc3; margin: 0 4px; }
+  .legend i.start { width: 12px; height: 12px; border-radius: 50%; background: #e9e9ff; box-shadow: 0 0 8px #e9e9ff; margin: 0 4px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: right;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .legend, .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <button id="showUi">show panel</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Every Bridge Once</h1>
+    <p class="sub">Experiment № 098 · October 23, 2026</p>
+
+    <div class="controls">
+      <p class="seg-label">Draw this</p>
+      <div class="seg" id="shapes">
+        <button data-shape="konigsberg">Königsberg</button>
+        <button data-shape="house">House</button>
+        <button data-shape="star" class="on">Star</button>
+        <button data-shape="rose">Rose</button>
+        <button data-shape="lattice">Lattice</button>
+        <button data-shape="scribble">Scribble</button>
+      </div>
+
+      <div class="verdict" id="verdict">—</div>
+
+      <div class="row">
+        <label>Pace <b id="speedV">—</b></label>
+        <input type="range" id="speed" min="0" max="100" value="40" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="bPlay">Pause</button>
+        <button class="btn" id="bStep">Step</button>
+        <button class="btn" id="bRestart">Walk again</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn pink" id="bFix">Double back over odd corners</button>
+      </div>
+
+      <div class="toggles">
+        <div class="toggle violet on" id="tDeg"><i></i>Degrees</div>
+        <div class="toggle violet on" id="tLoop"><i></i>Loop</div>
+        <div class="toggle rose on" id="tTrace"><i></i>Trace</div>
+      </div>
+
+      <div class="readout">
+        <span class="k">edges</span><span class="v" id="rEdges">0</span>
+        <span class="k">odd corners</span><span class="v pinkv" id="rOdd">0</span>
+        <hr />
+        <span class="k">steps forward</span><span class="v violet" id="rFwd">0</span>
+        <span class="k">steps back</span><span class="v" id="rBack">0</span>
+        <span class="k">loops spliced in</span><span class="v pinkv" id="rLoops">0</span>
+        <span class="k">stack depth</span><span class="v" id="rStack">0</span>
+        <span class="full" id="rNote">Start walking. Take any edge you haven't used yet, and keep going until you can't.</span>
+      </div>
+
+      <div class="code" id="code">
+        <div data-l="0"><span class="c">// Hierholzer 1873, with a stack</span></div>
+        <div data-l="1">stack ← [start];  circuit ← []</div>
+        <div data-l="2">while stack: v ← top of stack</div>
+        <div data-l="3" class="l1">&nbsp; if v has an unused edge vw: use it, push w</div>
+        <div data-l="4" class="l2">&nbsp; else: pop v and append it to circuit</div>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <div class="legend">
+    <div><i class="ln unused"></i>edge not walked yet</div>
+    <div><i class="ln walk"></i>on the stack, one colour per loop</div>
+    <div><i class="ln done"></i>settled into the circuit, coloured by position</div>
+    <div><i class="ln dup"></i>edge walked twice (added by doubling)</div>
+    <div><i class="odd"></i>odd corner</div>
+    <div><i class="start"></i>where the pen starts</div>
+  </div>
+
+  <p class="hint">tap an edge to remove or restore it · tap a corner to start there · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 098 · The story</p>
+      <h2>Every Bridge Once</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Graph theory is usually said to begin in 1736, when Euler explained why nobody in Königsberg could walk over each of the town's seven bridges exactly once: every crossing into a district needs a crossing out, so a district with an odd number of bridges has to be where you start or finish, and Königsberg had four. What Euler didn't give was a way to actually find the walk when one exists. That came from Carl Hierholzer, who worked it out before he died young; his paper was published in 1873, after his death, put together from what he had told colleagues. It's the puzzle on every children's menu (draw the house without lifting your pen) and it's also how genome assemblers stitch short DNA reads into one sequence. I wanted to watch the stitching happen.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The method is careless on purpose. Walk anywhere, taking any edge you haven't used, and you will get stuck, but the parity argument says it can only happen back where you began, so what you've drawn is a closed loop. It probably missed edges. No matter: back up along your own trail to the first corner that still has an unused edge, walk a fresh loop from there, and splice it in at that corner. Each new colour on the canvas is one of those detours. The stack does the bookkeeping, so the finished circuit falls out backwards as corners are popped, and the edges settle into a violet-to-pink gradient that only makes sense once the whole stroke is traced. Try the Star, then the Rose, then press Walk again: a different random tangle every time, and it always comes out as one line.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Before you search for an answer, count something. Whether a single stroke exists depends on nothing but how many corners have an odd number of edges: none means a closed circuit, two means a path from one odd corner to the other, anything more means no amount of cleverness will do it. That's a check that takes seconds, before any search at all. And when the answer is no, it tells you the cheapest fix: the snowplough or postman who must cover every street walks some of them twice, and the streets worth doubling are the ones that pair up the odd corners. Tap a bridge in Königsberg to knock it down and watch the verdict change.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  function setPanel(visible) {
+    ui.classList.toggle('hidden', !visible);
+    showUi.classList.toggle('on', !visible);
+  }
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  document.getElementById('collapse').addEventListener('click', () => setPanel(false));
+  showUi.addEventListener('click', () => setPanel(true));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if (e.key.toLowerCase() === 'h') setPanel(ui.classList.contains('hidden'));
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Hierholzer's Eulerian circuit ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv');
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, dpr = 1;
+
+    const LOOP_COLS = ['#7c7cff', '#5fd4ff', '#ffd27c', '#9cf0b4', '#ff9f7c', '#c49bff', '#7cf0ff', '#ff7cc3'];
+    const GRAD = [[124, 124, 255], [185, 140, 255], [255, 124, 195]];
+    function grad(t) {
+      t = Math.max(0, Math.min(1, t));
+      const s = t * 2, i = Math.min(1, Math.floor(s)), f = s - i;
+      const a = GRAD[i], b = GRAD[i + 1];
+      return `rgb(${Math.round(a[0] + (b[0] - a[0]) * f)},${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)})`;
+    }
+
+    // ---------- graph ----------
+    let shape = 'star';
+    let V = [];   // normalized {x, y}
+    let P = [];   // screen {x, y}
+    let E = [];   // {a, b, on, dup, k, state, loop, ord}
+    let vr = 10;
+    let start = -1;
+    let info = { kind: 'circuit', odd: [], deg: [], pieces: 1, active: 0 };
+
+    function addEdge(a, b, on = true) { E.push({ a, b, on, dup: false, k: 0, state: 'idle', loop: 0, ord: -1 }); }
+
+    function buildShape(name) {
+      V = []; E = [];
+      if (name === 'konigsberg') {
+        V = [{ x: -0.15, y: -0.85 }, { x: -0.15, y: 0.85 }, { x: -0.4, y: 0 }, { x: 0.85, y: 0 }];
+        addEdge(0, 2); addEdge(0, 2); addEdge(1, 2); addEdge(1, 2);
+        addEdge(0, 3); addEdge(1, 3); addEdge(2, 3);
+        addEdge(2, 3, false); // an eighth bridge, not built yet
+      } else if (name === 'house') {
+        V = [{ x: -0.6, y: 0.8 }, { x: 0.6, y: 0.8 }, { x: -0.6, y: -0.2 }, { x: 0.6, y: -0.2 }, { x: 0, y: -0.9 }];
+        addEdge(0, 1); addEdge(0, 2); addEdge(1, 3); addEdge(2, 3);
+        addEdge(0, 3); addEdge(1, 2); addEdge(2, 4); addEdge(3, 4);
+      } else if (name === 'star') {
+        const n = 9;
+        for (let i = 0; i < n; i++) { const t = -Math.PI / 2 + i * 2 * Math.PI / n; V.push({ x: Math.cos(t), y: Math.sin(t) }); }
+        for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) addEdge(i, j);
+      } else if (name === 'rose') {
+        const n = 36;
+        for (let i = 0; i < n; i++) { const t = -Math.PI / 2 + i * 2 * Math.PI / n; V.push({ x: Math.cos(t), y: Math.sin(t) }); }
+        for (let i = 0; i < n; i++) { addEdge(i, (i + 5) % n); addEdge(i, (i + 13) % n); }
+      } else if (name === 'lattice') {
+        const R = 3, idx = new Map();
+        for (let r = -R; r <= R; r++) for (let q = -R; q <= R; q++) {
+          if (Math.abs(q + r) > R) continue;
+          idx.set(q + ',' + r, V.length);
+          V.push({ x: q + r / 2, y: r * Math.sqrt(3) / 2 });
+        }
+        for (const [key, i] of idx) {
+          const [q, r] = key.split(',').map(Number);
+          for (const [dq, dr] of [[1, 0], [0, 1], [-1, 1]]) {
+            const j = idx.get((q + dq) + ',' + (r + dr));
+            if (j !== undefined) addEdge(i, j);
+          }
+        }
+      } else {
+        // scribble: random points joined by their Gabriel graph
+        let tries = 0;
+        while (V.length < 24 && tries++ < 4000) {
+          const p = { x: Math.random() * 2 - 1, y: Math.random() * 1.6 - 0.8 };
+          if (V.every((q) => Math.hypot(p.x - q.x, p.y - q.y) > 0.27)) V.push(p);
+        }
+        for (let i = 0; i < V.length; i++) for (let j = i + 1; j < V.length; j++) {
+          const mx = (V[i].x + V[j].x) / 2, my = (V[i].y + V[j].y) / 2;
+          const r2 = ((V[i].x - V[j].x) ** 2 + (V[i].y - V[j].y) ** 2) / 4;
+          let ok = true;
+          for (let k = 0; k < V.length && ok; k++) {
+            if (k === i || k === j) continue;
+            if ((V[k].x - mx) ** 2 + (V[k].y - my) ** 2 < r2) ok = false;
+          }
+          if (ok) addEdge(i, j);
+        }
+      }
+      start = -1;
+      assignOffsets();
+      layout();
+    }
+
+    // multi-edges between the same pair bow apart from each other
+    function assignOffsets() {
+      const groups = new Map();
+      E.forEach((e, i) => {
+        const key = Math.min(e.a, e.b) + '-' + Math.max(e.a, e.b);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(i);
+      });
+      for (const list of groups.values()) {
+        const m = list.length;
+        list.forEach((ei, n) => { E[ei].k = n - (m - 1) / 2; });
+      }
+    }
+
+    function layout() {
+      const mobile = W <= 700;
+      let x0, x1, y0, y1;
+      if (mobile) { x0 = 20; x1 = W - 20; y0 = 40; y1 = Math.max(160, H * 0.52); }
+      else {
+        x0 = W - 380 > 420 ? 384 : 30; x1 = W - 40; y0 = 56; y1 = H - 40;
+        if (W > 1100) y1 = H - 60;
+      }
+      let minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+      for (const v of V) { minx = Math.min(minx, v.x); maxx = Math.max(maxx, v.x); miny = Math.min(miny, v.y); maxy = Math.max(maxy, v.y); }
+      const pad = 34;
+      const s = Math.min((x1 - x0 - 2 * pad) / Math.max(0.01, maxx - minx), (y1 - y0 - 2 * pad) / Math.max(0.01, maxy - miny));
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, mx = (minx + maxx) / 2, my = (miny + maxy) / 2;
+      P = V.map((v) => ({ x: cx + (v.x - mx) * s, y: cy + (v.y - my) * s }));
+      const n = V.length;
+      vr = n <= 10 ? (mobile ? 12 : 15) : n <= 40 ? (mobile ? 8 : 10) : 6;
+      for (const e of E) e.pts = null;
+    }
+
+    // ---------- geometry ----------
+    function ctrlPoint(e) {
+      const lo = Math.min(e.a, e.b), hi = Math.max(e.a, e.b);
+      const A = P[lo], B = P[hi];
+      const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1;
+      const off = e.k * Math.min(60, len * 0.34);
+      return { x: (A.x + B.x) / 2 - dy / len * off, y: (A.y + B.y) / 2 + dx / len * off };
+    }
+    function edgePts(e) {
+      if (e.pts) return e.pts;
+      const A = P[e.a], B = P[e.b], C = ctrlPoint(e);
+      const pts = [];
+      const N = e.k === 0 ? 1 : 18;
+      for (let i = 0; i <= N; i++) {
+        const t = i / N, u = 1 - t;
+        pts.push({ x: u * u * A.x + 2 * u * t * C.x + t * t * B.x, y: u * u * A.y + 2 * u * t * C.y + t * t * B.y });
+      }
+      e.pts = pts;
+      return pts;
+    }
+    function strokeEdge(e) {
+      const A = P[e.a], B = P[e.b];
+      ctx.beginPath();
+      ctx.moveTo(A.x, A.y);
+      if (e.k === 0) ctx.lineTo(B.x, B.y);
+      else { const C = ctrlPoint(e); ctx.quadraticCurveTo(C.x, C.y, B.x, B.y); }
+      ctx.stroke();
+    }
+    function distToEdge(e, x, y) {
+      const pts = edgePts(e);
+      let best = Infinity;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1];
+        const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy || 1;
+        const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / l2));
+        best = Math.min(best, Math.hypot(x - a.x - t * dx, y - a.y - t * dy));
+      }
+      return best;
+    }
+
+    // ---------- analysis ----------
+    const active = (e) => e.on || e.dup;
+    function analyse() {
+      const deg = new Array(V.length).fill(0);
+      let count = 0;
+      for (const e of E) if (active(e)) { deg[e.a]++; deg[e.b]++; count++; }
+      const odd = [];
+      deg.forEach((d, i) => { if (d % 2) odd.push(i); });
+      // connected pieces among corners that have edges
+      const par = V.map((_, i) => i);
+      const find = (x) => { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; };
+      for (const e of E) if (active(e)) par[find(e.a)] = find(e.b);
+      const roots = new Set();
+      deg.forEach((d, i) => { if (d > 0) roots.add(find(i)); });
+      const pieces = roots.size;
+      let kind;
+      if (count === 0) kind = 'empty';
+      else if (pieces > 1) kind = 'split';
+      else if (odd.length === 0) kind = 'circuit';
+      else if (odd.length === 2) kind = 'path';
+      else kind = 'none';
+      info = { kind, odd, deg, pieces, active: count };
+    }
+
+    function chooseStart() {
+      const { kind, odd, deg } = info;
+      if (kind === 'path') { if (!odd.includes(start)) start = odd[0]; }
+      else if (kind === 'circuit') {
+        if (start < 0 || !deg[start]) {
+          const cands = deg.map((d, i) => d ? i : -1).filter((i) => i >= 0);
+          start = cands[Math.floor(Math.random() * cands.length)];
+        }
+      }
+    }
+
+    // pair up odd corners along shortest routes and walk those edges twice
+    function doubleOdd() {
+      const odd = info.odd.slice();
+      const adj = V.map(() => []);
+      E.forEach((e, i) => {
+        if (!e.on) return;
+        const L = Math.hypot(P[e.a].x - P[e.b].x, P[e.a].y - P[e.b].y);
+        adj[e.a].push([e.b, i, L]); adj[e.b].push([e.a, i, L]);
+      });
+      const added = [];
+      while (odd.length > 1) {
+        const s = odd.shift();
+        const dist = new Array(V.length).fill(Infinity), via = new Array(V.length).fill(-1), done = new Array(V.length).fill(false);
+        dist[s] = 0;
+        for (;;) {
+          let u = -1;
+          for (let i = 0; i < V.length; i++) if (!done[i] && dist[i] < Infinity && (u < 0 || dist[i] < dist[u])) u = i;
+          if (u < 0) break;
+          done[u] = true;
+          for (const [w, ei, L] of adj[u]) if (dist[u] + L < dist[w]) { dist[w] = dist[u] + L; via[w] = ei; }
+        }
+        let bi = -1;
+        odd.forEach((t, i) => { if (dist[t] < Infinity && (bi < 0 || dist[t] < dist[odd[bi]])) bi = i; });
+        if (bi < 0) break;
+        let t = odd.splice(bi, 1)[0];
+        while (t !== s) {
+          const e = E[via[t]];
+          added.push([e.a, e.b]);
+          t = e.a === t ? e.b : e.a;
+        }
+      }
+      for (const [a, b] of added) E.push({ a, b, on: false, dup: true, k: 0, state: 'idle', loop: 0, ord: -1 });
+      assignOffsets();
+      for (const e of E) e.pts = null;
+      return added.length;
+    }
+    function clearDups() {
+      const had = E.some((e) => e.dup);
+      E = E.filter((e) => !e.dup);
+      if (had) { assignOffsets(); for (const e of E) e.pts = null; }
+      return had;
+    }
+
+    // ---------- the algorithm ----------
+    let run = null;
+    let phase = 'idle';  // idle | walk | trace | hold | blocked
+    let traceT = 0, holdT = 0;
+    let flashes = [];
+    let note = '';
+    let hotLine = 1;
+
+    function resetRun() {
+      for (const e of E) { e.state = 'idle'; e.ord = -1; e.loop = 0; }
+      flashes = [];
+      analyse();
+      chooseStart();
+      if (info.kind !== 'circuit' && info.kind !== 'path') {
+        run = null; phase = 'blocked';
+        setNote(blockedNote());
+      } else {
+        const adj = V.map(() => []);
+        E.forEach((e, i) => { if (active(e)) { adj[e.a].push(i); adj[e.b].push(i); } });
+        for (const list of adj) for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+        run = {
+          adj, ptr: V.map(() => 0), used: new Uint8Array(E.length),
+          stack: [{ v: start, e: -1, from: -1 }], popped: [],
+          loop: 0, lastPop: false, fwd: 0, back: 0, firstPop: true,
+        };
+        phase = 'walk'; traceT = 0; holdT = 0; hotLine = 1;
+        setNote(info.kind === 'circuit'
+          ? 'Every corner is even, so a closed circuit exists. Start walking: take any unused edge, and keep going until you can\'t.'
+          : 'Exactly two odd corners, so the stroke must run from one to the other. Start at an odd one and walk until stuck.');
+      }
+      updateUi();
+    }
+
+    function blockedNote() {
+      if (info.kind === 'empty') return 'No edges left. Tap faint edges to bring some back.';
+      if (info.kind === 'split') return `The edges fall into <b>${info.pieces} separate pieces</b>, and no pen stroke can jump a gap. Tap faint edges to join them.`;
+      return `<b>${info.odd.length} odd corners.</b> Every visit to a corner uses one edge in and one out, so only the start and end of a stroke can be odd. No walk exists; don't bother searching. Double back over some edges, or tap edges away until at most two corners are odd.`;
+    }
+
+    function step() {
+      if (phase !== 'walk' || !run) return;
+      const R = run;
+      const top = R.stack[R.stack.length - 1];
+      const v = top.v, list = R.adj[v];
+      while (R.ptr[v] < list.length && R.used[list[R.ptr[v]]]) R.ptr[v]++;
+      if (R.ptr[v] < list.length) {
+        const ei = list[R.ptr[v]], e = E[ei];
+        R.used[ei] = 1;
+        const w = e.a === v ? e.b : e.a;
+        if (R.lastPop) {
+          R.loop++;
+          flashes.push({ x: P[v].x, y: P[v].y, t: 0, col: LOOP_COLS[R.loop % LOOP_COLS.length] });
+          setNote(`Backed up to a corner that still has unused edges. A <b>new loop</b> starts here, and in the final circuit it gets spliced in at exactly this corner.`);
+        } else if (R.fwd === 0 || R.fwd % 7 === 0) {
+          setNote('Walking on. Any unused edge will do; there\'s no lookahead and no cleverness about which one.');
+        }
+        R.lastPop = false;
+        e.state = 'stack'; e.loop = R.loop;
+        R.stack.push({ v: w, e: ei, from: v });
+        R.fwd++;
+        hotLine = 3;
+      } else {
+        R.stack.pop();
+        if (!R.lastPop) {
+          if (R.firstPop) {
+            setNote(info.kind === 'circuit'
+              ? 'Stuck, and back where the loop began: with every corner even, that\'s the only place you can get stuck. Pop corners off the stack into the circuit until one has unused edges.'
+              : 'Stuck, at the other odd corner: the only place this first walk can end. Pop corners into the circuit until one has unused edges.');
+            R.firstPop = false;
+          } else {
+            setNote('Stuck again, back where this loop started. Pop corners off the stack, each one becoming the next piece of the circuit, written backwards.');
+          }
+        }
+        R.lastPop = true;
+        if (top.e >= 0) {
+          const e = E[top.e];
+          e.state = 'done'; e.ord = R.popped.length;
+          R.popped.push(top);
+        }
+        R.back++;
+        hotLine = 4;
+        if (!R.stack.length) finishWalk();
+      }
+      updateUi();
+    }
+
+    let walk = [];   // polyline for the final trace
+    function finishWalk() {
+      const R = run;
+      const seq = R.popped.slice().reverse();
+      walk = [];
+      let total = 0;
+      for (const s of seq) {
+        const e = E[s.e];
+        let pts = edgePts(e).slice();
+        if (e.a !== s.from) pts.reverse();
+        for (let i = (walk.length ? 1 : 0); i < pts.length; i++) {
+          const p = pts[i];
+          if (walk.length) { const q = walk[walk.length - 1]; total += Math.hypot(p.x - q.x, p.y - q.y); }
+          walk.push({ x: p.x, y: p.y, d: total });
+        }
+      }
+      walk.total = total;
+      const loops = R.loop + 1;
+      setNote(`Done: <b>${info.active} edges, each once</b>${E.some((e) => e.dup) ? ' (doubled ones count twice)' : ''}, from ${loops} loop${loops > 1 ? 's' : ''} stitched into a single stroke. ${tTrace.classList.contains('on') ? 'Now the pen draws it in one go.' : ''}`);
+      hotLine = 2;
+      phase = tTrace.classList.contains('on') ? 'trace' : 'hold';
+      traceT = 0; holdT = 0;
+    }
+
+    // ---------- UI ----------
+    const speed = $('speed'), speedV = $('speedV');
+    const bPlay = $('bPlay'), bFix = $('bFix');
+    const tDeg = $('tDeg'), tLoop = $('tLoop'), tTrace = $('tTrace');
+    let playing = true;
+    const stepsPerSec = () => Math.pow(160, speed.value / 100) * 1.2;
+
+    function setNote(html) { note = html; $('rNote').innerHTML = html; }
+
+    function updateUi() {
+      $('rEdges').textContent = info.active;
+      $('rOdd').textContent = info.odd.length;
+      $('rFwd').textContent = run ? run.fwd : 0;
+      $('rBack').textContent = run ? run.back : 0;
+      $('rLoops').textContent = run ? run.loop : 0;
+      $('rStack').textContent = run ? run.stack.length : 0;
+      const vd = $('verdict');
+      vd.className = 'verdict';
+      if (info.kind === 'circuit') vd.innerHTML = '<b>Circuit.</b> Every corner has an even number of edges, so the stroke can end where it starts.';
+      else if (info.kind === 'path') { vd.classList.add('path'); vd.innerHTML = '<b>Path.</b> Two odd corners: the stroke must start at one and finish at the other.'; }
+      else if (info.kind === 'split') { vd.classList.add('bad'); vd.innerHTML = `<b>Impossible.</b> ${info.pieces} pieces that don't touch.`; }
+      else if (info.kind === 'empty') { vd.classList.add('bad'); vd.innerHTML = '<b>Nothing to draw.</b>'; }
+      else { vd.classList.add('bad'); vd.innerHTML = `<b>Impossible.</b> ${info.odd.length} odd corners; a single stroke allows at most two.`; }
+      const hasDup = E.some((e) => e.dup);
+      bFix.textContent = hasDup ? 'Undo the doubled edges' : 'Double back over odd corners';
+      bFix.disabled = !hasDup && (info.odd.length === 0 || info.kind === 'split' || info.kind === 'empty');
+      bFix.classList.toggle('pulse', !hasDup && info.kind === 'none');
+      bPlay.textContent = playing ? 'Pause' : 'Play';
+      document.querySelectorAll('#code div').forEach((d) => d.classList.toggle('hot', +d.dataset.l === hotLine && phase === 'walk'));
+    }
+
+    speed.addEventListener('input', () => { speedV.textContent = stepsPerSec().toFixed(stepsPerSec() < 10 ? 1 : 0) + ' steps/s'; });
+    speed.dispatchEvent(new Event('input'));
+    bPlay.addEventListener('click', () => { playing = !playing; updateUi(); });
+    $('bStep').addEventListener('click', () => { playing = false; if (phase === 'walk') step(); else if (phase !== 'blocked') resetRun(); updateUi(); });
+    $('bRestart').addEventListener('click', () => resetRun());
+    bFix.addEventListener('click', () => {
+      if (!clearDups()) {
+        const n = doubleOdd();
+        analyse();
+        resetRun();
+        if (n) setNote(`Paired the odd corners along their shortest routes and marked those <b>${n} edge${n > 1 ? 's' : ''}</b> to be walked twice, as a postman does. Every corner is even now. ${note}`);
+      } else resetRun();
+    });
+    for (const t of [tDeg, tLoop, tTrace]) t.addEventListener('click', () => t.classList.toggle('on'));
+    document.querySelectorAll('#shapes button').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('#shapes button').forEach((x) => x.classList.toggle('on', x === b));
+      shape = b.dataset.shape;
+      buildShape(shape);
+      resetRun();
+    }));
+
+    // ---------- pointer ----------
+    function pick(x, y) {
+      let bv = -1, bd = Math.max(16, vr + 6);
+      P.forEach((p, i) => { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; bv = i; } });
+      if (bv >= 0) return { v: bv };
+      let be = -1, bed = 11;
+      E.forEach((e, i) => { if (e.dup) return; const d = distToEdge(e, x, y); if (d < bed) { bed = d; be = i; } });
+      if (be >= 0) return { e: be };
+      return null;
+    }
+    cv.addEventListener('pointermove', (ev) => { cv.classList.toggle('hot', !!pick(ev.clientX, ev.clientY)); });
+    cv.addEventListener('pointerdown', (ev) => {
+      const hit = pick(ev.clientX, ev.clientY);
+      if (!hit) return;
+      if (hit.v !== undefined) {
+        analyse();
+        if (!info.deg[hit.v]) { setNote('That corner has no edges, so the pen can\'t start there.'); return; }
+        if (info.kind === 'path' && !info.odd.includes(hit.v)) {
+          start = hit.v;
+          resetRun();
+          setNote(`With two odd corners the stroke has to start at one of them, so the pen moved to an odd corner. ${note}`);
+          return;
+        }
+        start = hit.v;
+        resetRun();
+      } else {
+        clearDups();
+        E[hit.e].on = !E[hit.e].on;
+        resetRun();
+      }
+    });
+
+    // ---------- drawing ----------
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+      if (phase === 'trace' || phase === 'hold') finishWalkGeometry();
+    }
+    function finishWalkGeometry() { if (run && !run.stack.length) { const keep = note, ph = phase, tt = traceT, ht = holdT; finishWalk(); setNote(keep); phase = ph; traceT = tt; holdT = ht; } }
+    window.addEventListener('resize', resize);
+
+    function draw(dt) {
+      ctx.clearRect(0, 0, W, H);
+      const bg = ctx.createRadialGradient(W * 0.6, H * 0.45, 0, W * 0.6, H * 0.45, Math.max(W, H) * 0.7);
+      bg.addColorStop(0, '#0d0d1a'); bg.addColorStop(1, '#05050a');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+      const tracing = phase === 'trace' || phase === 'hold';
+      const N = Math.max(1, info.active);
+      const lw = E.length > 60 ? 1.6 : E.length > 20 ? 2.2 : 3.4;
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+      // edges
+      for (const e of E) {
+        if (!active(e)) {
+          ctx.setLineDash([3, 6]); ctx.strokeStyle = 'rgba(233,233,255,0.12)'; ctx.lineWidth = 1.2;
+          strokeEdge(e); ctx.setLineDash([]);
+          continue;
+        }
+        if (e.state === 'idle') {
+          ctx.lineWidth = lw * 0.8;
+          ctx.strokeStyle = e.dup ? 'rgba(255,124,195,0.55)' : 'rgba(233,233,255,0.26)';
+          if (e.dup) ctx.setLineDash([5, 5]);
+          strokeEdge(e); ctx.setLineDash([]);
+        } else if (e.state === 'stack') {
+          const c = LOOP_COLS[e.loop % LOOP_COLS.length];
+          ctx.lineWidth = lw * 1.25; ctx.strokeStyle = c;
+          ctx.shadowColor = c; ctx.shadowBlur = 10;
+          strokeEdge(e); ctx.shadowBlur = 0;
+        } else {
+          const pos = (N - 1 - e.ord) / Math.max(1, N - 1);
+          ctx.lineWidth = lw;
+          ctx.globalAlpha = tracing ? 0.18 : 0.85;
+          ctx.strokeStyle = grad(pos);
+          strokeEdge(e);
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // the single stroke
+      if (tracing && walk.length > 1) {
+        const upto = (phase === 'hold' ? 1 : traceT) * walk.total;
+        ctx.lineWidth = lw * 1.35;
+        ctx.shadowBlur = 12;
+        let head = walk[0];
+        for (let i = 1; i < walk.length; i++) {
+          const a = walk[i - 1], b = walk[i];
+          if (a.d >= upto) break;
+          let bx = b.x, by = b.y;
+          if (b.d > upto) { const f = (upto - a.d) / Math.max(1e-6, b.d - a.d); bx = a.x + (b.x - a.x) * f; by = a.y + (b.y - a.y) * f; }
+          const c = grad(a.d / walk.total);
+          ctx.strokeStyle = c; ctx.shadowColor = c;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(bx, by); ctx.stroke();
+          head = { x: bx, y: by };
+        }
+        ctx.shadowBlur = 0;
+        if (phase === 'trace') {
+          ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 16;
+          ctx.beginPath(); ctx.arc(head.x, head.y, Math.max(3, lw * 1.4), 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      // flashes where a loop gets spliced in
+      flashes = flashes.filter((f) => (f.t += dt) < 1.1);
+      for (const f of flashes) {
+        ctx.strokeStyle = f.col; ctx.globalAlpha = 1 - f.t / 1.1; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(f.x, f.y, vr + 4 + f.t * 34, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      // corners
+      const cur = run && run.stack.length && phase === 'walk' ? run.stack[run.stack.length - 1].v : -1;
+      const showDeg = tDeg.classList.contains('on') && vr >= 8;
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 260);
+      P.forEach((p, i) => {
+        const d = info.deg[i] || 0;
+        const isOdd = d % 2 === 1;
+        ctx.beginPath(); ctx.arc(p.x, p.y, vr, 0, Math.PI * 2);
+        ctx.fillStyle = d ? '#161624' : '#0b0b12'; ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = d ? 'rgba(233,233,255,0.35)' : 'rgba(233,233,255,0.12)';
+        if (isOdd) {
+          ctx.lineWidth = 2.4; ctx.strokeStyle = '#ff7cc3';
+          if (phase === 'blocked') { ctx.shadowColor = '#ff7cc3'; ctx.shadowBlur = 6 + 12 * pulse; }
+        }
+        ctx.stroke(); ctx.shadowBlur = 0;
+        if (i === start && phase !== 'blocked') {
+          ctx.beginPath(); ctx.arc(p.x, p.y, vr * 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = '#e9e9ff'; ctx.shadowColor = '#e9e9ff'; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
+        }
+        if (i === cur) {
+          ctx.beginPath(); ctx.arc(p.x, p.y, vr + 5, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        if (showDeg && d && i !== start) {
+          ctx.fillStyle = isOdd ? '#ffb8de' : '#b8b8d8';
+          ctx.font = `600 ${Math.round(vr * 0.95)}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(d, p.x, p.y + 0.5);
+        } else if (showDeg && d && i === start) {
+          ctx.fillStyle = isOdd ? '#ffb8de' : '#b8b8d8';
+          ctx.font = `600 ${Math.round(vr * 0.8)}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText(d, p.x, p.y - vr - 3);
+        }
+      });
+    }
+
+    // ---------- loop ----------
+    let last = performance.now(), acc = 0;
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      if (playing) {
+        if (phase === 'walk') {
+          acc += dt * stepsPerSec();
+          let guard = 0;
+          while (acc >= 1 && phase === 'walk' && guard++ < 400) { acc -= 1; step(); }
+        } else acc = 0;
+        if (phase === 'trace') {
+          const dur = Math.min(10, 1.6 + info.active * 0.055) * Math.max(0.35, 30 / (stepsPerSec() + 20));
+          traceT += dt / dur;
+          if (traceT >= 1) { traceT = 1; phase = 'hold'; holdT = 0; }
+        } else if (phase === 'hold') {
+          holdT += dt;
+          if (holdT > 3 && tLoop.classList.contains('on')) {
+            start = -1;
+            if (info.kind === 'path') start = info.odd[Math.floor(Math.random() * 2)];
+            resetRun();
+          }
+        }
+      }
+      draw(dt);
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    buildShape(shape);
+    resetRun();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
