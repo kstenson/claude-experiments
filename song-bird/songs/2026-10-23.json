@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-23",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Seven Ships",
+  "mood": {
+    "label": "Heavy going",
+    "score": -0.24,
+    "summary": "Heavy going: Trump hints at new Iran strikes, Iran claims seven ships hit in Hormuz, Brent nears $113, Kyiv frets as Trump leans toward Putin, and a Tibet quake kills 16. Small lifts: Venezuelans march peacefully, Indonesia spares a forest, Samoan wildlife returns.",
+    "palette": {
+      "bg": "#14121a",
+      "bg2": "#2a2433",
+      "accent": "#c9a25c",
+      "accent2": "#8a9fc4",
+      "text": "#ece6dd"
+    }
+  },
+  "style": {
+    "genre": "slow soul ballad — Rhodes, muted trumpet, upright bass, RhythmAce",
+    "key": "G",
+    "scale": "dorian",
+    "bpm": 76,
+    "swing": 0.12
+  },
+  "sampleSources": [
+    "Strudel default library (GM electric piano, GM muted trumpet, GM acoustic bass, GM nylon guitar, Ace Tone RhythmAce)"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"RhythmAce\").gain(0.5).room(0.35), s(\"hh*8\").bank(\"RhythmAce\").gain(perlin.range(0.08,0.22)).hpf(5000).pan(sine.range(0.4,0.6).slow(8)), note(\"<[g2 ~ ~ d2 ~ ~ g2 bf2] [c2 ~ ~ g2 ~ ~ c2 e2] [f2 ~ ~ c2 ~ ~ f2 a2] [d2 ~ ~ a2 ~ c3 ~ a2]>\").s(\"gm_acoustic_bass\").gain(0.6).lpf(1000), note(\"<[g3,bf3,d4,f4] [c3,e3,g3,bf3] [f3,a3,c4,e4] [d3,f3,a3,c4]>\").s(\"gm_epiano1\").attack(0.05).release(1.6).gain(0.38).lpf(sine.range(1200,3000).slow(16)).room(0.4).struct(\"x ~ ~ x ~ x ~ ~\"), note(\"<[~ ~ d5 ~ c5 bf4 ~ ~] [g4 ~ ~ ~ bf4 ~ c5 ~] [a4 ~ ~ f4 ~ ~ e4 ~] [d4 ~ ~ ~ ~ ~ ~ ~]>\").s(\"gm_muted_trumpet\").gain(0.42).room(0.55).delay(0.25).delaytime(0.592), note(\"<[g4 d5 bf4 d5] [e4 c5 g4 c5] [a4 c5 f4 c5] [f4 a4 d4 a4]>\").s(\"gm_acoustic_guitar_nylon\").gain(0.18).pan(0.7).degradeBy(0.3).jux(rev))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "He says they knocked the hell out of them,",
+        "and maybe there's more to send;",
+        "Tehran counts seven ships on fire,",
+        "and Washington says pretend."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "The oil climbs up to one-thirteen,",
+        "Kyiv watches the handshake grow,",
+        "the mountains shrug in Tibet,",
+        "Taiwan bolts its doors below."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "But Caracas walks without a stone,",
+        "a forest keeps its ground,",
+        "and on one small Samoan isle",
+        "the birds have come back round."
+      ]
+    }
+  ]
+}
