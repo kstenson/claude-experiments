@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Socks Before Shoes — Experiment 099</title>
+<meta name="description" content="Kahn's 1962 topological sort, live: count every task's incoming arrows, do whatever has none left, cross off its arrows, repeat. Every valid order puts each task after everything it depends on, and a loop of dependencies leaves the algorithm with nothing it can do." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+  canvas#cv.hot { cursor: pointer; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg button {
+    background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+  .seg-label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; margin-bottom: -4px; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.3s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.pulse { animation: pulse 1.4s ease-in-out infinite; }
+  .btn:disabled { opacity: 0.4; cursor: default; animation: none; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 rgba(255,124,195,0); } 50% { box-shadow: 0 0 16px rgba(255,124,195,0.55); } }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.72rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 8px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .verdict {
+    padding: 9px 12px; border-radius: 11px;
+    font-size: 0.8rem; line-height: 1.45;
+    border: 1px solid rgba(124,124,255,0.35);
+    background: rgba(124,124,255,0.1); color: #dcdcff;
+  }
+  .verdict b { font-weight: 700; }
+  .verdict.path { border-color: rgba(185,140,255,0.45); background: rgba(185,140,255,0.1); color: #ead9ff; }
+  .verdict.bad { border-color: rgba(255,124,195,0.45); background: rgba(255,124,195,0.1); color: #ffd6ec; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; }
+  .readout .full b { color: #e9e9f0; font-weight: 600; }
+  #rNote { min-height: 4.6em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code .l1 { color: #b0b0ff; }
+  .code .l2 { color: #ff9fd2; }
+  .code div { padding: 0 4px; border-radius: 4px; transition: background 0.15s ease; }
+  .code div.hot { background: rgba(255,255,255,0.09); }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: right;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .legend, .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+  .readout .v.mint { color: #9cf0c8; }
+  .seg.five { grid-template-columns: repeat(6, 1fr); }
+  .seg.five button { grid-column: span 2; }
+  .seg.five button:nth-child(4), .seg.five button:nth-child(5) { grid-column: span 3; }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <button id="showUi">show panel</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Socks Before Shoes</h1>
+    <p class="sub">Experiment № 099 · October 24, 2026</p>
+
+    <div class="controls">
+      <p class="seg-label">Tasks</p>
+      <div class="seg five" id="scenes">
+        <button data-scene="dressing" class="on">Dressing</button>
+        <button data-scene="bread">Bread</button>
+        <button data-scene="courses">Degree</button>
+        <button data-scene="catch">Catch-22</button>
+        <button data-scene="random">Random</button>
+      </div>
+
+      <p class="seg-label">When several are ready, take</p>
+      <div class="seg" id="modes">
+        <button data-mode="queue">the oldest</button>
+        <button data-mode="stack">the newest</button>
+        <button data-mode="random" class="on">any</button>
+      </div>
+
+      <div class="verdict" id="verdict">—</div>
+
+      <div class="row">
+        <label>Pace <b id="speedV">—</b></label>
+        <input type="range" id="speed" min="0" max="100" value="38" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="bPlay">Pause</button>
+        <button class="btn" id="bStep">Step</button>
+        <button class="btn" id="bRestart">Sort again</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn pink" id="bBreak" disabled>Cut an arrow in the loop</button>
+      </div>
+
+      <div class="toggles">
+        <div class="toggle violet on" id="tCount"><i></i>Counts</div>
+        <div class="toggle violet on" id="tGhost"><i></i>Ghosts</div>
+        <div class="toggle rose on" id="tRepeat"><i></i>Repeat</div>
+      </div>
+
+      <div class="readout">
+        <span class="k">tasks</span><span class="v" id="rTasks">0</span>
+        <span class="k">arrows</span><span class="v" id="rArrows">0</span>
+        <span class="k">valid orders</span><span class="v pinkv" id="rOrders">0</span>
+        <hr />
+        <span class="k">placed</span><span class="v violet" id="rPlaced">0</span>
+        <span class="k">ready pile</span><span class="v mint" id="rReady">—</span>
+        <span class="k">arrows crossed off</span><span class="v" id="rCrossed">0</span>
+        <span class="k">different orders seen</span><span class="v pinkv" id="rSeen">0</span>
+        <span class="full" id="rNote">Count the arrows pointing into every task.</span>
+      </div>
+
+      <div class="code" id="code">
+        <div data-l="0"><span class="c">// Kahn 1962</span></div>
+        <div data-l="1">count the arrows into every task</div>
+        <div data-l="2">ready ← every task with a count of 0</div>
+        <div data-l="3" class="l1">while ready: take one, append it to order</div>
+        <div data-l="4">&nbsp; for each arrow out of it: cross it off;<br />&nbsp; &nbsp; if its target hits 0, add it to ready</div>
+        <div data-l="5" class="l2">if tasks are left over: they form a loop</div>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint">drag from one task to another to add an arrow · tap an arrow to delete it · H hides the panel</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 099 · The story</p>
+      <h2>Socks Before Shoes</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Yesterday's piece was about using every edge. Today I wanted edges that are promises: this has to happen before that. Topological sorting is the algorithm I've watched run without seeing it more often than almost any other. Every build tool, package manager, spreadsheet recalculation and job scheduler is quietly doing it. Arthur Kahn published this version in 1962 for scheduling large networks of jobs, and I picked it over the depth-first version because you can watch it decide. There's a pile of tasks with nothing left to wait for, and a count on everything else of what's still holding it back. The opening scene comes from the textbook by Cormen, Leiserson, Rivest and Stein, where Professor Bumstead has to get dressed. Socks before shoes is the clearest statement of the problem I know.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Nobody ever chooses to make a task ready. A task's count drops to zero when its last reason to wait is crossed off, and it lights up on its own. Then there's how much freedom is left over. Leave "any" selected with Repeat on and the strip below fills with ghosts of earlier runs, each one a different order, every one of them correct: Bumstead has 1,728 ways to get dressed. Catch-22 is my favourite. The algorithm doesn't crash or loop forever, it just runs out of ready tasks while some are left. That leftover group is exactly the knot. Every leftover task still waits on another leftover task, so if you walk backwards along arrows among them you have to come round in a circle, and that's how the pink loop gets found.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A plan that respects every dependency is rarely the only one. Usually several things are ready at once, and which one you do next is your call: oldest first, newest first, or whatever you like. Dependencies narrow your options without dictating the order. And when nothing is ready but work remains, the problem isn't scheduling. Something is waiting on itself, and no amount of effort or reordering will get you out. You have to cut an arrow. Draw one from "shoes" back to "socks" in the dressing scene and watch the professor freeze halfway through.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  let onPanelChange = () => {};
+  function setPanel(visible) {
+    ui.classList.toggle('hidden', !visible);
+    showUi.classList.toggle('on', !visible);
+    onPanelChange();
+  }
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  document.getElementById('collapse').addEventListener('click', () => setPanel(false));
+  showUi.addEventListener('click', () => setPanel(true));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if (e.key.toLowerCase() === 'h') setPanel(ui.classList.contains('hidden'));
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Kahn's topological sort ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv');
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, dpr = 1;
+    let G = { x: 0, y: 0, w: 1, h: 1 };
+    let strip = { x0: 0, x1: 1, y: 0, arc: 60 };
+
+    const GRAD = [[124, 124, 255], [185, 140, 255], [255, 124, 195]];
+    function gradRGB(t) {
+      t = Math.max(0, Math.min(1, t));
+      const s = t * 2, i = Math.min(1, Math.floor(s)), f = s - i;
+      const a = GRAD[i], b = GRAD[i + 1];
+      return [Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f)];
+    }
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+    // ---------- scenes ----------
+    const SCENES = {
+      dressing: {
+        nodes: [['undershorts', .08, .18], ['socks', .82, .12], ['watch', .5, .9], ['pants', .62, .5], ['shoes', .28, .58],
+                ['shirt', .95, .72], ['belt', .1, .92], ['tie', .44, .14], ['jacket', .74, .95]],
+        edges: [['undershorts', 'pants'], ['undershorts', 'shoes'], ['pants', 'shoes'], ['pants', 'belt'], ['shirt', 'belt'],
+                ['shirt', 'tie'], ['tie', 'jacket'], ['belt', 'jacket'], ['socks', 'shoes']],
+      },
+      bread: {
+        nodes: [['slice', .06, .3], ['flour', .88, .08], ['cool', .3, .1], ['water', .62, .3], ['mix', .2, .62], ['bake', .5, .06],
+                ['yeast', .96, .55], ['knead', .55, .7], ['breakfast', .08, .95], ['rise', .8, .9], ['shape', .36, .38],
+                ['preheat', .72, .62], ['proof', .32, .92], ['kettle', .98, .25], ['tea', .55, .97]],
+        edges: [['flour', 'mix'], ['water', 'mix'], ['yeast', 'mix'], ['mix', 'knead'], ['knead', 'rise'], ['rise', 'shape'],
+                ['shape', 'proof'], ['proof', 'bake'], ['preheat', 'bake'], ['bake', 'cool'], ['cool', 'slice'],
+                ['slice', 'breakfast'], ['kettle', 'tea'], ['tea', 'breakfast']],
+      },
+      courses: {
+        nodes: [['ML', .1, .14], ['Algebra', .78, .9], ['Compilers', .5, .08], ['Calc I', .92, .5], ['Algorithms', .3, .48],
+                ['Intro CS', .12, .9], ['Lin. Alg.', .6, .58], ['Discrete', .5, .85], ['Calc II', .86, .14], ['Data Struct.', .2, .7],
+                ['Probability', .4, .26], ['Diff. Eq.', .68, .28], ['Databases', .04, .48]],
+        edges: [['Algebra', 'Calc I'], ['Calc I', 'Calc II'], ['Calc II', 'Diff. Eq.'], ['Algebra', 'Discrete'], ['Discrete', 'Algorithms'],
+                ['Intro CS', 'Data Struct.'], ['Data Struct.', 'Algorithms'], ['Data Struct.', 'Databases'], ['Calc I', 'Lin. Alg.'],
+                ['Lin. Alg.', 'ML'], ['Algorithms', 'ML'], ['Calc I', 'Probability'], ['Discrete', 'Probability'], ['Probability', 'ML'],
+                ['Algorithms', 'Compilers']],
+      },
+      catch: {
+        nodes: [['degree', .1, .2], ['apply', .32, .75], ['interview', .55, .2], ['job', .82, .55], ['experience', .5, .9],
+                ['paycheck', .95, .12], ['rent', .7, .95]],
+        edges: [['degree', 'apply'], ['apply', 'interview'], ['experience', 'interview'], ['interview', 'job'], ['job', 'paycheck'],
+                ['paycheck', 'rent'], ['job', 'experience']],
+      },
+    };
+
+    let nodes = [];   // {label, nx, ny, x, y, w, h, placed, readyAt}
+    let edges = [];   // {id, from, to, crossed, flash, pts}
+    let edgeSeq = 0;
+    let totalOrders = 0;
+    let seen = new Set();
+    let ghosts = [];
+    let scene = 'dressing';
+    let mode = 'random';
+    let showCounts = true, showGhosts = true, repeat = true;
+    let playing = true;
+    let run = null;
+    let acc = 0, doneTimer = 0;
+    let now = 0;
+
+    ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+    function makeNode(label, nx, ny) {
+      return { label, nx, ny, x: 0, y: 0, w: 0, h: 24, placed: -1, readyAt: -10 };
+    }
+    function measure() {
+      ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+      for (const n of nodes) n.w = Math.ceil(ctx.measureText(n.label).width) + 22;
+    }
+
+    function loadScene(name) {
+      scene = name;
+      nodes = []; edges = []; edgeSeq = 0;
+      if (name === 'random') {
+        buildRandom();
+      } else {
+        const s = SCENES[name];
+        const idx = {};
+        s.nodes.forEach(([l, x, y], i) => { idx[l] = i; nodes.push(makeNode(l, x, y)); });
+        s.edges.forEach(([a, b]) => edges.push({ id: edgeSeq++, from: idx[a], to: idx[b], crossed: false, flash: 0, pts: [] }));
+      }
+      measure();
+      for (const n of nodes) { n.x = G.x + n.nx * G.w; n.y = G.y + n.ny * G.h; }
+      graphChanged();
+    }
+
+    function buildRandom() {
+      const n = 10 + Math.floor(Math.random() * 6);
+      const pts = [];
+      let guard = 0;
+      while (pts.length < n && guard++ < 5000) {
+        const p = { x: Math.random(), y: Math.random() };
+        const minD = 0.2 - guard * 0.00003;
+        if (pts.every((q) => Math.hypot((q.x - p.x) * 1.6, q.y - p.y) > minD)) pts.push(p);
+      }
+      const rank = pts.map(() => Math.random());
+      pts.forEach((p, i) => nodes.push(makeNode('task ' + String.fromCharCode(65 + i), p.x, p.y)));
+      const have = new Set();
+      for (let i = 0; i < pts.length; i++) {
+        const near = pts.map((q, j) => [Math.hypot((q.x - pts[i].x) * 1.6, q.y - pts[i].y), j])
+          .filter(([, j]) => j !== i).sort((a, b) => a[0] - b[0]).slice(0, 3);
+        for (const [, j] of near) {
+          if (Math.random() > 0.72) continue;
+          const [a, b] = rank[i] < rank[j] ? [i, j] : [j, i];
+          const key = a + '>' + b;
+          if (have.has(key)) continue;
+          have.add(key);
+          edges.push({ id: edgeSeq++, from: a, to: b, crossed: false, flash: 0, pts: [] });
+        }
+      }
+    }
+
+    // Count linear extensions (valid orders) by DP over subsets of placed tasks.
+    function countOrders() {
+      const n = nodes.length;
+      if (n > 20) return -1;
+      const pred = new Array(n).fill(0);
+      for (const e of edges) pred[e.to] |= 1 << e.from;
+      const full = (1 << n) - 1;
+      const f = new Float64Array(full + 1);
+      f[0] = 1;
+      for (let m = 0; m < full; m++) {
+        const c = f[m];
+        if (!c) continue;
+        for (let v = 0; v < n; v++) {
+          if (!((m >> v) & 1) && (pred[v] & m) === pred[v]) f[m | (1 << v)] += c;
+        }
+      }
+      return f[full];
+    }
+
+    function graphChanged() {
+      totalOrders = countOrders();
+      seen = new Set();
+      ghosts = [];
+      resetRun();
+    }
+
+    function resetRun() {
+      for (const n of nodes) { n.placed = -1; n.readyAt = -10; }
+      for (const e of edges) { e.crossed = false; e.flash = 0; }
+      run = { phase: 'init', indeg: nodes.map(() => 0), ready: [], order: [], cur: -1, outq: [], crossed: 0,
+              cycleNodes: null, cycleEdges: null, done: false, stuck: false, line: 0 };
+      doneTimer = 0; acc = 0;
+      setNote('Ready to start: first, count the arrows pointing into every task.');
+      updateUI();
+    }
+
+    let noteText = '';
+    function setNote(t) { noteText = t; }
+
+    function step() {
+      const r = run;
+      if (r.done) { resetRun(); return; }
+      if (r.phase === 'init') {
+        for (const e of edges) r.indeg[e.to]++;
+        r.line = 1; r.phase = 'seed';
+        const z = r.indeg.filter((d) => d === 0).length;
+        setNote(`Counted: ${z} of ${nodes.length} tasks have no arrows coming in, so nothing has to happen before them.`);
+      } else if (r.phase === 'seed') {
+        nodes.forEach((n, i) => { if (r.indeg[i] === 0) { r.ready.push(i); n.readyAt = now; } });
+        r.line = 2; r.phase = 'take';
+        setNote(r.ready.length
+          ? `Those go on the ready pile: <b>${r.ready.map((i) => nodes[i].label).join(', ')}</b>.`
+          : 'Nothing has a count of zero. Every task waits on something, so not even the first step is possible.');
+      } else if (r.phase === 'take') {
+        if (!r.ready.length) { finish(); return; }
+        const k = mode === 'queue' ? 0 : mode === 'stack' ? r.ready.length - 1 : Math.floor(Math.random() * r.ready.length);
+        const choices = r.ready.length;
+        const v = r.ready.splice(k, 1)[0];
+        nodes[v].placed = r.order.length;
+        r.order.push(v);
+        r.cur = v;
+        r.outq = edges.filter((e) => e.from === v);
+        r.line = 3;
+        r.phase = r.outq.length ? 'cross' : 'take';
+        const why = choices > 1 ? ` (${choices} were ready; ${mode === 'queue' ? 'took the one waiting longest' : mode === 'stack' ? 'took the newest arrival' : 'picked one at random'})` : '';
+        setNote(`Do <b>${nodes[v].label}</b> next, slot ${r.order.length}${why}.` + (r.outq.length ? ` It has ${r.outq.length} arrow${r.outq.length > 1 ? 's' : ''} going out.` : ' Nothing depends on it.'));
+      } else if (r.phase === 'cross') {
+        const e = r.outq.shift();
+        e.crossed = true; e.flash = 1;
+        r.crossed++;
+        r.indeg[e.to]--;
+        const t = nodes[e.to];
+        if (r.indeg[e.to] === 0) {
+          r.ready.push(e.to); t.readyAt = now;
+          setNote(`Cross off ${nodes[e.from].label} → ${t.label}. That was the last thing <b>${t.label}</b> waited for, so it joins the ready pile.`);
+        } else {
+          setNote(`Cross off ${nodes[e.from].label} → ${t.label}. <b>${t.label}</b> still waits on ${r.indeg[e.to]} more.`);
+        }
+        r.line = 4;
+        if (!r.outq.length) r.phase = 'take';
+      }
+      updateUI();
+    }
+
+    function finish() {
+      const r = run;
+      r.done = true; r.line = 5; r.cur = -1;
+      if (r.order.length < nodes.length) {
+        r.stuck = true;
+        findCycle();
+        const left = nodes.length - r.order.length;
+        setNote(`The ready pile is empty but ${left} task${left > 1 ? 's are' : ' is'} left. Each one still waits on another leftover, so walking backwards along their arrows must come round in a circle: the pink loop.`);
+      } else {
+        const key = r.order.join(',');
+        seen.add(key);
+        ghosts.push(r.order.slice());
+        if (ghosts.length > 16) ghosts.shift();
+        setNote('Every task placed, and every arrow now points left to right. That makes it a valid order' + (totalOrders > 1 ? `, one of ${fmt(totalOrders)}.` : ', and the only one.'));
+      }
+      updateUI();
+    }
+
+    function findCycle() {
+      const left = (i) => nodes[i].placed < 0;
+      let v = nodes.findIndex((n, i) => left(i));
+      if (v < 0) return;
+      const seq = [v], es = [];
+      for (let guard = 0; guard < 500; guard++) {
+        const e = edges.find((x) => x.to === seq[seq.length - 1] && left(x.from));
+        if (!e) break;
+        es.push(e);
+        const idx = seq.indexOf(e.from);
+        if (idx >= 0) {
+          run.cycleEdges = new Set(es.slice(idx));
+          run.cycleNodes = new Set(seq.slice(idx));
+          return;
+        }
+        seq.push(e.from);
+      }
+    }
+
+    function breakLoop() {
+      if (!run.stuck || !run.cycleEdges) return;
+      let pick = null;
+      for (const e of run.cycleEdges) if (!pick || e.id > pick.id) pick = e;
+      edges = edges.filter((e) => e !== pick);
+      graphChanged();
+    }
+
+    function fmt(x) {
+      if (x < 0) return 'lots';
+      if (x >= 1e15) return x.toExponential(2);
+      return Math.round(x).toLocaleString('en-US');
+    }
+
+    // ---------- UI ----------
+    function updateUI() {
+      const r = run;
+      $('rTasks').textContent = nodes.length;
+      $('rArrows').textContent = edges.length;
+      $('rOrders').textContent = totalOrders === 0 ? 'none' : fmt(totalOrders);
+      $('rPlaced').textContent = `${r.order.length} / ${nodes.length}`;
+      $('rReady').textContent = r.phase === 'init' || r.phase === 'seed' ? '—' : (r.ready.length ? r.ready.map((i) => nodes[i].label).join(', ') : 'empty');
+      $('rCrossed').textContent = `${r.crossed} / ${edges.length}`;
+      $('rSeen').textContent = totalOrders > 0 ? `${seen.size}` : '—';
+      $('rNote').innerHTML = noteText;
+      document.querySelectorAll('#code div').forEach((d) => d.classList.toggle('hot', +d.dataset.l === r.line && r.line > 0));
+      const vd = $('verdict');
+      vd.className = 'verdict';
+      if (r.stuck) {
+        vd.classList.add('bad');
+        const loopN = r.cycleNodes ? r.cycleNodes.size : 0;
+        const leftN = nodes.length - r.order.length;
+        vd.innerHTML = `<b>Stuck</b> with ${leftN} task${leftN > 1 ? 's' : ''} left` + (loopN ? `, because ${loopN} of them wait on each other in a loop` : '') + '. No valid order exists until an arrow is cut.';
+      } else if (r.done) {
+        vd.classList.add('path');
+        vd.innerHTML = `<b>Sorted.</b> Nothing comes before anything it depends on.` + (totalOrders > 1 ? ` ${fmt(totalOrders)} orders would do; you've seen ${seen.size}.` : '');
+      } else if (totalOrders === 0) {
+        vd.classList.add('bad');
+        vd.innerHTML = '<b>There is a loop in here.</b> Watch where the sort gets stuck.';
+      } else {
+        vd.innerHTML = `${nodes.length} tasks, ${edges.length} arrows: <b>${fmt(totalOrders)}</b> valid order${totalOrders === 1 ? '' : 's'}.`;
+      }
+      const bb = $('bBreak');
+      bb.disabled = !r.stuck;
+      bb.classList.toggle('pulse', r.stuck);
+      $('bPlay').textContent = playing ? 'Pause' : 'Play';
+    }
+
+    const speedEl = $('speed');
+    const sps = () => 0.6 * Math.pow(50, speedEl.value / 100);
+    function speedLabel() { $('speedV').textContent = sps().toFixed(1) + ' steps/s'; }
+    speedEl.addEventListener('input', speedLabel);
+    speedLabel();
+
+    $('bPlay').addEventListener('click', () => { playing = !playing; updateUI(); });
+    $('bStep').addEventListener('click', () => { playing = false; step(); updateUI(); });
+    $('bRestart').addEventListener('click', () => { if (scene === 'random') loadScene('random'); else resetRun(); });
+    $('bBreak').addEventListener('click', breakLoop);
+
+    document.querySelectorAll('#scenes button').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('#scenes button').forEach((x) => x.classList.toggle('on', x === b));
+      loadScene(b.dataset.scene);
+    }));
+    document.querySelectorAll('#modes button').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('#modes button').forEach((x) => x.classList.toggle('on', x === b));
+      mode = b.dataset.mode;
+      resetRun();
+    }));
+    function bindToggle(id, set) {
+      const el = $(id);
+      el.addEventListener('click', () => { el.classList.toggle('on'); set(el.classList.contains('on')); });
+    }
+    bindToggle('tCount', (v) => { showCounts = v; });
+    bindToggle('tGhost', (v) => { showGhosts = v; });
+    bindToggle('tRepeat', (v) => { repeat = v; });
+
+    // ---------- layout ----------
+    function layout() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const panel = !ui.classList.contains('hidden');
+      if (W < 700) {
+        const bottom = panel ? H * 0.53 : H - 20;
+        const top = 40;
+        const span = bottom - top;
+        G = { x: 54, y: top + 14, w: W - 108, h: span * 0.5 - 14 };
+        strip = { x0: 18, x1: W - 18, y: top + span * 0.72, arc: span * 0.27 };
+      } else {
+        const left = panel ? 400 : 60;
+        G = { x: left + 50, y: 74, w: W - left - 110, h: H * 0.56 - 74 };
+        strip = { x0: left, x1: W - 40, y: H * 0.73, arc: H * 0.27 - 24 };
+      }
+      G.h = Math.max(80, G.h);
+    }
+    onPanelChange = layout;
+    window.addEventListener('resize', layout);
+
+    const slotX = (i) => strip.x0 + (i + 0.5) * (strip.x1 - strip.x0) / Math.max(1, nodes.length);
+    function homeOf(n) { return [G.x + n.nx * G.w, G.y + n.ny * G.h]; }
+
+    // ---------- drawing ----------
+    function arcPts(x1, x2, y) {
+      const depth = Math.min(strip.arc, 12 + Math.abs(x2 - x1) * 0.34);
+      const cx = (x1 + x2) / 2, cy = y + depth * 2;
+      const pts = [];
+      for (let i = 0; i <= 16; i++) {
+        const t = i / 16, u = 1 - t;
+        pts.push([u * u * x1 + 2 * u * t * cx + t * t * x2, u * u * y + 2 * u * t * cy + t * t * y]);
+      }
+      return pts;
+    }
+    function trimToPill(n, dx, dy) {
+      const hw = n.w / 2 + 3, hh = n.h / 2 + 3;
+      const t = Math.min(dx ? hw / Math.abs(dx) : 1e9, dy ? hh / Math.abs(dy) : 1e9);
+      return [n.x + dx * t, n.y + dy * t];
+    }
+    function polyline(pts) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    }
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    let drag = null;
+    let hoverEdge = null;
+
+    function draw() {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      // faint dot field in the graph area
+      ctx.fillStyle = 'rgba(255,255,255,0.035)';
+      for (let x = 12; x < W; x += 28) for (let y = 12; y < strip.y - 30; y += 28) ctx.fillRect(x, y, 1.2, 1.2);
+
+      const n = nodes.length;
+      const sy = strip.y;
+      // strip baseline + slots
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(strip.x0, sy); ctx.lineTo(strip.x1, sy); ctx.stroke();
+      for (let i = 0; i < n; i++) {
+        const x = slotX(i);
+        ctx.fillStyle = run.order.length > i ? 'rgba(255,255,255,0.0)' : 'rgba(255,255,255,0.14)';
+        ctx.beginPath(); ctx.arc(x, sy, 2.2, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(154,154,176,0.55)';
+      ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('ORDER  →', strip.x0, sy - 4 - (W < 700 ? 44 : 64));
+
+      // ghosts of previous valid orders
+      if (showGhosts && ghosts.length) {
+        ghosts.forEach((g, gi) => {
+          const pos = new Array(n);
+          g.forEach((v, i) => { pos[v] = i; });
+          const age = (gi + 1) / ghosts.length;
+          for (const e of edges) {
+            if (pos[e.from] === undefined || pos[e.to] === undefined) continue;
+            const c = gradRGB(pos[e.from] / Math.max(1, n - 1));
+            polyline(arcPts(slotX(pos[e.from]), slotX(pos[e.to]), sy + 6));
+            ctx.strokeStyle = rgba(c, 0.035 + 0.05 * age);
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        });
+      }
+
+      // edges
+      for (const e of edges) {
+        const a = nodes[e.from], b = nodes[e.to];
+        const inCycle = run.cycleEdges && run.cycleEdges.has(e);
+        const hot = hoverEdge === e;
+        if (a.inStrip && b.inStrip) {
+          const pts = arcPts(a.x, b.x, sy + 6);
+          e.pts = pts;
+          const c = gradRGB(a.placed / Math.max(1, n - 1));
+          polyline(pts);
+          ctx.strokeStyle = rgba(c, hot ? 1 : 0.8);
+          ctx.lineWidth = hot ? 3 : 1.7 + e.flash * 2;
+          ctx.stroke();
+          continue;
+        }
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const L = Math.hypot(dx, dy) || 1;
+        const [x1, y1] = a.inStrip ? [a.x, a.y - 8] : trimToPill(a, dx / L, dy / L);
+        const [x2, y2] = b.inStrip ? [b.x, b.y - 8] : trimToPill(b, -dx / L, -dy / L);
+        e.pts = [[x1, y1], [x2, y2]];
+        ctx.lineWidth = 1.5;
+        let col;
+        if (inCycle) { col = 'rgba(255,124,195,0.95)'; ctx.lineWidth = 2.6; }
+        else if (e.crossed) { col = `rgba(185,140,255,${0.16 + e.flash * 0.8})`; ctx.lineWidth = 1.2 + e.flash * 2.5; }
+        else col = 'rgba(220,220,245,0.42)';
+        if (hot) { col = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 2.6; }
+        ctx.strokeStyle = col;
+        ctx.setLineDash(e.crossed && !inCycle && e.flash < 0.05 && !hot ? [4, 5] : []);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        if (!e.crossed || inCycle || hot || e.flash > 0.05) {
+          const ux = (x2 - x1) / (Math.hypot(x2 - x1, y2 - y1) || 1), uy = (y2 - y1) / (Math.hypot(x2 - x1, y2 - y1) || 1);
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(x2, y2);
+          ctx.lineTo(x2 - ux * 9 - uy * 4.5, y2 - uy * 9 + ux * 4.5);
+          ctx.lineTo(x2 - ux * 9 + uy * 4.5, y2 - uy * 9 - ux * 4.5);
+          ctx.closePath(); ctx.fill();
+        }
+      }
+
+      // drag preview
+      if (drag && drag.moved) {
+        const a = nodes[drag.from];
+        ctx.strokeStyle = 'rgba(124,124,255,0.85)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 5]);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(drag.x, drag.y); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // nodes
+      const live = nodes.map(() => 0);
+      for (const e of edges) if (!e.crossed) live[e.to]++;
+      nodes.forEach((nd, i) => {
+        const isReady = run.ready.includes(i);
+        const inCyc = run.cycleNodes && run.cycleNodes.has(i);
+        if (nd.inStrip) {
+          const c = gradRGB(nd.placed / Math.max(1, n - 1));
+          ctx.fillStyle = rgba(c, 1);
+          ctx.shadowColor = rgba(c, 0.8); ctx.shadowBlur = i === run.cur ? 16 : 7;
+          ctx.beginPath(); ctx.arc(nd.x, nd.y, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.save();
+          ctx.translate(nd.x + 2, nd.y - 12);
+          ctx.rotate(W < 700 ? -1.2 : -0.7);
+          ctx.font = (W < 700 ? '600 10px' : '600 11px') + ' ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#d9d9ea';
+          ctx.fillText(nd.label, 0, 0);
+          ctx.restore();
+          return;
+        }
+        const x = nd.x - nd.w / 2, y = nd.y - nd.h / 2;
+        let stroke = 'rgba(255,255,255,0.22)', fill = '#14141f', text = '#cfcfe0';
+        if (nd.placed >= 0) { const c = gradRGB(nd.placed / Math.max(1, n - 1)); stroke = rgba(c, 1); fill = rgba(c, 0.25); text = '#fff'; }
+        else if (isReady) {
+          const pulse = 0.5 + 0.5 * Math.sin((now - nd.readyAt) * 4);
+          stroke = '#9cf0c8'; fill = 'rgba(156,240,200,0.12)'; text = '#eafff4';
+          ctx.shadowColor = 'rgba(156,240,200,0.7)'; ctx.shadowBlur = 8 + pulse * 10 + Math.max(0, 1 - (now - nd.readyAt)) * 20;
+        } else if (inCyc) {
+          stroke = '#ff7cc3'; fill = 'rgba(255,124,195,0.14)'; text = '#ffe0f0';
+          ctx.shadowColor = 'rgba(255,124,195,0.7)'; ctx.shadowBlur = 12;
+        }
+        if (drag && drag.over === i && drag.from !== i) { stroke = '#7c7cff'; ctx.shadowColor = 'rgba(124,124,255,0.9)'; ctx.shadowBlur = 16; }
+        roundRect(x, y, nd.w, nd.h, 12);
+        ctx.fillStyle = fill; ctx.fill();
+        ctx.lineWidth = 1.4; ctx.strokeStyle = stroke; ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = text;
+        ctx.fillText(nd.label, nd.x, nd.y + 0.5);
+        if (showCounts && nd.placed < 0) {
+          const k = live[i];
+          const bx = nd.x + nd.w / 2 - 2, by = nd.y - nd.h / 2 - 1;
+          ctx.fillStyle = k ? '#2a1a26' : '#16281f';
+          ctx.strokeStyle = k ? 'rgba(255,124,195,0.8)' : 'rgba(156,240,200,0.8)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(bx, by, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = k ? '#ffb3dc' : '#bff5da';
+          ctx.font = '700 10px ui-sans-serif, system-ui, sans-serif';
+          ctx.fillText(String(k), bx, by + 0.5);
+        }
+      });
+    }
+
+    // ---------- interaction ----------
+    function pointAt(ev) {
+      const r = cv.getBoundingClientRect();
+      return [ev.clientX - r.left, ev.clientY - r.top];
+    }
+    function nodeAt(x, y) {
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        const n = nodes[i];
+        if (n.inStrip) { if (Math.hypot(x - n.x, y - n.y) < 13) return i; }
+        else if (Math.abs(x - n.x) < n.w / 2 + 4 && Math.abs(y - n.y) < n.h / 2 + 4) return i;
+      }
+      return -1;
+    }
+    function segDist(px, py, a, b) {
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const L2 = dx * dx + dy * dy || 1;
+      let t = ((px - a[0]) * dx + (py - a[1]) * dy) / L2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(px - a[0] - t * dx, py - a[1] - t * dy);
+    }
+    function edgeAt(x, y) {
+      let best = null, bd = 9;
+      for (const e of edges) {
+        const p = e.pts;
+        for (let i = 1; i < p.length; i++) {
+          const d = segDist(x, y, p[i - 1], p[i]);
+          if (d < bd) { bd = d; best = e; }
+        }
+      }
+      return best;
+    }
+
+    cv.addEventListener('pointerdown', (ev) => {
+      const [x, y] = pointAt(ev);
+      const i = nodeAt(x, y);
+      if (i >= 0) {
+        drag = { from: i, x, y, sx: x, sy: y, moved: false, over: -1 };
+        cv.setPointerCapture(ev.pointerId);
+        return;
+      }
+      const e = edgeAt(x, y);
+      if (e) {
+        edges = edges.filter((q) => q !== e);
+        hoverEdge = null;
+        graphChanged();
+      }
+    });
+    cv.addEventListener('pointermove', (ev) => {
+      const [x, y] = pointAt(ev);
+      if (drag) {
+        drag.x = x; drag.y = y;
+        if (Math.hypot(x - drag.sx, y - drag.sy) > 6) drag.moved = true;
+        drag.over = nodeAt(x, y);
+        return;
+      }
+      const i = nodeAt(x, y);
+      hoverEdge = i >= 0 ? null : edgeAt(x, y);
+      cv.classList.toggle('hot', i >= 0 || !!hoverEdge);
+    });
+    function endDrag() {
+      if (!drag) return;
+      const { from, over, moved } = drag;
+      drag = null;
+      if (moved && over >= 0 && over !== from && !edges.some((e) => e.from === from && e.to === over)) {
+        edges.push({ id: edgeSeq++, from, to: over, crossed: false, flash: 0, pts: [] });
+        graphChanged();
+      }
+    }
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', () => { drag = null; });
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function frame(t) {
+      const dt = Math.min(0.05, (t - last) / 1000);
+      last = t;
+      now += dt;
+      if (playing && !run.done) {
+        acc += dt * sps();
+        let guard = 0;
+        while (acc >= 1 && !run.done && guard++ < 40) { acc -= 1; step(); }
+      } else if (playing && run.done && repeat && !run.stuck) {
+        doneTimer += dt;
+        if (doneTimer > 2.4) resetRun();
+      }
+      const k = 1 - Math.pow(0.0008, dt);
+      for (const nd of nodes) {
+        let tx, ty;
+        if (nd.placed >= 0) { tx = slotX(nd.placed); ty = strip.y; }
+        else [tx, ty] = homeOf(nd);
+        nd.x += (tx - nd.x) * k;
+        nd.y += (ty - nd.y) * k;
+        nd.inStrip = nd.placed >= 0 && Math.hypot(tx - nd.x, ty - nd.y) < 40;
+      }
+      for (const e of edges) e.flash = Math.max(0, e.flash - dt * 1.6);
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    layout();
+    loadScene('dressing');
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
