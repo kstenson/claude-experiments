@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>One Bit at a Time — Experiment 100</title>
+<meta name="description" content="Frank Gray's 1947 reflected binary code, live: build it by mirroring a list, spin it on a rotary encoder against plain binary with misaligned sensors, and watch it solve the Tower of Hanoi. Each step changes exactly one bit." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+  canvas#cv.grab { cursor: grab; }
+  canvas#cv.grabbing { cursor: grabbing; }
+  canvas#cv.tap { cursor: pointer; }
+
+  /* ---- Floating panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 17px 20px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+
+  .controls { display: grid; gap: 9px; }
+  .row { display: grid; gap: 4px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .only:not(.on) { display: none !important; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  .seg.two { grid-template-columns: repeat(2, 1fr); }
+  .seg button {
+    background: transparent; border: 0; color: #9a9ab0;
+    font-size: 0.76rem; padding: 7px 4px; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #e9e9f0; }
+  .seg button.on { background: rgba(124,124,255,0.24); color: #e9e9ff; }
+  .seg.rose button.on { background: rgba(255,124,195,0.22); color: #ffe0f0; }
+  .seg-label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; margin-bottom: -4px; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.3s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .toggles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .toggle {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.72rem; color: #9a9ab0; cursor: pointer;
+    padding: 7px 8px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    user-select: none; -webkit-user-select: none;
+  }
+  .toggle:hover { color: #e9e9f0; }
+  .toggle i {
+    width: 28px; height: 16px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,0.12); position: relative; transition: background 0.2s ease;
+  }
+  .toggle i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #9a9ab0; transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .toggle.on i::after { transform: translateX(12px); }
+  .toggle.violet.on i { background: rgba(124,124,255,0.4); }
+  .toggle.violet.on i::after { background: #a9a9ff; }
+  .toggle.violet.on { color: #cfcfff; }
+  .toggle.rose.on i { background: rgba(255,124,195,0.4); }
+  .toggle.rose.on i::after { background: #ff9fd2; }
+  .toggle.rose.on { color: #ffd6ec; }
+
+  .verdict {
+    padding: 9px 12px; border-radius: 11px;
+    font-size: 0.8rem; line-height: 1.45;
+    border: 1px solid rgba(124,124,255,0.35);
+    background: rgba(124,124,255,0.1); color: #dcdcff;
+  }
+  .verdict b { font-weight: 700; }
+  .verdict.bad { border-color: rgba(255,124,195,0.45); background: rgba(255,124,195,0.1); color: #ffd6ec; }
+  .verdict.good { border-color: rgba(156,240,200,0.4); background: rgba(156,240,200,0.08); color: #d8fbe9; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.08em; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .readout .full { grid-column: 1 / -1; color: #8f8fa6; font-size: 0.73rem; line-height: 1.55; min-height: 4.6em; }
+
+  .code {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem; line-height: 1.6; color: #cfcfe6;
+  }
+  .code .c { color: #7f7f99; }
+  .code .l1 { color: #b0b0ff; }
+  .code .l2 { color: #ff9fd2; }
+  .code div { padding: 0 4px; border-radius: 4px; transition: background 0.15s ease; }
+  .code div.hot { background: rgba(255,255,255,0.09); }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 4px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; top: 16px; right: 24px; z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: right;
+  }
+
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 46vh;
+      padding: 14px 16px;
+    }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <button id="showUi">show panel</button>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panel (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>One Bit at a Time</h1>
+    <p class="sub">Experiment № 100 · October 25, 2026</p>
+
+    <div class="controls">
+      <p class="seg-label">Watch it</p>
+      <div class="seg" id="views">
+        <button data-view="mirror" class="on">Mirror</button>
+        <button data-view="disc">Encoder</button>
+        <button data-view="hanoi">Hanoi</button>
+      </div>
+
+      <p class="seg-label only" id="codeLabel">Disc is printed in</p>
+      <div class="seg two rose only" id="codes">
+        <button data-code="gray" class="on">Gray code</button>
+        <button data-code="binary">plain binary</button>
+      </div>
+
+      <div class="verdict" id="verdict">—</div>
+
+      <div class="row">
+        <label>Bits <b id="bitsV">5</b></label>
+        <input type="range" id="bits" min="2" max="8" value="5" />
+      </div>
+
+      <div class="row only" id="misRow">
+        <label>Sensor misalignment <b id="misV">—</b></label>
+        <input type="range" id="mis" min="0" max="45" value="28" />
+      </div>
+
+      <div class="row">
+        <label>Pace <b id="speedV">—</b></label>
+        <input type="range" id="speed" min="0" max="100" value="40" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="bPlay">Pause</button>
+        <button class="btn" id="bStep">Step</button>
+        <button class="btn" id="bRestart">Restart</button>
+      </div>
+      <div class="btn-row only" id="jiggleRow">
+        <button class="btn pink" id="bJiggle">Knock the sensors</button>
+      </div>
+
+      <div class="toggles">
+        <div class="toggle violet on" id="tCompare"><i></i>Binary</div>
+        <div class="toggle violet on" id="tChart"><i></i>Trace</div>
+        <div class="toggle rose on" id="tRepeat"><i></i>Repeat</div>
+      </div>
+
+      <div class="readout">
+        <span class="k" id="k0">—</span><span class="v" id="v0">—</span>
+        <span class="k" id="k1">—</span><span class="v" id="v1">—</span>
+        <span class="k" id="k2">—</span><span class="v" id="v2">—</span>
+        <hr />
+        <span class="k" id="k3">—</span><span class="v" id="v3">—</span>
+        <span class="k" id="k4">—</span><span class="v" id="v4">—</span>
+        <span class="k" id="k5">—</span><span class="v" id="v5">—</span>
+        <span class="full" id="rNote">—</span>
+      </div>
+
+      <div class="code" id="code">
+        <div data-l="0"><span class="c">// Gray 1947, the reflected binary code</span></div>
+        <div data-l="1">list(1) = 0, 1</div>
+        <div data-l="2" class="l1">list(k+1) = 0·list(k), then 1·list(k) reversed</div>
+        <div data-l="3">gray(i) = i XOR (i &gt;&gt; 1)</div>
+        <div data-l="4">decode: XOR together g, g&gt;&gt;1, g&gt;&gt;2, …</div>
+        <div data-l="5" class="l2">move k: the bit that flips is k's lowest 1</div>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+
+  <p class="hint" id="hint">—</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 100 · The story</p>
+      <h2>One Bit at a Time</h2>
+
+      <h3>Why I picked it</h3>
+      <p>A hundredth piece felt like it should be about counting, and this is the strangest way to count I know. Frank Gray at Bell Labs filed it in 1947 as a "reflected binary code" for pulse-code communication, though Émile Baudot was already using it in telegraphs in the 1870s and Louis Gros used it in 1872 to solve the Chinese rings puzzle. It's a way of listing every number so that each one differs from the last in a single bit. That sounds like a curiosity until you hold a rotary encoder, the knob inside a volume dial or a robot joint that has to say where it's pointing. Light shines through rings of slots and a row of sensors reads them, but no row of sensors is ever perfectly straight. In plain binary, the step from 7 to 8 flips four rings at once, and a sensor that's a hair early reads 15 for an instant. Gray's code makes that impossible. For the record, 100 is 1100100 in binary and 1010110 in Gray.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The construction is a mirror. Take the list, reflect it, put 0 on the top half and 1 on the bottom. Across the fold the two halves are identical, so the new bit is the only thing that changes there, and you can watch it happen in the first view. Then it turns out the Tower of Hanoi has been doing the same thing all along. On move k you shift the disk numbered by k's lowest 1 bit, which is exactly the bit a Gray counter flips at step k. I didn't believe that the first time I read it, so the third view runs both side by side. My favourite moment is the Encoder view in plain binary at full misalignment, where the trace below the disc sprays pink spikes halfway across the dial. Switch to Gray and they shrink to a stutter of one sector.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When several things have to change at once, the trouble is rarely the values at either end. It's the instant in between, when some parts have changed and others haven't, and anyone looking sees a state that never really existed. Gray's answer wasn't faster sensors. He chose an order where every step changes only one thing, so any reading caught mid-change is the old value or the new one. Asynchronous FIFOs pass their pointers between clock domains in Gray code for the same reason. If you can't make a change happen all at once, see whether you can break it into steps that each change one thing.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const showUi = document.getElementById('showUi');
+  let onPanelChange = () => {};
+  function setPanel(visible) {
+    ui.classList.toggle('hidden', !visible);
+    showUi.classList.toggle('on', !visible);
+    onPanelChange();
+  }
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  document.getElementById('collapse').addEventListener('click', () => setPanel(false));
+  showUi.addEventListener('click', () => setPanel(true));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Gray's reflected binary code ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv');
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, dpr = 1;
+
+    // ---------- helpers ----------
+    const gray = (i) => i ^ (i >> 1);
+    const fromGray = (g) => { let b = 0; while (g) { b ^= g; g >>= 1; } return b; };
+    const pop = (x) => { let c = 0; while (x) { c += x & 1; x >>>= 1; } return c; };
+    const ctz = (x) => { let c = 0; while (x && !(x & 1)) { c++; x >>= 1; } return c; };
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const ease = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const bits = (v, n) => v.toString(2).padStart(n, '0');
+    const TAU = Math.PI * 2;
+
+    const GRAD = [[124, 124, 255], [185, 140, 255], [255, 124, 195]];
+    function gradRGB(t) {
+      t = clamp(t, 0, 1);
+      const s = t * 2, i = Math.min(1, Math.floor(s)), f = s - i;
+      const a = GRAD[i], b = GRAD[i + 1];
+      return [Math.round(a[0] + (b[0] - a[0]) * f), Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f)];
+    }
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+    const PINK = [255, 124, 195], VIOLET = [124, 124, 255], MINT = [156, 240, 200];
+    // colour for bit j of an n-bit word (LSB violet → MSB pink)
+    const bitCol = (j, n) => gradRGB(n <= 1 ? 0 : j / (n - 1));
+
+    function roundRect(x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // ---------- state ----------
+    const S = { view: 'mirror', code: 'gray', n: 5, mis: 0.28, pace: 40, playing: true, compare: true, chart: true, repeat: true };
+    const sp = () => 0.25 * Math.pow(2, S.pace / 20);
+
+    function region() {
+      const hidden = ui.classList.contains('hidden');
+      if (W <= 700) {
+        const h = hidden ? H : H * 0.52;
+        return { x: 0, y: 0, w: W, h, mobile: true };
+      }
+      const left = hidden ? 0 : 380;
+      return { x: left, y: 0, w: W - left, h: H, mobile: false };
+    }
+
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      discCache = null;
+    }
+    window.addEventListener('resize', resize);
+    onPanelChange = () => { discCache = null; };
+
+    // =========================================================
+    // View 1: the mirror construction
+    // =========================================================
+    const M = { k: 1, phase: 'hold', p: 0 };
+    const mirrorMax = () => Math.min(S.n, 6);
+    function mirrorDur() {
+      if (M.phase === 'hold') return M.k >= mirrorMax() ? 3.2 : 1.4;
+      if (M.phase === 'mirror') return 1.6;
+      return 1.1;
+    }
+    function mirrorAdvance(manual) {
+      if (M.phase === 'hold') {
+        if (M.k >= mirrorMax()) {
+          if (S.repeat || manual) { M.k = 1; M.phase = 'hold'; }
+          else { M.p = 1; return; }
+        } else M.phase = 'mirror';
+      } else if (M.phase === 'mirror') M.phase = 'prefix';
+      else { M.k++; M.phase = 'hold'; }
+      M.p = 0;
+    }
+    function mirrorReset() { M.k = 1; M.phase = 'hold'; M.p = 0; }
+    function mirrorUpdate(dt) {
+      if (!S.playing) return;
+      if (M.phase === 'hold' && M.k >= mirrorMax() && !S.repeat && M.p >= 1) return;
+      M.p += dt * sp() / mirrorDur();
+      if (M.p >= 1) {
+        if (M.phase === 'hold' && M.k >= mirrorMax() && !S.repeat) M.p = 1;
+        else mirrorAdvance(false);
+      }
+    }
+
+    function drawCell(x, y, w, h, on, col, alpha) {
+      roundRect(x, y, w, h, Math.min(4, h * 0.3));
+      if (on) {
+        ctx.fillStyle = rgba(col, 0.88 * alpha);
+        ctx.shadowColor = rgba(col, 0.6 * alpha);
+        ctx.shadowBlur = Math.min(10, h * 0.6);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      } else {
+        ctx.fillStyle = `rgba(255,255,255,${0.05 * alpha})`;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(255,255,255,${0.07 * alpha})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+    function outlineCell(x, y, w, h, alpha) {
+      roundRect(x - 1.5, y - 1.5, w + 3, h + 3, Math.min(5, h * 0.35));
+      ctx.strokeStyle = rgba(PINK, alpha);
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+
+    function drawMirror(r) {
+      const nb = mirrorMax(), maxRows = 1 << nb;
+      const top = r.y + (r.mobile ? 46 : 92);
+      const availH = r.h - (top - r.y) - (r.mobile ? 18 : 48);
+      const rowH = Math.min(30, availH / maxRows);
+      const pw = clamp(rowH * 1.05, 13, 34);
+      const cw = pw - Math.max(2, pw * 0.14), ch = Math.max(2, rowH * 0.78);
+      const idxW = rowH >= 9 ? 34 : 14;
+      const cmp = S.compare;
+      const blockW = nb * pw;
+      const totalW = idxW + blockW + (cmp ? 30 + blockW + 18 + 8 * 6 : 0);
+      const x0 = r.x + Math.max(8, (r.w - totalW) / 2);
+      const gRight = x0 + idxW + blockW;
+      const bRight = gRight + 30 + blockW;
+      const tallyX = bRight + 18;
+      const k = M.k, n = 1 << k, e = ease(clamp(M.p, 0, 1));
+      const rowY = (i) => top + i * rowH + (rowH - ch) / 2;
+      const bitX = (right, j) => right - (j + 1) * pw + (pw - cw) / 2;
+
+      // headers
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#b0b0ff';
+      ctx.fillText('GRAY', gRight - blockW / 2, top - 14);
+      if (cmp && M.phase === 'hold') {
+        ctx.fillStyle = 'rgba(200,200,220,0.5)';
+        ctx.fillText('BINARY', bRight - blockW / 2, top - 14);
+        ctx.textAlign = 'left';
+        ctx.fillText('FLIPS', tallyX, top - 14);
+      }
+
+      const drawWord = (y, word, kb, alpha, right, colAlpha, hilite) => {
+        for (let j = 0; j < kb; j++) {
+          const on = (word >> j) & 1;
+          drawCell(bitX(right, j), y, cw, ch, on, bitCol(j, nb), alpha * colAlpha);
+          if (hilite & (1 << j)) outlineCell(bitX(right, j), y, cw, ch, 0.95 * alpha);
+        }
+      };
+
+      // index labels
+      if (rowH >= 9) {
+        ctx.font = `${Math.min(11, rowH * 0.62)}px ui-monospace, Menlo, monospace`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        const rows = M.phase === 'prefix' ? 2 * n : n;
+        for (let i = 0; i < rows; i++) {
+          ctx.fillStyle = 'rgba(160,160,190,0.55)';
+          ctx.fillText(String(i), x0 + idxW - 8, top + (i + 0.5) * rowH);
+        }
+      }
+
+      if (M.phase === 'hold') {
+        for (let i = 0; i < n; i++) {
+          const y = rowY(i);
+          const hl = i > 0 ? (gray(i) ^ gray(i - 1)) : 0;
+          drawWord(y, gray(i), k, 1, gRight, 1, hl);
+          if (cmp) {
+            const bh = i > 0 ? ((i ^ (i - 1)) & (n - 1)) : 0;
+            drawWord(y, i, k, 1, bRight, 0.42, bh);
+            if (i > 0) drawTally(tallyX, top + (i + 0.5) * rowH, pop(bh), rowH);
+          }
+        }
+        // the wrap-around: last word is one bit from the first
+        if (n >= 2) {
+          const xa = x0 + (rowH >= 9 ? 4 : 2);
+          const y1 = top + 0.5 * rowH, y2 = top + (n - 0.5) * rowH;
+          const bulge = Math.min(46, 10 + (y2 - y1) * 0.08);
+          ctx.beginPath();
+          ctx.moveTo(xa, y2);
+          ctx.bezierCurveTo(xa - bulge, y2, xa - bulge, y1, xa, y1);
+          ctx.strokeStyle = rgba(PINK, 0.35 + 0.25 * Math.sin(performance.now() / 400));
+          ctx.lineWidth = 1.4;
+          ctx.setLineDash([3, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      } else if (M.phase === 'mirror') {
+        const Mline = top + n * rowH;
+        for (let i = 0; i < n; i++) drawWord(rowY(i), gray(i), k, 1, gRight, 1, 0);
+        const c = Math.cos(Math.PI * e);
+        for (let i = 0; i < n; i++) {
+          const yc = top + (i + 0.5) * rowH;
+          const y2 = Mline + (yc - Mline) * c;
+          const s = Math.max(0.06, Math.abs(c));
+          ctx.save();
+          ctx.translate(0, y2);
+          ctx.scale(1, s);
+          drawWord(-ch / 2, gray(i), k, 0.35 + 0.65 * e, gRight, 1, 0);
+          ctx.restore();
+        }
+        // the mirror itself
+        const glow = Math.sin(Math.PI * clamp(M.p, 0, 1));
+        ctx.beginPath();
+        ctx.moveTo(gRight - blockW - 22, Mline);
+        ctx.lineTo(gRight + 22, Mline);
+        ctx.strokeStyle = rgba(PINK, 0.35 + 0.6 * glow);
+        ctx.lineWidth = 2;
+        ctx.shadowColor = rgba(PINK, 0.9);
+        ctx.shadowBlur = 14 * glow;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      } else {
+        // prefix: the new bit slides in, 0 on top, 1 below
+        const n2 = 2 * n, Mline = top + n * rowH;
+        for (let i = 0; i < n2; i++) {
+          const word = gray(i) & (n - 1);
+          drawWord(rowY(i), word, k, 1, gRight, 1, 0);
+          const local = ease(clamp(M.p * 1.7 - (i / n2) * 0.7, 0, 1));
+          const x = bitX(gRight, k) - (1 - local) * 40;
+          drawCell(x, rowY(i), cw, ch, i >= n, bitCol(k, nb), local);
+        }
+        ctx.beginPath();
+        ctx.moveTo(gRight - blockW - 22, Mline);
+        ctx.lineTo(gRight + 22, Mline);
+        ctx.strokeStyle = rgba(PINK, 0.5 * (1 - e) + 0.1);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // the one place the new bit changes
+        if (e > 0.6) outlineCell(bitX(gRight, k), rowY(n), cw, ch, (e - 0.6) / 0.4);
+      }
+
+      // caption
+      if (!r.mobile) {
+        ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = 'rgba(200,200,225,0.55)';
+        const cap = M.phase === 'hold' ? `${k}-bit Gray code · ${n} words · every neighbour one bit apart`
+          : M.phase === 'mirror' ? 'reflect the list in a mirror' : 'prefix 0 above the fold, 1 below';
+        ctx.fillText(cap, r.x + r.w / 2, top - 46);
+      }
+    }
+    function drawTally(x, y, count, rowH) {
+      const d = clamp(rowH * 0.22, 1.5, 3.2);
+      for (let c = 0; c < count; c++) {
+        ctx.beginPath();
+        ctx.arc(x + c * (d * 2.6) + d, y, d, 0, TAU);
+        ctx.fillStyle = rgba(PINK, c === 0 ? 0.55 : 0.85);
+        ctx.fill();
+      }
+    }
+
+    // =========================================================
+    // View 2: the rotary encoder
+    // =========================================================
+    const D = { rot: 0.0001, eps: [], hist: [], wild: 0, one: 0, worst: 0, prevErr: 0, prevBits: [], flash: [], dragging: false, lastAng: 0, last: { p: 0, d: 0, word: 0 }, worstPair: null };
+    let discCache = null, discKey = '';
+    function rollEps() {
+      const n = S.n;
+      const v = Array.from({ length: n }, (_, i) => n === 1 ? 0 : -1 + 2 * i / (n - 1));
+      for (let i = v.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [v[i], v[j]] = [v[j], v[i]]; }
+      D.eps = v;
+    }
+    function discResetStats() { D.wild = 0; D.one = 0; D.worst = 0; D.prevErr = 0; D.hist = []; D.worstPair = null; D.prevBits = []; }
+    const codeOf = (p) => S.code === 'gray' ? gray(p) : p;
+    const decode = (w) => S.code === 'gray' ? fromGray(w) : w;
+
+    function discGeom(r) {
+      const chartH = S.chart ? Math.min(140, r.h * (r.mobile ? 0.2 : 0.2)) : 0;
+      const availH = r.h - chartH - (r.mobile ? 30 : 70);
+      const R = Math.max(40, Math.min(r.w * 0.4, availH * 0.42));
+      const cx = r.x + r.w / 2;
+      const cy = r.y + (r.mobile ? 30 : 52) + availH / 2 + (r.mobile ? 6 : 20);
+      const r0 = R * 0.26;
+      return { R, cx, cy, r0, chartH, chartY: r.y + r.h - chartH - (r.mobile ? 8 : 26) };
+    }
+    function ringBand(g, k) {
+      const n = S.n, bw = (g.R - g.r0) / n;
+      return [g.r0 + k * bw + 1.5, g.r0 + (k + 1) * bw - 1.5];
+    }
+    function buildDisc(g) {
+      const key = [S.n, S.code, Math.round(g.R), dpr].join(',');
+      if (discCache && key === discKey) return;
+      discKey = key;
+      const size = Math.ceil((g.R + 24) * 2 * dpr);
+      const oc = document.createElement('canvas');
+      oc.width = oc.height = size;
+      const c = oc.getContext('2d');
+      c.scale(dpr, dpr);
+      c.translate(size / dpr / 2, size / dpr / 2);
+      const n = S.n, N = 1 << n, sec = TAU / N;
+      // faint track for every ring
+      for (let k = 0; k < n; k++) {
+        const [ri, ro] = ringBand(g, k);
+        c.beginPath(); c.arc(0, 0, ro, 0, TAU); c.arc(0, 0, ri, TAU, 0, true);
+        c.fillStyle = 'rgba(255,255,255,0.035)'; c.fill();
+      }
+      for (let k = 0; k < n; k++) {
+        const b = n - 1 - k;                 // innermost ring = most significant bit
+        const col = bitCol(b, n);
+        const [ri, ro] = ringBand(g, k);
+        c.fillStyle = rgba(col, 0.9);
+        c.shadowColor = rgba(col, 0.55);
+        c.shadowBlur = 10;
+        let p = 0;
+        while (p < N) {
+          if ((codeOf(p) >> b) & 1) {
+            let q = p; while (q < N && ((codeOf(q) >> b) & 1)) q++;
+            const a0 = p * sec - Math.PI / 2, a1 = q * sec - Math.PI / 2;
+            const gap = Math.min(0.012, sec * 0.08);
+            c.beginPath(); c.arc(0, 0, ro, a0 + gap, a1 - gap); c.arc(0, 0, ri, a1 - gap, a0 + gap, true); c.closePath();
+            c.fill();
+            p = q;
+          } else p++;
+        }
+        c.shadowBlur = 0;
+      }
+      // sector ticks on the rim
+      c.strokeStyle = 'rgba(255,255,255,0.12)';
+      c.lineWidth = 1;
+      for (let p = 0; p < N; p++) {
+        const a = p * sec - Math.PI / 2;
+        c.beginPath();
+        c.moveTo(Math.cos(a) * (g.R + 4), Math.sin(a) * (g.R + 4));
+        c.lineTo(Math.cos(a) * (g.R + (p % 4 === 0 ? 11 : 7)), Math.sin(a) * (g.R + (p % 4 === 0 ? 11 : 7)));
+        c.stroke();
+      }
+      // hub
+      c.beginPath(); c.arc(0, 0, g.r0 - 6, 0, TAU);
+      c.fillStyle = 'rgba(19,19,29,0.95)'; c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.1)'; c.stroke();
+      discCache = oc;
+    }
+
+    function discRead() {
+      const n = S.n, N = 1 << n, sec = TAU / N;
+      const rot = ((D.rot % TAU) + TAU) % TAU;
+      const p = Math.floor(rot / sec) % N;
+      let word = 0;
+      const now = performance.now();
+      for (let k = 0; k < n; k++) {
+        const b = n - 1 - k;
+        const a = rot + (D.eps[k] || 0) * S.mis * sec;
+        const pk = ((Math.floor(a / sec) % N) + N) % N;
+        const bit = (codeOf(pk) >> b) & 1;
+        if (D.prevBits[k] !== undefined && D.prevBits[k] !== bit) D.flash[k] = now;
+        D.prevBits[k] = bit;
+        word |= bit << b;
+      }
+      const d = decode(word);
+      let err = ((d - p) % N + N) % N; if (err > N / 2) err -= N;
+      if (err !== 0 && err !== D.prevErr) {
+        if (Math.abs(err) === 1) D.one++; else D.wild++;
+        if (Math.abs(err) > D.worst) { D.worst = Math.abs(err); D.worstPair = [p, d]; }
+      }
+      D.prevErr = err;
+      D.last = { p, d, word, err };
+      D.hist.push({ t: now, p, d });
+      while (D.hist.length && now - D.hist[0].t > 7000) D.hist.shift();
+    }
+    function discUpdate(dt) {
+      const N = 1 << S.n;
+      if (S.playing && !D.dragging) {
+        const period = Math.max(12, N * 0.3) / sp();
+        D.rot += TAU * dt / period;
+      }
+      discRead();
+    }
+    function discStep() {
+      const N = 1 << S.n, sec = TAU / N;
+      const rot = ((D.rot % TAU) + TAU) % TAU;
+      const p = Math.floor(rot / sec);
+      D.rot += ((p + 1) * sec + sec * 0.5) - rot;
+    }
+
+    function drawDisc(r) {
+      const g = discGeom(r);
+      buildDisc(g);
+      const n = S.n, N = 1 << n, sec = TAU / N;
+      // halo
+      const halo = ctx.createRadialGradient(g.cx, g.cy, g.r0, g.cx, g.cy, g.R * 1.35);
+      halo.addColorStop(0, 'rgba(124,124,255,0.07)');
+      halo.addColorStop(1, 'rgba(124,124,255,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(g.cx, g.cy, g.R * 1.35, 0, TAU); ctx.fill();
+
+      ctx.save();
+      ctx.translate(g.cx, g.cy);
+      ctx.rotate(-D.rot);
+      const s = discCache.width / dpr;
+      ctx.drawImage(discCache, -s / 2, -s / 2, s, s);
+      ctx.restore();
+
+      // the read head (fixed at 12 o'clock)
+      const now = performance.now();
+      ctx.beginPath();
+      ctx.moveTo(g.cx, g.cy - g.r0 + 8);
+      ctx.lineTo(g.cx, g.cy - g.R - 20);
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // misalignment window
+      for (let k = 0; k < n; k++) {
+        const [ri, ro] = ringBand(g, k);
+        const rm = (ri + ro) / 2;
+        const b = n - 1 - k;
+        const da = (D.eps[k] || 0) * S.mis * sec;
+        const a = -Math.PI / 2 + da;
+        const x = g.cx + Math.cos(a) * rm, y = g.cy + Math.sin(a) * rm;
+        const bit = (D.last.word >> b) & 1;
+        const fl = D.flash[k] ? clamp(1 - (now - D.flash[k]) / 450, 0, 1) : 0;
+        if (fl > 0) {
+          ctx.beginPath(); ctx.arc(x, y, 6 + 10 * fl, 0, TAU);
+          ctx.fillStyle = rgba(PINK, 0.35 * fl); ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(x, y, Math.max(2.5, Math.min(5, (ro - ri) * 0.28)), 0, TAU);
+        if (bit) { ctx.fillStyle = '#ffffff'; ctx.shadowColor = rgba(bitCol(b, n), 1); ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0; }
+        else { ctx.fillStyle = 'rgba(5,5,10,0.9)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.2; ctx.stroke(); }
+      }
+
+      // reading label above the head
+      const wrong = D.last.err !== 0;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = '600 14px ui-monospace, Menlo, monospace';
+      ctx.fillStyle = wrong ? '#ff9fd2' : '#e9e9f0';
+      const wordStr = bits(D.last.word, n);
+      ctx.fillText(wordStr, g.cx, g.cy - g.R - 28);
+      ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = wrong ? rgba(PINK, 0.95) : 'rgba(200,200,225,0.6)';
+      ctx.fillText(wrong ? `reads ${D.last.d} · really ${D.last.p}` : `reads ${D.last.d}`, g.cx, g.cy - g.R - 46);
+      // hub label
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = S.code === 'gray' ? '#ff9fd2' : '#b0b0ff';
+      ctx.fillText(S.code === 'gray' ? 'GRAY' : 'BINARY', g.cx, g.cy + 4);
+
+      if (S.chart) drawTrace(r, g);
+    }
+    function drawTrace(r, g) {
+      const N = 1 << S.n;
+      const x0 = r.x + Math.max(16, r.w * 0.08), x1 = r.x + r.w - Math.max(16, r.w * 0.08);
+      const y0 = g.chartY, h = g.chartH;
+      roundRect(x0 - 8, y0 - 8, x1 - x0 + 16, h + 16, 10);
+      ctx.fillStyle = 'rgba(255,255,255,0.025)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.stroke();
+      ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(200,200,225,0.45)';
+      ctx.fillText('true position (violet) · misreads: off by one (mint), wild (pink) · last 7 s', x0, y0 + 4);
+      if (D.hist.length < 2) return;
+      const now = performance.now(), span = 7000;
+      const X = (t) => x1 - (now - t) / span * (x1 - x0);
+      const Y = (v) => y0 + h - (v / (N - 1)) * h;
+      ctx.beginPath();
+      D.hist.forEach((s, i) => { const x = X(s.t), y = Y(s.p); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+      ctx.strokeStyle = rgba(VIOLET, 0.85); ctx.lineWidth = 1.6; ctx.stroke();
+      for (let i = 1; i < D.hist.length; i++) {
+        const s = D.hist[i];
+        if (s.d === s.p) continue;
+        let diff = Math.abs(s.d - s.p); diff = Math.min(diff, N - diff);
+        const x = X(s.t);
+        ctx.beginPath(); ctx.moveTo(x, Y(s.p)); ctx.lineTo(x, Y(s.d));
+        ctx.strokeStyle = rgba(diff > 1 ? PINK : MINT, diff > 1 ? 0.9 : 0.7);
+        ctx.lineWidth = diff > 1 ? 1.8 : 1.2;
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, Y(s.d), diff > 1 ? 2.4 : 1.4, 0, TAU);
+        ctx.fillStyle = rgba(diff > 1 ? PINK : MINT, 0.95); ctx.fill();
+      }
+    }
+
+    // =========================================================
+    // View 3: Tower of Hanoi, driven by the Gray counter
+    // =========================================================
+    const T = { pegs: [[], [], []], k: 0, move: null, phase: 'pause', p: 0, flash: -1, flashT: 0 };
+    function hanoiReset() {
+      const n = S.n;
+      T.pegs = [Array.from({ length: n }, (_, i) => n - 1 - i), [], []];
+      T.k = 0; T.move = null; T.phase = 'pause'; T.p = 0; T.flash = -1;
+    }
+    const hanoiTotal = () => (1 << S.n) - 1;
+    function hanoiStart() {
+      const k = T.k + 1, d = ctz(k);
+      const from = T.pegs.findIndex((pg) => pg.includes(d));
+      let to;
+      if (d === 0) to = (from + (S.n % 2 ? 2 : 1)) % 3;
+      else to = [0, 1, 2].find((q) => q !== from && (T.pegs[q].length === 0 || T.pegs[q][T.pegs[q].length - 1] > d));
+      T.pegs[from].pop();
+      T.move = { d, from, to, fromH: T.pegs[from].length, toH: T.pegs[to].length };
+      T.phase = 'move'; T.p = 0;
+    }
+    function hanoiLand() {
+      const m = T.move;
+      T.pegs[m.to].push(m.d);
+      T.k++;
+      T.flash = m.d; T.flashT = performance.now();
+      T.move = null;
+      T.phase = T.k >= hanoiTotal() ? 'done' : 'pause';
+      T.p = 0;
+    }
+    function hanoiUpdate(dt) {
+      if (!S.playing) return;
+      const durs = { pause: 0.22, move: 0.8, done: 3 };
+      T.p += dt * sp() / durs[T.phase];
+      if (T.p < 1) return;
+      if (T.phase === 'pause') hanoiStart();
+      else if (T.phase === 'move') hanoiLand();
+      else if (T.phase === 'done') { if (S.repeat) hanoiReset(); else T.p = 1; }
+    }
+    function hanoiStep() {
+      if (T.phase === 'move') hanoiLand();
+      else if (T.phase === 'pause') { hanoiStart(); hanoiLand(); }
+      else hanoiReset();
+    }
+
+    function hanoiGeom(r) {
+      const n = S.n;
+      let counterY = r.y + (r.mobile ? 40 : 110);
+      const cellW = Math.min(46, (r.w - 60) / n - 6);
+      const floorY = r.y + r.h - (r.mobile ? 24 : 70);
+      const gapTop = (S.compare ? 120 : 84);
+      const dh = Math.min(26, (floorY - counterY - gapTop) / (n + 1.6));
+      let baseY = Math.min(floorY, counterY + gapTop + 50 + (n + 1.2) * dh);
+      const shift = (floorY - baseY) / 2;
+      counterY += shift; baseY += shift;
+      const maxW = Math.min(r.w / 3 - 18, 230), minW = Math.max(22, maxW * 0.24);
+      const px = [1, 3, 5].map((m) => r.x + r.w * m / 6);
+      return { counterY, cellW, baseY, dh, maxW, minW, px, pegH: (n + 1.2) * dh };
+    }
+    const diskW = (g, d) => g.minW + (g.maxW - g.minW) * (S.n <= 1 ? 1 : d / (S.n - 1));
+    const diskCol = (d) => bitCol(d, S.n);
+    function drawDisk(g, d, cx, y) {
+      const w = diskW(g, d), col = diskCol(d);
+      roundRect(cx - w / 2, y - g.dh + 2, w, g.dh - 3, Math.min(9, g.dh / 2));
+      const grd = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+      grd.addColorStop(0, rgba(col, 0.75)); grd.addColorStop(0.5, rgba(col, 1)); grd.addColorStop(1, rgba(col, 0.75));
+      ctx.fillStyle = grd;
+      ctx.shadowColor = rgba(col, 0.6); ctx.shadowBlur = 12;
+      ctx.fill(); ctx.shadowBlur = 0;
+      if (g.dh > 15) {
+        ctx.font = `600 ${Math.min(11, g.dh * 0.5)}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(5,5,10,0.75)';
+        ctx.fillText(String(d), cx, y - g.dh / 2 + 0.5);
+      }
+    }
+    function drawHanoi(r) {
+      const g = hanoiGeom(r), n = S.n, now = performance.now();
+      // the Gray counter: bit d belongs to disk d
+      const word = gray(T.k), totalW = n * (g.cellW + 6) - 6;
+      const cx0 = r.x + (r.w - totalW) / 2;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = '#b0b0ff';
+      ctx.fillText(`GRAY COUNTER · STEP ${T.k}`, r.x + r.w / 2, g.counterY - 14);
+      const fl = T.flash >= 0 ? clamp(1 - (now - T.flashT) / 700, 0, 1) : 0;
+      for (let i = 0; i < n; i++) {
+        const d = n - 1 - i;
+        const x = cx0 + i * (g.cellW + 6);
+        drawCell(x, g.counterY, g.cellW, g.cellW * 0.8, (word >> d) & 1, diskCol(d), 1);
+        if (d === T.flash && fl > 0) outlineCell(x, g.counterY, g.cellW, g.cellW * 0.8, fl);
+        ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(200,200,225,0.45)';
+        ctx.fillText(`disk ${d}`, x + g.cellW / 2, g.counterY + g.cellW * 0.8 + 14);
+      }
+      if (S.compare) {
+        const by = g.counterY + g.cellW * 0.8 + 30, bh = Math.min(16, g.cellW * 0.4);
+        const flipped = T.k > 0 ? (T.k ^ (T.k - 1)) : 0;
+        for (let i = 0; i < n; i++) {
+          const d = n - 1 - i;
+          const x = cx0 + i * (g.cellW + 6);
+          drawCell(x, by, g.cellW, bh, (T.k >> d) & 1, [180, 180, 210], 0.45);
+          if ((flipped >> d) & 1 && fl > 0) outlineCell(x, by, g.cellW, bh, fl * 0.8);
+        }
+        ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(200,200,225,0.45)';
+        ctx.fillText(T.k > 0 ? `a binary counter flipped ${pop(flipped)} bit${pop(flipped) === 1 ? '' : 's'} for step ${T.k}` : 'binary counter, for comparison', r.x + r.w / 2, by + bh + 14);
+      }
+
+      // pegs and base
+      roundRect(r.x + r.w * 0.06, g.baseY, r.w * 0.88, 6, 3);
+      ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fill();
+      ['A', 'B', 'C'].forEach((lab, q) => {
+        roundRect(g.px[q] - 2.5, g.baseY - g.pegH, 5, g.pegH, 2.5);
+        ctx.fillStyle = 'rgba(255,255,255,0.16)'; ctx.fill();
+        ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = 'rgba(200,200,225,0.4)';
+        ctx.fillText(lab, g.px[q], g.baseY + 22);
+      });
+      for (let q = 0; q < 3; q++) T.pegs[q].forEach((d, h) => drawDisk(g, d, g.px[q], g.baseY - h * g.dh));
+      if (T.move) {
+        const m = T.move, e = ease(clamp(T.p, 0, 1));
+        const liftY = g.baseY - g.pegH - g.dh * 0.6;
+        const ya = g.baseY - m.fromH * g.dh, yb = g.baseY - m.toH * g.dh;
+        const xa = g.px[m.from], xb = g.px[m.to];
+        const l1 = ya - liftY, l2 = Math.abs(xb - xa), l3 = yb - liftY, L = l1 + l2 + l3;
+        let s = e * L, x, y;
+        if (s < l1) { x = xa; y = ya - s; }
+        else if (s < l1 + l2) { s -= l1; x = xa + Math.sign(xb - xa) * s; y = liftY; }
+        else { s -= l1 + l2; x = xb; y = liftY + s; }
+        drawDisk(g, m.d, x, y);
+      }
+    }
+
+    // =========================================================
+    // panel wiring
+    // =========================================================
+    const verdict = $('verdict');
+    function setRead(rows, note) {
+      for (let i = 0; i < 6; i++) {
+        const [k, v, cls] = rows[i] || ['', '', ''];
+        $('k' + i).textContent = k;
+        const el = $('v' + i);
+        el.textContent = v;
+        el.className = 'v' + (cls ? ' ' + cls : '');
+      }
+      $('rNote').textContent = note;
+    }
+    function setHot(lines) {
+      document.querySelectorAll('#code div').forEach((d) => d.classList.toggle('hot', lines.includes(+d.dataset.l)));
+    }
+    function setVerdict(html, cls) {
+      verdict.innerHTML = html;
+      verdict.className = 'verdict' + (cls ? ' ' + cls : '');
+    }
+
+    let lastPanel = 0;
+    function updatePanel() {
+      const now = performance.now();
+      if (now - lastPanel < 90) return;
+      lastPanel = now;
+      if (S.view === 'mirror') {
+        const k = M.k, n = 1 << k, nb = mirrorMax();
+        let binTotal = 0; for (let i = 1; i < n; i++) binTotal += pop(i ^ (i - 1));
+        const note = M.phase === 'hold'
+          ? 'Every word differs from the one above it in exactly one bit (outlined), and the last differs from the first in one bit too: the dashed loop.'
+          : M.phase === 'mirror'
+            ? 'Reflect the list. Read away from the mirror, the copy is the list backwards, so the two words touching the fold are identical.'
+            : 'Put 0 in front of the top half and 1 in front of the bottom. The new bit changes only at the fold, where everything else matches.';
+        setRead([
+          ['bits', `${k} of ${nb}`, 'violet'],
+          ['words', String(M.phase === 'prefix' ? 2 * n : n)],
+          ['last word', bits(gray((M.phase === 'prefix' ? 2 * n : n) - 1), M.phase === 'prefix' ? k + 1 : k), 'mono pinkv'],
+          ['Gray flips, whole list', String(n - 1), 'mint'],
+          ['binary flips, whole list', String(binTotal), 'pinkv'],
+          ['binary worst step', k > 1 ? `${k} bits` : '1 bit'],
+        ], S.n > 6 ? note + ' (The mirror stops at 6 bits; the other views use all ' + S.n + '.)' : note);
+        setVerdict(M.phase === 'hold' ? `The <b>${k}-bit</b> Gray code: ${n} words, one bit apart`
+          : M.phase === 'mirror' ? `Reflecting to build <b>${k + 1} bits</b>` : `Prefixing the new bit for <b>${k + 1} bits</b>`);
+        setHot(M.phase === 'hold' ? (k === 1 ? [1] : [2, 3]) : [2]);
+      } else if (S.view === 'disc') {
+        const N = 1 << S.n, L = D.last;
+        let note;
+        if (S.mis === 0) note = 'With perfectly aligned sensors neither code ever misreads. Real sensors are never perfect: slide the misalignment up.';
+        else if (S.code === 'gray') note = 'Every sector boundary changes one ring, so a sensor that is early or late can only report the neighbouring sector, never anything far away.';
+        else note = 'Going from 7 to 8 flips four rings at once. When the sensors disagree by a hair, they report a mixture: a number that is nowhere near the true position.';
+        setRead([
+          ['sectors', String(N)],
+          ['under the head', String(L.p), 'violet'],
+          ['sensors report', String(L.d), L.err ? 'pinkv' : 'mint'],
+          ['off-by-one blips', String(D.one), 'mint'],
+          ['wild misreads', String(D.wild), D.wild ? 'pinkv' : ''],
+          ['worst miss', D.worst ? `${D.worst} sector${D.worst === 1 ? '' : 's'}` : '—', D.worst > 1 ? 'pinkv' : ''],
+        ], note);
+        if (D.worst > 1 && D.worstPair) setVerdict(`Plain binary read <b>${D.worstPair[1]}</b> when the disc was at <b>${D.worstPair[0]}</b>`, 'bad');
+        else if (S.code === 'gray' && D.one > 0) setVerdict(`Gray code: <b>${D.one}</b> misreads, every one off by a single sector`, 'good');
+        else setVerdict(S.code === 'gray' ? 'Gray code: watching for misreads…' : 'Plain binary: watching for misreads…');
+        setHot(S.code === 'gray' ? [3, 4] : []);
+      } else {
+        const total = hanoiTotal();
+        const d = T.move ? T.move.d : (T.k > 0 ? ctz(T.k) : null);
+        const shown = T.move ? T.k + 1 : T.k;
+        setRead([
+          ['disks', String(S.n)],
+          ['move', `${shown} / ${total}`, 'violet'],
+          [T.move ? 'disk moving' : 'disk last moved', d === null ? '—' : `disk ${d}`, 'pinkv'],
+          ['Gray word', bits(gray(T.k), S.n), 'mono mint'],
+          ['move in binary', shown ? bits(shown, S.n) : '—', 'mono'],
+          ['its lowest 1 is bit', d === null ? '—' : String(d), 'pinkv'],
+        ], 'Move k shifts the disk numbered by the lowest 1 bit of k, the same bit a Gray counter flips at step k. Disk 0 moves every other turn, always the same way round; every other move is forced.');
+        setVerdict(T.phase === 'done' ? `Solved in <b>${total}</b> moves, every Gray word visited once` : `Move <b>${Math.max(1, shown)}</b> of ${total}: the bit that flips is the disk that moves`, T.phase === 'done' ? 'good' : '');
+        setHot([5]);
+      }
+    }
+
+    function syncViewUi() {
+      document.querySelectorAll('#views button').forEach((b) => b.classList.toggle('on', b.dataset.view === S.view));
+      const disc = S.view === 'disc';
+      ['codeLabel', 'codes', 'misRow', 'jiggleRow'].forEach((id) => $(id).classList.toggle('on', disc));
+      $('tChart').style.opacity = disc ? 1 : 0.4;
+      $('tCompare').style.opacity = disc ? 0.4 : 1;
+      $('hint').textContent = disc ? 'drag the disc to turn it by hand · space pauses · H hides the panel'
+        : 'tap the canvas to step · space pauses · H hides the panel';
+      cv.className = disc ? 'grab' : 'tap';
+      lastPanel = 0;
+    }
+    document.querySelectorAll('#views button').forEach((b) => b.addEventListener('click', () => {
+      S.view = b.dataset.view;
+      if (S.view === 'disc') discResetStats();
+      syncViewUi();
+    }));
+    document.querySelectorAll('#codes button').forEach((b) => b.addEventListener('click', () => {
+      S.code = b.dataset.code;
+      document.querySelectorAll('#codes button').forEach((x) => x.classList.toggle('on', x === b));
+      discCache = null; discResetStats(); lastPanel = 0;
+    }));
+    $('bits').addEventListener('input', (e) => {
+      S.n = +e.target.value; $('bitsV').textContent = S.n;
+      mirrorReset(); hanoiReset(); rollEps(); discResetStats(); discCache = null; lastPanel = 0;
+    });
+    const showMis = () => { $('misV').textContent = S.mis === 0 ? 'none' : `${Math.round(S.mis * 100)}% of a sector`; };
+    $('mis').addEventListener('input', (e) => { S.mis = +e.target.value / 100; showMis(); discResetStats(); });
+    const showSpeed = () => { $('speedV').textContent = '×' + sp().toFixed(sp() < 1 ? 2 : 1); };
+    $('speed').addEventListener('input', (e) => { S.pace = +e.target.value; showSpeed(); });
+    const bPlay = $('bPlay');
+    const togglePlay = () => { S.playing = !S.playing; bPlay.textContent = S.playing ? 'Pause' : 'Play'; };
+    bPlay.addEventListener('click', togglePlay);
+    function step() {
+      if (S.view === 'mirror') mirrorAdvance(true);
+      else if (S.view === 'disc') discStep();
+      else hanoiStep();
+      lastPanel = 0;
+    }
+    $('bStep').addEventListener('click', step);
+    $('bRestart').addEventListener('click', () => {
+      if (S.view === 'mirror') mirrorReset();
+      else if (S.view === 'disc') { D.rot = 0.0001; discResetStats(); }
+      else hanoiReset();
+      lastPanel = 0;
+    });
+    $('bJiggle').addEventListener('click', () => { rollEps(); discResetStats(); lastPanel = 0; });
+    const toggle = (id, key, after) => $(id).addEventListener('click', () => {
+      S[key] = !S[key]; $(id).classList.toggle('on', S[key]); if (after) after(); lastPanel = 0;
+    });
+    toggle('tCompare', 'compare');
+    toggle('tChart', 'chart', () => { discCache = null; });
+    toggle('tRepeat', 'repeat');
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target && e.target.tagName === 'INPUT') return;
+      if (e.key.toLowerCase() === 'h') setPanel(ui.classList.contains('hidden'));
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (e.key === ' ' && !story.classList.contains('open')) { e.preventDefault(); togglePlay(); }
+    });
+
+    // ---------- pointer ----------
+    function pointerAngle(e) {
+      const g = discGeom(region());
+      return { a: Math.atan2(e.clientY - g.cy, e.clientX - g.cx), d: Math.hypot(e.clientX - g.cx, e.clientY - g.cy), g };
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      if (S.view === 'disc') {
+        const { a, d, g } = pointerAngle(e);
+        if (d <= g.R + 20) {
+          D.dragging = true; D.lastAng = a;
+          cv.setPointerCapture(e.pointerId);
+          cv.className = 'grabbing';
+        }
+      } else step();
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!D.dragging) return;
+      const { a } = pointerAngle(e);
+      let da = a - D.lastAng;
+      if (da > Math.PI) da -= TAU; if (da < -Math.PI) da += TAU;
+      D.rot -= da;
+      D.lastAng = a;
+    });
+    const endDrag = () => { if (D.dragging) { D.dragging = false; cv.className = 'grab'; } };
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+
+    // ---------- loop ----------
+    let lastT = performance.now();
+    function frame(t) {
+      const dt = Math.min(0.05, (t - lastT) / 1000);
+      lastT = t;
+      mirrorUpdate(S.view === 'mirror' ? dt : 0);
+      hanoiUpdate(S.view === 'hanoi' ? dt : 0);
+      if (S.view === 'disc') discUpdate(dt);
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      const r = region();
+      const bg = ctx.createRadialGradient(r.x + r.w * 0.5, r.y + r.h * 0.45, 0, r.x + r.w * 0.5, r.y + r.h * 0.45, Math.max(r.w, r.h) * 0.75);
+      bg.addColorStop(0, 'rgba(40,30,80,0.22)');
+      bg.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      if (S.view === 'mirror') drawMirror(r);
+      else if (S.view === 'disc') drawDisc(r);
+      else drawHanoi(r);
+
+      updatePanel();
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    rollEps();
+    hanoiReset();
+    showMis(); showSpeed();
+    syncViewUi();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
