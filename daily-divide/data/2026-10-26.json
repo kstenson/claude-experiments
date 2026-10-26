@@ -1,0 +1,305 @@
+{
+  "date": "2026-10-26",
+  "topic": "Brazil's two extra hours: Flávio Bolsonaro refuses to concede to Lula and seeks to annul the runoff over a last-minute voting extension",
+  "question": "Did a Supreme Court justice's two-hour extension of voting taint Lula's runoff win, or is the annulment bid an attempt to overturn a clear result on a procedural complaint?",
+  "summary": "Lula won Brazil's Oct. 25 runoff with 51.79% of valid votes to Flávio Bolsonaro's 48.21%, a margin of about 4.43 million votes, on higher turnout than the first round. Bolsonaro refused to concede and said he would ask the electoral court to annul the election.\n\nHis complaint centers on Supreme Court Justice Cristiano Zanin, Lula's former lawyer, who at about 5 p.m. granted a request from Lula's coalition and extended voting nationwide by two hours, citing bus shortages in several states. The electoral prosecutor had opposed changing the hours, and the electoral court (TSE) had not yet ruled. The TSE then limited the extension to polling stations still open, and many had already closed, so the extra time was applied unevenly.\n\nThe bus problems were real. In Salvador, a regional electoral judge ordered the arrest of the city's mobility secretary after at least 75 buses stayed in garages; city officials blame campaign stickers and fleet reserves. Bolsonaro's campaign had itself asked the TSE to extend voting in rain-hit southern towns.\n\nThe record supports Bolsonaro's procedural objections: the forum, the judge's ties and the uneven application. It does not support the claim that the extension could have changed a 4.4-million-vote result; reporters found few voters in the extra window. Whether the bus shortfalls were deliberate is unsettled.",
+  "needle": -14,
+  "verdict": "Leans to Lula's side on the checkable core. The margin is large, the extra window drew little traffic by every account, and Bolsonaro's own campaign sought an extension. But his procedural complaints are largely accurate: a Lula-appointed former Lula lawyer on the wrong court changed the rules at closing time over the prosecutor's objection, and the extension reached voters unequally. Lula's camp asserts deliberate suppression that is not yet proven. None of this settles whether the courts overstepped as a matter of Brazilian law.",
+  "weights": {
+    "factualAccuracy": 0.6,
+    "reasoningHonesty": 0.4
+  },
+  "verificationNote": "Final tallies come from Gazeta do Povo's report of the TSE count, matched against CBS/AP and the Rio Times' partial snapshot. The TSE memo and the low demand in the extra window were read at Agência Brasil, Brazil's state news agency, and cross-checked with right-leaning Gazeta do Povo and Fox News. Zanin's order itself was not found; its wording comes from JuriNews and Agência Brasil. No official count of votes cast after 5 p.m. has been published. CNBC, Conjur and Poder360 returned 403 errors, CNN a 451, and NPR and Reuters (via U.S. News) timed out; none were read directly.",
+  "sources_consulted": [
+    "CBS News (AP)",
+    "PBS NewsHour (AP)",
+    "Fox News",
+    "Al Jazeera",
+    "Gazeta do Povo",
+    "Agência Brasil",
+    "Exame",
+    "JuriNews",
+    "Latin Times",
+    "The Rio Times",
+    "Westfair Communications",
+    "Jovem Pan",
+    "Brasil de Fato",
+    "Euronews (Reuters)",
+    "WJLA (AP)",
+    "Migalhas",
+    "IstoÉ Dinheiro",
+    "Metro 1",
+    "Infomoney",
+    "Reuters (via U.S. News)",
+    "CNBC",
+    "CNN",
+    "NPR",
+    "Conjur",
+    "Poder360",
+    "O Povo"
+  ],
+  "sides": {
+    "left": {
+      "label": "A clear win, and voters kept from the polls",
+      "framing": "Lula won by more than four million votes. Bolsonaro-allied city governments left buses in garages in poor, pro-Lula neighborhoods, a judge gave voters time to make up for it, and the loser is now repeating his father's refusal to accept defeat.",
+      "factualAccuracy": 72,
+      "reasoningHonesty": 55,
+      "score": 65,
+      "strongestPoint": "The margin dwarfs anything the extension could plausibly have added, turnout rose from the first round, and Bolsonaro's own campaign asked for more voting time on the same afternoon.",
+      "weakestPoint": "It presents deliberate suppression as established when city officials offer alternative explanations and no court has ruled. It also says little about winning a closing-time rule change from an STF justice who was Lula's lawyer, after the TSE and the electoral prosecutor had not agreed to one."
+    },
+    "right": {
+      "label": "The rules changed at the final whistle",
+      "framing": "A Supreme Court justice who was Lula's personal lawyer bypassed the electoral court and changed the voting hours after polls were due to close, in some places and not others. A result produced that way cannot be recognized.",
+      "factualAccuracy": 58,
+      "reasoningHonesty": 40,
+      "score": 51,
+      "strongestPoint": "The procedural facts check out: Zanin is Lula's former lawyer, the order came from the STF rather than the TSE, the electoral prosecutor opposed it, and the extension reached voters unequally because many stations had already closed.",
+      "weakestPoint": "Nothing shows the extension added votes on a scale that could close a 4.4-million gap, and annulling an election over a remedy his own campaign also sought is a large leap. The claim that PL inspectors were removed from the secure room comes with no evidence."
+    }
+  },
+  "facts": [
+    {
+      "claim": "Lula won the runoff by about 4.4 million votes, on higher turnout than the first round.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Gazeta do Povo, 100% counted: Lula 51.79% (64,256,232), Flávio 48.21% (59,826,041). CBS/AP: a lead of 'nearly 4.4 million votes.' Rio Times (TSE snapshot): turnout 80.79% vs. 78.92% in the first round.",
+      "explanation": "The figures are consistent across the right-leaning Gazeta do Povo, AP and Reuters. Fox News called it a 'narrow margin'; at about 3.6 points it is narrow by percentage but large in absolute votes. The result still awaits formal certification by the TSE.",
+      "source": "Gazeta do Povo",
+      "url": "https://www.gazetadopovo.com.br/eleicoes/2026/flavio-bolsonaro-pronunciamento-anulacao-eleicao/",
+      "corroboration": [
+        {
+          "source": "CBS News (AP)",
+          "url": "https://www.cbsnews.com/news/brazil-presidential-runoff-lula-flavio-bolsonaro/"
+        },
+        {
+          "source": "The Rio Times",
+          "url": "https://www.riotimesonline.com/brazil-runoff-turnout-margin-2026/"
+        }
+      ]
+    },
+    {
+      "claim": "The extension was ordered by a Supreme Court justice who was Lula's lawyer, not by the electoral court, over the electoral prosecutor's objection.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "CBS/AP: 'Bolsonaro ally Nikolas Ferreira pointed out that Zanin was once Lula's lawyer.' JuriNews: the TSE 'had not yet ruled on a similar request,' and the Electoral Public Prosecutor's Office 'opposed changing the voting hours.' Agência Brasil: the TSE acted 'em estrito cumprimento à determinação judicial.'",
+      "explanation": "Zanin was Lula's defense lawyer before Lula appointed him to the STF. The legal basis of the order and the case number were not published in anything readable, and whether the STF had jurisdiction is disputed. Hence medium confidence.",
+      "source": "JuriNews",
+      "url": "https://jurinews.com.br/en/brasil/zanin-determines-extension-in-voting-time-throughout-the-country-until-19h",
+      "corroboration": [
+        {
+          "source": "CBS News (AP)",
+          "url": "https://www.cbsnews.com/news/brazil-presidential-runoff-lula-flavio-bolsonaro/"
+        },
+        {
+          "source": "Agência Brasil",
+          "url": "https://agenciabrasil.ebc.com.br/politica/noticia/2026-10/tse-secoes-eleitorais-ainda-abertas-devem-manter-votacao-ate-19h"
+        }
+      ]
+    },
+    {
+      "claim": "The extension was applied unequally, because many polling stations had already closed when it arrived.",
+      "side": "right",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "Agência Brasil: in the Federal District, polls 'closed at 5 p.m. sharp, before word of the extension reached poll workers'; the TSE said the extension 'serviria apenas para as seções que ainda não tinham encerrado a votação.' Latin Times: stations that had closed 'were required to remain closed.'",
+      "explanation": "The TSE's memo came about 50 minutes after the order, and no count of stations that had closed by then has been published. Unequal treatment is real; whether it favored either candidate is not shown, since closed stations were in both parties' areas.",
+      "source": "Agência Brasil",
+      "url": "https://agenciabrasil.ebc.com.br/politica/noticia/2026-10/prorrogacao-da-votacao-teve-baixa-procura-e-frustracao-de-eleitores",
+      "corroboration": [
+        {
+          "source": "Latin Times",
+          "url": "https://www.latintimes.com/brazil-election-voting-extension-supreme-court-600551"
+        },
+        {
+          "source": "Fox News",
+          "url": "https://www.foxnews.com/world/conservative-wave-hits-roadblock-brazil-lula-holds-off-bolsonaro-challenge"
+        }
+      ]
+    },
+    {
+      "claim": "The extension could have changed the outcome, so the result cannot be recognized.",
+      "side": "right",
+      "verdict": "mostly-false",
+      "confidence": "medium",
+      "evidence": "Agência Brasil headline: the extension 'teve baixa procura.' One São Paulo poll worker: after the extension 'devem ter entrado, no máximo, umas três ou quatro pessoas.' Flávio: 'É impossível reconhecer o resultado das eleições no contexto como essas coisas aconteceram.'",
+      "explanation": "The evidence is reporting from individual polling stations, not an official count; the TSE has published no tally of votes cast after 5 p.m. Overturning a 4.43-million margin would require millions of late votes going almost entirely to Lula at stations that mostly stayed closed. No one has produced evidence of that.",
+      "source": "Agência Brasil",
+      "url": "https://agenciabrasil.ebc.com.br/politica/noticia/2026-10/prorrogacao-da-votacao-teve-baixa-procura-e-frustracao-de-eleitores",
+      "corroboration": [
+        {
+          "source": "Gazeta do Povo",
+          "url": "https://www.gazetadopovo.com.br/eleicoes/2026/flavio-bolsonaro-pronunciamento-anulacao-eleicao/"
+        },
+        {
+          "source": "Al Jazeera",
+          "url": "https://www.aljazeera.com/news/2026/10/26/brazil-election-2026-key-takeaways-from-lulas-historic-win"
+        }
+      ]
+    },
+    {
+      "claim": "Bolsonaro's own campaign asked for longer voting hours on election day.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Gazeta do Povo: his campaign asked the TSE to extend voting 'until 7 p.m.' in towns in São Paulo, Paraná and Santa Catarina, citing rain, flooding and power outages. Its filing: 'o eleitor não pode ser posto diante da escolha entre a própria segurança e o exercício do voto.'",
+      "explanation": "Confirmed by a right-leaning Brazilian outlet and by AP. The difference he draws is real: his request was local, filed with the TSE, while Zanin's order was nationwide and came from the STF. But it undercuts the claim that any extension changes the rules mid-game.",
+      "source": "Gazeta do Povo",
+      "url": "https://www.gazetadopovo.com.br/eleicoes/2026/stf-concede-liminar-e-prorroga-votacao-ate-as-19h-em-todo-o-brasil/",
+      "corroboration": [
+        {
+          "source": "CBS News (AP)",
+          "url": "https://www.cbsnews.com/news/brazil-presidential-runoff-lula-flavio-bolsonaro/"
+        },
+        {
+          "source": "Agência Brasil",
+          "url": "https://agenciabrasil.ebc.com.br/politica/noticia/2026-10/tse-secoes-eleitorais-ainda-abertas-devem-manter-votacao-ate-19h"
+        }
+      ]
+    },
+    {
+      "claim": "Bolsonaro-allied city governments deliberately held back buses to suppress Lula voters.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "low",
+      "evidence": "Exame: TRE-BA ordered the arrest of Salvador mobility secretary Pablo Souza and release of '100% of the bus fleet'; Procon-BA found 55 buses 'ready to operate but parked.' In São Paulo, 9,892 of 13,790 buses (71.7%) were running at 1:20 p.m. Mayor Reis blamed Lula '13' stickers that had to be removed.",
+      "explanation": "Shortfalls and court orders are documented. Intent is not: Salvador cites stickers and fleet reserves, and São Paulo's mayor says demand was met despite short notice. No court has ruled on the merits, and the arrest order had not been carried out because Souza was in Paris. Turnout rose overall.",
+      "source": "Exame",
+      "url": "https://exame.com/brasil/falta-de-onibus-no-2o-turno-pedido-de-prisao-em-salvador-acao-contra-nunes-e-o-que-se-sabe/",
+      "corroboration": [
+        {
+          "source": "CBS News (AP)",
+          "url": "https://www.cbsnews.com/news/brazil-presidential-runoff-lula-flavio-bolsonaro/"
+        },
+        {
+          "source": "The Rio Times",
+          "url": "https://www.riotimesonline.com/brazil-election-court-president-voter-transport-bahia-buses-2026"
+        }
+      ]
+    },
+    {
+      "claim": "Bolsonaro's party's inspectors were removed from the electoral court's secure room after the extension.",
+      "side": "right",
+      "verdict": "unverifiable",
+      "confidence": "low",
+      "evidence": "Gazeta do Povo: Flávio said PL poll-watchers were removed from the 'sala-cofre' once the extension was decided; the paper reports it as his claim without independent confirmation.",
+      "explanation": "No outlet across the spectrum has confirmed it, and the TSE has not responded on the record in anything read. Reuters reportedly said he offered no evidence, but its article could not be opened. It stays unverifiable until his annulment filing or the TSE addresses it.",
+      "source": "Gazeta do Povo",
+      "url": "https://www.gazetadopovo.com.br/eleicoes/2026/flavio-bolsonaro-pronunciamento-anulacao-eleicao/",
+      "corroboration": [
+        {
+          "source": "Reuters (via U.S. News)",
+          "url": "https://www.usnews.com/news/world/articles/2026-10-25/bolsonaro-refuses-to-concede-says-he-will-seek-annulment-of-brazil-vote"
+        }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "The power test: would each side's view of election-day remedies hold if the obstruction ran the other way? Brazil's 2022 runoff is the mirror. Bolsonaro was then president, his federal highway police stopped voter buses mostly in the Lula-leaning Northeast, and Lula's campaign asked for a 7 p.m. extension. The court refused. In 2026 the same request was granted.",
+    "precedent": {
+      "case": "Brazil presidential runoff, Oct. 30, 2022",
+      "what": "Lula's campaign asked the TSE to extend voting to 7 p.m. where about 560 highway police operations had taken place. TSE president Alexandre de Moraes refused, saying 'A eleição termina às 17h como programado' and that no operation had prevented anyone from voting.",
+      "mirror": "In 2022 the court held that delays did not justify changing the hours, and the losing side's later bid to annul votes was rejected and fined. In 2026 an STF justice changed the hours over delays, and the losing side seeks annulment over the change.",
+      "source": "Jovem Pan",
+      "url": "https://jovempan.com.br/politica/moraes-diz-que-operacoes-da-prf-nao-impediram-eleitores-de-votar-e-descarta-prorrogacao-da-votacao/",
+      "corroboration": [
+        {
+          "source": "Brasil de Fato",
+          "url": "https://www.brasildefato.com.br/2022/10/30/moraes-diz-que-prf-nao-causou-perda-de-votos-votacao-terminara-as-17h-em-todo-o-pais/"
+        },
+        {
+          "source": "Euronews (Reuters)",
+          "url": "https://www.euronews.com/2022/10/31/brazil-election-prf"
+        }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Bolsonaro's camp",
+        "then": "2022: when Bolsonaro's highway police delayed voter buses, the stops were defended as traffic-code inspections and no extension was granted. Oct. 25, 2026, afternoon: Flávio's campaign asked the TSE for more time, arguing voters should not have to choose 'between their own safety and the exercise of the vote.'",
+        "now": "Oct. 25, 2026, night: the same campaign calls a two-hour extension grounds for annulment. Flávio: 'He changes the rules of the game mid-game.'",
+        "source": "Gazeta do Povo",
+        "url": "https://www.gazetadopovo.com.br/eleicoes/2026/stf-concede-liminar-e-prorroga-votacao-ate-as-19h-em-todo-o-brasil/",
+        "corroboration": [
+          {
+            "source": "Al Jazeera",
+            "url": "https://www.aljazeera.com/news/2026/10/26/brazil-election-2026-key-takeaways-from-lulas-historic-win"
+          },
+          {
+            "source": "Jovem Pan",
+            "url": "https://jovempan.com.br/?p=74091"
+          }
+        ]
+      },
+      {
+        "who": "Lula's camp",
+        "then": "2022: PT leader Gleisi Hoffmann asked for an extension only 'nos mais de 500 lugares em que aconteceram as operações,' and the campaign accepted the TSE's refusal as final.",
+        "now": "2026: the coalition took the request to an STF justice who was Lula's lawyer before the TSE had ruled, and won a nationwide extension over the electoral prosecutor's objection.",
+        "source": "Jovem Pan",
+        "url": "https://jovempan.com.br/?p=74091",
+        "corroboration": [
+          {
+            "source": "JuriNews",
+            "url": "https://jurinews.com.br/en/brasil/zanin-determines-extension-in-voting-time-throughout-the-country-until-19h"
+          }
+        ]
+      }
+    ],
+    "longRun": "Remove the names and the durable rule is that voting hours should be set by the electoral authority, applied evenly, and changed only for specific, local obstruction. Neither camp holds that rule consistently: each wants flexibility when its voters are stranded and certainty when the other side's are. Expect the next loser, of whichever party, to challenge any late change.",
+    "appliedToScore": "Bolsonaro's camp earns no reasoning credit for defending fixed rules, having asked for a change the same day. Lula's camp earns none for institutional propriety, having gone around the electoral court to a friendly justice. The needle rests on the present-tense facts: the margin, the evidence on late voting, and what the order did."
+  },
+  "pattern": {
+    "thesis": "This is the second straight Brazilian presidential runoff in which a Bolsonaro refused to concede, and the latest clash in a long fight over how far Brazil's top courts reach into politics. Treating it as a one-off procedural spat hides both trends.",
+    "campaigns": [
+      {
+        "where": "PL petition to void votes, November 2022",
+        "what": "Bolsonaro's party asked the TSE to void votes from about 279,000 voting machines; Moraes rejected it and fined the coalition R$22.9 million for bad-faith litigation.",
+        "authorization": "Rejected and sanctioned",
+        "source": "Migalhas",
+        "url": "https://www.migalhas.com.br/quentes/377514/moraes-nega-acao-do-pl-que-questiona-urnas-e-aplica-multa-de-r-22-mi",
+        "corroboration": [
+          {
+            "source": "IstoÉ Dinheiro",
+            "url": "https://www.istoedinheiro.com.br/moraes-nega-pedido-do-pl-para-anular-votos-e-aplica-multa-ao-partido/"
+          }
+        ]
+      },
+      {
+        "where": "Coup trial of Jair Bolsonaro, September 2025",
+        "what": "An STF panel voted 4-1 to sentence the former president to 27 years and three months for attempting a coup after his 2022 loss; Rubio called it a 'witch hunt.'",
+        "authorization": "Convicted; appeals possible",
+        "source": "WJLA (AP)",
+        "url": "https://wjla.com/news/nation-world/brazils-top-court-gives-former-president-bolsonaro-27-years-in-prison-for-coup-attempt-supreme-court-electoral-defeat-political-division-with-hunt-trump-tariffs-president-luiz-inacio-lula-da-silva-office",
+        "corroboration": [
+          {
+            "source": "CBS News (AP)",
+            "url": "https://www.cbsnews.com/news/brazil-presidential-runoff-lula-flavio-bolsonaro/"
+          }
+        ]
+      },
+      {
+        "where": "Suspension of X, August 2024",
+        "what": "Justice Moraes ordered the 'full and immediate suspension' of X nationwide after it missed a deadline to name a legal representative, a case critics cite as STF overreach.",
+        "authorization": "Single-justice order",
+        "source": "Al Jazeera",
+        "url": "https://www.aljazeera.com/economy/2024/8/30/judge-orders-immediate-suspension-of-x-in-brazil",
+        "corroboration": [
+          {
+            "source": "O Povo",
+            "url": "https://www.opovo.com.br/noticias/politica/2024/08/30/moraes-manda-suspender-o-x-antigo-twitter-de-forma-imediata.html"
+          }
+        ]
+      }
+    ],
+    "takeaway": "Two patterns are at work: a political family that has not accepted a defeat since 2022, and single justices who make sweeping decisions on their own. Each side sees only one of them. The tell is a commentator who names one pattern as the whole story."
+  },
+  "notAdjudicable": [
+    "Whether stranded voters' access should outweigh a fixed, uniform closing time, a value trade-off between inclusion and procedural certainty.",
+    "Whether Brazil's Supreme Court should act on election-day emergencies at all, which turns on how much one trusts courts relative to elected and electoral bodies.",
+    "Whether a justice who was a candidate's personal lawyer should rule on that candidate's election, a question of judicial ethics and appearance rather than fact.",
+    "Whether a losing candidate who believes the process was unfair should concede anyway, which weighs democratic norms against the right to contest."
+  ],
+  "biasWatch": "The bias at work is outcome-first proceduralism: judging a procedure by whom it helped. Bolsonaro's supporters treat a real procedural irregularity as proof of a stolen election; Lula's supporters treat a clear margin as proof the procedure was fine. Both skip the question of scale: an improper order can coexist with a result it could not have changed. The tell is any argument that moves from 'the rule change was wrong' to 'the result is void,' or from 'he won by 4 million' to 'nothing improper happened.'"
+}
