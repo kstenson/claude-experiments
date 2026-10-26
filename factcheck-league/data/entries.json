@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-10-25",
+    "lastUpdated": "2026-10-26",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -4725,7 +4725,7 @@
     {
       "id": "2026-10-25",
       "date": "2026-10-25",
-      "headline": true,
+      "headline": false,
       "topic": "Whether EU-era migrants generally stayed a few years then went home",
       "claim": "Migration in the EU years was \"generally younger people, not always, but spending a few years, then going back.\"",
       "speaker": "Andy Burnham",
@@ -4769,6 +4769,52 @@
         {
           "title": "Home Office — Settlement and citizenship grants, year ending September 2025",
           "url": "https://www.gov.uk/government/statistics/immigration-system-statistics-year-ending-september-2025/how-many-indefinite-leave-settlement-and-euss-settled-status-and-citizenship-grants-have-been-issued-in-the-uk"
+        }
+      ]
+    },
+    {
+      "id": "2026-10-26",
+      "date": "2026-10-26",
+      "headline": true,
+      "topic": "Whether 750,000 people from 'small boat nations' have gained EU citizenship since 2020",
+      "claim": "Since 2020, 750,000 migrants from the 'small boat nations' of Afghanistan, Syria, Iran, Iraq and Eritrea have been granted EU citizenship.",
+      "speaker": "Zia Yusuf",
+      "party": "Reform UK",
+      "role": "Reform UK home affairs spokesman",
+      "discussionScore": 60,
+      "discussionNote": "Yusuf's figure was Reform's main numerical attack on Burnham's free-movement opening, the story that led the weekend's news. Farage called it a 'betrayal' and Badenoch and Philp joined in.",
+      "score": 85,
+      "verdict": "Mostly True",
+      "explanation": "The number holds up. Eurostat records about 712,000 citizenship grants to nationals of the five countries across the EU from 2020 to 2024. Syrians make up 442,000 of them. Data for 2025 are not out yet, but Germany alone naturalised 65,600 Syrians that year, which takes the total past 750,000. The framing needs context. Most of these people naturalised after five to ten years of legal residence, many as recognised refugees, not as recent Channel-crossing migrants. They could move to the UK only if free movement returned, and no deal on that exists.",
+      "evidence": [
+        "Eurostat migr_acq, EU27, 2020–2024: Syria 442,092, Iraq 79,583, Afghanistan 75,141, Eritrea 61,905, Iran 53,710. Total 712,431.",
+        "Totals rose every year, from 87,500 in 2020 to 181,200 in 2024.",
+        "Destatis: Germany naturalised 65,600 Syrians in 2025, so 2020–2025 is above 750,000 before counting any other country.",
+        "The EU granted almost 1.2 million citizenships in 2024. Syrians were the largest group, with 110,100.",
+        "Germany's 2024 reform cut the usual residence requirement from eight years to five, driving record naturalisations.",
+        "Burnham has said only that free movement is not a red line. No deal exists before the 20 November UK-EU summit."
+      ],
+      "confidence": "High: official Eurostat counts, though 2025 EU-wide data are not yet published.",
+      "sources": [
+        {
+          "title": "Breitbart — Farage: Burnham plotting 'betrayal' of Brexit voters",
+          "url": "https://www.breitbart.com/europe/2026/10/25/farage-burnham-plotting-betrayal-of-brexit-voters-amid-talk-of-rejoining-eu-open-borders-scheme/"
+        },
+        {
+          "title": "Eurostat — Acquisition of citizenship by previous citizenship (migr_acq)",
+          "url": "https://ec.europa.eu/eurostat/databrowser/view/migr_acq/default/table"
+        },
+        {
+          "title": "Eurostat — Citizenship granted to almost 1.2 million people in 2024",
+          "url": "https://ec.europa.eu/eurostat/web/products-eurostat-news/w/ddn-20260327-1"
+        },
+        {
+          "title": "Destatis — 332,500 naturalisations in 2025",
+          "url": "https://www.destatis.de/DE/Presse/Pressemitteilungen/2026/06/PD26_186_125.html"
+        },
+        {
+          "title": "Brit Brief — Farage and Badenoch condemn Burnham over free movement",
+          "url": "https://britbrief.co.uk/politics/westminster/farage-badenoch-slam-burnham-free-movement-stance.html"
         }
       ]
     }
