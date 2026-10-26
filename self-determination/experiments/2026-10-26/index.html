@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Longest Streak — Experiment 101</title>
+<meta name="description" content="HyperLogLog (Flajolet, Fusy, Gandouet and Meunier, 2007): count the distinct items in a stream using a few hundred bytes, by remembering only the longest run of leading zeros each bucket of hashes has seen." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; }
+
+  /* ---- Panels ---- */
+  .ui, .side {
+    position: fixed;
+    z-index: 10;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui {
+    left: 24px; top: 24px;
+    width: 330px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 17px 20px;
+  }
+  .side {
+    right: 24px; top: 24px;
+    width: 372px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 15px 16px;
+    display: grid; gap: 10px;
+  }
+  .ui.hidden, .side.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.8rem; line-height: 1.55; color: #b4b4c8; margin-bottom: 12px; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].rose::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].rose::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.dim { color: #9a9ab0; font-weight: 500; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7c7cff; }
+  .ticker {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.6rem; line-height: 1.75;
+    padding: 8px 10px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    min-height: 9.6em;
+    overflow: hidden;
+  }
+  .ticker div { white-space: nowrap; display: flex; justify-content: space-between; gap: 8px; }
+  .ticker .id { color: #7f7f99; min-width: 4.2em; }
+  .ticker .bits { letter-spacing: 0.02em; }
+  .ticker .b { color: #8d8dff; }
+  .ticker .z { color: #ff7cc3; }
+  .ticker .one { color: #ffd6ec; font-weight: 700; }
+  .ticker .r { color: #5d5d72; }
+  .ticker .tag { color: #9a9ab0; min-width: 5.6em; text-align: right; }
+  .ticker .rec .tag { color: #9cf0c8; }
+  .ticker .dup .id { color: #55556a; }
+  .key { font-size: 0.68rem; color: #8f8fa6; line-height: 1.5; }
+  .key span { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  .chart-wrap {
+    padding: 8px 10px 6px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  }
+  canvas#chart { display: block; width: 100%; height: 140px; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 12px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; width: max-content; max-width: 90vw;
+  }
+
+  @media (max-width: 1080px) {
+    .side { top: auto; bottom: 24px; width: 340px; max-height: 40vh; }
+    .side .ticker, .side .key, .side .tick-label { display: none; }
+    .hint { display: none; }
+  }
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 44vh;
+      padding: 14px 16px;
+    }
+    .side {
+      left: 12px; right: 12px; top: 12px; bottom: auto;
+      width: auto; max-width: none; max-height: 24vh;
+      padding: 10px 12px; gap: 6px;
+    }
+    .side .ticker, .side .key, .side .tick-label { display: none; }
+    canvas#chart { height: 92px; }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .hint { display: none; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panels (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>The Longest Streak</h1>
+    <p class="sub">Experiment № 101 · October 26, 2026</p>
+    <p class="lede">
+      <b>HyperLogLog</b> counts how many <i>different</i> things it has seen without remembering any of them.
+      Hash each item to random-looking bits; the first few pick a bucket, and the bucket keeps only its
+      <b>longest run of leading zeros</b>. A run of <i>k</i> zeros turns up about once in 2<sup>k</sup> tries,
+      so the streaks give the count away.
+    </p>
+
+    <div class="controls">
+      <div class="row">
+        <label for="speed">Stream speed <b id="speedV">4 / s</b></label>
+        <input type="range" id="speed" min="0" max="100" value="12" />
+      </div>
+      <div class="row">
+        <label for="dup">Repeat visitors <b id="dupV">50%</b></label>
+        <input type="range" id="dup" class="rose" min="0" max="99" value="50" />
+      </div>
+      <div class="row">
+        <label for="prec">Buckets <b id="precV">m = 64 · p = 6</b></label>
+        <input type="range" id="prec" min="4" max="12" value="6" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="pause">Pause</button>
+        <button class="btn" id="burst">+100,000</button>
+        <button class="btn pink" id="reseed">New hash</button>
+        <button class="btn pink" id="reset">Reset</button>
+      </div>
+
+      <div class="readout">
+        <span class="k">items streamed</span><span class="v dim" id="rTotal">0</span>
+        <span class="k">truly distinct</span><span class="v" id="rTrue">0</span>
+        <span class="k">HyperLogLog says</span><span class="v violet" id="rEst">0</span>
+        <span class="k">off by</span><span class="v pinkv" id="rErr">—</span>
+        <span class="k">typical error ±1.04/√m</span><span class="v dim" id="rSigma">13.0%</span>
+        <hr />
+        <span class="k">one streak alone guesses</span><span class="v dim" id="rFM">—</span>
+        <hr />
+        <span class="k">sketch memory</span><span class="v mint" id="rMem">40 bytes</span>
+        <span class="k">exact set would need</span><span class="v dim" id="rSet">0 bytes</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+  <button id="showUi">show panels</button>
+
+  <div class="side" id="side">
+    <p class="section-label tick-label">The latest hashes</p>
+    <div class="ticker" id="ticker"></div>
+    <p class="key"><span class="b">bucket bits</span> pick the spoke · <span class="z">leading zeros</span> + the first <span class="one">1</span> make the rank · a bucket only grows when it sees a <span style="color:#9cf0c8">new record</span></p>
+    <p class="section-label">Estimate ÷ truth, as the stream grows</p>
+    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  </div>
+
+  <p class="hint">Each spoke is one bucket; its length is the longest streak it has seen · drag speed up · H hides panels · space pauses</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 101 · The story</p>
+      <h2>The Longest Streak</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Yesterday was the hundredth of these, and I wanted the first one after it to be about counting. Not counting the slow way, with a list you check every item against, but counting the way a server farm counts unique visitors: billions of arrivals, a few kilobytes of memory, an answer good to a couple of percent. HyperLogLog is the algorithm that does it. It is inside Redis, BigQuery, Presto and most analytics dashboards you have used, and almost nobody who leans on it has seen its insides. I wanted to draw them.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The central trick is a gambler's intuition made exact. If someone tells you the longest run of heads they flipped today was ten, you can guess they flipped about a thousand times, because a run of ten heads shows up about once in 2<sup>10</sup>. That guess on its own is wild (watch the "one streak alone" line jump by factors of two), so the algorithm splits the stream into buckets by the first bits of the hash, keeps a streak per bucket, and takes a harmonic mean, which refuses to let one lucky bucket shout over the rest. I love that duplicates cost nothing: the same item always hashes to the same bits, so it can never set a new record. Turn repeat visitors up to 99% and the estimate doesn't flinch. And I love the ring. With enough items, every spoke settles to within a step or two of the same length, and the length is a logarithm of the crowd.</p>
+
+      <h3>Something you might take away</h3>
+      <p>An exact answer and a useful answer can differ in cost by a factor of a million. A hash set of ten million visitors needs at least eighty megabytes; 4,096 buckets of HyperLogLog need about three kilobytes and are typically off by about 1.6 percent. When a question only needs to be roughly right, ask what the smallest thing is that still carries the answer. Often it is not the data, but one surprising fact about it, like how rare the rarest thing you saw was.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- HyperLogLog ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv'), ctx = cv.getContext('2d');
+    const chart = $('chart'), cctx = chart.getContext('2d');
+    const ui = $('ui'), side = $('side'), showUi = $('showUi');
+
+    // State
+    let p = 6, m = 1 << p;
+    let reg = new Uint8Array(m);
+    let touched = new Float64Array(m);   // last time a register was raised (for the glow)
+    let seed = 0x2545f491;
+    let nextId = 0;                      // ids 0..nextId-1 have been seen: that IS the true distinct count
+    let total = 0;                       // all items including repeats
+    let fmMax = 0;                       // single-register Flajolet–Martin streak (separate hash)
+    let records = 0;
+    let paused = false;
+    let carry = 0;
+    let history = [];                    // {n, ratio}
+    let lastHistN = 0;
+    const recent = [];                   // ticker rows
+    const particles = [];
+    let speed = 4, dup = 0.5;
+
+    // murmur3-style 32-bit mixer; xor + odd multiply + xorshifts are all bijective,
+    // so distinct ids give distinct hashes.
+    function hash(id, s) {
+      let h = Math.imul((id ^ s) >>> 0, 0x9E3779B1);
+      h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b);
+      h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35);
+      h ^= h >>> 16;
+      return h >>> 0;
+    }
+    function rankOf(h) {
+      const w = (h << p) >>> 0;
+      const maxRank = 32 - p + 1;
+      return Math.min(Math.clz32(w) + 1, maxRank);
+    }
+    const TWO32 = 4294967296;
+    function alpha(m) {
+      if (m === 16) return 0.673;
+      if (m === 32) return 0.697;
+      if (m === 64) return 0.709;
+      return 0.7213 / (1 + 1.079 / m);
+    }
+    function estimate() {
+      let sum = 0, zeros = 0;
+      for (let j = 0; j < m; j++) { sum += Math.pow(2, -reg[j]); if (reg[j] === 0) zeros++; }
+      let E = alpha(m) * m * m / sum;
+      if (E <= 2.5 * m && zeros > 0) E = m * Math.log(m / zeros);   // linear counting for small n
+      else if (E > TWO32 / 30) E = -TWO32 * Math.log(1 - E / TWO32);  // 32-bit hash collisions for huge n
+      return E;
+    }
+
+    // Feed one item into the sketch. Returns info for the ticker.
+    function feed(id, now, show, isDup) {
+      const h = hash(id, seed);
+      const j = h >>> (32 - p);
+      const r = rankOf(h);
+      const isRecord = r > reg[j];
+      if (isRecord) { reg[j] = r; touched[j] = now; records++; }
+      const h2 = hash(id, seed ^ 0x5bd1e995);
+      const fz = Math.clz32(h2) + 1;
+      if (fz > fmMax) fmMax = Math.min(fz, 32);
+      if (show) {
+        recent.unshift({ id, h, j, r, isRecord, dup: isDup });
+        if (recent.length > 7) recent.length = 7;
+        if (particles.length < 80) particles.push({ j, r, t: 0, rec: isRecord });
+      }
+    }
+    function nextItem(now, show) {
+      let id, isDup = false;
+      if (nextId > 0 && Math.random() < dup) { id = Math.floor(Math.random() * nextId); isDup = true; }
+      else id = nextId++;
+      total++;
+      feed(id, now, show, isDup);
+      if (nextId >= lastHistN * 1.015 + 1) recordHistory();
+    }
+
+    function recordHistory() {
+      if (nextId === 0) return;
+      lastHistN = nextId;
+      history.push({ n: nextId, ratio: estimate() / nextId });
+      if (history.length > 1400) history = history.filter((_, i) => i % 2 === 0);
+    }
+
+    // Rebuild from the distinct ids. Order and repeats never matter to the sketch,
+    // so replaying each distinct id once gives exactly the same registers.
+    function rebuild() {
+      m = 1 << p;
+      reg = new Uint8Array(m);
+      touched = new Float64Array(m);
+      fmMax = 0; records = 0;
+      const now = performance.now();
+      for (let id = 0; id < nextId; id++) feed(id, now - 2000, false);
+      history = []; lastHistN = 0;
+      recent.length = 0; particles.length = 0;
+      // Re-trace the error curve cheaply from a replay of the ids in order.
+      replayHistory();
+      renderTicker(); updateStats(); drawChart();
+    }
+    function replayHistory() {
+      if (nextId === 0) return;
+      const tmp = new Uint8Array(m);
+      let sum = m, zeros = m, n = 0, nextMark = 1;
+      const a = alpha(m);
+      for (let id = 0; id < nextId; id++) {
+        const h = hash(id, seed);
+        const j = h >>> (32 - p), r = rankOf(h);
+        if (r > tmp[j]) {
+          sum += Math.pow(2, -r) - Math.pow(2, -tmp[j]);
+          if (tmp[j] === 0) zeros--;
+          tmp[j] = r;
+        }
+        n = id + 1;
+        if (n >= nextMark || n === nextId) {
+          let E = a * m * m / sum;
+          if (E <= 2.5 * m && zeros > 0) E = m * Math.log(m / zeros);
+          history.push({ n, ratio: E / n });
+          nextMark = Math.floor(n * 1.015) + 1;
+        }
+      }
+      lastHistN = nextId;
+    }
+
+    function resetAll() {
+      nextId = 0; total = 0;
+      rebuild();
+    }
+
+    // ---- Controls ----
+    const speedFromSlider = (v) => Math.round(Math.pow(10, (v / 100) * Math.log10(200000)));
+    function fmtInt(n) { return Math.round(n).toLocaleString('en-US'); }
+    function fmtBytes(b) {
+      if (b < 1024) return Math.round(b) + ' bytes';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(b < 10240 ? 1 : 0) + ' KB';
+      if (b < 1024 * 1024 * 1024) return (b / 1048576).toFixed(1) + ' MB';
+      return (b / 1073741824).toFixed(2) + ' GB';
+    }
+    function readSpeed() {
+      speed = Math.max(1, speedFromSlider(+$('speed').value));
+      $('speedV').textContent = fmtInt(speed) + ' / s';
+    }
+    function readDup() {
+      dup = +$('dup').value / 100;
+      $('dupV').textContent = Math.round(dup * 100) + '%';
+    }
+    function readPrec() {
+      p = +$('prec').value;
+      $('precV').textContent = 'm = ' + fmtInt(1 << p) + ' · p = ' + p;
+      $('rSigma').textContent = (104 / Math.sqrt(1 << p)).toFixed(1) + '%';
+    }
+    $('speed').addEventListener('input', readSpeed);
+    $('dup').addEventListener('input', readDup);
+    $('prec').addEventListener('input', () => { readPrec(); rebuild(); });
+    $('pause').addEventListener('click', togglePause);
+    function togglePause() { paused = !paused; $('pause').textContent = paused ? 'Play' : 'Pause'; }
+    $('burst').addEventListener('click', () => {
+      const now = performance.now();
+      for (let i = 0; i < 100000; i++) nextItem(now, false);
+      recordHistory(); updateStats(); drawChart();
+    });
+    $('reseed').addEventListener('click', () => {
+      seed = (Math.random() * 0xffffffff) >>> 0;
+      rebuild();
+    });
+    $('reset').addEventListener('click', resetAll);
+
+    function setHidden(h) {
+      ui.classList.toggle('hidden', h);
+      side.classList.toggle('hidden', h);
+      showUi.classList.toggle('on', h);
+    }
+    $('collapse').addEventListener('click', () => setHidden(true));
+    showUi.addEventListener('click', () => setHidden(false));
+    window.addEventListener('keydown', (e) => {
+      if (e.target && e.target.tagName === 'INPUT' && e.key !== ' ') return;
+      if (e.key.toLowerCase() === 'h') setHidden(!ui.classList.contains('hidden'));
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (e.key === ' ') { e.preventDefault(); togglePause(); }
+    });
+
+    // ---- Readouts ----
+    function updateStats() {
+      const E = nextId ? estimate() : 0;
+      $('rTotal').textContent = fmtInt(total);
+      $('rTrue').textContent = fmtInt(nextId);
+      $('rEst').textContent = fmtInt(E);
+      $('rErr').textContent = nextId ? ((E / nextId - 1) * 100 >= 0 ? '+' : '') + ((E / nextId - 1) * 100).toFixed(1) + '%' : '—';
+      $('rFM').textContent = nextId ? '2^' + (fmMax - 1) + ' = ' + fmtInt(Math.pow(2, fmMax - 1)) : '—';
+      // HLL needs 6 bits per register with a 64-bit hash (5 with this 32-bit one).
+      $('rMem').textContent = fmtBytes(m * 5 / 8);
+      $('rSet').textContent = fmtBytes(nextId * 8);
+    }
+
+    function bitsHTML(h, r) {
+      const s = h.toString(2).padStart(32, '0');
+      const z = r - 1;               // zeros before the first 1 (in the part after the bucket bits)
+      const bucket = s.slice(0, p);
+      const rest = s.slice(p);
+      const zs = rest.slice(0, z), one = rest.slice(z, z + 1), tail = rest.slice(z + 1);
+      return '<span class="b">' + bucket + '</span><span class="z">' + zs + '</span><span class="one">' + one + '</span><span class="r">' + tail + '</span>';
+    }
+    function renderTicker() {
+      const t = $('ticker');
+      if (!recent.length) {
+        t.innerHTML = '<div><span class="id">waiting…</span></div>';
+        return;
+      }
+      t.innerHTML = recent.map((e) =>
+        '<div class="' + (e.isRecord ? 'rec' : '') + (e.dup ? ' dup' : '') + '">' +
+        '<span class="id">#' + e.id + '</span>' +
+        '<span class="bits">' + bitsHTML(e.h, e.r) + '</span>' +
+        '<span class="tag">' + (e.isRecord ? '★ ' : '') + 'b' + e.j + ' r' + e.r + '</span></div>'
+      ).join('');
+    }
+
+    // ---- Error chart ----
+    function sizeChart() {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const r = chart.getBoundingClientRect();
+      chart.width = Math.max(10, r.width * dpr); chart.height = Math.max(10, r.height * dpr);
+      cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function drawChart() {
+      const W = chart.clientWidth, H = chart.clientHeight;
+      cctx.clearRect(0, 0, W, H);
+      const padL = 30, padR = 6, padT = 6, padB = 16;
+      const pw = W - padL - padR, ph = H - padT - padB;
+      const yr = 0.4;
+      const maxN = Math.max(1000, nextId);
+      const xmax = Math.pow(10, Math.ceil(Math.log10(maxN + 1)));
+      const X = (n) => padL + (Math.log10(Math.max(1, n)) / Math.log10(xmax)) * pw;
+      const Y = (ratio) => padT + ph / 2 - Math.max(-1, Math.min(1, (ratio - 1) / yr)) * ph / 2;
+      const sig = 1.04 / Math.sqrt(m);
+      // bands
+      cctx.fillStyle = 'rgba(124,124,255,0.07)';
+      cctx.fillRect(padL, Y(1 + 2 * sig), pw, Y(1 - 2 * sig) - Y(1 + 2 * sig));
+      cctx.fillStyle = 'rgba(124,124,255,0.12)';
+      cctx.fillRect(padL, Y(1 + sig), pw, Y(1 - sig) - Y(1 + sig));
+      // axes
+      cctx.font = '9px ui-monospace, Menlo, monospace';
+      cctx.fillStyle = '#6f6f88'; cctx.textAlign = 'right'; cctx.textBaseline = 'middle';
+      for (const v of [-0.4, -0.2, 0, 0.2, 0.4]) {
+        const y = Y(1 + v);
+        cctx.strokeStyle = v === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.06)';
+        cctx.beginPath(); cctx.moveTo(padL, y); cctx.lineTo(W - padR, y); cctx.stroke();
+        cctx.fillText((v > 0 ? '+' : '') + Math.round(v * 100) + '%', padL - 4, y);
+      }
+      cctx.textAlign = 'center'; cctx.textBaseline = 'top';
+      for (let e = 0; Math.pow(10, e) <= xmax; e++) {
+        const x = X(Math.pow(10, e));
+        cctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        cctx.beginPath(); cctx.moveTo(x, padT); cctx.lineTo(x, padT + ph); cctx.stroke();
+        const lab = e === 0 ? '1' : e < 3 ? String(Math.pow(10, e)) : e < 6 ? Math.pow(10, e - 3) + 'k' : Math.pow(10, e - 6) + 'M';
+        cctx.fillText(lab, x, padT + ph + 3);
+      }
+      // line
+      if (history.length) {
+        cctx.strokeStyle = '#ff7cc3'; cctx.lineWidth = 1.5; cctx.lineJoin = 'round';
+        cctx.beginPath();
+        history.forEach((h, i) => { const x = X(h.n), y = Y(h.ratio); i ? cctx.lineTo(x, y) : cctx.moveTo(x, y); });
+        cctx.stroke();
+        const last = history[history.length - 1];
+        cctx.fillStyle = '#ffd6ec';
+        cctx.beginPath(); cctx.arc(X(last.n), Y(last.ratio), 2.6, 0, Math.PI * 2); cctx.fill();
+        cctx.lineWidth = 1;
+      }
+    }
+
+    // ---- The ring ----
+    let W = 0, H = 0, dpr = 1;
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sizeChart(); drawChart();
+    }
+    window.addEventListener('resize', resize);
+
+    function ringBox() {
+      // Fit the ring into the space the panels leave free.
+      let x0 = 0, x1 = W, y0 = 0, y1 = H;
+      const hidden = ui.classList.contains('hidden');
+      if (!hidden) {
+        const a = ui.getBoundingClientRect(), b = side.getBoundingClientRect();
+        if (W <= 700) {
+          y0 = b.bottom + 6; y1 = a.top - 6;
+        } else {
+          // Either squeeze between the panels side by side, or sit above the side panel.
+          x0 = a.right + 12;
+          const between = Math.min(b.left - 12 - x0, H);
+          const above = Math.min(W - x0, b.top - 6);
+          if (b.left > x0 && between >= above) x1 = b.left - 12;
+          else y1 = b.top - 6;
+        }
+      }
+      if (x1 - x0 < 200) { x0 = 0; x1 = W; }
+      if (y1 - y0 < 160) { y0 = 0; y1 = H; }
+      return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, R: Math.max(60, Math.min(x1 - x0, y1 - y0) / 2 - 16) };
+    }
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+    function rankColor(t, alphaV) {
+      // violet #7c7cff → pink #ff7cc3 → pale #ffe6f4
+      let r, g, b;
+      if (t < 0.6) { const u = t / 0.6; r = lerp(124, 255, u); g = 124; b = lerp(255, 195, u); }
+      else { const u = (t - 0.6) / 0.4; r = 255; g = lerp(124, 230, u); b = lerp(195, 244, u); }
+      return 'rgba(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ',' + alphaV + ')';
+    }
+
+    let scale = 6;   // displayed rank range, eased
+    function drawRing(now) {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      const { cx, cy, R } = ringBox();
+      const r0 = R * 0.34;
+      let maxR = 0; for (let j = 0; j < m; j++) if (reg[j] > maxR) maxR = reg[j];
+      const target = Math.max(6, maxR + 1);
+      // Grow at once (no spoke may poke out of the frame), shrink gently.
+      scale = target > scale ? target : scale + (target - scale) * 0.06;
+      const unit = (R - r0) / scale;
+
+      // rank guide rings
+      ctx.lineWidth = 1;
+      ctx.font = '10px ui-monospace, Menlo, monospace';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      for (let k = 1; k <= Math.floor(scale); k++) {
+        const rr = r0 + k * unit;
+        ctx.strokeStyle = k % 5 === 0 ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)';
+        ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2); ctx.stroke();
+        if (k % (scale > 14 ? 4 : 2) === 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.22)';
+          ctx.fillText('rank ' + k, cx + 4, cy - rr - 6);
+        }
+      }
+      // mean rank ring (what the harmonic mean leans on)
+      let mean = 0; for (let j = 0; j < m; j++) mean += reg[j]; mean /= m;
+      if (mean > 0) {
+        ctx.strokeStyle = 'rgba(156,240,200,0.35)'; ctx.setLineDash([3, 5]);
+        ctx.beginPath(); ctx.arc(cx, cy, r0 + mean * unit, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // spokes, batched by rank
+      const step = (Math.PI * 2) / m;
+      const lw = Math.max(1, Math.min(10, (2 * Math.PI * r0 / m) * 0.62));
+      ctx.lineCap = m > 512 ? 'butt' : 'round';
+      ctx.lineWidth = lw;
+      const maxRankAll = 32 - p + 1;
+      for (let k = 0; k <= maxRankAll; k++) {
+        let any = false;
+        ctx.beginPath();
+        for (let j = 0; j < m; j++) {
+          if (reg[j] !== k) continue;
+          any = true;
+          const a = j * step - Math.PI / 2 + step / 2;
+          const c = Math.cos(a), s = Math.sin(a);
+          const len = k === 0 ? 1.5 : k * unit;
+          ctx.moveTo(cx + c * r0, cy + s * r0);
+          ctx.lineTo(cx + c * (r0 + len), cy + s * (r0 + len));
+        }
+        if (!any) continue;
+        ctx.strokeStyle = k === 0 ? 'rgba(255,255,255,0.12)' : rankColor(Math.min(1, k / Math.max(8, scale)), 0.85);
+        ctx.stroke();
+      }
+      // glow on fresh records
+      ctx.lineWidth = lw + 2;
+      for (let j = 0; j < m; j++) {
+        const age = now - touched[j];
+        if (age > 900 || age < 0) continue;
+        const f = 1 - age / 900;
+        const a = j * step - Math.PI / 2 + step / 2;
+        const c = Math.cos(a), s = Math.sin(a);
+        const len = reg[j] * unit;
+        ctx.strokeStyle = 'rgba(156,240,200,' + (0.75 * f) + ')';
+        ctx.beginPath();
+        ctx.moveTo(cx + c * r0, cy + s * r0);
+        ctx.lineTo(cx + c * (r0 + len), cy + s * (r0 + len));
+        ctx.stroke();
+      }
+
+      // particles: each item travels out along its bucket's spoke to its rank
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const q = particles[i];
+        q.t += 1 / 40;
+        if (q.t >= 1.35) { particles.splice(i, 1); continue; }
+        const a = q.j * step - Math.PI / 2 + step / 2;
+        const tt = Math.min(1, q.t);
+        const e = 1 - Math.pow(1 - tt, 3);
+        const rr = r0 * 0.25 + (r0 - r0 * 0.25 + q.r * unit) * e;
+        const fade = q.t > 1 ? 1 - (q.t - 1) / 0.35 : 1;
+        ctx.fillStyle = q.rec ? 'rgba(156,240,200,' + fade + ')' : 'rgba(255,214,236,' + (0.8 * fade) + ')';
+        ctx.beginPath(); ctx.arc(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, q.rec ? 3.4 : 2.4, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // centre: the estimate
+      const E = nextId ? estimate() : 0;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const roomy = r0 > 64;
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = Math.max(9, r0 * 0.11) + 'px ui-sans-serif, system-ui, sans-serif';
+      if (roomy) ctx.fillText('ESTIMATE', cx, cy - r0 * 0.36);
+      ctx.fillStyle = '#e9e9ff';
+      const big = fmtInt(E);
+      ctx.font = '600 ' + Math.max(14, Math.min(r0 * 0.36, (r0 * 1.6) / Math.max(1, big.length) * 1.7)) + 'px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillText(big, cx, cy - r0 * 0.02);
+      ctx.fillStyle = 'rgba(207,207,230,0.6)';
+      ctx.font = Math.max(9, r0 * 0.1) + 'px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillText('truth ' + fmtInt(nextId), cx, cy + r0 * (roomy ? 0.32 : 0.42));
+      if (roomy) {
+        ctx.fillStyle = 'rgba(156,240,200,0.55)';
+        ctx.fillText(fmtBytes(m * 5 / 8) + ' of memory', cx, cy + r0 * 0.52);
+      }
+    }
+
+    // ---- Loop ----
+    let last = performance.now(), lastUi = 0;
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      if (!paused && !story.classList.contains('open')) {
+        carry += speed * dt;
+        let n = Math.floor(carry);
+        carry -= n;
+        n = Math.min(n, 60000);
+        const showEach = speed <= 60;
+        for (let i = 0; i < n; i++) nextItem(now, showEach || i >= n - 7);
+      }
+      drawRing(now);
+      if (now - lastUi > 110) {
+        lastUi = now;
+        updateStats(); renderTicker(); drawChart();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    readSpeed(); readDup(); readPrec();
+    resize();
+    rebuild();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
