@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-27",
+  "score": 43,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "Diplomacy and violence ran side by side. Iran said Washington was \"not serious\" about talks, and a vessel caught fire off Iraq's coast, but envoys from Saudi Arabia, Turkiye and Pakistan kept talking in Tehran. Jordan struck Syria after a church attack, killing at least seven people. In Ukraine, Russia paused strikes on Kherson province so aid could reach occupied Oleshky. In Brazil, Bolsonaro's party accepted Lula's victory despite Trump calling the vote rigged, though the real fell. African trade officials warned that the Iran war threatens food security, and people are missing after a drilling platform sank off Gabon. A scrub fire forced evacuations in Central Otago. Science offered some lift: OpenAI reported AI-driven research results, and an endangered river dolphin population grew. The weighted formula gave 43; no editorial adjustment.",
+  "dimensions": {
+    "conflict": 30,
+    "economy": 40,
+    "climate": 44,
+    "humanInterest": 50,
+    "techProgress": 62
+  },
+  "regions": {
+    "northAmerica": 46,
+    "southAmerica": 60,
+    "europe": 52,
+    "africa": 36,
+    "middleEast": 20,
+    "asia": 46,
+    "oceania": 50
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Iran says US is 'not serious' about talks; vessel on fire off Iraq's coast",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/10/27/iran-war-live-iran-says-us-not-serious-on-talks-ship-on-fire-off-iraq",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Jordan strikes Syria after church attack, killing at least seven people",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/26/jordan-launches-air-strikes-in-syria-in-response-to-a-fatal-church-shooting",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Russia halts strikes on Ukraine's Kherson as Oleshky ceasefire takes effect",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/27/russia-halts-strikes-on-ukraines-kherson-as-oleshky-ceasefire-takes-effect",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Bolsonaro's party accepts Brazil election after Trump calls vote 'rigged'",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/27/bolsonaros-party-accepts-result-after-trump-suggests-vote-was",
+      "dimension": "humanInterest",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Brazil's real sinks after Lula's re-election victory",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/10/26/brazils-real-sinks-after-lulas-re-election-victory",
+      "dimension": "economy",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Africa food security under threat due to Iran war, trade officials warn",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/26/africa-food-security-under-threat-due-to-iran-war-warn-trade-officials",
+      "dimension": "economy",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "People missing after massive drilling platform sinks off Gabon",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/video/newsfeed/2026/10/27/people-missing-after-massive-drilling-platform-sinks-off-gabon",
+      "dimension": "climate",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "US court rules against Trump administration in California voting case",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/27/us-court-rules-against-trump-administration-in-california-voting-case",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Rohingya dismantle homes amid eviction threat in disputed Kashmir region",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/video/newsfeed/2026/10/26/rohingya-deported-disputed-kashmir-region",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Evacuations in Otago township, firefighters battle several blazes",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/emergencies_local/2171007/evacuations-in-otago-township-firefighters-battle-several-blazes",
+      "dimension": "climate",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "AI makes discoveries in mathematics, computer science, physics, OpenAI says",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/10/27/ai-makes-discoveries-in-mathematics-computer-science-physics-openai-says",
+      "dimension": "techProgress"
+    },
+    {
+      "direction": "up",
+      "headline": "Numbers of Endangered and Sacred River Dolphin Grow by 6 After Successful Breeding Season",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/numbers-of-endangered-and-sacred-river-dolphin-grow-by-6-after-successful-breeding-season/",
+      "dimension": "climate"
+    }
+  ],
+  "sources_consulted": [
+    "Al Jazeera",
+    "Euronews",
+    "RNZ",
+    "ScienceDaily",
+    "Good News Network"
+  ]
+}
