@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-10-26",
+    "lastUpdated": "2026-10-27",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -4775,7 +4775,7 @@
     {
       "id": "2026-10-26",
       "date": "2026-10-26",
-      "headline": true,
+      "headline": false,
       "topic": "Whether 750,000 people from 'small boat nations' have gained EU citizenship since 2020",
       "claim": "Since 2020, 750,000 migrants from the 'small boat nations' of Afghanistan, Syria, Iran, Iraq and Eritrea have been granted EU citizenship.",
       "speaker": "Zia Yusuf",
@@ -4815,6 +4815,52 @@
         {
           "title": "Brit Brief — Farage and Badenoch condemn Burnham over free movement",
           "url": "https://britbrief.co.uk/politics/westminster/farage-badenoch-slam-burnham-free-movement-stance.html"
+        }
+      ]
+    },
+    {
+      "id": "2026-10-27",
+      "date": "2026-10-27",
+      "headline": true,
+      "topic": "Whether the pensioner tax shield protects nearly one million people",
+      "claim": "Healey will use his Budget to shield nearly one million pensioners from paying income tax by raising the tax-free allowance for those living solely on the state pension to £13,036.",
+      "speaker": "John Healey",
+      "party": "Labour",
+      "role": "Chancellor of the Exchequer",
+      "discussionScore": 70,
+      "discussionNote": "The Treasury's pre-Budget briefing to The Times led Monday's money coverage across at least six outlets, including the BBC, Telegraph and LBC, ahead of Healey's first Budget on Wednesday.",
+      "score": 60,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The headcount comes from a real official estimate but measures the wrong group. HMRC told MPs that 800,000 to one million pensioners have the state pension as their only income. That counts everyone living on the state pension alone, including many on less than the full rate, who would stay under the £12,570 allowance anyway. The protection only matters for those on the full flat-rate pension. Nobody has published a count of that smaller group. The policy is also not new: Reeves promised it in the 2025 Budget.",
+      "evidence": [
+        "The full new state pension is expected to rise 3.9% in April 2027 to £13,036, above the frozen £12,570 personal allowance.",
+        "HMRC's director of individuals policy told the Treasury Committee in January 2026 that 800,000 to one million pensioners have the state pension as sole income.",
+        "The 2025 Budget promised that people whose only income is the basic or new state pension, without increments, would not pay small tax bills.",
+        "The full basic state pension for pre-2016 retirees is about £184.90 a week, well below the allowance, so most of them need no shield.",
+        "DWP data analysed by Royal London found only around half of new state pension recipients get the full rate.",
+        "Steve Webb (LCP) puts the cost at about £200m a year by 2030 and warns of a cliff edge at £1 of other income."
+      ],
+      "confidence": "Medium: the HMRC range is official, but no published figure counts pensioners on exactly the full rate with no other income.",
+      "sources": [
+        {
+          "title": "Newscord — Healey to shield low-income pensioners: 6 outlets compared",
+          "url": "https://newscord.org/article/john-healey-lifts-pensioners-tax-free-allowance-to-shield-over-one-million-from--Story_20261026_Healeytoshieldlowincc32f7884"
+        },
+        {
+          "title": "City AM — Healey's state pension shield could create a 'messy' cliff edge",
+          "url": "https://www.cityam.com/healeys-state-pension-shield-could-create-messy-200m-cliff-edge/"
+        },
+        {
+          "title": "Commons Library — Taxation of state pension (CBP-10250)",
+          "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-10250/"
+        },
+        {
+          "title": "IFS — A new triple-locked personal allowance for pensioners?",
+          "url": "https://ifs.org.uk/articles/new-triple-locked-personal-allowance-pensioners"
+        },
+        {
+          "title": "Foreign Policy Journal — HMRC evidence to the Treasury Committee on pensioner tax",
+          "url": "https://www.foreignpolicyjournal.com/2026/05/15/rachel-reeves-plans-hmrc-rule-change-to-shield-600000-pensioners-from-income-tax/"
         }
       ]
     }
