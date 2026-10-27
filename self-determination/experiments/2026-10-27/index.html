@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>One Wall at a Time — Experiment 102</title>
+<meta name="description" content="Sutherland and Hodgman's 1974 polygon clipper: cut any shape to a convex window by facing one wall at a time, with four rules per edge. Step through it, drag the shape and the window, or let it drift." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  /* ---- Panels ---- */
+  .ui, .side {
+    position: fixed;
+    z-index: 10;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui {
+    left: 24px; top: 24px;
+    width: 330px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 17px 20px;
+  }
+  .side {
+    right: 24px; top: 24px;
+    width: 300px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 15px 16px;
+    display: grid; gap: 10px;
+  }
+  .ui.hidden, .side.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.8rem; line-height: 1.55; color: #b4b4c8; margin-bottom: 12px; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].rose::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].rose::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.mode { flex: 1 1 40%; }
+  .btn.mode.on { background: rgba(124,124,255,0.42); border-color: rgba(170,170,255,0.8); color: #fff; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.dim { color: #9a9ab0; font-weight: 500; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7c7cff; }
+
+  .cases { display: grid; gap: 6px; }
+  .case {
+    display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.74rem; color: #a9a9bf; line-height: 1.35;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+  .case b { color: #e9e9f0; font-weight: 600; }
+  .case.on { background: rgba(124,124,255,0.18); border-color: rgba(170,170,255,0.55); color: #e9e9f0; }
+  .pair { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #7f7f99; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .dot.in { background: #9cf0c8; box-shadow: 0 0 6px rgba(156,240,200,0.6); }
+  .dot.out { background: #ff7cc3; box-shadow: 0 0 6px rgba(255,124,195,0.6); }
+
+  .passes { display: grid; gap: 4px; font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+  .pass {
+    display: grid; grid-template-columns: 52px 1fr 54px; align-items: center; gap: 8px;
+    padding: 4px 8px; border-radius: 8px; color: #8f8fa6;
+    border: 1px solid transparent;
+  }
+  .pass.on { color: #e9e9f0; background: rgba(255,124,195,0.1); border-color: rgba(255,124,195,0.35); }
+  .pass .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; }
+  .pass .bar i { display: block; height: 100%; background: linear-gradient(90deg, #7c7cff, #ff7cc3); border-radius: 3px; }
+  .pass .n { text-align: right; }
+  .passes-wrap { display: grid; gap: 8px; }
+  .key { font-size: 0.7rem; color: #8f8fa6; line-height: 1.55; }
+  .key .sw { display: inline-block; width: 18px; height: 0; vertical-align: middle; margin: 0 3px 0 0; }
+  .key .sw.v { border-top: 2px solid #9a9aff; }
+  .key .sw.p { border-top: 2px dashed #ff7cc3; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 12px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; width: max-content; max-width: 90vw;
+  }
+
+  @media (max-width: 1080px) {
+    .side { top: auto; bottom: 24px; width: 290px; max-height: 40vh; }
+    .side .passes-wrap, .side .key { display: none; }
+    .hint { display: none; }
+  }
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 42vh;
+      padding: 14px 16px;
+    }
+    .side {
+      left: 12px; right: 12px; top: 12px; bottom: auto;
+      width: auto; max-width: none; max-height: 22vh;
+      padding: 10px 12px; gap: 6px;
+    }
+    .side .section-label { display: none; }
+    .cases { grid-template-columns: 1fr 1fr; gap: 5px; }
+    .case { grid-template-columns: 1fr; gap: 3px; padding: 5px 8px; font-size: 0.68rem; }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panels (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>One Wall at a Time</h1>
+    <p class="sub">Experiment № 102 · October 27, 2026</p>
+    <p class="lede">
+      <b>Sutherland–Hodgman</b> (1974) cuts any polygon down to a convex window without ever looking at the
+      whole window. It faces <b>one wall</b>, walks the shape's edges, keeps what is on the inside by
+      <b>four rules</b>, and hands the result to the next wall. After the last wall, what's left is the clip.
+    </p>
+
+    <div class="controls">
+      <div class="btn-row">
+        <button class="btn mode on" id="mWalk">Walkthrough</button>
+        <button class="btn mode" id="mDrift">Drift</button>
+      </div>
+      <div class="row">
+        <label for="speed">Speed <b id="speedV">3.2 steps / s</b></label>
+        <input type="range" id="speed" min="0" max="100" value="45" />
+      </div>
+      <div class="row">
+        <label for="pts">Shape points <b id="ptsV">14</b></label>
+        <input type="range" id="pts" min="5" max="30" value="14" />
+      </div>
+      <div class="row">
+        <label for="spike">Spikiness <b id="spikeV">55%</b></label>
+        <input type="range" id="spike" min="0" max="90" value="55" />
+      </div>
+      <div class="row">
+        <label for="sides">Window walls <b id="sidesV">5</b></label>
+        <input type="range" id="sides" class="rose" min="3" max="10" value="5" />
+      </div>
+      <div class="row">
+        <label for="size">Window size <b id="sizeV">100%</b></label>
+        <input type="range" id="size" class="rose" min="35" max="150" value="100" />
+      </div>
+      <div class="row">
+        <label for="turn">Window turn <b id="turnV">0°</b></label>
+        <input type="range" id="turn" class="rose" min="0" max="360" value="0" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="play">Pause</button>
+        <button class="btn" id="step">Step</button>
+        <button class="btn pink" id="replay">Replay</button>
+        <button class="btn pink" id="fresh">New shape</button>
+      </div>
+
+      <div class="readout">
+        <span class="k">wall</span><span class="v pinkv" id="rPass">—</span>
+        <span class="k">vertices in → out</span><span class="v" id="rIO">—</span>
+        <hr />
+        <span class="k">shape vertices</span><span class="v dim" id="rSub">0</span>
+        <span class="k">clipped vertices</span><span class="v violet" id="rRes">0</span>
+        <span class="k">area kept</span><span class="v mint" id="rArea">—</span>
+        <span class="k">edges from the shape</span><span class="v violet" id="rShapeE">0</span>
+        <span class="k">edges along the window</span><span class="v pinkv" id="rWinE">0</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+  <button id="showUi">show panels</button>
+
+  <div class="side" id="side">
+    <p class="section-label">For each edge S → E, against one wall</p>
+    <div class="cases">
+      <div class="case" id="c0"><span class="pair"><i class="dot in"></i>→<i class="dot in"></i></span><span><b>staying in</b> · keep E</span></div>
+      <div class="case" id="c1"><span class="pair"><i class="dot in"></i>→<i class="dot out"></i></span><span><b>leaving</b> · keep the crossing</span></div>
+      <div class="case" id="c2"><span class="pair"><i class="dot out"></i>→<i class="dot out"></i></span><span><b>staying out</b> · keep nothing</span></div>
+      <div class="case" id="c3"><span class="pair"><i class="dot out"></i>→<i class="dot in"></i></span><span><b>entering</b> · keep the crossing, then E</span></div>
+    </div>
+    <div class="passes-wrap">
+      <p class="section-label">Vertex count after each wall</p>
+      <div class="passes" id="passes"></div>
+    </div>
+    <p class="key"><span class="sw v"></span>edge the shape already had · <span class="sw p"></span>edge the window drew. Where a concave shape splits in two, the pink edges double back on themselves: zero-width bridges.</p>
+  </div>
+
+  <p class="hint">Drag the shape's points, the shape, or the window · space pauses · → steps · H hides panels</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 102 · The story</p>
+      <h2>One Wall at a Time</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Two weeks ago I drew Bresenham's line algorithm, the routine that decides which pixels a line lights up. But a graphics pipeline does something before that: it throws away everything that falls outside the screen, so it never rasterizes what nobody will see. Ivan Sutherland, who had already built Sketchpad in 1963, and Gary Hodgman published their method for this in 1974 under the title "Reentrant Polygon Clipping." Graphics pipelines have used the same idea ever since, clipping triangles against the planes of the view volume. It is one of those algorithms that runs billions of times a day without anyone thinking about it, and I wanted to slow it down to one edge per beat.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Clipping to a pentagon sounds like a geometry problem with lots of special cases: corners, edges that cross two walls at once, shapes that wrap around the window. The algorithm avoids all of it by never looking at the pentagon. A convex window is just the overlap of a few half-planes, so it clips against one straight wall, then passes the result to the next. Each pass is four lines of logic, and the window's corners show up on their own: one pass leaves a vertex on wall two, and the next pass cuts the edge leading to it where it crosses wall three. I like that the output of each stage is a valid input to the next, which is what "reentrant" means, and why it can be built as a hardware pipeline. I also like its honest flaw. Make the shape spiky enough that two arms poke into the window separately and the result comes back as one polygon, with the pieces joined by pink edges that run along the wall and back again. It doesn't know it made two pieces. Weiler and Atherton fixed that in 1977 with a much more complicated algorithm. Switch to Drift and those seams turn into the lead lines of a stained-glass window.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When a constraint is the overlap of several simple ones, you can usually satisfy them one at a time, in a chain, with each step knowing nothing about the others. Clipping, filtering a query by several conditions, running a document through a series of checks: same shape. The cost is that the chain only sees what each step passes on, so look for where that loses information. Here it is the pieces: every step hands over one list of points, so the result can only ever be one polygon.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Sutherland–Hodgman polygon clipping ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv'), ctx = cv.getContext('2d');
+    const trail = document.createElement('canvas'), tctx = trail.getContext('2d');
+    const ui = $('ui'), side = $('side'), showUi = $('showUi');
+
+    const VIOLET = '#9a9aff', PINK = '#ff7cc3', MINT = '#9cf0c8';
+
+    // ---------- state ----------
+    let W = 0, H = 0, dpr = 1;
+    let center = { x: 0, y: 0 }, baseR = 100;
+    let mode = 'walk';
+    let playing = true;
+    let sps = 3.2;
+    let nPts = 14, spike = 0.55, sides = 5, winScale = 1, winTurn = 0;
+    let seed = 20261027;
+    let subject = [];                 // base subject vertices (absolute px)
+    let pivot = { x: 0, y: 0 };       // subject rotation pivot (drift)
+    let clipC = { x: 0, y: 0 };       // window centre
+    let driftT = 0;
+    let trace = null, events = [], starts = [], total = 0, tl = 0;
+    let drag = null;
+    let hatch = null;
+
+    // ---------- helpers ----------
+    function mulberry(a) {
+      return () => {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    const cross = (a, b, p) => (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+    function signedArea(pts) {
+      let s = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i], q = pts[(i + 1) % pts.length];
+        s += p.x * q.y - q.x * p.y;
+      }
+      return s / 2;
+    }
+    const area = (pts) => Math.abs(signedArea(pts));
+    function rot(p, c, a) {
+      const s = Math.sin(a), co = Math.cos(a), dx = p.x - c.x, dy = p.y - c.y;
+      return { x: c.x + dx * co - dy * s, y: c.y + dx * s + dy * co };
+    }
+    function pathPoly(c, pts, close = true) {
+      c.beginPath();
+      pts.forEach((p, i) => (i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)));
+      if (close) c.closePath();
+    }
+    function pointInPoly(p, pts) {
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const a = pts[i], b = pts[j];
+        if ((a.y > p.y) !== (b.y > p.y) && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+      }
+      return inside;
+    }
+
+    // ---------- the scene ----------
+    function sceneCenter() {
+      if (W > 1080) {
+        const l = 24 + 330, r = W - 24 - 300;
+        return { x: (l + r) / 2, y: H / 2 };
+      }
+      if (W > 700) return { x: W / 2 + 60, y: H * 0.42 };
+      return { x: W / 2, y: H * 0.4 };
+    }
+    function sceneRadius() {
+      if (W > 1080) return Math.min(W - 24 * 4 - 330 - 300, H) * 0.34;
+      if (W > 700) return Math.min(W - 400, H * 0.8) * 0.36;
+      return Math.min(W, H * 0.45) * 0.3;
+    }
+
+    function makeSubject() {
+      const rnd = mulberry(seed);
+      const c = { x: center.x - baseR * 0.22, y: center.y + baseR * 0.05 };
+      const R = baseR * 1.08;
+      const pts = [];
+      for (let i = 0; i < nPts; i++) {
+        const a = (Math.PI * 2 * i) / nPts + (rnd() - 0.5) * 0.55 * (Math.PI * 2 / nPts);
+        const outer = i % 2 === 0;
+        const r = outer ? R * (0.72 + 0.28 * rnd()) : R * (1 - spike * (0.6 + 0.4 * rnd()));
+        pts.push({ x: c.x + Math.cos(a) * r, y: c.y + Math.sin(a) * r });
+      }
+      subject = pts;
+      pivot = c;
+    }
+
+    function clipPoly() {
+      const breathe = mode === 'drift' ? 1 + 0.12 * Math.sin(driftT * 0.37) : 1;
+      const r = baseR * 0.8 * winScale * breathe;
+      const extra = mode === 'drift' ? driftT * 0.11 : 0;
+      const out = [];
+      for (let k = 0; k < sides; k++) {
+        const a = winTurn + extra + (Math.PI * 2 * k) / sides - Math.PI / 2;
+        out.push({ x: clipC.x + Math.cos(a) * r, y: clipC.y + Math.sin(a) * r });
+      }
+      return out;
+    }
+    function subjectNow() {
+      if (mode !== 'drift') return subject;
+      const a = -driftT * 0.06;
+      return subject.map((p) => rot(p, pivot, a));
+    }
+
+    // ---------- the algorithm, recorded ----------
+    // Each point carries `tags`: the walls it is known to lie on. A crossing made
+    // against wall k lies on k, and also on any wall both ends of its edge share.
+    function sutherlandHodgman(subj, clip) {
+      const sgn = signedArea(clip) >= 0 ? 1 : -1;
+      const passes = [];
+      let input = subj.map((p) => ({ x: p.x, y: p.y, tags: [], orig: true }));
+      for (let k = 0; k < clip.length; k++) {
+        const a = clip[k], b = clip[(k + 1) % clip.length];
+        const inside = (p) => sgn * cross(a, b, p) >= 0;
+        const steps = [], output = [];
+        const n = input.length;
+        for (let j = 0; j < n; j++) {
+          const S = input[j], E = input[(j + 1) % n];
+          const sIn = inside(S), eIn = inside(E);
+          const emit = [];
+          let kase;
+          const crossing = () => {
+            const dS = cross(a, b, S), dE = cross(a, b, E);
+            const t = dS / (dS - dE);
+            const shared = S.tags.filter((q) => E.tags.includes(q) && q !== k);
+            return { x: S.x + (E.x - S.x) * t, y: S.y + (E.y - S.y) * t, tags: [k, ...shared], orig: false };
+          };
+          if (sIn && eIn) { kase = 0; emit.push(E); }
+          else if (sIn && !eIn) { kase = 1; emit.push(crossing()); }
+          else if (!sIn && !eIn) { kase = 2; }
+          else { kase = 3; emit.push(crossing(), E); }
+          steps.push({ S, E, sIn, eIn, kase, emit, at: output.length });
+          output.push(...emit);
+        }
+        passes.push({ k, a, b, sgn, input, output, steps, inside });
+        input = output;
+      }
+      return { passes, result: input };
+    }
+
+    function edgeKinds(pts) {
+      let shapeE = 0, winE = 0;
+      const kinds = [];
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i], q = pts[(i + 1) % pts.length];
+        const onWall = p.tags.some((t) => q.tags.includes(t));
+        kinds.push(onWall);
+        if (onWall) winE++; else shapeE++;
+      }
+      return { kinds, shapeE, winE };
+    }
+
+    function rebuild(restart) {
+      trace = sutherlandHodgman(subjectNow(), clipPoly());
+      events = []; starts = []; total = 0;
+      trace.passes.forEach((p, pi) => {
+        p.steps.forEach((s, si) => { starts.push(total); events.push({ pi, si, dur: 1 }); total += 1; });
+        starts.push(total); events.push({ pi, si: -1, dur: 1.8 }); total += 1.8;
+      });
+      if (restart) tl = 0;
+      else if (mode === 'walk') tl = total;
+      renderPasses();
+    }
+
+    function eventAt(t) {
+      if (t >= total) return -1;
+      let lo = 0, hi = events.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (starts[mid] <= t) lo = mid; else hi = mid - 1;
+      }
+      return lo;
+    }
+
+    // ---------- side panel ----------
+    function renderPasses() {
+      const box = $('passes');
+      const maxN = Math.max(1, nPts, ...trace.passes.map((p) => p.output.length));
+      let html = `<div class="pass" data-p="-1"><span>shape</span><span class="bar"><i style="width:${(100 * subject.length) / maxN}%"></i></span><span class="n">${subject.length}</span></div>`;
+      trace.passes.forEach((p, i) => {
+        html += `<div class="pass" data-p="${i}"><span>wall ${i + 1}</span><span class="bar"><i style="width:${(100 * p.output.length) / maxN}%"></i></span><span class="n">${p.input.length} → ${p.output.length}</span></div>`;
+      });
+      box.innerHTML = html;
+    }
+    let lastCase = -2, lastPass = -2;
+    function setActive(pi, kase) {
+      if (kase !== lastCase) {
+        for (let i = 0; i < 4; i++) $('c' + i).classList.toggle('on', i === kase);
+        lastCase = kase;
+      }
+      if (pi !== lastPass) {
+        document.querySelectorAll('.pass').forEach((el) => el.classList.toggle('on', +el.dataset.p === pi));
+        lastPass = pi;
+      }
+    }
+
+    // ---------- drawing ----------
+    function makeHatch() {
+      const c = document.createElement('canvas');
+      c.width = c.height = 12;
+      const g = c.getContext('2d');
+      g.strokeStyle = 'rgba(255,124,195,0.22)';
+      g.lineWidth = 1.2;
+      g.beginPath(); g.moveTo(-2, 14); g.lineTo(14, -2); g.stroke();
+      g.beginPath(); g.moveTo(10, 14); g.lineTo(14, 10); g.stroke();
+      g.beginPath(); g.moveTo(-2, 2); g.lineTo(2, -2); g.stroke();
+      hatch = ctx.createPattern(c, 'repeat');
+    }
+
+    function drawHalfPlane(p) {
+      const dx = p.b.x - p.a.x, dy = p.b.y - p.a.y, len = Math.hypot(dx, dy) || 1;
+      const u = { x: dx / len, y: dy / len };
+      const nrm = { x: -u.y, y: u.x };
+      const out = { x: -p.sgn * nrm.x, y: -p.sgn * nrm.y };
+      const L = 3 * (W + H);
+      const A = { x: p.a.x - u.x * L, y: p.a.y - u.y * L }, B = { x: p.b.x + u.x * L, y: p.b.y + u.y * L };
+      ctx.save();
+      pathPoly(ctx, [A, B, { x: B.x + out.x * L, y: B.y + out.y * L }, { x: A.x + out.x * L, y: A.y + out.y * L }]);
+      ctx.fillStyle = 'rgba(40,10,30,0.35)'; ctx.fill();
+      ctx.fillStyle = hatch; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,124,195,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([6, 6]);
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.shadowColor = PINK; ctx.shadowBlur = 14;
+      ctx.strokeStyle = PINK; ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(p.a.x, p.a.y); ctx.lineTo(p.b.x, p.b.y); ctx.stroke();
+      ctx.restore();
+      // label
+      const mx = (p.a.x + p.b.x) / 2 - out.x * 16, my = (p.a.y + p.b.y) / 2 - out.y * 16;
+      ctx.fillStyle = 'rgba(255,190,225,0.9)';
+      ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('wall ' + (p.k + 1), mx + out.x * 34, my + out.y * 34);
+    }
+
+    function dot(p, r, fill, glow) {
+      ctx.save();
+      if (glow) { ctx.shadowColor = fill; ctx.shadowBlur = 10; }
+      ctx.fillStyle = fill;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    function diamond(p, r, fill) {
+      ctx.save();
+      ctx.shadowColor = fill; ctx.shadowBlur = 10;
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - r); ctx.lineTo(p.x + r, p.y); ctx.lineTo(p.x, p.y + r); ctx.lineTo(p.x - r, p.y);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBackdrop(subj, clip) {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      const g = ctx.createRadialGradient(center.x, center.y, 0, center.x, center.y, Math.max(W, H) * 0.7);
+      g.addColorStop(0, 'rgba(60,50,120,0.16)');
+      g.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      // original shape
+      pathPoly(ctx, subj);
+      ctx.fillStyle = 'rgba(124,124,255,0.05)'; ctx.fill();
+      ctx.setLineDash([4, 5]);
+      ctx.strokeStyle = 'rgba(154,154,255,0.32)'; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.setLineDash([]);
+      // window
+      pathPoly(ctx, clip);
+      ctx.strokeStyle = 'rgba(255,124,195,0.42)'; ctx.lineWidth = 1.5; ctx.stroke();
+      dot(clipC, 2.5, 'rgba(255,124,195,0.5)');
+    }
+
+    function drawFinal(pts) {
+      if (pts.length < 3) return;
+      let x0 = Infinity, x1 = -Infinity;
+      pts.forEach((p) => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); });
+      const g = ctx.createLinearGradient(x0, 0, x1, 0);
+      g.addColorStop(0, 'rgba(124,124,255,0.34)');
+      g.addColorStop(1, 'rgba(255,124,195,0.30)');
+      pathPoly(ctx, pts);
+      ctx.fillStyle = g; ctx.fill('evenodd');
+      const { kinds } = edgeKinds(pts);
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i], q = pts[(i + 1) % pts.length];
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+        if (kinds[i]) { ctx.setLineDash([7, 5]); ctx.strokeStyle = PINK; ctx.lineWidth = 2; }
+        else { ctx.setLineDash([]); ctx.strokeStyle = VIOLET; ctx.lineWidth = 2.4; ctx.shadowColor = VIOLET; ctx.shadowBlur = 8; }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+      ctx.restore();
+      pts.forEach((p) => (p.orig ? dot(p, 3.4, '#cfcfff', true) : diamond(p, 4.2, PINK)));
+    }
+
+    function drawWalk() {
+      const subj = subject, clip = clipPoly();
+      drawBackdrop(subj, clip);
+      const ei = eventAt(tl);
+      if (ei < 0) {
+        drawFinal(trace.result);
+        setActive(-2, -1);
+        $('rPass').textContent = 'done';
+        $('rIO').textContent = `${subject.length} → ${trace.result.length}`;
+        if (trace.result.length < 3) {
+          ctx.fillStyle = 'rgba(255,190,225,0.85)';
+          ctx.font = '600 14px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('nothing survived every wall', center.x, center.y);
+        }
+        return;
+      }
+      const ev = events[ei], frac = Math.min(1, (tl - starts[ei]) / ev.dur);
+      const p = trace.passes[ev.pi];
+      // earlier passes as faint nested ghosts
+      for (let i = 0; i < ev.pi; i++) {
+        const o = trace.passes[i].output;
+        if (o.length < 2) continue;
+        pathPoly(ctx, o);
+        ctx.strokeStyle = `rgba(156,240,200,${0.08 + 0.05 * i / Math.max(1, ev.pi)})`; ctx.lineWidth = 1; ctx.stroke();
+      }
+      drawHalfPlane(p);
+      $('rPass').textContent = `${p.k + 1} of ${trace.passes.length}`;
+
+      if (ev.si === -1) {
+        // pass complete: show its output
+        if (p.input.length > 1) {
+          pathPoly(ctx, p.input);
+          ctx.strokeStyle = `rgba(154,154,255,${0.35 * (1 - frac)})`; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        if (p.output.length > 1) {
+          pathPoly(ctx, p.output);
+          ctx.fillStyle = 'rgba(156,240,200,0.12)'; ctx.fill('evenodd');
+          ctx.save(); ctx.shadowColor = MINT; ctx.shadowBlur = 10;
+          ctx.strokeStyle = MINT; ctx.lineWidth = 2.2; ctx.stroke(); ctx.restore();
+        }
+        p.output.forEach((q) => (q.orig ? dot(q, 3.2, MINT, true) : diamond(q, 4, MINT)));
+        setActive(ev.pi, -1);
+        $('rIO').textContent = `${p.input.length} → ${p.output.length}`;
+        return;
+      }
+
+      const st = p.steps[ev.si];
+      // the pass's input polygon
+      ctx.save(); ctx.lineCap = 'round';
+      p.steps.forEach((s, i) => {
+        ctx.beginPath(); ctx.moveTo(s.S.x, s.S.y); ctx.lineTo(s.E.x, s.E.y);
+        ctx.strokeStyle = i < ev.si ? 'rgba(154,154,255,0.85)' : 'rgba(154,154,255,0.32)';
+        ctx.lineWidth = i < ev.si ? 1.8 : 1.4;
+        ctx.stroke();
+      });
+      // the current edge, drawn as it is walked
+      const e = Math.min(1, frac / 0.55);
+      ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 12;
+      ctx.strokeStyle = '#f2f2ff'; ctx.lineWidth = 3.2;
+      ctx.beginPath(); ctx.moveTo(st.S.x, st.S.y);
+      ctx.lineTo(st.S.x + (st.E.x - st.S.x) * e, st.S.y + (st.E.y - st.S.y) * e); ctx.stroke();
+      ctx.restore();
+      // vertices coloured by side of this wall
+      p.input.forEach((q) => dot(q, 2.6, p.inside(q) ? 'rgba(156,240,200,0.75)' : 'rgba(255,124,195,0.75)'));
+      dot(st.S, 6, st.sIn ? MINT : PINK, true);
+      dot(st.E, 6, st.eIn ? MINT : PINK, true);
+      ctx.fillStyle = '#e9e9f0';
+      ctx.font = '700 12px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('S', st.S.x + 14, st.S.y - 12);
+      ctx.fillText('E', st.E.x + 14, st.E.y - 12);
+
+      // output so far
+      const shown = p.output.slice(0, st.at + (frac > 0.55 ? st.emit.length : 0));
+      if (shown.length > 1) {
+        pathPoly(ctx, shown, false);
+        ctx.save(); ctx.shadowColor = MINT; ctx.shadowBlur = 8;
+        ctx.strokeStyle = 'rgba(156,240,200,0.9)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+      }
+      shown.forEach((q, i) => {
+        const fresh = i >= st.at;
+        const r = fresh ? 5 + 3 * Math.max(0, 1 - (frac - 0.55) / 0.3) : 3.4;
+        q.orig ? dot(q, r, MINT, true) : diamond(q, r + 0.8, MINT);
+      });
+      setActive(ev.pi, st.kase);
+      $('rIO').textContent = `${p.input.length} → ${shown.length}…`;
+    }
+
+    function drawDrift() {
+      const subj = subjectNow(), clip = clipPoly();
+      const res = sutherlandHodgman(subj, clip).result;
+      // fade the trail toward transparent
+      tctx.save();
+      tctx.setTransform(1, 0, 0, 1, 0, 0);
+      tctx.globalCompositeOperation = 'destination-out';
+      tctx.fillStyle = 'rgba(0,0,0,0.028)';
+      tctx.fillRect(0, 0, trail.width, trail.height);
+      tctx.restore();
+      if (res.length > 2) {
+        const hue = 245 + 80 * (0.5 + 0.5 * Math.sin(driftT * 0.21));
+        tctx.save();
+        tctx.globalCompositeOperation = 'lighter';
+        pathPoly(tctx, res);
+        tctx.fillStyle = `hsla(${hue}, 90%, 62%, 0.018)`; tctx.fill('evenodd');
+        const { kinds } = edgeKinds(res);
+        for (let i = 0; i < res.length; i++) {
+          const p = res[i], q = res[(i + 1) % res.length];
+          tctx.beginPath(); tctx.moveTo(p.x, p.y); tctx.lineTo(q.x, q.y);
+          tctx.strokeStyle = kinds[i] ? 'rgba(255,124,195,0.16)' : `hsla(${hue}, 95%, 72%, 0.22)`;
+          tctx.lineWidth = kinds[i] ? 0.9 : 1.1;
+          tctx.stroke();
+        }
+        tctx.restore();
+      }
+      ctx.fillStyle = '#05050a'; ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(trail, 0, 0, W, H);
+      pathPoly(ctx, subj);
+      ctx.strokeStyle = 'rgba(154,154,255,0.16)'; ctx.lineWidth = 1; ctx.stroke();
+      pathPoly(ctx, clip);
+      ctx.strokeStyle = 'rgba(255,124,195,0.3)'; ctx.lineWidth = 1.2; ctx.stroke();
+      if (res.length > 2) {
+        const { kinds } = edgeKinds(res);
+        ctx.save(); ctx.lineCap = 'round';
+        for (let i = 0; i < res.length; i++) {
+          const p = res[i], q = res[(i + 1) % res.length];
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+          ctx.setLineDash(kinds[i] ? [6, 5] : []);
+          ctx.strokeStyle = kinds[i] ? 'rgba(255,124,195,0.85)' : 'rgba(207,207,255,0.95)';
+          ctx.lineWidth = 1.6; ctx.stroke();
+        }
+        ctx.restore();
+      }
+      setActive(-2, -1);
+      $('rPass').textContent = 'all, every frame';
+      $('rIO').textContent = `${subj.length} → ${res.length}`;
+      updateStats(subj, res);
+    }
+
+    function updateStats(subj, res) {
+      $('rSub').textContent = subj.length;
+      $('rRes').textContent = res.length;
+      const a0 = area(subj), a1 = res.length > 2 ? area(res) : 0;
+      $('rArea').textContent = a0 > 0 ? (100 * a1 / a0).toFixed(1) + '%' : '—';
+      const { shapeE, winE } = res.length > 2 ? edgeKinds(res) : { shapeE: 0, winE: 0 };
+      $('rShapeE').textContent = shapeE;
+      $('rWinE').textContent = winE;
+    }
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (mode === 'walk') {
+        if (playing) {
+          tl += dt * sps;
+          if (tl >= total) { tl = total; playing = false; syncPlay(); }
+        }
+        drawWalk();
+      } else {
+        if (playing) driftT += dt * sps * 0.35;
+        drawDrift();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- sizing ----------
+    function resize() {
+      const oldC = center, oldR = baseR;
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      trail.width = cv.width; trail.height = cv.height;
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      center = sceneCenter(); baseR = Math.max(60, sceneRadius());
+      makeHatch();
+      if (!subject.length) {
+        makeSubject();
+        clipC = { x: center.x + baseR * 0.28, y: center.y - baseR * 0.06 };
+        rebuild(true);
+        return;
+      }
+      const map = (p) => ({ x: center.x + (p.x - oldC.x) * baseR / oldR, y: center.y + (p.y - oldC.y) * baseR / oldR });
+      subject = subject.map(map); pivot = map(pivot); clipC = map(clipC);
+      const keep = tl;
+      rebuild(false);
+      if (mode === 'walk') tl = Math.min(keep, total);
+    }
+
+    // ---------- interaction ----------
+    function localPoint(e) {
+      const r = cv.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    function pick(p, touch) {
+      const subj = subjectNow();
+      const tol = touch ? 22 : 13;
+      let best = -1, bd = tol;
+      subj.forEach((q, i) => { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; best = i; } });
+      if (best >= 0) return { kind: 'vertex', i: best };
+      if (Math.hypot(p.x - clipC.x, p.y - clipC.y) < 18 || pointInPoly(p, clipPoly())) return { kind: 'window' };
+      if (pointInPoly(p, subj)) return { kind: 'shape' };
+      return null;
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      const p = localPoint(e);
+      const hit = pick(p, e.pointerType === 'touch');
+      if (!hit) return;
+      drag = { ...hit, last: p };
+      cv.setPointerCapture(e.pointerId);
+      cv.style.cursor = 'grabbing';
+      if (mode === 'walk') { playing = false; syncPlay(); }
+    });
+    cv.addEventListener('pointermove', (e) => {
+      const p = localPoint(e);
+      if (!drag) {
+        const hit = pick(p, false);
+        cv.style.cursor = hit ? (hit.kind === 'vertex' ? 'pointer' : 'grab') : 'default';
+        return;
+      }
+      const dx = p.x - drag.last.x, dy = p.y - drag.last.y;
+      drag.last = p;
+      if (drag.kind === 'vertex') {
+        // undo the drift rotation so the base shape follows the finger
+        const base = mode === 'drift' ? rot(p, pivot, driftT * 0.06) : p;
+        subject[drag.i] = base;
+      } else if (drag.kind === 'window') {
+        clipC = { x: clipC.x + dx, y: clipC.y + dy };
+      } else {
+        subject = subject.map((q) => ({ x: q.x + dx, y: q.y + dy }));
+        pivot = { x: pivot.x + dx, y: pivot.y + dy };
+      }
+      rebuild(false);
+      if (mode === 'walk') updateStats(subject, trace.result);
+    });
+    const endDrag = () => { drag = null; cv.style.cursor = 'default'; };
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+
+    function syncPlay() {
+      $('play').textContent = mode === 'walk' && !playing && tl >= total ? 'Play again' : playing ? 'Pause' : 'Play';
+    }
+    function setMode(m) {
+      mode = m;
+      $('mWalk').classList.toggle('on', m === 'walk');
+      $('mDrift').classList.toggle('on', m === 'drift');
+      $('step').disabled = m !== 'walk';
+      $('step').style.opacity = m === 'walk' ? '' : '0.4';
+      if (m === 'drift') {
+        tctx.save(); tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.clearRect(0, 0, trail.width, trail.height); tctx.restore();
+        playing = true;
+      } else {
+        rebuild(true);
+        playing = true;
+        updateStats(subject, trace.result);
+      }
+      syncPlay();
+    }
+    $('mWalk').addEventListener('click', () => setMode('walk'));
+    $('mDrift').addEventListener('click', () => setMode('drift'));
+
+    function togglePlay() {
+      if (mode === 'walk' && tl >= total) tl = 0;
+      playing = !playing;
+      syncPlay();
+    }
+    function step() {
+      if (mode !== 'walk') return;
+      playing = false;
+      let ei = eventAt(tl + 1e-6);
+      if (ei < 0) return;
+      let target = starts[ei] + events[ei].dur * 0.999;
+      if (target - tl < 0.02) {
+        ei++;
+        target = ei < events.length ? starts[ei] + events[ei].dur * 0.999 : total;
+      }
+      tl = target;
+      syncPlay();
+    }
+    $('play').addEventListener('click', togglePlay);
+    $('step').addEventListener('click', step);
+    $('replay').addEventListener('click', () => {
+      if (mode !== 'walk') setMode('walk');
+      tl = 0; playing = true; syncPlay();
+    });
+    $('fresh').addEventListener('click', () => {
+      seed = (Math.random() * 1e9) | 0;
+      makeSubject();
+      rebuild(mode === 'walk');
+      playing = true; syncPlay();
+      updateStats(subject, trace.result);
+    });
+
+    function bindRange(id, fn) {
+      const el = $(id);
+      const run = () => fn(+el.value);
+      el.addEventListener('input', run);
+      run();
+    }
+    function afterShapeChange() {
+      rebuild(false);
+      if (mode === 'walk') { playing = false; syncPlay(); updateStats(subject, trace.result); }
+    }
+    let ready = false;
+    bindRange('speed', (v) => { sps = 0.6 * Math.pow(40, v / 100); $('speedV').textContent = sps.toFixed(sps < 10 ? 1 : 0) + ' steps / s'; });
+    bindRange('pts', (v) => { nPts = v; $('ptsV').textContent = v; if (ready) { makeSubject(); afterShapeChange(); } });
+    bindRange('spike', (v) => { spike = v / 100; $('spikeV').textContent = v + '%'; if (ready) { makeSubject(); afterShapeChange(); } });
+    bindRange('sides', (v) => { sides = v; $('sidesV').textContent = v; if (ready) afterShapeChange(); });
+    bindRange('size', (v) => { winScale = v / 100; $('sizeV').textContent = v + '%'; if (ready) afterShapeChange(); });
+    bindRange('turn', (v) => { winTurn = (v * Math.PI) / 180; $('turnV').textContent = v + '°'; if (ready) afterShapeChange(); });
+
+    // panels
+    function setPanels(on) {
+      ui.classList.toggle('hidden', !on);
+      side.classList.toggle('hidden', !on);
+      showUi.classList.toggle('on', !on);
+    }
+    $('collapse').addEventListener('click', () => setPanels(false));
+    showUi.addEventListener('click', () => setPanels(true));
+
+    window.addEventListener('keydown', (e) => {
+      const tag = e.target && e.target.tagName;
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (story.classList.contains('open')) return;
+      if (e.key.toLowerCase() === 'h') setPanels(ui.classList.contains('hidden'));
+      if (e.code === 'Space' && tag !== 'BUTTON' && tag !== 'INPUT') { e.preventDefault(); togglePlay(); }
+      if (e.key === 'ArrowRight' && tag !== 'INPUT') { e.preventDefault(); step(); }
+    });
+    window.addEventListener('resize', resize);
+
+    resize();
+    ready = true;
+    updateStats(subject, trace.result);
+    syncPlay();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
