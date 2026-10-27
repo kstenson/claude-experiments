@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-27",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Room for the Trucks",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.14,
+    "summary": "Uneasy calm: Iran calls US talks not serious and a ship burns off Iraq, Jordan strikes Syria after a church attack, a rig sinks off Gabon. But Kherson's guns pause for aid to Oleshky, Brazil's losers concede, and river dolphins number six more.",
+    "palette": {
+      "bg": "#141619",
+      "bg2": "#262b30",
+      "accent": "#e0a458",
+      "accent2": "#6fa8c7",
+      "text": "#ece9e3"
+    }
+  },
+  "style": {
+    "genre": "motorik krautrock — dulcimer, reed organ, picked bass, TR-909",
+    "key": "B",
+    "scale": "mixolydian",
+    "bpm": 108,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (GM dulcimer, GM reed organ, GM picked electric bass, GM choir, Roland TR-909)"
+  ],
+  "pattern": "stack(s(\"bd ~ bd ~ bd ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"RolandTR909\").gain(0.5).lpf(4000).room(0.2), s(\"hh*8\").bank(\"RolandTR909\").gain(perlin.range(0.07,0.15)).hpf(7500).pan(sine.range(0.3,0.7).slow(4)), s(\"~ ~ ~ ~ ~ ~ ~ oh\").bank(\"RolandTR909\").gain(0.12).hpf(6000), note(\"<[b1*8] [b1*8] [a1*8] [e1*8]>\").s(\"gm_electric_bass_pick\").gain(0.5).lpf(sine.range(600,1200).slow(16)), note(\"<[b2,fs3,ds4] [b2,fs3,ds4] [a2,e3,cs4] [e2,b2,gs3]>\").s(\"gm_reed_organ\").attack(0.4).release(1.5).gain(0.22).room(0.5).lpf(1800), note(\"<[b3 ds4 fs4 a4 fs4 ds4 b3 fs4] [b3 ds4 fs4 a4 b4 a4 fs4 ds4] [a3 cs4 e4 a4 e4 cs4 a3 e4] [e3 gs3 b3 e4 gs4 e4 b3 gs3]>\").s(\"gm_dulcimer\").gain(0.32).room(0.35).delay(0.3).delaytime(0.417).jux(rev), note(\"<~ [fs5 ~ ~ e5 ~ ~ ds5 ~] ~ [cs5 ~ ~ ~ b4 ~ ~ ~]>\").s(\"gm_choir_aahs\").attack(0.5).release(2).gain(0.16).room(0.7).rsize(5))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Not serious, Tehran says of the talks,",
+        "a ship burns off the Iraqi shore;",
+        "Jordan answers a church with jets,",
+        "a platform sinks off Gabon, and more."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "The real slides down in São Paulo,",
+        "Otago packs the car tonight,",
+        "but Bolsonaro's people signed the count",
+        "and in Tehran the envoys stay."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Hold the guns on Kherson road,",
+        "make room for the trucks to pass,",
+        "six more dolphins in the river,",
+        "an uneasy calm, but calm at last."
+      ]
+    }
+  ]
+}

@@ -1,57 +1,57 @@
 {
-  "date": "2026-10-26",
+  "date": "2026-10-27",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "No Strikes Today",
+  "title": "Room for the Trucks",
   "mood": {
     "label": "Uneasy calm",
-    "score": -0.16,
-    "summary": "Uneasy calm: Trump rules out strikes on Iran for the day and regional talks are set, but Sanaa is bombed, eight die in Gaza and a nurse is killed fighting Ebola. Lula wins Brazil, Vucic concedes to students, and Brent still sits near $114.",
+    "score": -0.14,
+    "summary": "Uneasy calm: Iran calls US talks not serious and a ship burns off Iraq, Jordan strikes Syria after a church attack, a rig sinks off Gabon. But Kherson's guns pause for aid to Oleshky, Brazil's losers concede, and river dolphins number six more.",
     "palette": {
-      "bg": "#10171a",
-      "bg2": "#1f2e33",
-      "accent": "#d9b46a",
-      "accent2": "#7fb8b0",
-      "text": "#e8ebe6"
+      "bg": "#141619",
+      "bg2": "#262b30",
+      "accent": "#e0a458",
+      "accent2": "#6fa8c7",
+      "text": "#ece9e3"
     }
   },
   "style": {
-    "genre": "dub — steel drums, clean guitar skank, sub bass, AkaiLinn",
-    "key": "E",
-    "scale": "melodic minor",
-    "bpm": 94,
-    "swing": 0.08
+    "genre": "motorik krautrock — dulcimer, reed organ, picked bass, TR-909",
+    "key": "B",
+    "scale": "mixolydian",
+    "bpm": 108,
+    "swing": 0
   },
   "sampleSources": [
-    "Strudel default library (GM steel drums, GM clean electric guitar, GM harmonica, Akai Linn)"
+    "Strudel default library (GM dulcimer, GM reed organ, GM picked electric bass, GM choir, Roland TR-909)"
   ],
-  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~, ~ ~ ~ ~ sd ~ ~ ~\").bank(\"AkaiLinn\").gain(0.55).lpf(3000).room(0.3), s(\"~ hh ~ hh ~ hh ~ [hh hh]\").bank(\"AkaiLinn\").gain(perlin.range(0.08,0.18)).hpf(6000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ ~ cp ~ ~ ~ ~ cp\").bank(\"AkaiLinn\").gain(0.2).delay(0.4).delaytime(0.48).room(0.4), note(\"<[e1 ~ ~ e1 ~ ~ b1 ~] [a1 ~ ~ a1 ~ ~ e1 ~] [e1 ~ ~ g1 ~ ~ e1 ~] [b0 ~ ~ b0 ~ ~ ds1 ~]>\").s(\"sine\").gain(0.6).lpf(400).release(0.4), note(\"<[e3,g3,b3,ds4] [a3,cs4,e4] [e3,g3,b3,ds4] [b2,ds3,fs3,a3]>\").struct(\"~ x ~ x ~ x ~ x\").s(\"gm_electric_guitar_clean\").gain(0.32).hpf(400).room(0.3).delay(0.3).delaytime(0.24).pan(0.62), note(\"<[b4 ~ ~ g4 ~ fs4 ~ ~] [e5 ~ cs5 ~ ~ ~ a4 ~] [g4 ~ b4 ~ ds5 ~ ~ e5] [fs5 ~ ~ ~ ds5 ~ b4 ~]>\").s(\"gm_steel_drums\").gain(0.36).room(0.5).delay(0.35).delaytime(0.48).jux(rev), note(\"<~ ~ [e4 ~ fs4 g4 ~ ~ ~ ~] [~ ~ ~ ~ a4 ~ ~ ~]>\").s(\"gm_harmonica\").attack(0.2).release(1.2).gain(0.18).room(0.6).rsize(4).lpf(sine.range(1000,2600).slow(16)))",
+  "pattern": "stack(s(\"bd ~ bd ~ bd ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"RolandTR909\").gain(0.5).lpf(4000).room(0.2), s(\"hh*8\").bank(\"RolandTR909\").gain(perlin.range(0.07,0.15)).hpf(7500).pan(sine.range(0.3,0.7).slow(4)), s(\"~ ~ ~ ~ ~ ~ ~ oh\").bank(\"RolandTR909\").gain(0.12).hpf(6000), note(\"<[b1*8] [b1*8] [a1*8] [e1*8]>\").s(\"gm_electric_bass_pick\").gain(0.5).lpf(sine.range(600,1200).slow(16)), note(\"<[b2,fs3,ds4] [b2,fs3,ds4] [a2,e3,cs4] [e2,b2,gs3]>\").s(\"gm_reed_organ\").attack(0.4).release(1.5).gain(0.22).room(0.5).lpf(1800), note(\"<[b3 ds4 fs4 a4 fs4 ds4 b3 fs4] [b3 ds4 fs4 a4 b4 a4 fs4 ds4] [a3 cs4 e4 a4 e4 cs4 a3 e4] [e3 gs3 b3 e4 gs4 e4 b3 gs3]>\").s(\"gm_dulcimer\").gain(0.32).room(0.35).delay(0.3).delaytime(0.417).jux(rev), note(\"<~ [fs5 ~ ~ e5 ~ ~ ds5 ~] ~ [cs5 ~ ~ ~ b4 ~ ~ ~]>\").s(\"gm_choir_aahs\").attack(0.5).release(2).gain(0.16).room(0.7).rsize(5))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "No strikes today, the President said,",
-        "and Tehran sets the chairs;",
-        "but Sanaa shook beneath the jets,",
-        "and Gaza buries theirs."
+        "Not serious, Tehran says of the talks,",
+        "a ship burns off the Iraqi shore;",
+        "Jordan answers a church with jets,",
+        "a platform sinks off Gabon, and more."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "A nurse went out to meet the fever,",
-        "someone met her first;",
-        "the northern lights went out in storms,",
-        "the oil flows back, the price still hurts."
+        "The real slides down in São Paulo,",
+        "Otago packs the car tonight,",
+        "but Bolsonaro's people signed the count",
+        "and in Tehran the envoys stay."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Lula came from behind,",
-        "Belgrade's students won the street,",
-        "and fifty-three orangutans",
-        "went home on careful feet."
+        "Hold the guns on Kherson road,",
+        "make room for the trucks to pass,",
+        "six more dolphins in the river,",
+        "an uneasy calm, but calm at last."
       ]
     }
   ]
