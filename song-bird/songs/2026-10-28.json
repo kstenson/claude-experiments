@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-28",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Ten Thousand in Congo",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.16,
+    "summary": "Uneasy calm, heaviest in Africa: Ebola passes 10,000 in DR Congo, gunmen kill 62 in Nigeria, Sudan faces famine, Cyclone Arnab hits India. But the Syria-Jordan border reopens, Amazon acres are saved, and a drill-free cavity cure nears approval.",
+    "palette": {
+      "bg": "#16121a",
+      "bg2": "#2a2230",
+      "accent": "#d46a5a",
+      "accent2": "#8fb3a8",
+      "text": "#ebe6ee"
+    }
+  },
+  "style": {
+    "genre": "post-punk — overdriven guitar, violin, synth bass, TR-707",
+    "key": "F#",
+    "scale": "harmonic minor",
+    "bpm": 112,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (GM overdriven guitar, GM violin, GM synth bass, GM clean guitar, Roland TR-707)"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"RolandTR707\").gain(0.55).room(0.15), s(\"hh*8\").bank(\"RolandTR707\").gain(perlin.range(0.08,0.16)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ ~ ~ ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ cp\").bank(\"RolandTR707\").gain(0.18).room(0.4), note(\"<[fs1 fs1 fs2 fs1 fs1 fs2 fs1 a1] [d2 d2 d1 d2 d2 d1 d2 fs1] [b1 b1 b2 b1 b1 b2 b1 d2] [cs2 cs2 cs1 cs2 gs1 gs1 cs2 f1]>\").s(\"gm_synth_bass_1\").gain(0.5).lpf(sine.range(500,1100).slow(16)), note(\"<[fs3 cs4 a4 cs4 fs3 cs4 a4 cs4] [d3 a3 fs4 a3 d3 a3 fs4 a3] [b2 fs3 d4 fs3 b2 fs3 d4 fs3] [cs3 gs3 f4 gs3 cs3 gs3 f4 gs3]>\").s(\"gm_electric_guitar_clean\").gain(0.26).room(0.4).delay(0.25).delaytime(0.402).jux(rev), note(\"<[fs2,cs3] [d2,a2] [b1,fs2] [cs2,gs2]>\").s(\"gm_overdriven_guitar\").struct(\"x ~ ~ x ~ ~ x ~\").gain(0.2).lpf(2200).room(0.3), note(\"<[cs5 ~ ~ d5 cs5 ~ a4 ~] [fs5 ~ ~ ~ e5 ~ d5 ~] [d5 ~ cs5 ~ b4 ~ ~ ~] [f5 ~ ~ gs5 f5 ~ cs5 ~]>\").s(\"gm_violin\").attack(0.08).release(0.8).gain(0.24).room(0.55).rsize(4).delay(0.2).delaytime(0.536))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Ten thousand now in Congo's fever,",
+        "sixty-two in a Nigerian town,",
+        "thirty flags sign a famine warning,",
+        "and Arnab brings the river down."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Israel counts and no one's winning,",
+        "the Jordan gate swings open wide,",
+        "the markets climb on talk of circuits,",
+        "the Amazon kept on one side."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Keep your head down, keep it steady,",
+        "a quiet day is not a calm,",
+        "somewhere a tooth gets mended gently,",
+        "somewhere a hand lifts off the harm."
+      ]
+    }
+  ]
+}
