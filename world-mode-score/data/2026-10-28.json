@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-28",
+  "score": 42,
+  "label": "Uneasy calm",
+  "emoji": "🌥️",
+  "summary": "Africa carried the heaviest news. Ebola cases in DR Congo passed 10,000, gunmen killed 62 people in northeastern Nigeria, and more than 30 governments warned of famine in Sudan. Israel's election passed without a clear winner, with Arab parties on course for a record number of seats. The Syria-Jordan border reopened after this week's air strikes. Egypt approved military support for Saudi Arabia amid Houthi attacks, and the Iran war continues. India evacuated tens of thousands as Cyclone Arnab made landfall, and a tornado killed four workers in Turkey. Markets rose on AI optimism, an NGO marked 70 million Amazon acres conserved, and a drill-free cavity treatment moved closer to approval. The weighted formula gave 42; no editorial adjustment.",
+  "dimensions": {
+    "conflict": 30,
+    "economy": 48,
+    "climate": 40,
+    "humanInterest": 40,
+    "techProgress": 62
+  },
+  "regions": {
+    "northAmerica": 48,
+    "southAmerica": 52,
+    "europe": 46,
+    "africa": 24,
+    "middleEast": 30,
+    "asia": 38,
+    "oceania": 50
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Ebola cases in DR Congo surpass 10,000 in fastest-growing outbreak",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/27/ebola-cases-in-dr-congo-surpass-10000-in-fastest-growing-outbreak",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Death toll from attack by gunmen in northeastern Nigeria rises to 62",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/27/death-toll-from-attack-by-gunmen-in-northeastern-nigeria-rises-to-62",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "US, EU and 30 countries warn of famine risk in Sudan, call for aid",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/27/us-eu-and-30-countries-warn-of-famine-risk-in-sudan-call-for-aid",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "Arab parties on track to win record seats in Israel election, polls show",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/28/arab-parties-could-win-18-seats-in-israeli-elections-exit-polls-suggest",
+      "dimension": "humanInterest",
+      "region": "middleEast"
+    },
+    {
+      "direction": "up",
+      "headline": "Syria-Jordan border reopens amid probe into deadly air strikes",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/28/syria-jordan-border-reopens-amid-probe-into-deadly-airstrikes",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Egypt's parliament approves military support for Saudi Arabia amid Houthi attacks",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/10/27/egypts-parliament-approves-military-support-for-saudi-arabia-amid-houthi-attacks",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "India evacuates tens of thousands as Cyclone Arnab makes landfall",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/2026/10/28/india-evacuates-tens-of-thousands-as-cyclone-arnab-makes-landfall",
+      "dimension": "climate",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Turkey: tornado kills at least four workers at Antalya construction site",
+      "source": "Euronews",
+      "url": "https://www.euronews.com/video/2026/10/27/turkey-tornado-kills-at-least-four-workers-at-antalya-construction-site",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Global stock markets rise as investors continue to bet on AI",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/10/28/global-stock-markets-rise-as-investors-continue-to-bet-on-ai",
+      "dimension": "economy"
+    },
+    {
+      "direction": "up",
+      "headline": "NGO celebrates 70 million Amazon acres conserved",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/ngo-celebrates-70-million-amazon-acres-conserved-after-protecting-are-called-a-link-of-life/",
+      "dimension": "climate",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "FDA approval for drill-free cavity care may be imminent after Phase 3 trial",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/fda-approval-for-drill-free-cavity-care-may-be-imminent-after-great-phase-3-treatment-trial/",
+      "dimension": "techProgress",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Franz Josef's rising riverbed sparks stark flood warning",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/ldr/2204242/rising-riverbed-risks-franz-josef-disaster",
+      "dimension": "climate",
+      "region": "oceania"
+    }
+  ],
+  "sources_consulted": [
+    "Al Jazeera",
+    "Euronews",
+    "RNZ",
+    "ScienceDaily",
+    "Good News Network"
+  ]
+}
