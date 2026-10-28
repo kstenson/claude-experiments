@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-10-27",
+    "lastUpdated": "2026-10-28",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -4821,7 +4821,7 @@
     {
       "id": "2026-10-27",
       "date": "2026-10-27",
-      "headline": true,
+      "headline": false,
       "topic": "Whether the pensioner tax shield protects nearly one million people",
       "claim": "Healey will use his Budget to shield nearly one million pensioners from paying income tax by raising the tax-free allowance for those living solely on the state pension to £13,036.",
       "speaker": "John Healey",
@@ -4861,6 +4861,52 @@
         {
           "title": "Foreign Policy Journal — HMRC evidence to the Treasury Committee on pensioner tax",
           "url": "https://www.foreignpolicyjournal.com/2026/05/15/rachel-reeves-plans-hmrc-rule-change-to-shield-600000-pensioners-from-income-tax/"
+        }
+      ]
+    },
+    {
+      "id": "2026-10-28",
+      "date": "2026-10-28",
+      "headline": true,
+      "topic": "Whether the IMF says Britain is the joint fastest-growing G7 economy",
+      "claim": "The IMF said recently Britain [is] the fastest growing in the G7, joint.",
+      "speaker": "Andy Burnham",
+      "party": "Labour",
+      "role": "Prime Minister",
+      "discussionScore": 60,
+      "discussionNote": "Burnham repeated the line on Good Morning Britain on Monday, after using it at PMQs on 21 October. It is No 10's main growth claim going into Healey's Budget, and a fact-check ran in the Evening Standard on Tuesday.",
+      "score": 35,
+      "verdict": "Mostly False",
+      "explanation": "The IMF's October 2026 World Economic Outlook does not put Britain top of the G7. It forecasts 1.3% UK growth in 2026, level with Germany but a full point behind the United States at 2.3%. That makes the UK joint second, and third on unrounded figures. In 2027 it falls to third, behind the US and Canada. The 'joint' part is real, but it is joint with Germany, not with the leader. OECD quarterly data shows the UK narrowly ahead of the US in the first half of 2026, but that is a different dataset from the one Burnham cited.",
+      "evidence": [
+        "IMF WEO October 2026, Table 1.1: 2026 growth is US 2.3%, UK 1.3%, Germany 1.3%, Canada 1.1%, Italy 0.8%, Japan 0.7%, France 0.4%.",
+        "On unrounded IMF data the UK (about 1.27%) is just behind Germany (about 1.32%), so third in the G7.",
+        "For 2027 the IMF forecasts the UK at 1.2%, behind the US (2.3%) and Canada (1.7%).",
+        "The IMF did upgrade UK 2026 growth by 0.5 points since April, joint-largest in the G7 with Germany.",
+        "OECD quarterly data puts UK growth in the first half of 2026 at about 1.174%, marginally ahead of the US at about 1.168%.",
+        "At PMQs on 21 October Burnham called the UK 'the joint fastest growing country in the G7', citing the IMF report."
+      ],
+      "confidence": "High: the IMF table is published and unambiguous; the only ambiguity is the OECD half-year data, which Burnham did not cite.",
+      "sources": [
+        {
+          "title": "IMF — World Economic Outlook, October 2026 (Table 1.1)",
+          "url": "https://www.imf.org/-/media/files/publications/weo/2026/october/english/text.pdf"
+        },
+        {
+          "title": "Evening Standard — Fact check: UK forecast to have third-fastest growth in G7",
+          "url": "https://www.aol.co.uk/articles/fact-check-uk-forecast-third-165936000.html"
+        },
+        {
+          "title": "Hansard — PMQs, 21 October 2026",
+          "url": "https://hansard.parliament.uk/commons/2026-10-21/debates/75C8A826-17E0-47BD-A4C3-A2DCD01144FB/Engagements"
+        },
+        {
+          "title": "ITV Good Morning Britain — Andy Burnham interview, 26 October 2026",
+          "url": "https://www.youtube.com/watch?v=GGhi9IM7GLs&t=1114s"
+        },
+        {
+          "title": "Full Fact — Is the UK the fastest growing European G7 country?",
+          "url": "https://fullfact.org/politics/reeves-uk-fastest-growing-european-g7-country/"
         }
       ]
     }
