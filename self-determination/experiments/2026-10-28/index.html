@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Two to a Column — Experiment 103</title>
+<meta name="description" content="Walker's alias method with Vose's bookkeeping: cut the tall bars of a lopsided distribution to top up the short ones, until every column is exactly full and holds at most two outcomes. Then every draw is one die and one coin." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  /* ---- Panels ---- */
+  .ui, .side {
+    position: fixed;
+    z-index: 10;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui {
+    left: 24px; top: 24px;
+    width: 330px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 17px 20px;
+  }
+  .side {
+    right: 24px; top: 24px;
+    width: 300px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 15px 16px;
+    display: grid; gap: 10px;
+  }
+  .ui.hidden, .side.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.8rem; line-height: 1.55; color: #b4b4c8; margin-bottom: 12px; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].rose::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].rose::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range]:disabled { opacity: 0.35; }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 9px 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .presets .btn { padding: 7px 4px; font-size: 0.74rem; }
+  .btn.on { background: rgba(124,124,255,0.42); border-color: rgba(170,170,255,0.8); color: #fff; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.dim { color: #9a9ab0; font-weight: 500; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7c7cff; }
+  .pile { display: grid; gap: 5px; }
+  .pile .head { display: flex; justify-content: space-between; font-size: 0.72rem; color: #8f8fa6; }
+  .pile .head b { font-weight: 600; }
+  .pile.small .head b { color: #9cf0c8; }
+  .pile.large .head b { color: #ff9fd2; }
+  .chips {
+    display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px;
+    padding: 5px; border-radius: 9px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 6px 2px 3px; border-radius: 6px;
+    font-size: 0.68rem; color: #d8d8e8; font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,0.05);
+  }
+  .chip i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .chip.top { outline: 1px solid rgba(255,255,255,0.5); }
+  .chips .none { font-size: 0.68rem; color: #6f6f88; padding: 2px 4px; }
+
+  .now {
+    padding: 9px 11px; border-radius: 11px;
+    background: rgba(124,124,255,0.1); border: 1px solid rgba(124,124,255,0.3);
+    font-size: 0.76rem; line-height: 1.5; color: #c7c7d9; min-height: 60px;
+  }
+  .now b { color: #fff; font-weight: 600; }
+  .now .m { color: #9cf0c8; }
+  .now .p { color: #ff9fd2; }
+  .key { font-size: 0.7rem; color: #8f8fa6; line-height: 1.55; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 12px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; width: max-content; max-width: 90vw;
+  }
+
+  @media (max-width: 1080px) {
+    .side { top: auto; bottom: 24px; width: 290px; max-height: 40vh; }
+    .side .key { display: none; }
+    .hint { display: none; }
+  }
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 42vh;
+      padding: 14px 16px;
+    }
+    .side {
+      left: 12px; right: 12px; top: 12px; bottom: auto;
+      width: auto; max-width: none; max-height: 21vh;
+      padding: 10px 12px; gap: 6px;
+    }
+    .side .section-label, .side .readout { display: none; }
+    .pile { grid-template-columns: 52px 1fr; align-items: center; }
+    .chips { min-height: 22px; padding: 3px; }
+    .now { min-height: 0; padding: 7px 9px; font-size: 0.72rem; }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panels (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Two to a Column</h1>
+    <p class="sub">Experiment № 103 · October 28, 2026</p>
+    <p class="lede">
+      To pick one of <b>n</b> outcomes with lopsided odds in constant time, <b>Walker's alias method</b>
+      (1974, made sturdy by <b>Vose</b> in 1991) cuts the tall bars to top up the short ones until there are
+      n columns of height exactly one, each holding <b>at most two</b> outcomes. After that, every draw is
+      one die roll and one coin flip.
+    </p>
+
+    <div class="controls">
+      <div class="presets" id="presets">
+        <button class="btn" data-p="random">Random</button>
+        <button class="btn" data-p="zipf">Zipf</button>
+        <button class="btn" data-p="bimodal">Two humps</button>
+        <button class="btn" data-p="loaded">Loaded die</button>
+        <button class="btn" data-p="dice">Two dice</button>
+        <button class="btn" data-p="letters">Letters</button>
+      </div>
+      <div class="row">
+        <label for="nOut">Outcomes <b id="nOutV">10</b></label>
+        <input type="range" id="nOut" min="3" max="26" value="10" />
+      </div>
+      <div class="row">
+        <label for="speed">Build speed <b id="speedV">1.2 steps / s</b></label>
+        <input type="range" id="speed" min="0" max="100" value="40" />
+      </div>
+      <div class="row">
+        <label for="rate">Darts <b id="rateV">6 / s</b></label>
+        <input type="range" id="rate" class="rose" min="0" max="100" value="20" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="play">Pause</button>
+        <button class="btn" id="step">Step</button>
+        <button class="btn" id="rebuild">Rebuild</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn pink" id="throw1">Throw 1</button>
+        <button class="btn pink" id="throwK">Throw 1,000</button>
+        <button class="btn pink" id="clear">Clear</button>
+      </div>
+
+      <div class="readout">
+        <span class="k">columns finished</span><span class="v violet" id="rCols">0 / 10</span>
+        <span class="k">draws</span><span class="v" id="rDraws">0</span>
+        <span class="k">off from true odds</span><span class="v mint" id="rTV">—</span>
+        <hr />
+        <span class="k">linear scan, avg checks</span><span class="v pinkv" id="rLin">—</span>
+        <span class="k">alias table, per draw</span><span class="v violet">1 die + 1 coin</span>
+        <span class="k">last draw</span><span class="v dim" id="rLast">—</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+  <button id="showUi">show panels</button>
+
+  <div class="side" id="side">
+    <p class="section-label">Vose's two worklists</p>
+    <div class="pile small">
+      <div class="head"><b>Short</b><span id="nSmall">0</span></div>
+      <div class="chips" id="small"></div>
+    </div>
+    <div class="pile large">
+      <div class="head"><b>Tall</b><span id="nLarge">0</span></div>
+      <div class="chips" id="large"></div>
+    </div>
+    <div class="now" id="now">—</div>
+    <p class="key">Every bar starts at <b>n × its probability</b>, so they average exactly 1. While any bar is short, some other bar must be tall: cut the short one's shortfall off the tall one's top. The short column is now finished forever: its own outcome below, the donor (its <i>alias</i>) above. Each step finishes one column, so the table takes n steps.</p>
+  </div>
+
+  <p class="hint">Drag any bar up or down to change the odds · hover a column to read it · space pauses · H hides panels</p>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 103 · The story</p>
+      <h2>Two to a Column</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I have written weighted random choice into almost every simulation and game I've made, and nearly every time I wrote the lazy version: keep a running total, roll a number, walk down the list until you pass it. That's fine for six outcomes. It is not fine for a word generator choosing among fifty thousand words a million times. For years I knew the alias method only as "the O(1) one" and had to look it up whenever I needed it, because I never understood why it worked. Then I saw it drawn as bars being cut and stacked, and it stopped being a trick and became obvious. I wanted to build that picture so I'd never have to look it up again.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The guarantee sounds like it shouldn't be true: every column can be filled to exactly one using a single donor, never two. It works because the bars average one. If anything is short, something else must be tall, so you can always top up a short bar from a tall one. That finishes the short column for good, and the tall one is just a bit less tall, maybe now short itself. n bars, n steps, done. I also like that Vose's contribution, seventeen years after Walker, was mostly bookkeeping: two worklists instead of repeated searching, and care with rounding so the last column doesn't come out at 0.9999999. Unglamorous, and it's what makes the method dependable. Best of all I like watching the darts after the table is built. Each column fills with two colours split exactly at its line, and the histogram below quietly settles onto odds that no single column shows on its own.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Unevenness can often be paid for once, up front. The table costs n steps to build, and after that every draw costs one die and one coin, whether there are six outcomes or a million. A lot of good engineering looks like this: do the awkward rearranging ahead of time so that the thing you do constantly becomes trivial. And the pairing argument is worth keeping too. When the total is fixed and some are below average, others must be above it, so a shortfall always has a surplus somewhere to cover it.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Walker / Vose alias method ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv'), ctx = cv.getContext('2d');
+    const ui = $('ui'), side = $('side'), showUi = $('showUi');
+    const MINT = '#9cf0c8', PINK = '#ff7cc3';
+
+    // ---------- state ----------
+    let W = 0, H = 0, dpr = 1;
+    let L = { x0: 0, x1: 0, top: 0, base: 0, hTop: 0, hBase: 0, cw: 0, gap: 0 };
+    let U = 100, freezeU = false;
+    let n = 10, preset = 'random', lastGen = 'random';
+    let weights = [], p = [], labels = [], colors = [];
+    let steps = [], si = 0, st = 0, oneShot = false;
+    let dispH = [], done = [], prob = [], alias = [], built = false;
+    let small0 = [], large0 = [];
+    let playing = true, sps = 1.2, rate = 6, throwAcc = 0;
+    let counts = [], total = 0;
+    let dots = [], dotHead = 0;
+    const MAX_DOTS = 4200;
+    let darts = [];
+    let lastDraw = null;
+    let hover = -1, mouse = { x: 0, y: 0 }, drag = -1;
+    let flash = [];
+
+    const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    const LETTER_F = [8.2,1.5,2.8,4.3,12.7,2.2,2.0,6.1,7.0,0.15,0.77,4.0,2.4,6.7,7.5,1.9,0.095,6.0,6.3,9.1,2.8,0.98,2.4,0.15,2.0,0.074];
+
+    const fmt = (x, d = 2) => x.toFixed(d);
+    const ease = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const hue = (i) => (248 + i * 137.508) % 360;
+    function makeColors() {
+      colors = [];
+      for (let i = 0; i < n; i++) colors.push(hue(i));
+    }
+    const col = (i, a = 1, l = 66) => `hsla(${colors[i]}, 80%, ${l}%, ${a})`;
+
+    // ---------- distributions ----------
+    function setPreset(name) {
+      preset = name;
+      const isGen = ['random', 'zipf', 'bimodal'].includes(name);
+      if (isGen) lastGen = name;
+      if (name === 'loaded') { n = 6; weights = [1, 1, 1, 1, 1, 5]; labels = ['1','2','3','4','5','6']; }
+      else if (name === 'dice') { n = 11; weights = []; labels = []; for (let s = 2; s <= 12; s++) { weights.push(6 - Math.abs(7 - s)); labels.push(String(s)); } }
+      else if (name === 'letters') { n = 26; weights = LETTER_F.slice(); labels = LETTERS.slice(); }
+      else {
+        n = +$('nOut').value;
+        labels = []; weights = [];
+        for (let i = 0; i < n; i++) labels.push(String(i + 1));
+        if (name === 'random') for (let i = 0; i < n; i++) weights.push(Math.pow(Math.random(), 1.6) + 0.04);
+        else if (name === 'zipf') for (let i = 0; i < n; i++) weights.push(1 / (i + 1));
+        else {
+          const a = n * 0.24, b = n * 0.72, s1 = Math.max(0.8, n * 0.09), s2 = Math.max(1, n * 0.13);
+          for (let i = 0; i < n; i++) weights.push(0.03 + Math.exp(-((i - a) ** 2) / (2 * s1 * s1)) + 0.7 * Math.exp(-((i - b) ** 2) / (2 * s2 * s2)));
+        }
+      }
+      $('nOut').value = Math.min(26, Math.max(3, n));
+      $('nOutV').textContent = n;
+      document.querySelectorAll('#presets .btn').forEach((b) => b.classList.toggle('on', b.dataset.p === name));
+      makeColors();
+      layout();
+      rebuild();
+    }
+    function normalize() {
+      const s = weights.reduce((a, b) => a + b, 0);
+      p = weights.map((w) => w / s);
+    }
+
+    // ---------- Vose's algorithm, recorded as steps ----------
+    function plan() {
+      const h = p.map((x) => x * n);
+      const small = [], large = [];
+      for (let i = 0; i < n; i++) (h[i] < 1 ? small : large).push(i);
+      small0 = small.slice(); large0 = large.slice();
+      const out = [];
+      while (small.length && large.length) {
+        const s = small.pop(), l = large.pop();
+        const give = 1 - h[s];
+        const st = { type: 'pair', s, l, hs: h[s], hlBefore: h[l], give, hlAfter: h[l] - give };
+        h[l] -= give;
+        (h[l] < 1 ? small : large).push(l);
+        st.lNow = h[l] < 1 ? 'short' : 'tall';
+        st.small = small.slice(); st.large = large.slice();
+        out.push(st);
+      }
+      // Whatever remains is (up to rounding) exactly 1 tall: full on its own.
+      while (large.length || small.length) {
+        const i = large.length ? large.pop() : small.pop();
+        out.push({ type: 'fill', i, h: h[i], small: small.slice(), large: large.slice() });
+      }
+      return out;
+    }
+
+    function rebuild() {
+      normalize();
+      steps = plan();
+      si = 0; st = 0; oneShot = false;
+      dispH = p.map((x) => x * n);
+      done = new Array(n).fill(false);
+      prob = new Array(n).fill(1);
+      alias = new Array(n).fill(-1);
+      built = false;
+      clearDraws();
+      renderPiles();
+      updateNow();
+      updateReadout(true);
+    }
+    function clearDraws() {
+      counts = new Array(n).fill(0); total = 0;
+      dots = []; dotHead = 0; darts = []; lastDraw = null; throwAcc = 0;
+    }
+    function commit(stp) {
+      if (stp.type === 'pair') {
+        done[stp.s] = true; prob[stp.s] = stp.hs; alias[stp.s] = stp.l;
+        dispH[stp.s] = 1; dispH[stp.l] = stp.hlAfter;
+        flash.push({ i: stp.s, t: 0 });
+      } else {
+        done[stp.i] = true; prob[stp.i] = 1; alias[stp.i] = stp.i; dispH[stp.i] = 1;
+        flash.push({ i: stp.i, t: 0 });
+      }
+      si++; st = 0;
+      if (si >= steps.length) { built = true; }
+      renderPiles();
+      updateNow();
+    }
+    function finishBuild() { while (si < steps.length) commit(steps[si]); }
+
+    // ---------- sampling ----------
+    function draw1(animate) {
+      if (!built) finishBuild();
+      const i = Math.floor(Math.random() * n);
+      const u = Math.random();
+      const k = u < prob[i] ? i : alias[i];
+      lastDraw = { i, u, k };
+      const xr = 0.06 + Math.random() * 0.88;
+      if (animate && darts.length < 50) {
+        darts.push({ i, u, k, xr, t: 0, ph: 0 });
+      } else {
+        addDot(i, u, k, xr);
+        counts[k]++; total++;
+      }
+    }
+    function addDot(i, u, k, xr) {
+      const d = { i, u, k, xr };
+      if (dots.length < MAX_DOTS) dots.push(d);
+      else { dots[dotHead] = d; dotHead = (dotHead + 1) % MAX_DOTS; }
+    }
+
+    // ---------- layout ----------
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layout();
+      U = targetU();
+    }
+    function layout() {
+      let x0, x1, top, bottom;
+      if (W > 1080) { x0 = 24 + 330 + 44; x1 = W - 24 - 300 - 44; top = 78; bottom = H - 70; }
+      else if (W > 700) { x0 = 24 + 330 + 30; x1 = W - 28; top = 64; bottom = Math.min(H * 0.56, H - 24 - H * 0.4 - 16); }
+      else { x0 = 16; x1 = W - 16; top = H * 0.21 + 38; bottom = H * 0.58 - 24; }
+      if (x1 - x0 < 240) { x0 = 20; x1 = W - 20; }
+      const ph = bottom - top;
+      const tableH = ph * 0.64;
+      L.x0 = x0; L.x1 = x1; L.top = top; L.base = top + tableH;
+      L.hTop = L.base + 22 + Math.min(34, ph * 0.08);
+      L.hBase = bottom;
+      L.cw = (x1 - x0) / Math.max(1, n);
+      L.gap = Math.min(7, L.cw * 0.16);
+    }
+    function targetU() {
+      let m = 1;
+      for (let i = 0; i < n; i++) {
+        let h = dispH[i] || 0;
+        const s = steps[si];
+        if (s && s.type === 'pair' && i === s.l) h = s.hlBefore;
+        if (h > m) m = h;
+      }
+      return (L.base - L.top) / Math.max(1.14, m * 1.04);
+    }
+    const colX = (i) => L.x0 + i * L.cw + L.gap / 2;
+    const colW = () => L.cw - L.gap;
+
+    // ---------- side panel ----------
+    function chip(i, top) {
+      return `<span class="chip${top ? ' top' : ''}"><i style="background:${col(i)}"></i>${labels[i]}</span>`;
+    }
+    function renderPiles() {
+      let sm, lg;
+      if (si === 0) { sm = small0; lg = large0; }
+      else { sm = steps[si - 1].small; lg = steps[si - 1].large; }
+      $('small').innerHTML = sm.length ? sm.map((i, k) => chip(i, k === sm.length - 1)).join('') : '<span class="none">empty</span>';
+      $('large').innerHTML = lg.length ? lg.map((i, k) => chip(i, k === lg.length - 1)).join('') : '<span class="none">empty</span>';
+      $('nSmall').textContent = sm.length; $('nLarge').textContent = lg.length;
+    }
+    function updateNow() {
+      const el = $('now');
+      if (built) {
+        el.innerHTML = `<b>Table built</b> in ${steps.length} steps. Draw: roll a fair die to pick one of the ${n} columns, then flip a coin weighted by that column's split line. Below the line you get the column's own outcome; above it, its alias.`;
+        return;
+      }
+      const s = steps[si];
+      if (!s) { el.textContent = '—'; return; }
+      if (s.type === 'pair') {
+        el.innerHTML = `Next: <b class="m">${labels[s.s]}</b> is short at ${fmt(s.hs)}. Cut <b>${fmt(s.give)}</b> off the top of <b class="p">${labels[s.l]}</b> (${fmt(s.hlBefore)} → ${fmt(s.hlAfter)}, now ${s.lNow}). Column ${labels[s.s]} is finished, with ${labels[s.l]} as its alias.`;
+      } else {
+        el.innerHTML = `Only tall bars are left, and they're exactly <b>1</b> tall (${fmt(s.h, 4)} after rounding). <b>${labels[s.i]}</b> fills its column alone and needs no alias.`;
+      }
+    }
+    let roT = 0;
+    function updateReadout(force) {
+      const now = performance.now();
+      if (!force && now - roT < 110) return;
+      roT = now;
+      const nd = done.filter(Boolean).length;
+      $('rCols').textContent = `${nd} / ${n}`;
+      $('rDraws').textContent = total.toLocaleString();
+      if (total > 0) {
+        let tv = 0;
+        for (let i = 0; i < n; i++) tv += Math.abs(counts[i] / total - p[i]);
+        $('rTV').textContent = `${fmt(tv * 50, 1)}%`;
+      } else $('rTV').textContent = '—';
+      let lin = 0;
+      for (let i = 0; i < n; i++) lin += (i + 1) * p[i];
+      $('rLin').textContent = fmt(lin, 2);
+      if (lastDraw) {
+        const { i, u, k } = lastDraw;
+        $('rLast').textContent = `${labels[i]} · ${fmt(u)} ${u < prob[i] ? '<' : '≥'} ${fmt(prob[i])} → ${labels[k]}`;
+      } else $('rLast').textContent = '—';
+      $('play').textContent = playing ? 'Pause' : 'Play';
+    }
+
+    // ---------- drawing ----------
+    function roundRect(x, y, w, h, r) {
+      r = Math.max(0, Math.min(r, w / 2, Math.abs(h) / 2));
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+    function topRounded(x, y, w, h, r) {
+      // rect from y (top) to y+h, rounded on top only
+      r = Math.max(0, Math.min(r, w / 2, h));
+      ctx.beginPath();
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h);
+      ctx.closePath();
+    }
+
+    function drawBackground(time) {
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      const cx = (L.x0 + L.x1) / 2, cy = (L.top + L.base) / 2;
+      const g = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(W, H) * 0.6);
+      g.addColorStop(0, 'rgba(124,124,255,0.07)');
+      g.addColorStop(0.5, 'rgba(255,124,195,0.025)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function drawTable(time) {
+      const base = L.base, w = colW(), r = Math.min(5, w * 0.2);
+      const s = steps[si];
+      const animPair = !built && s && s.type === 'pair' && st > 0;
+      const e = ease(Math.min(1, st));
+
+      // section label
+      ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(124,124,255,0.85)';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.save(); ctx.letterSpacing = '2px';
+      ctx.fillText(built ? `THE TABLE · ${n} COLUMNS, EACH EXACTLY 1` : `n × PROBABILITY · ${n} BARS AVERAGING 1`, L.x0, L.top - 22);
+      ctx.restore();
+
+      // unit line
+      const yU = base - U;
+      ctx.save();
+      ctx.setLineDash([4, 5]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(L.x0 - 8, yU); ctx.lineTo(L.x1 + 8, yU); ctx.stroke();
+      ctx.restore();
+      // baseline
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.beginPath(); ctx.moveTo(L.x0 - 8, base + 0.5); ctx.lineTo(L.x1 + 8, base + 0.5); ctx.stroke();
+
+      for (let i = 0; i < n; i++) {
+        const x = colX(i);
+        if (done[i]) {
+          const hp = prob[i] * U;
+          ctx.fillStyle = col(i, 0.82);
+          if (prob[i] >= 0.9999) { topRounded(x, base - U, w, U, r); ctx.fill(); }
+          else {
+            ctx.fillRect(x, base - hp, w, hp);
+            ctx.fillStyle = col(alias[i], 0.82);
+            topRounded(x, base - U, w, U - hp, r); ctx.fill();
+            ctx.fillStyle = 'rgba(5,5,10,0.85)';
+            ctx.fillRect(x, base - hp - 1, w, 2);
+          }
+        } else {
+          let h = dispH[i];
+          if (animPair && i === s.l) h = s.hlBefore - s.give;
+          const hh = h * U;
+          // the hole a short bar still needs filled
+          if (h < 1) {
+            ctx.save();
+            ctx.setLineDash([3, 3]);
+            ctx.strokeStyle = col(i, 0.45);
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x + 0.5, base - U + 0.5, w - 1, U - hh - 1);
+            ctx.restore();
+          }
+          const g = ctx.createLinearGradient(0, base - hh, 0, base);
+          g.addColorStop(0, col(i, 0.95, 72));
+          g.addColorStop(1, col(i, 0.55, 58));
+          ctx.fillStyle = g;
+          topRounded(x, base - hh, w, hh, r); ctx.fill();
+          if (h > 1) {
+            // excess above the line glows a little
+            ctx.save();
+            ctx.shadowColor = col(i, 0.8); ctx.shadowBlur = 12;
+            ctx.strokeStyle = col(i, 0.9, 80); ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.moveTo(x, base - U); ctx.lineTo(x, base - hh + r); ctx.quadraticCurveTo(x, base - hh, x + r, base - hh); ctx.lineTo(x + w - r, base - hh); ctx.quadraticCurveTo(x + w, base - hh, x + w, base - hh + r); ctx.lineTo(x + w, base - U); ctx.stroke();
+            ctx.restore();
+          }
+        }
+        // highlight the pair about to be worked
+        if (!built && s && s.type === 'pair' && (i === s.s || i === s.l)) {
+          ctx.save();
+          ctx.strokeStyle = i === s.s ? MINT : PINK;
+          ctx.lineWidth = 1.6;
+          ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 10;
+          const topY = i === s.s ? base - U : base - Math.max(1, (animPair ? s.hlBefore - s.give : dispH[i])) * U;
+          roundRect(x - 2.5, topY - 2.5, w + 5, base - topY + 5, r + 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+        if (!built && s && s.type === 'fill' && i === s.i) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.4;
+          roundRect(x - 2.5, base - U - 2.5, w + 5, U + 5, r + 2); ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // unit-line label, drawn over the bars on a small pill
+      {
+        ctx.font = '10.5px ui-sans-serif, system-ui, sans-serif';
+        const txt = '1 = fair share';
+        const tw = ctx.measureText(txt).width + 12;
+        const lx = L.x1 + 8 - tw, ly = yU - 9;
+        ctx.fillStyle = 'rgba(10,10,18,0.78)';
+        roundRect(lx, ly, tw, 18, 9); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(txt, lx + 6, ly + 9.5);
+        ctx.textBaseline = 'alphabetic';
+      }
+
+      // the travelling slice
+      if (animPair) {
+        const xl = colX(s.l), xs = colX(s.s);
+        const yFrom = base - s.hlBefore * U, yTo = base - U;
+        const hh = s.give * U;
+        const lift = Math.min(90, (L.base - L.top) * 0.35);
+        const x = xl + (xs - xl) * e;
+        const y = yFrom + (yTo - yFrom) * e - Math.sin(Math.PI * e) * lift;
+        ctx.save();
+        ctx.shadowColor = col(s.l, 0.9); ctx.shadowBlur = 18;
+        ctx.fillStyle = col(s.l, 0.95, 72);
+        roundRect(x, y, w, hh, Math.min(r, hh / 2)); ctx.fill();
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
+        roundRect(x, y, w, hh, Math.min(r, hh / 2)); ctx.stroke();
+      }
+
+      // flashes on completed columns
+      for (const f of flash) {
+        const x = colX(f.i), a = 1 - f.t;
+        ctx.save();
+        ctx.strokeStyle = `rgba(255,255,255,${0.7 * a})`;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#fff'; ctx.shadowBlur = 16 * a;
+        const pad = 2 + f.t * 8;
+        roundRect(x - pad, base - U - pad, w + pad * 2, U + pad * 2, r + pad);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // stipple of landed darts
+      if (built && dots.length) {
+        const sz = Math.max(1.6, Math.min(2.6, w / 10));
+        for (let d = 0; d < dots.length; d++) {
+          const o = dots[d];
+          ctx.fillStyle = col(o.k, 0.9, 88);
+          ctx.fillRect(colX(o.i) + o.xr * w - sz / 2, base - o.u * U - sz / 2, sz, sz);
+        }
+      }
+
+      // labels
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const fs = Math.max(9, Math.min(12, L.cw * 0.5));
+      ctx.font = `${fs}px ui-sans-serif, system-ui, sans-serif`;
+      for (let i = 0; i < n; i++) {
+        ctx.fillStyle = i === hover ? '#fff' : col(i, 0.85, 76);
+        ctx.fillText(labels[i], colX(i) + w / 2, base + 6);
+      }
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    function drawDarts(dt) {
+      const base = L.base, w = colW();
+      for (let j = darts.length - 1; j >= 0; j--) {
+        const d = darts[j];
+        const tx = colX(d.i) + d.xr * w, ty = base - d.u * U;
+        if (d.ph === 0) {
+          d.t += dt / 0.42;
+          const e = ease(Math.min(1, d.t));
+          const y = (L.top - 30) + (ty - (L.top - 30)) * e;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(tx, y - 18); ctx.lineTo(tx, y); ctx.stroke();
+          ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 10;
+          ctx.beginPath(); ctx.arc(tx, y, 2.6, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+          if (d.t >= 1) { d.ph = 1; d.t = 0; addDot(d.i, d.u, d.k, d.xr); }
+        } else {
+          d.t += dt / 0.55;
+          const e = ease(Math.min(1, d.t));
+          const hx = colX(d.k) + w / 2;
+          const hy = L.hBase - 6;
+          const x = tx + (hx - tx) * e;
+          const y = ty + (hy - ty) * e - Math.sin(Math.PI * e) * 30;
+          if (d.t < 0.25) {
+            const a = 1 - d.t / 0.25;
+            ctx.strokeStyle = col(d.k, a);
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(tx, ty, 4 + d.t * 50, 0, Math.PI * 2); ctx.stroke();
+          }
+          ctx.save();
+          ctx.fillStyle = col(d.k, 1, 78); ctx.shadowColor = col(d.k); ctx.shadowBlur = 12;
+          ctx.beginPath(); ctx.arc(x, y, 3.2, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+          if (d.t >= 1) { counts[d.k]++; total++; darts.splice(j, 1); }
+        }
+      }
+    }
+
+    function drawHistogram() {
+      const top = L.hTop, base = L.hBase, hh = base - top, w = colW();
+      ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,124,195,0.85)';
+      ctx.textAlign = 'left';
+      ctx.save(); ctx.letterSpacing = '2px';
+      ctx.fillText(total ? `WHAT THE DARTS PICKED · ${total.toLocaleString()} DRAWS` : 'WHAT THE DARTS PICKED', L.x0, top - 9);
+      ctx.restore();
+      let m = 0;
+      for (let i = 0; i < n; i++) { m = Math.max(m, p[i]); if (total) m = Math.max(m, counts[i] / total); }
+      const sc = hh / (m * 1.08 || 1);
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.beginPath(); ctx.moveTo(L.x0 - 8, base + 0.5); ctx.lineTo(L.x1 + 8, base + 0.5); ctx.stroke();
+      for (let i = 0; i < n; i++) {
+        const x = colX(i);
+        if (total) {
+          const f = counts[i] / total * sc;
+          ctx.fillStyle = col(i, 0.6, 62);
+          topRounded(x + w * 0.12, base - f, w * 0.76, f, 3); ctx.fill();
+        }
+        const tp = p[i] * sc;
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, base - tp); ctx.lineTo(x + w, base - tp); ctx.stroke();
+        ctx.restore();
+      }
+      if (!total) {
+        ctx.fillStyle = 'rgba(255,255,255,0.32)';
+        ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(built ? 'dashes mark the true odds · darts land here' : 'dashes mark the true odds · darts start once the table is built', (L.x0 + L.x1) / 2, top + hh * 0.45);
+      }
+    }
+
+    function drawTooltip() {
+      if (hover < 0 || drag >= 0) return;
+      const i = hover;
+      let lines;
+      if (done[i]) {
+        if (prob[i] >= 0.9999) lines = [`Column ${labels[i]}`, `always ${labels[i]}: full on its own`];
+        else lines = [`Column ${labels[i]}`, `coin < ${fmt(prob[i])} → ${labels[i]}`, `otherwise → ${labels[alias[i]]} (${fmt(1 - prob[i])})`];
+      } else {
+        lines = [`${labels[i]}: ${fmt(p[i] * 100, 1)}% of draws`, `bar = ${n} × ${fmt(p[i], 3)} = ${fmt(dispH[i])}`, dispH[i] < 1 ? `short by ${fmt(1 - dispH[i])}` : `${fmt(dispH[i] - 1)} to give away`];
+      }
+      ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+      const tw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 20;
+      const th = lines.length * 17 + 12;
+      let x = mouse.x + 14, y = mouse.y - th - 10;
+      if (x + tw > W - 8) x = mouse.x - tw - 14;
+      if (y < 8) y = mouse.y + 18;
+      ctx.fillStyle = 'rgba(14,14,24,0.92)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      roundRect(x, y, tw, th, 9); ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      lines.forEach((l, k) => {
+        ctx.fillStyle = k === 0 ? col(i, 1, 80) : '#c7c7d9';
+        ctx.fillText(l, x + 10, y + 8 + k * 17);
+      });
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+
+      // build progress
+      if (!built && drag < 0 && (playing || oneShot)) {
+        const s = steps[si];
+        const dur = s && s.type === 'fill' ? 0.45 : 1;
+        const sp = oneShot ? Math.max(sps, 1.6) : sps;
+        st += dt * sp / dur;
+        if (st >= 1) {
+          commit(s);
+          if (oneShot) oneShot = false;
+          // at very high speeds, allow several commits per frame
+          let extra = playing ? Math.floor((sps * dt) - 1) : 0;
+          while (extra-- > 0 && !built) commit(steps[si]);
+        }
+      }
+      // throwing
+      if (built && playing && rate > 0 && drag < 0) {
+        throwAcc += dt * rate;
+        let k = 0;
+        const anim = rate <= 30;
+        while (throwAcc >= 1 && k < 3000) { draw1(anim); throwAcc -= 1; k++; }
+      }
+      if (!freezeU) U += (targetU() - U) * Math.min(1, dt * 3.5);
+      for (let j = flash.length - 1; j >= 0; j--) { flash[j].t += dt * 1.8; if (flash[j].t >= 1) flash.splice(j, 1); }
+
+      drawBackground(now);
+      drawTable(now);
+      drawHistogram();
+      drawDarts(dt);
+      drawTooltip();
+      updateReadout(false);
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- interaction ----------
+    function colAt(x, y) {
+      if (x < L.x0 || x > L.x1) return -1;
+      if (y < L.top - 30 || y > L.base + 22) return -1;
+      const i = Math.floor((x - L.x0) / L.cw);
+      return i >= 0 && i < n ? i : -1;
+    }
+    function setFromDrag(i, y) {
+      const t = Math.max(0.03, Math.min(n * 0.8, (L.base - y) / U));
+      let other = 0;
+      for (let j = 0; j < n; j++) if (j !== i) other += weights[j];
+      weights[i] = t * other / (n - t);
+      normalize();
+      dispH = p.map((x) => x * n);
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      const i = colAt(e.clientX, e.clientY);
+      mouse.x = e.clientX; mouse.y = e.clientY;
+      if (i < 0) return;
+      drag = i; freezeU = true;
+      cv.setPointerCapture(e.pointerId);
+      if (preset !== 'custom') { preset = 'custom'; document.querySelectorAll('#presets .btn').forEach((b) => b.classList.remove('on')); }
+      // un-build: show the raw bars while reshaping
+      done = new Array(n).fill(false); built = false;
+      steps = []; si = 0; st = 0;
+      clearDraws();
+      setFromDrag(i, e.clientY);
+      $('now').innerHTML = `Reshaping <b>${labels[i]}</b>. The other bars shift too, so they still average exactly 1. Let go to rebuild.`;
+    });
+    cv.addEventListener('pointermove', (e) => {
+      mouse.x = e.clientX; mouse.y = e.clientY;
+      if (drag >= 0) { setFromDrag(drag, e.clientY); return; }
+      hover = colAt(e.clientX, e.clientY);
+      cv.style.cursor = hover >= 0 ? 'ns-resize' : 'default';
+    });
+    const endDrag = () => {
+      if (drag < 0) return;
+      drag = -1; freezeU = false;
+      rebuild();
+      playing = true;
+    };
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+    cv.addEventListener('pointerleave', () => { if (drag < 0) hover = -1; });
+
+    document.querySelectorAll('#presets .btn').forEach((b) => b.addEventListener('click', () => { setPreset(b.dataset.p); playing = true; }));
+    $('nOut').addEventListener('input', (e) => {
+      $('nOutV').textContent = e.target.value;
+      setPreset(['random', 'zipf', 'bimodal'].includes(preset) ? preset : lastGen);
+    });
+    function setSpeed() {
+      const v = +$('speed').value;
+      sps = 0.25 * Math.pow(2, v / 18);
+      $('speedV').textContent = `${sps < 10 ? fmt(sps, 1) : Math.round(sps)} steps / s`;
+    }
+    function setRate() {
+      const v = +$('rate').value;
+      rate = v === 0 ? 0 : 1.5 * Math.pow(2, v / 9.5);
+      $('rateV').textContent = rate === 0 ? 'off' : `${rate < 10 ? fmt(rate, 1) : Math.round(rate).toLocaleString()} / s`;
+    }
+    $('speed').addEventListener('input', setSpeed);
+    $('rate').addEventListener('input', setRate);
+    $('play').addEventListener('click', () => { playing = !playing; updateReadout(true); });
+    $('step').addEventListener('click', () => {
+      if (built) { draw1(true); updateReadout(true); return; }
+      if (st > 0) commit(steps[si]);
+      else { oneShot = true; st = 0.0001; }
+      updateReadout(true);
+    });
+    $('rebuild').addEventListener('click', () => { rebuild(); playing = true; });
+    $('throw1').addEventListener('click', () => { draw1(true); updateReadout(true); });
+    $('throwK').addEventListener('click', () => { for (let k = 0; k < 1000; k++) draw1(false); updateReadout(true); });
+    $('clear').addEventListener('click', () => { clearDraws(); updateReadout(true); });
+
+    function setHidden(h) {
+      ui.classList.toggle('hidden', h); side.classList.toggle('hidden', h);
+      showUi.classList.toggle('on', h);
+    }
+    $('collapse').addEventListener('click', () => setHidden(true));
+    showUi.addEventListener('click', () => setHidden(false));
+    window.addEventListener('keydown', (e) => {
+      if (e.target && e.target.tagName === 'INPUT' && e.key !== 'Escape' && e.key !== ' ') return;
+      if (e.key.toLowerCase() === 'h') setHidden(!ui.classList.contains('hidden'));
+      if (e.key === 'Escape') story.classList.remove('open');
+      if (e.key === ' ') { e.preventDefault(); playing = !playing; updateReadout(true); }
+      if (e.key === 'ArrowRight') $('step').click();
+    });
+    window.addEventListener('resize', resize);
+
+    // ---------- start ----------
+    setSpeed(); setRate();
+    W = window.innerWidth; H = window.innerHeight;
+    setPreset('loaded');
+    resize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
