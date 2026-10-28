@@ -1,57 +1,57 @@
 {
-  "date": "2026-10-27",
+  "date": "2026-10-28",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Room for the Trucks",
+  "title": "Ten Thousand in Congo",
   "mood": {
     "label": "Uneasy calm",
-    "score": -0.14,
-    "summary": "Uneasy calm: Iran calls US talks not serious and a ship burns off Iraq, Jordan strikes Syria after a church attack, a rig sinks off Gabon. But Kherson's guns pause for aid to Oleshky, Brazil's losers concede, and river dolphins number six more.",
+    "score": -0.16,
+    "summary": "Uneasy calm, heaviest in Africa: Ebola passes 10,000 in DR Congo, gunmen kill 62 in Nigeria, Sudan faces famine, Cyclone Arnab hits India. But the Syria-Jordan border reopens, Amazon acres are saved, and a drill-free cavity cure nears approval.",
     "palette": {
-      "bg": "#141619",
-      "bg2": "#262b30",
-      "accent": "#e0a458",
-      "accent2": "#6fa8c7",
-      "text": "#ece9e3"
+      "bg": "#16121a",
+      "bg2": "#2a2230",
+      "accent": "#d46a5a",
+      "accent2": "#8fb3a8",
+      "text": "#ebe6ee"
     }
   },
   "style": {
-    "genre": "motorik krautrock — dulcimer, reed organ, picked bass, TR-909",
-    "key": "B",
-    "scale": "mixolydian",
-    "bpm": 108,
+    "genre": "post-punk — overdriven guitar, violin, synth bass, TR-707",
+    "key": "F#",
+    "scale": "harmonic minor",
+    "bpm": 112,
     "swing": 0
   },
   "sampleSources": [
-    "Strudel default library (GM dulcimer, GM reed organ, GM picked electric bass, GM choir, Roland TR-909)"
+    "Strudel default library (GM overdriven guitar, GM violin, GM synth bass, GM clean guitar, Roland TR-707)"
   ],
-  "pattern": "stack(s(\"bd ~ bd ~ bd ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"RolandTR909\").gain(0.5).lpf(4000).room(0.2), s(\"hh*8\").bank(\"RolandTR909\").gain(perlin.range(0.07,0.15)).hpf(7500).pan(sine.range(0.3,0.7).slow(4)), s(\"~ ~ ~ ~ ~ ~ ~ oh\").bank(\"RolandTR909\").gain(0.12).hpf(6000), note(\"<[b1*8] [b1*8] [a1*8] [e1*8]>\").s(\"gm_electric_bass_pick\").gain(0.5).lpf(sine.range(600,1200).slow(16)), note(\"<[b2,fs3,ds4] [b2,fs3,ds4] [a2,e3,cs4] [e2,b2,gs3]>\").s(\"gm_reed_organ\").attack(0.4).release(1.5).gain(0.22).room(0.5).lpf(1800), note(\"<[b3 ds4 fs4 a4 fs4 ds4 b3 fs4] [b3 ds4 fs4 a4 b4 a4 fs4 ds4] [a3 cs4 e4 a4 e4 cs4 a3 e4] [e3 gs3 b3 e4 gs4 e4 b3 gs3]>\").s(\"gm_dulcimer\").gain(0.32).room(0.35).delay(0.3).delaytime(0.417).jux(rev), note(\"<~ [fs5 ~ ~ e5 ~ ~ ds5 ~] ~ [cs5 ~ ~ ~ b4 ~ ~ ~]>\").s(\"gm_choir_aahs\").attack(0.5).release(2).gain(0.16).room(0.7).rsize(5))",
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"RolandTR707\").gain(0.55).room(0.15), s(\"hh*8\").bank(\"RolandTR707\").gain(perlin.range(0.08,0.16)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ ~ ~ ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ cp\").bank(\"RolandTR707\").gain(0.18).room(0.4), note(\"<[fs1 fs1 fs2 fs1 fs1 fs2 fs1 a1] [d2 d2 d1 d2 d2 d1 d2 fs1] [b1 b1 b2 b1 b1 b2 b1 d2] [cs2 cs2 cs1 cs2 gs1 gs1 cs2 f1]>\").s(\"gm_synth_bass_1\").gain(0.5).lpf(sine.range(500,1100).slow(16)), note(\"<[fs3 cs4 a4 cs4 fs3 cs4 a4 cs4] [d3 a3 fs4 a3 d3 a3 fs4 a3] [b2 fs3 d4 fs3 b2 fs3 d4 fs3] [cs3 gs3 f4 gs3 cs3 gs3 f4 gs3]>\").s(\"gm_electric_guitar_clean\").gain(0.26).room(0.4).delay(0.25).delaytime(0.402).jux(rev), note(\"<[fs2,cs3] [d2,a2] [b1,fs2] [cs2,gs2]>\").s(\"gm_overdriven_guitar\").struct(\"x ~ ~ x ~ ~ x ~\").gain(0.2).lpf(2200).room(0.3), note(\"<[cs5 ~ ~ d5 cs5 ~ a4 ~] [fs5 ~ ~ ~ e5 ~ d5 ~] [d5 ~ cs5 ~ b4 ~ ~ ~] [f5 ~ ~ gs5 f5 ~ cs5 ~]>\").s(\"gm_violin\").attack(0.08).release(0.8).gain(0.24).room(0.55).rsize(4).delay(0.2).delaytime(0.536))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Not serious, Tehran says of the talks,",
-        "a ship burns off the Iraqi shore;",
-        "Jordan answers a church with jets,",
-        "a platform sinks off Gabon, and more."
+        "Ten thousand now in Congo's fever,",
+        "sixty-two in a Nigerian town,",
+        "thirty flags sign a famine warning,",
+        "and Arnab brings the river down."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "The real slides down in São Paulo,",
-        "Otago packs the car tonight,",
-        "but Bolsonaro's people signed the count",
-        "and in Tehran the envoys stay."
+        "Israel counts and no one's winning,",
+        "the Jordan gate swings open wide,",
+        "the markets climb on talk of circuits,",
+        "the Amazon kept on one side."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Hold the guns on Kherson road,",
-        "make room for the trucks to pass,",
-        "six more dolphins in the river,",
-        "an uneasy calm, but calm at last."
+        "Keep your head down, keep it steady,",
+        "a quiet day is not a calm,",
+        "somewhere a tooth gets mended gently,",
+        "somewhere a hand lifts off the harm."
       ]
     }
   ]
