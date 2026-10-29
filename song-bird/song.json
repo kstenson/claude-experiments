@@ -1,57 +1,57 @@
 {
-  "date": "2026-10-28",
+  "date": "2026-10-29",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Ten Thousand in Congo",
+  "title": "Last Patient Home",
   "mood": {
     "label": "Uneasy calm",
-    "score": -0.16,
-    "summary": "Uneasy calm, heaviest in Africa: Ebola passes 10,000 in DR Congo, gunmen kill 62 in Nigeria, Sudan faces famine, Cyclone Arnab hits India. But the Syria-Jordan border reopens, Amazon acres are saved, and a drill-free cavity cure nears approval.",
+    "score": -0.18,
+    "summary": "Uneasy calm: a train crash near Toledo kills 68, Kharkiv burns, Ethiopians flee into Kenya, and the Iran war grinds on. But a DR Congo Ebola centre cheers its last patient home, and a Kiribati fisherman is found after 41 days adrift.",
     "palette": {
-      "bg": "#16121a",
-      "bg2": "#2a2230",
-      "accent": "#d46a5a",
-      "accent2": "#8fb3a8",
-      "text": "#ebe6ee"
+      "bg": "#121620",
+      "bg2": "#222a38",
+      "accent": "#e0a458",
+      "accent2": "#7fa6c9",
+      "text": "#e8ebf0"
     }
   },
   "style": {
-    "genre": "post-punk — overdriven guitar, violin, synth bass, TR-707",
-    "key": "F#",
-    "scale": "harmonic minor",
-    "bpm": 112,
-    "swing": 0
+    "genre": "trip-hop — Rhodes, vibraphone, fretless bass, SP-1200",
+    "key": "C#",
+    "scale": "dorian",
+    "bpm": 88,
+    "swing": 0.1
   },
   "sampleSources": [
-    "Strudel default library (GM overdriven guitar, GM violin, GM synth bass, GM clean guitar, Roland TR-707)"
+    "Strudel default library (GM electric piano 2, VCSL vibraphone, GM fretless bass, GM string ensemble, E-mu SP-1200)"
   ],
-  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"RolandTR707\").gain(0.55).room(0.15), s(\"hh*8\").bank(\"RolandTR707\").gain(perlin.range(0.08,0.16)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ ~ ~ ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ cp\").bank(\"RolandTR707\").gain(0.18).room(0.4), note(\"<[fs1 fs1 fs2 fs1 fs1 fs2 fs1 a1] [d2 d2 d1 d2 d2 d1 d2 fs1] [b1 b1 b2 b1 b1 b2 b1 d2] [cs2 cs2 cs1 cs2 gs1 gs1 cs2 f1]>\").s(\"gm_synth_bass_1\").gain(0.5).lpf(sine.range(500,1100).slow(16)), note(\"<[fs3 cs4 a4 cs4 fs3 cs4 a4 cs4] [d3 a3 fs4 a3 d3 a3 fs4 a3] [b2 fs3 d4 fs3 b2 fs3 d4 fs3] [cs3 gs3 f4 gs3 cs3 gs3 f4 gs3]>\").s(\"gm_electric_guitar_clean\").gain(0.26).room(0.4).delay(0.25).delaytime(0.402).jux(rev), note(\"<[fs2,cs3] [d2,a2] [b1,fs2] [cs2,gs2]>\").s(\"gm_overdriven_guitar\").struct(\"x ~ ~ x ~ ~ x ~\").gain(0.2).lpf(2200).room(0.3), note(\"<[cs5 ~ ~ d5 cs5 ~ a4 ~] [fs5 ~ ~ ~ e5 ~ d5 ~] [d5 ~ cs5 ~ b4 ~ ~ ~] [f5 ~ ~ gs5 f5 ~ cs5 ~]>\").s(\"gm_violin\").attack(0.08).release(0.8).gain(0.24).room(0.55).rsize(4).delay(0.2).delaytime(0.536))",
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ ~ ~, ~ ~ ~ ~ sd ~ ~ ~\").bank(\"EmuSP12\").gain(0.6).lpf(3000).room(0.2), s(\"~ hh ~ hh ~ hh ~ [hh hh]\").bank(\"EmuSP12\").gain(perlin.range(0.08,0.15)).hpf(6000).pan(sine.range(0.4,0.6).slow(8)), s(\"~ ~ ~ ~ ~ ~ rim ~\").bank(\"EmuSP12\").gain(0.2).room(0.5).delay(0.3).delaytime(0.511), note(\"<[cs2 ~ ~ cs2 ~ ~ gs1 ~] [fs1 ~ ~ fs1 ~ ~ as1 ~] [b1 ~ ~ b1 ~ ~ fs1 ~] [gs1 ~ ~ gs1 ~ ~ ds2 ~]>\").s(\"gm_fretless_bass\").gain(0.55).lpf(900), note(\"<[cs3,e3,gs3,b3,ds4] [fs2,as2,e3,gs3] [b2,ds3,fs3,as3] [gs2,b2,ds3,fs3]>\").s(\"gm_epiano2\").attack(0.05).release(1.5).gain(0.28).room(0.5).lpf(sine.range(1200,2600).slow(16)), note(\"<[gs4 ~ b4 ~ ~ cs5 ~ ~] [as4 ~ ~ gs4 ~ ~ e4 ~] [ds5 ~ cs5 ~ b4 ~ ~ ~] [fs4 ~ gs4 ~ ~ ~ ~ ~]>\").s(\"vibraphone\").gain(0.3).room(0.6).delay(0.3).delaytime(0.511).off(0.25, x => x.gain(0.1).pan(0.8)), note(\"<[cs4,e4] [as3,e4] [ds4,fs4] [ds4,fs4]>\").s(\"gm_string_ensemble_1\").attack(1).release(2).gain(0.12).room(0.6))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Ten thousand now in Congo's fever,",
-        "sixty-two in a Nigerian town,",
-        "thirty flags sign a famine warning,",
-        "and Arnab brings the river down."
+        "Two trains met in the Toledo dark,",
+        "sixty-eight who won't get home,",
+        "Kharkiv's windows burning orange,",
+        "Ethiopia walking south alone."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Israel counts and no one's winning,",
-        "the Jordan gate swings open wide,",
-        "the markets climb on talk of circuits,",
-        "the Amazon kept on one side."
+        "A strait wound on a seven-day clock,",
+        "a beaten man crowned on foreign ground,",
+        "Canada makes the money dearer,",
+        "Arnab's rain keeps coming down."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Keep your head down, keep it steady,",
-        "a quiet day is not a calm,",
-        "somewhere a tooth gets mended gently,",
-        "somewhere a hand lifts off the harm."
+        "Ring it out at the clinic door,",
+        "the last patient walking free,",
+        "and a boy, forty-one days adrift,",
+        "pulled home again from the open sea."
       ]
     }
   ]
