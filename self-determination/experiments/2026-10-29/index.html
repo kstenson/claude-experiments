@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Odd Means Inside — Experiment 104</title>
+<meta name="description" content="Shimrat's 1962 point-in-polygon test: shoot a ray from a point, count the edges it crosses, and odd means inside. Move the probe, turn the ray, walk the edges, and watch the even–odd and winding rules part ways on shapes that cross themselves." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  /* ---- Panels ---- */
+  .ui, .side {
+    position: fixed;
+    z-index: 10;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui {
+    left: 24px; top: 24px;
+    width: 330px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 17px 20px;
+  }
+  .side {
+    right: 24px; top: 24px;
+    width: 300px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 15px 16px;
+    display: grid; gap: 10px;
+  }
+  .ui.hidden, .side.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.8rem; line-height: 1.55; color: #b4b4c8; margin-bottom: 12px; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .group-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #7c7cff; margin-top: 2px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].rose::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].rose::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .btn-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 7px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.on { background: rgba(124,124,255,0.42); border-color: rgba(170,170,255,0.8); color: #fff; }
+  .btn.pink.on { background: rgba(255,124,195,0.38); border-color: rgba(255,170,215,0.85); color: #fff; }
+  .btn.third { flex: 1 1 30%; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.dim { color: #9a9ab0; font-weight: 500; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7c7cff; }
+
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem; line-height: 1.55;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 8px 6px;
+    color: #9a9ab0; white-space: pre; overflow-x: auto;
+  }
+  .code span { display: block; padding: 0 6px; border-radius: 5px; transition: background 0.15s ease, color 0.15s ease; }
+  .code span.on { background: rgba(124,124,255,0.22); color: #f0f0ff; }
+  .code span.hit { background: rgba(255,124,195,0.24); color: #fff; }
+  .code i { font-style: normal; color: #6f6f88; }
+
+  .legend { display: grid; gap: 4px; font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+  .lg {
+    display: grid; grid-template-columns: 16px 1fr 1fr 48px; align-items: center; gap: 8px;
+    padding: 3px 6px; border-radius: 7px; color: #a9a9bf;
+  }
+  .lg.on { background: rgba(255,255,255,0.06); color: #f0f0ff; }
+  .lg .sw { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); }
+  .lg .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; }
+  .lg .bar i { display: block; height: 100%; border-radius: 3px; }
+  .lg .n { text-align: right; }
+  .note { font-size: 0.7rem; color: #8f8fa6; line-height: 1.55; }
+  .note b { color: #cfcfe6; font-weight: 600; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 12px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; width: max-content; max-width: 90vw;
+  }
+  .toast {
+    position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 12;
+    background: rgba(255,124,195,0.16); border: 1px solid rgba(255,124,195,0.5); color: #ffe0f1;
+    border-radius: 999px; padding: 8px 16px; font-size: 0.8rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .toast.on { opacity: 1; }
+
+  @media (max-width: 1080px) {
+    .side { top: auto; bottom: 24px; width: 290px; max-height: 42vh; }
+    .side .legend-wrap, .side .note { display: none; }
+    .hint { display: none; }
+  }
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 42vh;
+      padding: 14px 16px;
+    }
+    .side {
+      left: 12px; right: 12px; top: 12px; bottom: auto;
+      width: auto; max-width: none; max-height: 20vh;
+      padding: 10px 12px; gap: 6px;
+    }
+    .side .section-label { display: none; }
+    .code { font-size: 0.62rem; padding: 5px 3px; }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .story-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panels (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Odd Means Inside</h1>
+    <p class="sub">Experiment № 104 · October 29, 2026</p>
+    <p class="lede">
+      Is a point inside a shape? <b>Shimrat</b>'s 1962 answer: shoot a ray from it in any direction and
+      <b>count the edges it crosses</b>. Every crossing switches you between inside and outside, so
+      <b>odd means inside</b>. Count with signs instead, +1 for an edge going one way and −1 for the other,
+      and you get the <b>winding number</b>. The two rules agree until a shape crosses itself.
+    </p>
+
+    <div class="controls">
+      <p class="group-label">Colour the plane by</p>
+      <div class="btn-row">
+        <button class="btn third on" id="vParity">Even–odd</button>
+        <button class="btn third" id="vWind">Winding</button>
+        <button class="btn third" id="vDis">Disagree</button>
+      </div>
+
+      <p class="group-label">Shape</p>
+      <div class="btn-row">
+        <button class="btn pink third" id="pStar">Star</button>
+        <button class="btn pink third" id="pSpiro">Spirograph</button>
+        <button class="btn pink third" id="pScrib">Scribble</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn pink" id="pDraw">Draw your own</button>
+        <button class="btn pink" id="pShuffle">Another one</button>
+      </div>
+
+      <div class="row">
+        <label for="ray">Ray direction <b id="rayV">0°</b></label>
+        <input type="range" id="ray" min="0" max="359" value="0" />
+      </div>
+      <div class="row">
+        <label for="speed">Walk speed <b id="speedV">4 edges / s</b></label>
+        <input type="range" id="speed" class="rose" min="0" max="100" value="30" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="walk">Walk the edges</button>
+        <button class="btn" id="anim">Drift: on</button>
+      </div>
+
+      <div class="readout">
+        <span class="k">edges crossed by the ray</span><span class="v violet" id="rCross">—</span>
+        <span class="k">even–odd says</span><span class="v" id="rParity">—</span>
+        <span class="k">winding number</span><span class="v pinkv" id="rWind">—</span>
+        <span class="k">nonzero rule says</span><span class="v" id="rNZ">—</span>
+        <hr />
+        <span class="k">edges in the shape</span><span class="v dim" id="rEdges">0</span>
+        <span class="k">inside by even–odd</span><span class="v violet" id="rAreaOdd">—</span>
+        <span class="k">inside by nonzero</span><span class="v pinkv" id="rAreaNZ">—</span>
+        <span class="k">where they disagree</span><span class="v mint" id="rAreaDis">—</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+  <button id="showUi">show panels</button>
+
+  <div class="side" id="side">
+    <p class="section-label">The whole test, for probe p</p>
+    <div class="code" id="code"><span id="k0">inside = false; w = 0</span><span id="k1">for each edge a → b:</span><span id="k2">  if (a.y > p.y) != (b.y > p.y):  <i>// straddles</i></span><span id="k3">    x = a.x + (p.y−a.y)·(b.x−a.x)/(b.y−a.y)</span><span id="k4">    if x > p.x:                  <i>// on the ray</i></span><span id="k5">      inside = !inside</span><span id="k6">      w += (b.y &gt; a.y) ? +1 : −1</span></div>
+    <p class="note" id="walkNote">Coordinates are turned so the ray points along <b>+x</b>. The strict <b>&gt;</b> on both ends is the whole trick for vertices that sit exactly on the ray: each one belongs to the edge above it, never to both.</p>
+    <div class="legend-wrap">
+      <p class="section-label" style="margin-bottom:6px">Share of the shape, by winding number</p>
+      <div class="legend" id="legend"></div>
+    </div>
+    <p class="note">In <b>Disagree</b>, pink marks points wound around an even number of times: inside by the nonzero rule, outside by even–odd. Arrows on the outline show which way each edge runs.</p>
+  </div>
+
+  <p class="hint" id="hint">Move to aim the probe · drag a corner to reshape · W walks the edges · space toggles drift · H hides panels</p>
+  <div class="toast" id="toast">Drag one closed loop on the canvas</div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 104 · The story</p>
+      <h2>Odd Means Inside</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Two days ago, for One Wall at a Time, I needed to know whether your finger had landed on the shape so you could drag it. I wrote a seven-line function to check, the same seven lines I have written dozens of times without thinking, and moved on. It bothered me afterwards that the most-used piece of geometry in that page was the one I never showed you. The idea is old: M. Shimrat published it as Algorithm 112 in Communications of the ACM in 1962, and a correction followed in the same journal within months. W. Randolph Franklin's compact version, PNPOLY, is the one most people have copied since, me included. Every map that tells you which country you clicked, and every game that checks whether you stood inside a zone, runs something like it.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>It turns a question about the whole shape into a count along one line. You don't need to know what the shape looks like, only how many times its boundary passes in front of you in one direction. Turn the ray-direction slider and the crossings jump around, sometimes one, sometimes five, but the parity never changes. I also like the strict comparison on line three. When the ray runs exactly through a corner, a careless test counts it twice or not at all. Asking "is this end above the ray?" for both ends means each corner belongs to the edge on one side of it, so a path that passes through a corner is counted once and a path that only touches a corner and turns back is counted zero or two times. Both answers come out right without a single special case. Then there is the pentagram. Its centre is wound around twice, so it has two crossings: even-odd says outside, the winding number says inside. Neither is wrong. They are two definitions, and SVG, canvas and every font renderer make you choose one with a fill-rule setting. Switch to Spirograph and Winding for the prettiest version of that disagreement.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Many questions about a whole thing can be answered by looking in one direction and counting. Am I enclosed? Count the walls between me and infinity. Have I made a full loop? Add up the turns. And when a simple definition like "inside" stops being obvious, as it does for a shape that crosses itself, that is usually the moment to admit it was a choice all along and write down which one you made.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Point in polygon: crossing number and winding number ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv'), ctx = cv.getContext('2d');
+    const field = document.createElement('canvas'), fctx = field.getContext('2d');
+    const ui = $('ui'), side = $('side'), showUi = $('showUi');
+
+    const VIOLET = '#9a9aff', PINK = '#ff7cc3', MINT = '#9cf0c8';
+    const CELL = 3;
+
+    // winding palette: index by w (clamped), signed
+    const WPAL = {
+      '-3': [64, 170, 150], '-2': [96, 210, 180], '-1': [156, 240, 200],
+      '1': [124, 124, 255], '2': [179, 124, 255], '3': [255, 124, 195], '4': [255, 168, 120], '5': [255, 220, 150],
+    };
+    const wColor = (w) => WPAL[String(Math.max(-3, Math.min(5, w)))];
+
+    // ---------- state ----------
+    let W = 0, H = 0, dpr = 1;
+    let center = { x: 0, y: 0 }, baseR = 100;
+    let view = 'parity';
+    let shape = [];               // unit coords
+    let preset = 'star';
+    let starN = 5, starK = 2;
+    let spiro = { R: 7, r: 3, d: 2.2 };
+    let scribSeed = 7;
+    let rayDeg = 0;
+    let drift = true, t = 0;
+    let probe = { x: 0.08, y: -0.05 };   // unit coords
+    let lastUser = -1e9;
+    let drag = null, drawing = null, drawMode = false;
+    let eps = 4;
+    let walk = null;
+    let stats = null, statTick = 0;
+    let gw = 0, gh = 0, img = null;
+
+    // ---------- helpers ----------
+    function mulberry(a) {
+      return () => {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let q = Math.imul(a ^ (a >>> 15), 1 | a);
+        q = (q + Math.imul(q ^ (q >>> 7), 61 | q)) ^ q;
+        return ((q ^ (q >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+    function normalize(pts) {
+      let cx = 0, cy = 0;
+      pts.forEach((p) => { cx += p.x; cy += p.y; });
+      cx /= pts.length; cy /= pts.length;
+      let m = 1e-9;
+      pts.forEach((p) => { m = Math.max(m, Math.hypot(p.x - cx, p.y - cy)); });
+      return pts.map((p) => ({ x: (p.x - cx) / m, y: (p.y - cy) / m }));
+    }
+
+    // ---------- shapes ----------
+    function makeStar() {
+      const pts = [];
+      for (let i = 0; i < starN; i++) {
+        const a = -Math.PI / 2 + (Math.PI * 2 * i * starK) / starN;
+        pts.push({ x: Math.cos(a), y: Math.sin(a) });
+      }
+      return pts;
+    }
+    function makeSpiro() {
+      const { R, r, d } = spiro;
+      const loops = r / gcd(R, r);
+      const N = Math.min(720, 140 * loops);
+      const pts = [];
+      for (let i = 0; i < N; i++) {
+        const a = (Math.PI * 2 * loops * i) / N;
+        pts.push({
+          x: (R - r) * Math.cos(a) + d * Math.cos(((R - r) / r) * a),
+          y: (R - r) * Math.sin(a) - d * Math.sin(((R - r) / r) * a),
+        });
+      }
+      return normalize(pts);
+    }
+    function makeScribble() {
+      const rnd = mulberry(scribSeed);
+      const k = 6 + Math.floor(rnd() * 5);
+      const ctrl = [];
+      for (let i = 0; i < k; i++) {
+        const a = rnd() * Math.PI * 2, r = 0.25 + 0.75 * rnd();
+        ctrl.push({ x: Math.cos(a) * r, y: Math.sin(a) * r });
+      }
+      const pts = [], per = 22;
+      for (let i = 0; i < k; i++) {
+        const p0 = ctrl[(i - 1 + k) % k], p1 = ctrl[i], p2 = ctrl[(i + 1) % k], p3 = ctrl[(i + 2) % k];
+        for (let s = 0; s < per; s++) {
+          const u = s / per, u2 = u * u, u3 = u2 * u;
+          const f = (a, b, c, d2) => 0.5 * (2 * b + (-a + c) * u + (2 * a - 5 * b + 4 * c - d2) * u2 + (-a + 3 * b - 3 * c + d2) * u3);
+          pts.push({ x: f(p0.x, p1.x, p2.x, p3.x), y: f(p0.y, p1.y, p2.y, p3.y) });
+        }
+      }
+      return normalize(pts);
+    }
+    function setPreset(p) {
+      preset = p;
+      if (p === 'star') shape = makeStar();
+      else if (p === 'spiro') shape = makeSpiro();
+      else if (p === 'scrib') shape = makeScribble();
+      ['pStar', 'pSpiro', 'pScrib'].forEach((id) => $(id).classList.remove('on'));
+      const map = { star: 'pStar', spiro: 'pSpiro', scrib: 'pScrib' };
+      if (map[p]) $(map[p]).classList.add('on');
+      stopWalk();
+    }
+    function shuffle() {
+      if (preset === 'star') {
+        const opts = [[5, 2], [7, 2], [7, 3], [8, 3], [9, 2], [9, 4], [11, 3], [11, 5], [12, 5], [13, 6]];
+        let pick;
+        do { pick = opts[Math.floor(Math.random() * opts.length)]; } while (pick[0] === starN && pick[1] === starK);
+        [starN, starK] = pick;
+      } else if (preset === 'spiro') {
+        const opts = [[7, 3, 2.2], [8, 3, 3.2], [11, 4, 4], [9, 4, 3], [10, 3, 4.5], [13, 5, 5], [5, 3, 2.6], [12, 5, 3.5]];
+        let pick;
+        do { pick = opts[Math.floor(Math.random() * opts.length)]; } while (pick[0] === spiro.R && pick[1] === spiro.r);
+        spiro = { R: pick[0], r: pick[1], d: pick[2] };
+      } else {
+        scribSeed = (Math.random() * 1e9) | 0;
+        if (preset !== 'scrib') { setPreset('scrib'); return; }
+      }
+      setPreset(preset);
+    }
+
+    // ---------- geometry on screen ----------
+    function sceneCenter() {
+      if (W > 1080) {
+        const l = 24 + 330, r = W - 24 - 300;
+        return { x: (l + r) / 2, y: H / 2 };
+      }
+      if (W > 700) return { x: W / 2 + 70, y: H * 0.42 };
+      return { x: W / 2, y: H * 0.4 };
+    }
+    function sceneRadius() {
+      if (W > 1080) return Math.min(W - 24 * 4 - 330 - 300, H) * 0.42;
+      if (W > 700) return Math.min(W - 420, H * 0.75) * 0.44;
+      return Math.min(W * 0.9, H * 0.32) * 0.46;
+    }
+    function morph(p) {
+      if (!drift) return p;
+      const a = t * 0.05, s = Math.sin(a), c = Math.cos(a);
+      const ang = Math.atan2(p.y, p.x);
+      const k = 1 + 0.07 * Math.sin(3 * ang + t * 0.8) + 0.04 * Math.sin(5 * ang - t * 0.55);
+      return { x: (p.x * c - p.y * s) * k, y: (p.x * s + p.y * c) * k };
+    }
+    const toScreen = (p) => ({ x: center.x + p.x * baseR, y: center.y + p.y * baseR });
+    const toUnit = (p) => ({ x: (p.x - center.x) / baseR, y: (p.y - center.y) / baseR });
+    function screenShape() { return shape.map((p) => toScreen(morph(p))); }
+
+    // ---------- the test itself, for one probe and one ray ----------
+    function probeTest(S, P, theta) {
+      const c = Math.cos(theta), s = Math.sin(theta);
+      const n = S.length, rows = [];
+      let inside = false, w = 0, count = 0;
+      for (let i = 0; i < n; i++) {
+        const a = S[i], b = S[(i + 1) % n];
+        // turn into the ray's frame: u along the ray, v across it
+        const ua = (a.x - P.x) * c + (a.y - P.y) * s, va = -(a.x - P.x) * s + (a.y - P.y) * c;
+        const ub = (b.x - P.x) * c + (b.y - P.y) * s, vb = -(b.x - P.x) * s + (b.y - P.y) * c;
+        const straddle = (va > 0) !== (vb > 0);
+        let hit = false, at = null, dir = 0;
+        if (straddle) {
+          const f = va / (va - vb);
+          const u = ua + f * (ub - ua);
+          if (u > 0) {
+            hit = true; inside = !inside; count++;
+            dir = vb > va ? 1 : -1; w += dir;
+            at = { x: a.x + f * (b.x - a.x), y: a.y + f * (b.y - a.y), u };
+          }
+        }
+        rows.push({ i, straddle, hit, at, dir, inside, w, count });
+      }
+      return { inside, w, count, rows };
+    }
+
+    // ---------- the plane, one scanline at a time (same test, ray = +x) ----------
+    function renderField(S) {
+      const data = img.data;
+      data.fill(0);
+      const n = S.length;
+      const xs = new Float64Array(n), ds = new Int8Array(n), idx = new Int32Array(n);
+      const hist = new Map();
+      let odd = 0, nz = 0, dis = 0;
+      let minX = Infinity, maxX = -Infinity;
+      S.forEach((p) => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); });
+      for (let j = 0; j < gh; j++) {
+        const y = (j + 0.5) * CELL;
+        let m = 0;
+        for (let i = 0; i < n; i++) {
+          const a = S[i], b = S[(i + 1) % n];
+          if ((a.y > y) !== (b.y > y)) {
+            xs[m] = a.x + ((y - a.y) * (b.x - a.x)) / (b.y - a.y);
+            ds[m] = b.y > a.y ? 1 : -1;
+            m++;
+          }
+        }
+        if (!m) continue;
+        for (let i = 0; i < m; i++) idx[i] = i;
+        const ord = Array.from(idx.subarray(0, m)).sort((p, q) => xs[p] - xs[q]);
+        let k = 0, left = 0;
+        const i0 = Math.max(0, Math.floor(xs[ord[0]] / CELL) - 1), i1 = Math.min(gw, Math.ceil(xs[ord[m - 1]] / CELL) + 1);
+        for (let i = i0; i < i1; i++) {
+          const x = (i + 0.5) * CELL;
+          while (k < m && xs[ord[k]] < x) { left += ds[ord[k]]; k++; }
+          const w = -left, isOdd = ((m - k) & 1) === 1;
+          if (w === 0 && !isOdd) continue;
+          if (w !== 0) { nz++; hist.set(w, (hist.get(w) || 0) + 1); }
+          if (isOdd) odd++;
+          if (w !== 0 && !isOdd) dis++;
+          const o = (j * gw + i) * 4;
+          let r, g, bl, al;
+          if (view === 'parity') {
+            if (!isOdd) continue;
+            const f = maxX > minX ? (x - minX) / (maxX - minX) : 0.5;
+            r = 124 + 131 * f; g = 124; bl = 255 - 60 * f; al = 165;
+          } else if (view === 'wind') {
+            [r, g, bl] = wColor(w); al = 120 + Math.min(4, Math.abs(w)) * 25;
+          } else {
+            if (isOdd) { r = 124; g = 124; bl = 255; al = 70; }
+            else { r = 255; g = 124; bl = 195; al = 225; }
+          }
+          data[o] = r; data[o + 1] = g; data[o + 2] = bl; data[o + 3] = al;
+        }
+      }
+      fctx.putImageData(img, 0, 0);
+      return { odd, nz, dis, hist };
+    }
+
+    // ---------- drawing ----------
+    function drawOutline(S) {
+      const n = S.length;
+      ctx.save();
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      S.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(220,220,255,0.55)';
+      ctx.lineWidth = n > 60 ? 1 : 1.5;
+      ctx.stroke();
+      // direction arrows
+      const every = Math.max(1, Math.round(n / 26));
+      ctx.fillStyle = 'rgba(230,230,255,0.75)';
+      for (let i = 0; i < n; i += every) {
+        const a = S[i], b = S[(i + 1) % n];
+        const L = Math.hypot(b.x - a.x, b.y - a.y);
+        if (L < 1) continue;
+        const ux = (b.x - a.x) / L, uy = (b.y - a.y) / L;
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, s = 5;
+        ctx.beginPath();
+        ctx.moveTo(mx + ux * s, my + uy * s);
+        ctx.lineTo(mx - ux * s - uy * s * 0.7, my - uy * s + ux * s * 0.7);
+        ctx.lineTo(mx - ux * s + uy * s * 0.7, my - uy * s - ux * s * 0.7);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+      if (n <= 40 && !drift) {
+        S.forEach((p, i) => {
+          ctx.beginPath(); ctx.arc(p.x, p.y, drag && drag.i === i ? 6 : 4, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffd6ec'; ctx.fill();
+        });
+      }
+    }
+
+    function dot(p, r, fill, glow) {
+      ctx.save();
+      if (glow) { ctx.shadowColor = fill; ctx.shadowBlur = 12; }
+      ctx.fillStyle = fill;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawRay(P, theta, res, upto) {
+      const L = 3 * (W + H);
+      const c = Math.cos(theta), s = Math.sin(theta);
+      ctx.save();
+      const g = ctx.createLinearGradient(P.x, P.y, P.x + c * Math.max(W, H), P.y + s * Math.max(W, H));
+      g.addColorStop(0, 'rgba(255,255,255,0.9)');
+      g.addColorStop(1, 'rgba(255,255,255,0.08)');
+      ctx.strokeStyle = g; ctx.lineWidth = 1.6;
+      ctx.setLineDash([2, 5]);
+      ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x + c * L, P.y + s * L); ctx.stroke();
+      ctx.restore();
+      // crossings, numbered along the ray
+      const hits = res.rows.filter((r, i) => r.hit && i <= upto).sort((a, b) => a.at.u - b.at.u);
+      ctx.font = '700 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      hits.forEach((h, k) => {
+        const col = view === 'parity' ? PINK : h.dir > 0 ? '#b0b0ff' : MINT;
+        dot(h.at, 5, col, true);
+        const label = view === 'parity' ? String(k + 1) : h.dir > 0 ? '+1' : '−1';
+        const ox = -s * 14, oy = c * 14;
+        ctx.fillStyle = '#f4f4ff';
+        ctx.fillText(label, h.at.x + ox, h.at.y + oy);
+      });
+    }
+
+    function drawProbe(P, res) {
+      const inByRule = view === 'parity' ? res.inside : res.w !== 0;
+      const col = inByRule ? MINT : PINK;
+      ctx.save();
+      ctx.strokeStyle = col; ctx.lineWidth = 2;
+      ctx.shadowColor = col; ctx.shadowBlur = 14;
+      ctx.beginPath(); ctx.arc(P.x, P.y, 9, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+      dot(P, 3.5, col, true);
+      ctx.font = '600 12px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(244,244,255,0.92)';
+      const txt = view === 'parity'
+        ? `${res.count} crossing${res.count === 1 ? '' : 's'} · ${res.inside ? 'inside' : 'outside'}`
+        : `w = ${res.w}${view === 'dis' ? ` · ${res.count} crossings` : ''}`;
+      const th = (rayDeg * Math.PI) / 180;
+      const tw = ctx.measureText(txt).width;
+      // sit the label on the side opposite the ray
+      const lx = P.x - Math.cos(th) * 22 - (Math.cos(th) > 0.3 ? tw : Math.cos(th) < -0.3 ? 0 : tw / 2);
+      const ly = P.y - Math.sin(th) * 22 + (Math.abs(Math.sin(th)) < 0.5 ? -16 : 0);
+      ctx.save();
+      ctx.shadowColor = '#05050a'; ctx.shadowBlur = 6;
+      ctx.fillText(txt, lx, ly);
+      ctx.restore();
+    }
+
+    function setReadout(res) {
+      $('rCross').textContent = res.count;
+      $('rParity').textContent = res.inside ? 'inside' : 'outside';
+      $('rParity').style.color = res.inside ? MINT : PINK;
+      $('rWind').textContent = (res.w > 0 ? '+' : '') + res.w;
+      $('rNZ').textContent = res.w !== 0 ? 'inside' : 'outside';
+      $('rNZ').style.color = res.w !== 0 ? MINT : PINK;
+    }
+
+    function setStats(st, nEdges) {
+      $('rEdges').textContent = nEdges;
+      const cellArea = CELL * CELL / (baseR * baseR);
+      const fmt = (c) => (c * cellArea).toFixed(2) + ' r²';
+      $('rAreaOdd').textContent = fmt(st.odd);
+      $('rAreaNZ').textContent = fmt(st.nz);
+      $('rAreaDis').textContent = st.nz ? ((100 * st.dis) / st.nz).toFixed(1) + '% of it' : '—';
+      // legend
+      const keys = [...st.hist.keys()].sort((a, b) => a - b);
+      const tot = st.nz || 1;
+      let html = '';
+      keys.forEach((w) => {
+        const [r, g, b] = wColor(w);
+        const pct = (100 * st.hist.get(w)) / tot;
+        const even = w % 2 === 0;
+        html += `<div class="lg" data-w="${w}"><span class="sw" style="background:rgb(${r},${g},${b})"></span><span>w = ${w > 0 ? '+' : ''}${w}${even ? ' <span style="color:#ff9fd2">· even</span>' : ''}</span><span class="bar"><i style="width:${pct}%;background:rgb(${r},${g},${b})"></i></span><span class="n">${pct.toFixed(1)}%</span></div>`;
+      });
+      $('legend').innerHTML = html || '<div class="note">Nothing is inside.</div>';
+    }
+    let lastW = null;
+    function markLegend(w) {
+      if (w === lastW) return;
+      lastW = w;
+      document.querySelectorAll('.lg').forEach((el) => el.classList.toggle('on', +el.dataset.w === w));
+    }
+
+    function setCode(lines, hitLine) {
+      for (let i = 0; i <= 6; i++) {
+        const el = $('k' + i);
+        el.classList.toggle('on', lines.includes(i) && i !== hitLine);
+        el.classList.toggle('hit', i === hitLine);
+      }
+    }
+
+    // ---------- walkthrough ----------
+    let wsp = 4;
+    function startWalk() {
+      if (drawMode) return;
+      const S = screenShape();
+      const P = toScreen(probe);
+      walk = { S, P, theta: (rayDeg * Math.PI) / 180, res: probeTest(S, toScreen(probe), (rayDeg * Math.PI) / 180), tl: -0.6, hold: 0 };
+      walk.P = P;
+      $('walk').textContent = 'Stop walking';
+      $('walk').classList.add('on');
+    }
+    function stopWalk() {
+      if (!walk) return;
+      walk = null;
+      $('walk').textContent = 'Walk the edges';
+      $('walk').classList.remove('on');
+      setCode([], -1);
+    }
+
+    function drawWalk(dt) {
+      const { S, P, theta, res } = walk;
+      const n = S.length;
+      const rate = n > 60 ? wsp * Math.max(1, n / 40) : wsp;
+      walk.tl += dt * rate;
+      const cur = Math.floor(walk.tl);
+      const done = cur >= n;
+      if (done) { walk.hold += dt; if (walk.hold > 3.2) { stopWalk(); return false; } }
+      const upto = Math.min(n - 1, cur);
+
+      ctx.drawImage(field, 0, 0, gw * CELL, gh * CELL);
+      // dim outline, walked part brighter
+      ctx.save(); ctx.lineJoin = 'round';
+      for (let i = 0; i < n; i++) {
+        const a = S[i], b = S[(i + 1) % n];
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = i < cur ? 'rgba(220,220,255,0.7)' : 'rgba(220,220,255,0.18)';
+        ctx.lineWidth = n > 60 ? 1 : 1.5;
+        ctx.stroke();
+      }
+      ctx.restore();
+      drawRay(P, theta, res, cur < 0 ? -1 : upto);
+
+      let row = null;
+      if (cur >= 0 && !done) {
+        row = res.rows[cur];
+        const a = S[cur], b = S[(cur + 1) % n];
+        ctx.save();
+        ctx.shadowColor = row.hit ? PINK : '#ffffff'; ctx.shadowBlur = 16;
+        ctx.strokeStyle = row.hit ? PINK : row.straddle ? '#ffe6a8' : '#ffffff';
+        ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        ctx.restore();
+        dot(a, 4, '#ffffff'); dot(b, 4, '#ffffff');
+        ctx.font = '700 12px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = '#f4f4ff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        if (n <= 60) { ctx.fillText('a', a.x - 10, a.y - 10); ctx.fillText('b', b.x - 10, b.y - 10); }
+      }
+      const sofar = cur < 0 ? { inside: false, w: 0, count: 0 } : res.rows[upto];
+      drawProbe(P, sofar);
+
+      // code + readout
+      if (cur < 0) setCode([0], -1);
+      else if (done) setCode([], -1);
+      else if (row.hit) setCode([1, 2, 3, 4, 6], 5);
+      else if (row.straddle) setCode([1, 2, 3, 4], -1);
+      else setCode([1, 2], -1);
+      $('rCross').textContent = `${sofar.count}${done ? '' : '…'}`;
+      $('rParity').textContent = sofar.inside ? 'inside' : 'outside';
+      $('rParity').style.color = sofar.inside ? MINT : PINK;
+      $('rWind').textContent = (sofar.w > 0 ? '+' : '') + sofar.w;
+      $('rNZ').textContent = sofar.w !== 0 ? 'inside' : 'outside';
+      $('rNZ').style.color = sofar.w !== 0 ? MINT : PINK;
+      let note;
+      if (cur < 0) note = `Start: <b>inside = false</b>, w = 0. Now look at each edge once, in order.`;
+      else if (done) note = `All <b>${n}</b> edges seen. <b>${res.count}</b> crossed the ray, so even–odd says <b>${res.inside ? 'inside' : 'outside'}</b>; the signs add to <b>w = ${res.w}</b>.`;
+      else if (row.hit) note = `Edge <b>${cur + 1}</b> of ${n}: straddles the ray's line and crosses <b>ahead</b> of the probe. Flip: now <b>${row.inside ? 'inside' : 'outside'}</b>, w ${row.dir > 0 ? '+1' : '−1'} → ${row.w}.`;
+      else if (row.straddle) note = `Edge <b>${cur + 1}</b> of ${n}: straddles the line, but crosses it <b>behind</b> the probe. Ignore.`;
+      else note = `Edge <b>${cur + 1}</b> of ${n}: both ends on the same side of the line. It can't cross. Ignore.`;
+      $('walkNote').innerHTML = note;
+      return true;
+    }
+    const DEFAULT_NOTE = $('walkNote').innerHTML;
+
+    // ---------- loop ----------
+    let last = performance.now();
+    let fieldDirty = true;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (drift && !walk && !drag) { t += dt; fieldDirty = true; }
+
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      const g = ctx.createRadialGradient(center.x, center.y, 0, center.x, center.y, Math.max(W, H) * 0.7);
+      g.addColorStop(0, 'rgba(60,50,120,0.16)');
+      g.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+      if (drawing) {
+        ctx.save();
+        ctx.strokeStyle = PINK; ctx.lineWidth = 2; ctx.shadowColor = PINK; ctx.shadowBlur = 10;
+        ctx.beginPath();
+        drawing.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+        ctx.stroke();
+        ctx.restore();
+        requestAnimationFrame(frame);
+        return;
+      }
+
+      if (walk) {
+        if (fieldDirty) { stats = renderField(walk.S); setStats(stats, walk.S.length); fieldDirty = false; }
+        if (drawWalk(dt)) { requestAnimationFrame(frame); return; }
+        $('walkNote').innerHTML = DEFAULT_NOTE;
+        fieldDirty = true;
+      }
+
+      const S = screenShape();
+      if (fieldDirty) {
+        stats = renderField(S);
+        fieldDirty = false;
+        if (++statTick % 6 === 1 || !drift) setStats(stats, S.length);
+      }
+      ctx.drawImage(field, 0, 0, gw * CELL, gh * CELL);
+      drawOutline(S);
+
+      // probe wanders when left alone
+      if (now - lastUser > 4000 && !drag) {
+        const a = now / 1000;
+        probe = { x: 0.62 * Math.sin(a * 0.23) + 0.12 * Math.sin(a * 0.71), y: 0.5 * Math.sin(a * 0.31 + 1.1) };
+      }
+      const P = toScreen(probe);
+      const theta = (rayDeg * Math.PI) / 180;
+      const res = probeTest(S, P, theta);
+      drawRay(P, theta, res, Infinity);
+      drawProbe(P, res);
+      setReadout(res);
+      markLegend(res.w);
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- sizing ----------
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      gw = Math.ceil(W / CELL); gh = Math.ceil(H / CELL);
+      field.width = gw; field.height = gh;
+      img = fctx.createImageData(gw, gh);
+      center = sceneCenter(); baseR = Math.max(60, sceneRadius());
+      stopWalk();
+      fieldDirty = true;
+    }
+
+    // ---------- interaction ----------
+    function localPoint(e) {
+      const r = cv.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    function pickVertex(p, touch) {
+      if (drift || shape.length > 40) return -1;
+      const S = screenShape(), tol = touch ? 22 : 12;
+      let best = -1, bd = tol;
+      S.forEach((q, i) => { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; best = i; } });
+      return best;
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      const p = localPoint(e);
+      lastUser = performance.now();
+      cv.setPointerCapture(e.pointerId);
+      if (drawMode) { drawing = [p]; return; }
+      if (walk) stopWalk();
+      const v = pickVertex(p, e.pointerType === 'touch');
+      if (v >= 0) { drag = { kind: 'vertex', i: v }; cv.style.cursor = 'grabbing'; return; }
+      drag = { kind: 'probe' };
+      probe = toUnit(p);
+    });
+    cv.addEventListener('pointermove', (e) => {
+      const p = localPoint(e);
+      if (drawing) {
+        const q = drawing[drawing.length - 1];
+        if (Math.hypot(p.x - q.x, p.y - q.y) >= eps) drawing.push(p);
+        return;
+      }
+      if (drag) {
+        lastUser = performance.now();
+        if (drag.kind === 'vertex') { shape[drag.i] = toUnit(p); fieldDirty = true; }
+        else probe = toUnit(p);
+        return;
+      }
+      if (e.pointerType === 'mouse' && !walk && !drawMode) {
+        lastUser = performance.now();
+        probe = toUnit(p);
+        cv.style.cursor = pickVertex(p, false) >= 0 ? 'grab' : 'crosshair';
+      }
+    });
+    function endPointer() {
+      if (drawing) {
+        const pts = drawing;
+        drawing = null;
+        setDrawMode(false);
+        if (pts.length >= 8) {
+          let step = Math.max(1, Math.floor(pts.length / 300));
+          const kept = pts.filter((_, i) => i % step === 0).map(toUnit);
+          shape = kept;
+          preset = 'drawn';
+          ['pStar', 'pSpiro', 'pScrib'].forEach((id) => $(id).classList.remove('on'));
+          if (drift) toggleDrift();
+          fieldDirty = true;
+        }
+        return;
+      }
+      if (drag && drag.kind === 'vertex') fieldDirty = true;
+      drag = null; cv.style.cursor = 'crosshair';
+    }
+    cv.addEventListener('pointerup', endPointer);
+    cv.addEventListener('pointercancel', endPointer);
+    cv.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && !drag && !drawing) lastUser = performance.now() - 2500; });
+
+    function setDrawMode(on) {
+      drawMode = on;
+      $('pDraw').classList.toggle('on', on);
+      $('toast').classList.toggle('on', on);
+      if (on) stopWalk();
+    }
+    function toggleDrift() {
+      drift = !drift;
+      $('anim').textContent = drift ? 'Drift: on' : 'Drift: off';
+      $('anim').classList.toggle('on', drift);
+      fieldDirty = true;
+    }
+    function setView(v) {
+      view = v;
+      $('vParity').classList.toggle('on', v === 'parity');
+      $('vWind').classList.toggle('on', v === 'wind');
+      $('vDis').classList.toggle('on', v === 'dis');
+      fieldDirty = true;
+    }
+
+    $('vParity').addEventListener('click', () => setView('parity'));
+    $('vWind').addEventListener('click', () => setView('wind'));
+    $('vDis').addEventListener('click', () => setView('dis'));
+    $('pStar').addEventListener('click', () => { setPreset('star'); fieldDirty = true; });
+    $('pSpiro').addEventListener('click', () => { setPreset('spiro'); fieldDirty = true; });
+    $('pScrib').addEventListener('click', () => { setPreset('scrib'); fieldDirty = true; });
+    $('pShuffle').addEventListener('click', () => { shuffle(); fieldDirty = true; });
+    $('pDraw').addEventListener('click', () => setDrawMode(!drawMode));
+    $('walk').addEventListener('click', () => (walk ? stopWalk() : startWalk()));
+    $('anim').addEventListener('click', toggleDrift);
+
+    function bindRange(id, fn) {
+      const el = $(id);
+      const run = () => fn(+el.value);
+      el.addEventListener('input', run);
+      run();
+    }
+    bindRange('ray', (v) => { rayDeg = v; $('rayV').textContent = v + '°'; if (walk) stopWalk(); });
+    bindRange('speed', (v) => { wsp = 0.8 * Math.pow(30, v / 100); $('speedV').textContent = wsp.toFixed(wsp < 10 ? 1 : 0) + ' edges / s'; });
+
+    // panels
+    function setPanels(on) {
+      ui.classList.toggle('hidden', !on);
+      side.classList.toggle('hidden', !on);
+      showUi.classList.toggle('on', !on);
+    }
+    $('collapse').addEventListener('click', () => setPanels(false));
+    showUi.addEventListener('click', () => setPanels(true));
+
+    window.addEventListener('keydown', (e) => {
+      const tag = e.target && e.target.tagName;
+      if (e.key === 'Escape') { story.classList.remove('open'); setDrawMode(false); }
+      if (story.classList.contains('open')) return;
+      if (tag === 'INPUT') return;
+      const k = e.key.toLowerCase();
+      if (k === 'h') setPanels(ui.classList.contains('hidden'));
+      if (k === 'w') (walk ? stopWalk() : startWalk());
+      if (e.code === 'Space' && tag !== 'BUTTON') { e.preventDefault(); toggleDrift(); }
+    });
+    window.addEventListener('resize', resize);
+
+    setPreset('star');
+    $('anim').classList.add('on');
+    cv.style.cursor = 'crosshair';
+    resize();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
