@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-10-28",
+    "lastUpdated": "2026-10-29",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -4867,7 +4867,7 @@
     {
       "id": "2026-10-28",
       "date": "2026-10-28",
-      "headline": true,
+      "headline": false,
       "topic": "Whether the IMF says Britain is the joint fastest-growing G7 economy",
       "claim": "The IMF said recently Britain [is] the fastest growing in the G7, joint.",
       "speaker": "Andy Burnham",
@@ -4907,6 +4907,56 @@
         {
           "title": "Full Fact — Is the UK the fastest growing European G7 country?",
           "url": "https://fullfact.org/politics/reeves-uk-fastest-growing-european-g7-country/"
+        }
+      ]
+    },
+    {
+      "id": "2026-10-29",
+      "date": "2026-10-29",
+      "headline": true,
+      "topic": "Whether Britain will have the highest tax burden in its history",
+      "claim": "Next year, Britain will have the highest tax burden in our country's history. Higher than the 1970s. Higher than in the Second World War. Higher than in the Napoleonic Wars.",
+      "speaker": "Kemi Badenoch",
+      "party": "Conservative",
+      "role": "Leader of the Opposition",
+      "discussionScore": 75,
+      "discussionNote": "The opening attack of Badenoch's Budget reply on 28 October, carried by City AM, GB News and live blogs, and fact-checked the same day by Full Fact and UK Fact Check.",
+      "score": 40,
+      "verdict": "Mostly False",
+      "explanation": "The record is real within the official series. The OBR forecasts tax at 37.9% of GDP in 2027-28, above the previous high of 37.2%, so it beats the 1970s. But that series starts in 1948-49. The OBR's own long-run history says tax reached 39% of GDP during the Second World War, above the 2027-28 forecast and the 38.6% peak forecast for 2031-32. The Napoleonic comparison fails by a wider margin: 18th-century taxes averaged about 8% of GDP. Neidle's 'highest since the Napoleonic Wars' finding counts the number of taxes, not their size. Badenoch made the wartime comparisons explicitly, so the claim as used is mostly false.",
+      "evidence": [
+        "OBR October 2026 EFO: the tax-to-GDP ratio surpasses its historical high of 37.2% in 2027-28 and rises every year after.",
+        "Full Fact puts the 2027-28 forecast at 37.9% of GDP, the highest since comparable records began in 1948-49.",
+        "OBR '300 years of UK public finance data': in the Second World War, tax revenues as a share of GDP rose to 39%.",
+        "The same OBR history puts 18th-century tax receipts at about 8% of GDP; the 1799 income tax raised about 1%.",
+        "Dan Neidle found the number of UK taxes is the highest since the Napoleonic Wars, a different measure from tax as a share of GDP.",
+        "Full Fact asked the Conservatives for the basis of the wartime comparisons and had no reply at publication."
+      ],
+      "confidence": "High: the OBR forecast and its long-run history are published; pre-1948 figures are less comparable, but the WWII gap points the same way.",
+      "sources": [
+        {
+          "title": "OBR — Economic and fiscal outlook, October 2026",
+          "url": "https://obr.uk/efo/economic-and-fiscal-outlook-october-2026/"
+        },
+        {
+          "title": "OBR — 300 years of UK public finance data",
+          "url": "https://articles.obr.uk/300-years-of-uk-public-finance-data/"
+        },
+        {
+          "title": "Full Fact — Budget 2026: fact checked",
+          "url": "https://fullfact.org/economy/budget-2026-fact-checked/"
+        },
+        {
+          "title": "UK Fact Check — Budget 2026 live",
+          "url": "https://www.ukfactcheck.com/live/budget-2026-live-latest-updates-analysis-and-fact-checks"
+        },
+        {
+          "title": "City AM — 'Is that it?': Badenoch lays into Healey Budget speech",
+          "url": "https://www.cityam.com/is-that-it-badenoch-lays-into-healey-budget-speech/"
+        },
+        {
+          "title": "Tax Policy Associates — A history of tax",
+          "url": "https://taxpolicy.org.uk/2026/05/29/uk-taxes-history/"
         }
       ]
     }
