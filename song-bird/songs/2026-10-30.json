@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-30",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Two Percent, Thirteen Years",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.12,
+    "summary": "Uneasy calm: the Iran war spreads around the Gulf with mined tankers and Houthi strikes on Saudi airports, North Korea fires missiles, and floods kill five in Syria. But Japan finally hits its inflation target, and Fijian conjoined twins are safely separated.",
+    "palette": {
+      "bg": "#16121c",
+      "bg2": "#2a2233",
+      "accent": "#d98c6a",
+      "accent2": "#8fb8a8",
+      "text": "#ece6ef"
+    }
+  },
+  "style": {
+    "genre": "dark downtempo — kalimba, warm pad, synth bass, TR-808",
+    "key": "Ab",
+    "scale": "phrygian",
+    "bpm": 100,
+    "swing": 0.05
+  },
+  "sampleSources": [
+    "Strudel default library (GM kalimba, GM warm pad, GM synth bass, Roland TR-808)"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~, ~ ~ ~ ~ cp ~ ~ ~\").bank(\"RolandTR808\").gain(0.6).room(0.2), s(\"hh*8\").bank(\"RolandTR808\").gain(perlin.range(0.06,0.14)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"rim(3,8)\").bank(\"RolandTR808\").gain(0.16).delay(0.25).delaytime(0.45), note(\"<[af1 ~ af1 ~ ~ ef2 ~ ~] [a1 ~ a1 ~ ~ e2 ~ ~] [e1 ~ e1 ~ ~ b1 ~ ~] [cs2 ~ cs2 ~ ~ af1 ~ ~]>\").s(\"gm_synth_bass_1\").gain(0.5).lpf(sine.range(500,1100).slow(16)), note(\"<[af2,b2,ef3] [a2,cs3,e3] [e2,af2,b2] [cs3,e3,af3]>\").s(\"gm_pad_warm\").attack(1).release(2.5).gain(0.18).room(0.6).lpf(1800), note(\"<[ef4 ~ e4 ~ ef4 ~ b3 ~] [cs4 ~ ~ e4 ~ a4 ~ ~] [af4 ~ gf4 ~ e4 ~ ~ ~] [e4 ~ cs4 ~ a3 ~ af3 ~]>\").s(\"gm_kalimba\").gain(0.4).room(0.5).delay(0.3).delaytime(0.45).off(0.125, x => x.add(note(12)).gain(0.12).pan(0.75)))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Mines bloom quiet in the Hormuz swell,",
+        "a drone falls short of Mecca's sky,",
+        "ten missiles arc off Korea's coast,",
+        "and Syrian rivers rise."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Families hungry at Kenya's edge,",
+        "a helicopter down on Bosnian ground,",
+        "while Tokyo's bankers lift their heads:",
+        "thirteen years, the target found."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Two percent, thirteen years,",
+        "some things arrive if you wait,",
+        "and the Suva twins, once joined,",
+        "wake up apart and safe today."
+      ]
+    }
+  ]
+}
