@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Same Swaps Every Time — Experiment 106</title>
+<meta name="description" content="Batcher's 1968 sorting networks: wires carry values left to right, and fixed comparators put the smaller of each pair on top, the same ones whatever the input. Pick bitonic, odd–even merge or transposition, knock out a comparator, and let the 0–1 principle find the input it breaks." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  /* ---- Panels ---- */
+  .ui, .side {
+    position: fixed;
+    z-index: 10;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui {
+    left: 24px; top: 24px;
+    width: 330px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 17px 20px;
+  }
+  .side {
+    right: 24px; top: 24px;
+    width: 300px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 15px 16px;
+    display: grid; gap: 10px;
+  }
+  .ui.hidden, .side.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.8rem; line-height: 1.55; color: #b4b4c8; margin-bottom: 12px; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .group-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #7c7cff; margin-top: 2px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #ff7cc3; cursor: pointer;
+    box-shadow: 0 0 10px rgba(255,124,195,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #ff7cc3; cursor: pointer;
+    box-shadow: 0 0 10px rgba(255,124,195,0.7);
+  }
+
+  .btn-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 7px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.on { background: rgba(124,124,255,0.42); border-color: rgba(170,170,255,0.8); color: #fff; }
+  .btn.pink.on { background: rgba(255,124,195,0.38); border-color: rgba(255,170,215,0.85); color: #fff; }
+  .btn.third { flex: 1 1 30%; }
+  .btn.wide { flex: 1 1 100%; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.dim { color: #9a9ab0; font-weight: 500; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7c7cff; }
+
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem; line-height: 1.55;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 8px 12px;
+    color: #a9a9c0; white-space: pre; overflow-x: auto;
+  }
+  .code i { font-style: normal; color: #6f6f88; }
+  .code b { font-weight: 600; color: #ff9fd2; }
+  .note { font-size: 0.7rem; color: #8f8fa6; line-height: 1.55; }
+  .note b { color: #cfcfe6; font-weight: 600; }
+  .ramp { height: 8px; border-radius: 4px; }
+  .ramp-l { display: flex; justify-content: space-between; font-size: 0.66rem; color: #8f8fa6; margin-top: 3px; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 12px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; width: max-content; max-width: 90vw;
+  }
+  .toast {
+    position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 12;
+    background: rgba(255,124,195,0.16); border: 1px solid rgba(255,124,195,0.5); color: #ffe0f1;
+    border-radius: 14px; padding: 8px 16px; font-size: 0.8rem; text-align: center;
+    max-width: min(520px, 86vw);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .toast.on { opacity: 1; }
+
+  @media (max-width: 1180px) {
+    .side { top: auto; bottom: 24px; width: 290px; max-height: 40vh; }
+    .side .hide-mid { display: none; }
+    .hint { display: none; }
+  }
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 42vh;
+      padding: 14px 16px;
+    }
+    .side {
+      left: 12px; right: 12px; top: 12px; bottom: auto;
+      width: auto; max-width: none; max-height: 18vh;
+      padding: 10px 12px; gap: 6px;
+    }
+    .side .section-label, .side .code, .side .note { display: none; }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .story-card { padding: 28px 24px; }
+    .toast { top: auto; bottom: 46vh; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panels (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>The Same Swaps Every Time</h1>
+    <p class="sub">Experiment № 106 · October 31, 2026</p>
+    <p class="lede">
+      A <b>sorting network</b> is a sort that never decides anything. Values ride along wires, and at each
+      <b>comparator</b> the smaller of two wires goes on top. The comparators are fixed in advance, so the
+      network does <b>the same swaps-or-not on every input</b>, and the ones in each column can all fire at once.
+      Kenneth <b>Batcher</b> showed in 1968 how to wire one that sorts anything.
+    </p>
+
+    <div class="controls">
+      <p class="group-label">Network</p>
+      <div class="btn-row">
+        <button class="btn third on" id="nBit">Bitonic</button>
+        <button class="btn third" id="nOem">Odd–even merge</button>
+        <button class="btn third" id="nTra">Transposition</button>
+      </div>
+
+      <p class="group-label">Wires</p>
+      <div class="btn-row" id="sizes">
+        <button class="btn" data-n="8">8</button>
+        <button class="btn on" data-n="16">16</button>
+        <button class="btn" data-n="32">32</button>
+        <button class="btn" data-n="64">64</button>
+      </div>
+
+      <p class="group-label">Input</p>
+      <div class="btn-row">
+        <button class="btn pink on" id="iRand">Shuffled</button>
+        <button class="btn pink" id="iRev">Reversed</button>
+        <button class="btn pink" id="iNear">Nearly sorted</button>
+        <button class="btn pink" id="iBin">0s and 1s</button>
+      </div>
+
+      <div class="row">
+        <label for="speed">Speed <b id="speedV">2 columns / s</b></label>
+        <input type="range" id="speed" min="0" max="100" value="48" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="play">Pause</button>
+        <button class="btn" id="step">Step</button>
+        <button class="btn" id="again">New input</button>
+        <button class="btn on" id="auto">Auto</button>
+      </div>
+
+      <p class="group-label">Break it</p>
+      <div class="btn-row">
+        <button class="btn pink" id="test">Test every 0–1 input</button>
+        <button class="btn pink" id="restore">Restore all</button>
+      </div>
+
+      <div class="readout">
+        <span class="k">comparators</span><span class="v violet" id="rComp">—</span>
+        <span class="k">columns (parallel steps)</span><span class="v pinkv" id="rDepth">—</span>
+        <span class="k">swaps so far</span><span class="v" id="rSwaps">—</span>
+        <span class="k">knocked out</span><span class="v dim" id="rKnock">0</span>
+        <hr />
+        <span class="k">least any sort could need</span><span class="v dim" id="rBound">—</span>
+        <span class="k">output</span><span class="v mint" id="rOut">—</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+  <button id="showUi">show panels</button>
+
+  <div class="side" id="side">
+    <p class="section-label">Every comparator, everywhere</p>
+    <div class="code"><i>// wire i is above wire j</i>
+if w[i] &gt; w[j]:
+  swap(w[i], w[j])     <i>// that's all</i></div>
+    <p class="section-label hide-mid">How this network is wired</p>
+    <div class="code hide-mid" id="wiring"></div>
+    <div>
+      <div class="ramp" id="ramp"></div>
+      <div class="ramp-l"><span>smallest</span><span>largest</span></div>
+    </div>
+    <p class="note hide-mid">Nothing in the network looks at a value to decide what to do next, which is why the same wiring runs on GPUs and in constant-time crypto code. The <b>0–1 principle</b> (Knuth credits W. G. Bouricius) says that if a network sorts every input made only of 0s and 1s, it sorts every input at all. So <b>Test</b> only has to try 2ⁿ inputs, and a broken network always has a 0–1 input that proves it.</p>
+    <p class="note">Click a comparator to knock it out, then hit <b>Test</b>.</p>
+  </div>
+
+  <p class="hint" id="hint">Click a comparator to knock it out · space pauses · S steps · N new input · T tests · H hides panels</p>
+  <div class="toast" id="toast"></div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 106 · The story</p>
+      <h2>The Same Swaps Every Time</h2>
+
+      <h3>Why I picked it</h3>
+      <p>This collection already has quicksort and patience sorting, and both of them are made of decisions: look at a value, then choose where to go next. I wanted the opposite kind of sort, one where the whole plan is written down before any data arrives. Kenneth Batcher published two of them in 1968, in a conference paper called "Sorting networks and their applications": the bitonic sorter and the odd–even merge sorter. He was working on parallel hardware at Goodyear Aerospace, and a sort with no branches can be built directly in wire. The same property turns up in places he can't have pictured. GPUs sort with bitonic networks because thousands of threads can run the same comparator pattern in lockstep, and Daniel Bernstein's djbsort uses a network so that the time it takes reveals nothing about the secret data it is sorting.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The picture is the program. There is no hidden state, only wires and the rungs between them, and you can see the structure of the method in the shape of the drawing: the bitonic network folds each block in half like a ruler, the odd–even merge saves comparators by skipping the ones that could never matter, and transposition is bubble sort pressed flat into a brick wall. With the shuffled input, the coloured threads cross in a tangle on the left and come out the right side as a smooth gradient, every time. My favourite part is the Break it panel. Knock out one rung and the network looks almost the same, but somewhere among the 65,536 inputs of sixteen 0s and 1s there is one it now gets wrong, and the test finds it and plays it for you. I like that a fact about every possible list of numbers can be checked by trying only the boring ones.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Deciding less can make you faster. Batcher's networks do more comparisons than a good sequential sort (63 for sixteen values where 45 is the theoretical floor) but because nothing waits on an earlier answer, sixteen values are sorted in 10 parallel steps instead of 45 in a row. And when something has to work for every input, it is worth asking whether a much smaller set of test cases stands in for all of them, the way 0s and 1s do here.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Sorting networks: Batcher's bitonic and odd–even merge, plus odd–even transposition ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv'), ctx = cv.getContext('2d');
+    const ui = $('ui'), side = $('side'), showUi = $('showUi');
+
+    // colour ramp: indigo → violet → pink → peach → cream
+    const STOPS = [
+      [0.00, [52, 40, 140]],
+      [0.28, [124, 124, 255]],
+      [0.55, [255, 124, 195]],
+      [0.80, [255, 182, 120]],
+      [1.00, [255, 240, 200]],
+    ];
+    function ramp(t) {
+      t = Math.max(0, Math.min(1, t));
+      for (let i = 1; i < STOPS.length; i++) {
+        if (t <= STOPS[i][0]) {
+          const [t0, a] = STOPS[i - 1], [t1, b] = STOPS[i];
+          const u = (t - t0) / (t1 - t0);
+          return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
+        }
+      }
+      return STOPS[STOPS.length - 1][1];
+    }
+    const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+    $('ramp').style.background = `linear-gradient(90deg, ${STOPS.map(([t, c]) => rgb(c) + ' ' + (t * 100) + '%').join(', ')})`;
+
+    // ---------- state ----------
+    let W = 0, H = 0, dpr = 1;
+    let kind = 'bitonic';
+    let n = 16;
+    let inputKind = 'rand';
+    let input = [];
+    let layers = [];          // layers[l] = [[a, b], ...]
+    let comps = [];           // flat: {a, b, layer, col, x, knocked, swapped, fired}
+    let columns = [];         // {layer, x}
+    let boundaries = [];      // front x positions between layers (length L+1)
+    let segs = [];            // segs[wire] = [{x0, x1, v}]
+    let outVals = [];
+    let front = 0;            // in layer units, 0..L
+    let target = null;        // step target
+    let playing = true;
+    let auto = true;
+    let speed = 2;
+    let doneAt = -1;
+    let geo = { x0: 0, x1: 0, y0: 0, y1: 0, row: 10, unit: 10 };
+    let maxVal = 1;
+    let toastTimer = 0;
+    let rng = Math.random;
+
+    // ---------- network construction ----------
+    function buildBitonic(n) {
+      const L = [];
+      for (let k = 2; k <= n; k *= 2) {
+        // fold: pair each element of the lower half of a block with its mirror
+        let layer = [];
+        for (let i = 0; i < n; i++) if ((i & (k - 1)) < k / 2) layer.push([i, i ^ (k - 1)]);
+        L.push(layer);
+        for (let j = k / 4; j >= 1; j /= 2) {
+          layer = [];
+          for (let i = 0; i < n; i++) if ((i & j) === 0) layer.push([i, i | j]);
+          L.push(layer);
+        }
+      }
+      return L;
+    }
+    function buildOddEvenMerge(n) {
+      const L = [];
+      for (let p = 1; p < n; p *= 2) {
+        for (let k = p; k >= 1; k = Math.floor(k / 2)) {
+          const layer = [];
+          for (let j = k % p; j + k < n; j += 2 * k) {
+            for (let i = 0; i < k && i + j + k < n; i++) {
+              if (Math.floor((i + j) / (2 * p)) === Math.floor((i + j + k) / (2 * p))) layer.push([i + j, i + j + k]);
+            }
+          }
+          if (layer.length) L.push(layer);
+        }
+      }
+      return L;
+    }
+    function buildTransposition(n) {
+      const L = [];
+      for (let r = 0; r < n; r++) {
+        const layer = [];
+        for (let i = r % 2; i + 1 < n; i += 2) layer.push([i, i + 1]);
+        if (layer.length) L.push(layer);
+      }
+      return L;
+    }
+
+    const WIRING = {
+      bitonic: `<i>// Batcher 1968, min always on top</i>
+for k = 2, 4, 8 … n:
+  pair i with <b>i xor (k−1)</b>   <i>// fold</i>
+  for j = k/4 … 2, 1:
+    pair i with <b>i + j</b>   if i & j = 0`,
+      oem: `<i>// Batcher 1968, odd–even merge</i>
+for p = 1, 2, 4 … n/2:
+  for k = p, p/2 … 1:
+    for j = k mod p; j+k &lt; n; j += 2k:
+      for i = 0 … k−1:
+        if (i+j) div 2p = (i+j+k) div 2p:
+          pair <b>i+j</b> with <b>i+j+k</b>`,
+      trans: `<i>// odd–even transposition</i>
+repeat n times, alternating:
+  pair (0,1) (2,3) (4,5) …
+  pair (1,2) (3,4) (5,6) …
+<i>// bubble sort, done in parallel</i>`,
+    };
+
+    function build() {
+      layers = kind === 'bitonic' ? buildBitonic(n) : kind === 'oem' ? buildOddEvenMerge(n) : buildTransposition(n);
+      comps = [];
+      columns = [];
+      layers.forEach((layer, l) => {
+        // pack comparators whose spans overlap into separate sub-columns
+        const sorted = layer.slice().sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+        const ends = [];
+        const cols = [];
+        for (const [a, b] of sorted) {
+          let c = 0;
+          while (c < ends.length && ends[c] >= a) c++;
+          if (c === ends.length) { ends.push(-1); cols.push([]); }
+          ends[c] = b;
+          cols[c].push([a, b]);
+        }
+        cols.forEach((list) => {
+          const col = { layer: l, x: 0, comps: [] };
+          for (const [a, b] of list) {
+            const cp = { a, b, layer: l, col, x: 0, knocked: false, swapped: false, fired: -1 };
+            comps.push(cp);
+            col.comps.push(cp);
+          }
+          columns.push(col);
+        });
+      });
+      $('wiring').innerHTML = WIRING[kind];
+      $('rComp').textContent = comps.length;
+      $('rDepth').textContent = layers.length;
+      // ceil(log2 n!)
+      let s = 0;
+      for (let i = 2; i <= n; i++) s += Math.log2(i);
+      $('rBound').textContent = Math.ceil(s - 1e-9) + ' comparisons, one at a time';
+      layout();
+    }
+
+    // ---------- inputs ----------
+    function shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function makeInput() {
+      const a = [];
+      if (inputKind === 'rand') {
+        for (let i = 0; i < n; i++) a.push(i);
+        shuffle(a);
+      } else if (inputKind === 'rev') {
+        for (let i = 0; i < n; i++) a.push(n - 1 - i);
+      } else if (inputKind === 'near') {
+        for (let i = 0; i < n; i++) a.push(i);
+        const swaps = Math.max(2, Math.round(n / 6));
+        for (let s = 0; s < swaps; s++) {
+          const i = Math.floor(rng() * n);
+          const j = Math.max(0, Math.min(n - 1, i + 1 + Math.floor(rng() * 3) * (rng() < 0.5 ? -1 : 1)));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+      } else if (inputKind === 'bin') {
+        let ones = 0;
+        for (let i = 0; i < n; i++) { const b = rng() < 0.5 ? 1 : 0; ones += b; a.push(b); }
+        if (ones === 0 || ones === n) a[Math.floor(rng() * n)] ^= 1;
+      } else {
+        return input.slice(); // custom (counterexample) stays
+      }
+      return a;
+    }
+    function isBinary() { return input.every((v) => v === 0 || v === 1); }
+    function colourOf(v) {
+      if (maxVal === 1) return ramp(v ? 0.82 : 0.1);
+      return ramp(v / maxVal);
+    }
+
+    // ---------- simulation ----------
+    function simulate() {
+      maxVal = Math.max(1, ...input);
+      const vals = input.slice();
+      segs = [];
+      for (let i = 0; i < n; i++) segs.push([{ x0: geo.x0, x1: geo.x1, v: vals[i] }]);
+      for (const col of columns) {
+        for (const c of col.comps) {
+          c.swapped = false;
+          if (c.knocked) continue;
+          if (vals[c.a] > vals[c.b]) {
+            const t = vals[c.a]; vals[c.a] = vals[c.b]; vals[c.b] = t;
+            c.swapped = true;
+            for (const w of [c.a, c.b]) {
+              const list = segs[w];
+              list[list.length - 1].x1 = c.x;
+              list.push({ x0: c.x, x1: geo.x1, v: vals[w] });
+            }
+          }
+        }
+      }
+      outVals = vals;
+      let bad = 0;
+      for (let i = 0; i + 1 < n; i++) if (vals[i] > vals[i + 1]) bad++;
+      $('rOut').textContent = bad ? `${bad} pair${bad > 1 ? 's' : ''} out of order` : 'sorted ✓';
+      $('rOut').className = 'v ' + (bad ? 'pinkv' : 'mint');
+      $('rKnock').textContent = comps.filter((c) => c.knocked).length;
+    }
+
+    function restart(newInput = true) {
+      if (newInput) input = makeInput();
+      front = 0;
+      target = null;
+      doneAt = -1;
+      comps.forEach((c) => { c.fired = -1; });
+      simulate();
+    }
+
+    // ---------- layout ----------
+    function panelRect(el) {
+      if (el.classList.contains('hidden')) return null;
+      return el.getBoundingClientRect();
+    }
+    function layout() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      let x0 = 40, x1 = W - 64, y0 = 40, y1 = H - 40;
+      const r1 = panelRect(ui), r2 = panelRect(side);
+      if (W > 700) {
+        if (r1) x0 = Math.max(x0, r1.right + 34);
+        if (r2 && W > 1180) x1 = Math.min(x1, r2.left - 60);
+        else if (r2) {
+          // side panel sits bottom-right: stop above it if there is room, else beside it
+          if (r2.top - 18 - y0 > 260) y1 = r2.top - 18;
+          else if (r2.left - 60 - x0 > 320) x1 = r2.left - 60;
+        }
+        if (x1 - x0 < 320) { x0 = 40; x1 = W - 64; }
+      } else {
+        x0 = 34; x1 = W - 52;
+        if (r2) y0 = Math.max(y0, r2.bottom + 18);
+        if (r1) y1 = Math.min(y1, r1.top - 18);
+        if (y1 - y0 < 160) { y0 = 40; y1 = H - 40; }
+      }
+      const rowGap = (y1 - y0) / n;
+      // horizontal units: each sub-column is 1 unit, each gap between layers 1.4 units
+      const G = 1.4;
+      const total = columns.length + G * (layers.length + 1);
+      const unit = (x1 - x0) / total;
+      geo = { x0, x1, y0, y1, row: rowGap, unit };
+
+      // boundaries[l] .. boundaries[l+1] is the stretch of wire the front crosses during column l
+      boundaries = [x0];
+      let x = x0 + G * unit;
+      for (let ci = 0; ci < columns.length; ci++) {
+        const col = columns[ci];
+        col.x = x + unit * 0.5;
+        col.comps.forEach((c) => { c.x = col.x; });
+        x += unit;
+        const next = columns[ci + 1];
+        if (!next) boundaries.push(x1);
+        else if (next.layer !== col.layer) {
+          boundaries.push(x + G * unit * 0.5);
+          x += G * unit;
+        }
+      }
+      if (input.length === n) simulate();
+    }
+    const wy = (i) => geo.y0 + (i + 0.5) * geo.row;
+    function frontX() {
+      const L = layers.length;
+      if (front >= L) return geo.x1 + 1;
+      const l = Math.floor(front), u = front - l;
+      return boundaries[l] + (boundaries[l + 1] - boundaries[l]) * u;
+    }
+
+    // ---------- drawing ----------
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+      const bg = ctx.createRadialGradient(W * 0.55, H * 0.45, 0, W * 0.55, H * 0.45, Math.max(W, H) * 0.75);
+      bg.addColorStop(0, '#0d0b1c');
+      bg.addColorStop(1, '#05050a');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      const fx = frontX();
+      const lw = Math.max(1.4, Math.min(7, geo.row * 0.42));
+      const dotR = Math.max(1.5, Math.min(4.6, geo.row * 0.26));
+      const cw = Math.max(1, Math.min(2.4, geo.unit * 0.32));
+
+      // faint layer bands
+      for (let l = 0; l < layers.length; l++) {
+        if (l % 2) continue;
+        ctx.fillStyle = 'rgba(255,255,255,0.018)';
+        ctx.fillRect(boundaries[l], geo.y0 - 6, boundaries[l + 1] - boundaries[l], geo.y1 - geo.y0 + 12);
+      }
+
+      // wires: dim ahead of the front
+      ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(1, lw * 0.35);
+      ctx.strokeStyle = 'rgba(160,160,200,0.16)';
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const y = wy(i);
+        ctx.moveTo(Math.max(geo.x0, Math.min(fx, geo.x1)), y);
+        ctx.lineTo(geo.x1, y);
+      }
+      ctx.stroke();
+
+      // coloured threads behind the front
+      ctx.lineCap = 'butt';
+      for (let i = 0; i < n; i++) {
+        const y = wy(i);
+        for (const s of segs[i]) {
+          if (s.x0 >= fx) break;
+          const xe = Math.min(s.x1, fx);
+          const c = colourOf(s.v);
+          ctx.strokeStyle = rgb(c, 0.92);
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          ctx.moveTo(s.x0, y);
+          ctx.lineTo(xe, y);
+          ctx.stroke();
+        }
+      }
+
+      // the crossings: a swap is drawn as two threads trading places
+      for (const c of comps) {
+        const past = c.x <= fx;
+        const ya = wy(c.a), yb = wy(c.b);
+        if (c.knocked) {
+          ctx.setLineDash([3, 4]);
+          ctx.strokeStyle = 'rgba(255,124,195,0.55)';
+          ctx.lineWidth = cw;
+          ctx.beginPath(); ctx.moveTo(c.x, ya); ctx.lineTo(c.x, yb); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.strokeStyle = 'rgba(255,124,195,0.75)';
+          ctx.lineWidth = 1.2;
+          const r = dotR + 1.5;
+          for (const y of [ya, yb]) {
+            ctx.beginPath();
+            ctx.moveTo(c.x - r, y - r); ctx.lineTo(c.x + r, y + r);
+            ctx.moveTo(c.x + r, y - r); ctx.lineTo(c.x - r, y + r);
+            ctx.stroke();
+          }
+          continue;
+        }
+        if (past && c.fired < 0) c.fired = now;
+        let glow = 0;
+        if (past && c.swapped) glow = Math.max(0, 1 - (now - c.fired) / 700);
+        if (!past) {
+          ctx.strokeStyle = 'rgba(190,190,230,0.22)';
+          ctx.fillStyle = 'rgba(190,190,230,0.32)';
+        } else if (c.swapped) {
+          ctx.strokeStyle = `rgba(255,${(200 - glow * 60) | 0},${(230 - glow * 20) | 0},${0.6 + glow * 0.4})`;
+          ctx.fillStyle = `rgba(255,235,245,${0.75 + glow * 0.25})`;
+        } else {
+          ctx.strokeStyle = 'rgba(210,210,255,0.38)';
+          ctx.fillStyle = 'rgba(210,210,255,0.55)';
+        }
+        if (glow > 0) {
+          ctx.save();
+          ctx.shadowColor = 'rgba(255,124,195,0.9)';
+          ctx.shadowBlur = 14 * glow;
+        }
+        ctx.lineWidth = cw;
+        ctx.beginPath(); ctx.moveTo(c.x, ya); ctx.lineTo(c.x, yb); ctx.stroke();
+        ctx.beginPath(); ctx.arc(c.x, ya, dotR, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(c.x, yb, dotR * (past && !c.swapped ? 1 : 1), 0, Math.PI * 2); ctx.fill();
+        if (glow > 0) ctx.restore();
+      }
+
+      // input and output caps
+      const capW = Math.max(6, Math.min(16, geo.row * 0.9));
+      for (let i = 0; i < n; i++) {
+        const y = wy(i);
+        const h = Math.max(2, geo.row * 0.62);
+        ctx.fillStyle = rgb(colourOf(input[i]));
+        roundRect(geo.x0 - capW - 6, y - h / 2, capW, h, Math.min(3, h / 2));
+        if (front >= layers.length) {
+          ctx.fillStyle = rgb(colourOf(outVals[i]));
+          roundRect(geo.x1 + 6, y - h / 2, capW, h, Math.min(3, h / 2));
+        }
+      }
+      // mark out-of-order outputs
+      if (front >= layers.length) {
+        ctx.strokeStyle = '#ff7cc3';
+        ctx.lineWidth = 1.6;
+        for (let i = 0; i + 1 < n; i++) {
+          if (outVals[i] > outVals[i + 1]) {
+            const ym = (wy(i) + wy(i + 1)) / 2;
+            const xm = geo.x1 + 6 + capW + 10;
+            ctx.beginPath(); ctx.arc(xm, ym, Math.max(5, geo.row * 0.7), 0, Math.PI * 2); ctx.stroke();
+          }
+        }
+      }
+
+      // the sweeping front
+      if (front < layers.length) {
+        const g = ctx.createLinearGradient(fx - 26, 0, fx, 0);
+        g.addColorStop(0, 'rgba(255,124,195,0)');
+        g.addColorStop(1, 'rgba(255,124,195,0.14)');
+        ctx.fillStyle = g;
+        ctx.fillRect(fx - 26, geo.y0 - 8, 26, geo.y1 - geo.y0 + 16);
+        ctx.strokeStyle = 'rgba(255,170,215,0.55)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(fx, geo.y0 - 8); ctx.lineTo(fx, geo.y1 + 8); ctx.stroke();
+      }
+
+      // swaps readout
+      let done = 0, total = 0;
+      for (const c of comps) { if (c.swapped) { total++; if (c.x <= fx) done++; } }
+      $('rSwaps').textContent = `${done} of ${total}`;
+    }
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function tick(now) {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      const L = layers.length;
+      if (playing || target !== null) {
+        const goal = target !== null ? target : L;
+        if (front < goal) {
+          front = Math.min(goal, front + speed * dt * (target !== null ? 2.5 : 1));
+          if (target !== null && front >= target) target = null;
+        }
+      }
+      if (front >= L && doneAt < 0) doneAt = now;
+      if (auto && playing && doneAt > 0 && now - doneAt > 1800) {
+        restart(inputKind !== 'custom' && inputKind !== 'rev');
+      }
+      draw(now);
+      requestAnimationFrame(tick);
+    }
+
+    // ---------- 0–1 test, 32 inputs per machine word ----------
+    function zeroOneTest() {
+      const live = comps.filter((c) => !c.knocked);
+      // comparators in network order
+      const order = [];
+      for (const col of columns) for (const c of col.comps) if (!c.knocked) order.push(c);
+      const w = new Uint32Array(n);
+      const run = () => {
+        for (const c of order) {
+          const a = w[c.a], b = w[c.b];
+          w[c.a] = a & b;   // min on top
+          w[c.b] = a | b;   // max below
+        }
+        let badLanes = 0;
+        for (let i = 0; i + 1 < n; i++) badLanes |= w[i] & ~w[i + 1];
+        return badLanes >>> 0;
+      };
+      const t0 = performance.now();
+      if (n <= 20) {
+        const total = 2 ** n;
+        for (let base = 0; base < total; base += 32) {
+          for (let i = 0; i < n; i++) {
+            let word = 0;
+            for (let l = 0; l < 32; l++) {
+              const cs = base + l;
+              if (cs < total && ((cs >> i) & 1)) word |= (1 << l);
+            }
+            w[i] = word;
+          }
+          const bad = run();
+          if (bad) {
+            const lane = 31 - Math.clz32(bad & -bad);
+            const cs = base + lane;
+            const ex = [];
+            for (let i = 0; i < n; i++) ex.push((cs >> i) & 1);
+            return { found: ex, tried: cs + 1, exhaustive: true, ms: performance.now() - t0, live: live.length };
+          }
+        }
+        return { found: null, tried: total, exhaustive: true, ms: performance.now() - t0, live: live.length };
+      }
+      // too many to enumerate: random 0–1 inputs, with the number of 1s spread evenly
+      const batches = 6000;
+      const lanes = new Array(32);
+      for (let bt = 0; bt < batches; bt++) {
+        w.fill(0);
+        for (let l = 0; l < 32; l++) {
+          const k = Math.floor(rng() * (n + 1));
+          const idx = [];
+          for (let i = 0; i < n; i++) idx.push(i);
+          for (let s = 0; s < k; s++) {
+            const j = s + Math.floor(rng() * (n - s));
+            [idx[s], idx[j]] = [idx[j], idx[s]];
+            w[idx[s]] |= (1 << l);
+          }
+          lanes[l] = k;
+        }
+        const snapshot = Array.from(w);
+        const bad = run();
+        if (bad) {
+          const lane = 31 - Math.clz32(bad & -bad);
+          const ex = snapshot.map((word) => (word >>> lane) & 1);
+          return { found: ex, tried: bt * 32 + lane + 1, exhaustive: false, ms: performance.now() - t0, live: live.length };
+        }
+      }
+      return { found: null, tried: batches * 32, exhaustive: false, ms: performance.now() - t0, live: live.length };
+    }
+
+    // ---------- UI ----------
+    function toast(msg, ms = 4200) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.classList.add('on');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('on'), ms);
+    }
+    const fmt = (x) => x.toLocaleString('en-US');
+
+    function setKind(k) {
+      kind = k;
+      [['nBit', 'bitonic'], ['nOem', 'oem'], ['nTra', 'trans']].forEach(([id, v]) => $(id).classList.toggle('on', v === k));
+      build();
+      if (inputKind === 'custom') setInput('bin', false);
+      restart(true);
+    }
+    function setN(v) {
+      n = v;
+      document.querySelectorAll('#sizes .btn').forEach((b) => b.classList.toggle('on', +b.dataset.n === v));
+      if (inputKind === 'custom') setInput('bin', false);
+      build();
+      restart(true);
+    }
+    function setInput(k, go = true) {
+      inputKind = k;
+      [['iRand', 'rand'], ['iRev', 'rev'], ['iNear', 'near'], ['iBin', 'bin']].forEach(([id, v]) => $(id).classList.toggle('on', v === k));
+      if (go) restart(true);
+    }
+    $('nBit').onclick = () => setKind('bitonic');
+    $('nOem').onclick = () => setKind('oem');
+    $('nTra').onclick = () => setKind('trans');
+    document.querySelectorAll('#sizes .btn').forEach((b) => { b.onclick = () => setN(+b.dataset.n); });
+    $('iRand').onclick = () => setInput('rand');
+    $('iRev').onclick = () => setInput('rev');
+    $('iNear').onclick = () => setInput('near');
+    $('iBin').onclick = () => setInput('bin');
+
+    function speedFromSlider() {
+      const v = +$('speed').value;
+      speed = 0.25 * Math.pow(2, v / 100 * 6.3);   // 0.25 … ~20 columns per second
+      $('speedV').textContent = (speed < 1 ? speed.toFixed(2) : speed < 10 ? speed.toFixed(1) : Math.round(speed)) + ' columns / s';
+    }
+    $('speed').oninput = speedFromSlider;
+    speedFromSlider();
+
+    function setPlaying(p) {
+      playing = p;
+      $('play').textContent = p ? 'Pause' : 'Play';
+      if (p && front >= layers.length) restart(inputKind !== 'custom' && inputKind !== 'rev');
+    }
+    $('play').onclick = () => setPlaying(!playing);
+    function step() {
+      setPlaying(false);
+      if (front >= layers.length) { restart(false); return; }
+      target = Math.min(layers.length, Math.floor(front + 1e-6) + 1);
+    }
+    $('step').onclick = step;
+    function again() {
+      if (inputKind === 'custom') setInput('bin', false);
+      restart(true);
+      if (!playing) setPlaying(true);
+    }
+    $('again').onclick = again;
+    $('auto').onclick = () => { auto = !auto; $('auto').classList.toggle('on', auto); };
+
+    function runTest() {
+      const res = zeroOneTest();
+      const knocked = comps.filter((c) => c.knocked).length;
+      if (res.found) {
+        input = res.found;
+        inputKind = 'custom';
+        [['iRand', 'rand'], ['iRev', 'rev'], ['iNear', 'near'], ['iBin', 'bin']].forEach(([id]) => $(id).classList.remove('on'));
+        restart(false);
+        setPlaying(true);
+        const how = res.exhaustive ? `after trying ${fmt(res.tried)} of ${fmt(2 ** n)} inputs` : `after ${fmt(res.tried)} random 0–1 inputs`;
+        toast(`Found one ${how}: this pattern of 0s and 1s comes out unsorted. Watch where it slips through.`, 6000);
+      } else if (res.exhaustive) {
+        toast(`All ${fmt(res.tried)} inputs of 0s and 1s come out sorted${knocked ? `, even with ${knocked} comparator${knocked > 1 ? 's' : ''} gone` : ''}, so by the 0–1 principle every input does.`, 6000);
+      } else {
+        toast(`No failure in ${fmt(res.tried)} random 0–1 inputs. That is evidence, not proof: ${n} wires have 2^${n} of them. Try 16 wires for a full check.`, 6500);
+      }
+    }
+    $('test').onclick = runTest;
+    $('restore').onclick = () => {
+      comps.forEach((c) => { c.knocked = false; });
+      simulate();
+      toast('Every comparator is back.', 2000);
+    };
+
+    // knock out a comparator by clicking it
+    function pick(px, py) {
+      let best = null, bd = Infinity;
+      const tol = Math.max(7, geo.unit * 0.7);
+      for (const c of comps) {
+        const dx = Math.abs(px - c.x);
+        if (dx > tol) continue;
+        const ya = wy(c.a) - geo.row * 0.5, yb = wy(c.b) + geo.row * 0.5;
+        if (py < ya || py > yb) continue;
+        const span = c.b - c.a;
+        const d = dx + span * 0.01;   // prefer the nearest, then the shortest
+        if (d < bd) { bd = d; best = c; }
+      }
+      return best;
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      const c = pick(e.clientX, e.clientY);
+      if (!c) return;
+      c.knocked = !c.knocked;
+      simulate();
+      const k = comps.filter((q) => q.knocked).length;
+      toast(c.knocked
+        ? `Knocked out the comparator between wires ${c.a + 1} and ${c.b + 1}. ${k} gone. Press Test to hunt for an input it breaks.`
+        : `Comparator ${c.a + 1}–${c.b + 1} restored.`, 3600);
+    });
+    cv.addEventListener('pointermove', (e) => {
+      cv.style.cursor = pick(e.clientX, e.clientY) ? 'pointer' : 'default';
+    });
+
+    function togglePanels() {
+      const hide = !ui.classList.contains('hidden');
+      ui.classList.toggle('hidden', hide);
+      side.classList.toggle('hidden', hide);
+      showUi.classList.toggle('on', hide);
+      setTimeout(layout, 30);
+    }
+    $('collapse').onclick = togglePanels;
+    showUi.onclick = togglePanels;
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      const k = e.key.toLowerCase();
+      if (k === 'escape') story.classList.remove('open');
+      if (story.classList.contains('open')) return;
+      if (k === 'h') togglePanels();
+      else if (k === ' ') { e.preventDefault(); setPlaying(!playing); }
+      else if (k === 's') step();
+      else if (k === 'n') again();
+      else if (k === 't') runTest();
+    });
+    window.addEventListener('resize', layout);
+
+    build();
+    restart(true);
+    requestAnimationFrame(tick);
+  })();
+</script>
+</body>
+</html>
