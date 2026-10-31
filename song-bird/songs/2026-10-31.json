@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-31",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Ending Soon",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.12,
+    "summary": "Uneasy calm: tankers burn in Hormuz while Trump says the war ends soon, Ebola deaths in Congo pass 5,000 and Port Sudan rations water. Yet rescued orangutans return to Borneo's forest, Hokkaido has a bumper potato harvest, and a diabetes trial sends half into remission.",
+    "palette": {
+      "bg": "#141820",
+      "bg2": "#232b36",
+      "accent": "#c9a46b",
+      "accent2": "#7fa6b8",
+      "text": "#e9e7e2"
+    }
+  },
+  "style": {
+    "genre": "neo-soul — jazz guitar, flute, finger bass, Oberheim DMX",
+    "key": "Eb",
+    "scale": "melodic minor",
+    "bpm": 92,
+    "swing": 0.12
+  },
+  "sampleSources": [
+    "Strudel default library (GM jazz guitar, GM flute, GM finger bass, Oberheim DMX)"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"OberheimDMX\").gain(0.55).room(0.15), s(\"hh*8\").bank(\"OberheimDMX\").gain(perlin.range(0.07,0.15)).hpf(6000).pan(sine.range(0.4,0.6).slow(8)), s(\"~ rim ~ ~ ~ ~ rim ~\").bank(\"OberheimDMX\").gain(0.14).delay(0.2).delaytime(0.33), note(\"<[ef2 ~ bf1 ~ ef2 ~ gf2 f2] [af1 ~ ef2 ~ af1 ~ c2 ~] [f1 ~ c2 ~ f2 ~ af1 ~] [bf1 ~ f2 ~ d2 ~ bf1 ~]>\").s(\"gm_electric_bass_finger\").gain(0.55).lpf(900), note(\"<[ef3,gf3,bf3,d4] [af2,c3,ef3,gf3] [f3,af3,c4,ef4] [bf2,d3,f3,af3]>\").struct(\"~ x ~ x@2 ~ x ~\").s(\"gm_electric_guitar_jazz\").gain(0.32).room(0.35).lpf(sine.range(1400,2600).slow(16)), note(\"<[bf4 ~ gf4 ~ f4 ~ ef4 ~] [c5 ~ ~ bf4 ~ gf4 ~ ~] [af4 ~ c5 ~ ef5 ~ ~ ~] [d5 ~ c5 ~ bf4 ~ af4 ~]>\").s(\"gm_flute\").gain(0.36).room(0.5).delay(0.25).delaytime(0.49).off(0.25, x => x.add(note(-12)).gain(0.1).pan(0.7)))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Four tankers burning in the strait,",
+        "a voice says soon, the end is near,",
+        "in Congo five thousand gone,",
+        "in Port Sudan the water's dear."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Nine orangutans climb back home",
+        "through Borneo's unburnt green,",
+        "Hokkaido digs its best in years,",
+        "the station hums with power clean."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Soon, they say, soon,",
+        "keep the lamp lit low,",
+        "half of what was broken mends,",
+        "and half we've yet to know."
+      ]
+    }
+  ]
+}
