@@ -1,57 +1,57 @@
 {
-  "date": "2026-10-30",
+  "date": "2026-10-31",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Two Percent, Thirteen Years",
+  "title": "Ending Soon",
   "mood": {
     "label": "Uneasy calm",
     "score": -0.12,
-    "summary": "Uneasy calm: the Iran war spreads around the Gulf with mined tankers and Houthi strikes on Saudi airports, North Korea fires missiles, and floods kill five in Syria. But Japan finally hits its inflation target, and Fijian conjoined twins are safely separated.",
+    "summary": "Uneasy calm: tankers burn in Hormuz while Trump says the war ends soon, Ebola deaths in Congo pass 5,000 and Port Sudan rations water. Yet rescued orangutans return to Borneo's forest, Hokkaido has a bumper potato harvest, and a diabetes trial sends half into remission.",
     "palette": {
-      "bg": "#16121c",
-      "bg2": "#2a2233",
-      "accent": "#d98c6a",
-      "accent2": "#8fb8a8",
-      "text": "#ece6ef"
+      "bg": "#141820",
+      "bg2": "#232b36",
+      "accent": "#c9a46b",
+      "accent2": "#7fa6b8",
+      "text": "#e9e7e2"
     }
   },
   "style": {
-    "genre": "dark downtempo — kalimba, warm pad, synth bass, TR-808",
-    "key": "Ab",
-    "scale": "phrygian",
-    "bpm": 100,
-    "swing": 0.05
+    "genre": "neo-soul — jazz guitar, flute, finger bass, Oberheim DMX",
+    "key": "Eb",
+    "scale": "melodic minor",
+    "bpm": 92,
+    "swing": 0.12
   },
   "sampleSources": [
-    "Strudel default library (GM kalimba, GM warm pad, GM synth bass, Roland TR-808)"
+    "Strudel default library (GM jazz guitar, GM flute, GM finger bass, Oberheim DMX)"
   ],
-  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~, ~ ~ ~ ~ cp ~ ~ ~\").bank(\"RolandTR808\").gain(0.6).room(0.2), s(\"hh*8\").bank(\"RolandTR808\").gain(perlin.range(0.06,0.14)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"rim(3,8)\").bank(\"RolandTR808\").gain(0.16).delay(0.25).delaytime(0.45), note(\"<[af1 ~ af1 ~ ~ ef2 ~ ~] [a1 ~ a1 ~ ~ e2 ~ ~] [e1 ~ e1 ~ ~ b1 ~ ~] [cs2 ~ cs2 ~ ~ af1 ~ ~]>\").s(\"gm_synth_bass_1\").gain(0.5).lpf(sine.range(500,1100).slow(16)), note(\"<[af2,b2,ef3] [a2,cs3,e3] [e2,af2,b2] [cs3,e3,af3]>\").s(\"gm_pad_warm\").attack(1).release(2.5).gain(0.18).room(0.6).lpf(1800), note(\"<[ef4 ~ e4 ~ ef4 ~ b3 ~] [cs4 ~ ~ e4 ~ a4 ~ ~] [af4 ~ gf4 ~ e4 ~ ~ ~] [e4 ~ cs4 ~ a3 ~ af3 ~]>\").s(\"gm_kalimba\").gain(0.4).room(0.5).delay(0.3).delaytime(0.45).off(0.125, x => x.add(note(12)).gain(0.12).pan(0.75)))",
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"OberheimDMX\").gain(0.55).room(0.15), s(\"hh*8\").bank(\"OberheimDMX\").gain(perlin.range(0.07,0.15)).hpf(6000).pan(sine.range(0.4,0.6).slow(8)), s(\"~ rim ~ ~ ~ ~ rim ~\").bank(\"OberheimDMX\").gain(0.14).delay(0.2).delaytime(0.33), note(\"<[ef2 ~ bf1 ~ ef2 ~ gf2 f2] [af1 ~ ef2 ~ af1 ~ c2 ~] [f1 ~ c2 ~ f2 ~ af1 ~] [bf1 ~ f2 ~ d2 ~ bf1 ~]>\").s(\"gm_electric_bass_finger\").gain(0.55).lpf(900), note(\"<[ef3,gf3,bf3,d4] [af2,c3,ef3,gf3] [f3,af3,c4,ef4] [bf2,d3,f3,af3]>\").struct(\"~ x ~ x@2 ~ x ~\").s(\"gm_electric_guitar_jazz\").gain(0.32).room(0.35).lpf(sine.range(1400,2600).slow(16)), note(\"<[bf4 ~ gf4 ~ f4 ~ ef4 ~] [c5 ~ ~ bf4 ~ gf4 ~ ~] [af4 ~ c5 ~ ef5 ~ ~ ~] [d5 ~ c5 ~ bf4 ~ af4 ~]>\").s(\"gm_flute\").gain(0.36).room(0.5).delay(0.25).delaytime(0.49).off(0.25, x => x.add(note(-12)).gain(0.1).pan(0.7)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Mines bloom quiet in the Hormuz swell,",
-        "a drone falls short of Mecca's sky,",
-        "ten missiles arc off Korea's coast,",
-        "and Syrian rivers rise."
+        "Four tankers burning in the strait,",
+        "a voice says soon, the end is near,",
+        "in Congo five thousand gone,",
+        "in Port Sudan the water's dear."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Families hungry at Kenya's edge,",
-        "a helicopter down on Bosnian ground,",
-        "while Tokyo's bankers lift their heads:",
-        "thirteen years, the target found."
+        "Nine orangutans climb back home",
+        "through Borneo's unburnt green,",
+        "Hokkaido digs its best in years,",
+        "the station hums with power clean."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Two percent, thirteen years,",
-        "some things arrive if you wait,",
-        "and the Suva twins, once joined,",
-        "wake up apart and safe today."
+        "Soon, they say, soon,",
+        "keep the lamp lit low,",
+        "half of what was broken mends,",
+        "and half we've yet to know."
       ]
     }
   ]
