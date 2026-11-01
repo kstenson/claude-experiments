@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-01",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Two Days to Open the Sea",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.12,
+    "summary": "Uneasy calm: talks on a two-day plan to reopen Hormuz, but riots in Frankfurt, a court standoff in Poland and a record crypto heist. Evacuees from Oleshky reunite with family, and astronomers spot a possible dwarf planet beyond Pluto.",
+    "palette": {
+      "bg": "#16131d",
+      "bg2": "#262033",
+      "accent": "#b48ad6",
+      "accent2": "#d6a35e",
+      "text": "#ebe6f0"
+    }
+  },
+  "style": {
+    "genre": "minimal EBM — harpsichord, pizzicato strings, celesta, TR-606",
+    "key": "Bb",
+    "scale": "harmonic minor",
+    "bpm": 118,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (GM harpsichord, GM pizzicato strings, GM celesta, GM synth bass, Roland TR-606)"
+  ],
+  "pattern": "stack(s(\"bd*4, ~ sd ~ sd\").bank(\"RolandTR606\").gain(0.6).room(0.1), s(\"hh*8\").bank(\"RolandTR606\").gain(perlin.range(0.08,0.18)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ ~ ~ oh ~ ~ ~ oh\").bank(\"RolandTR606\").gain(0.1), note(\"<[bf1 bf1 ~ bf1 ~ bf1 f1 ~] [gf1 gf1 ~ gf1 ~ gf1 df2 ~] [ef1 ef1 ~ ef1 ~ ef1 bf1 ~] [f1 f1 ~ f1 ~ a1 c2 ~]>\").s(\"gm_synth_bass_1\").gain(0.55).lpf(sine.range(500,1100).slow(16)), note(\"<[bf3 df4 f4 df4 bf3 df4 f4 a4] [gf3 bf3 df4 bf3 gf3 bf3 df4 f4] [ef3 gf3 bf3 gf3 ef3 gf3 bf3 df4] [f3 a3 c4 a3 f3 a3 c4 ef4]>\").s(\"gm_harpsichord\").gain(0.3).lpf(sine.range(1800,4200).slow(12)).jux(rev).room(0.25), note(\"<[bf2,df3,f3] [gf2,bf2,df3] [ef3,gf3,bf3] [f2,a2,c3]>\").struct(\"x ~ ~ x ~ ~ x ~\").s(\"gm_pizzicato_strings\").gain(0.4).room(0.3), note(\"<[f5 ~ ~ gf5 f5 ~ df5 ~] [~ ~ df5 ~ bf4 ~ ~ ~] [gf5 ~ f5 ~ ef5 ~ df5 ~] [c5 ~ ~ a4 ~ ~ ~ ~]>\").s(\"gm_celesta\").gain(0.32).room(0.5).delay(0.3).delaytime(0.381).off(0.25, x => x.add(note(-12)).gain(0.12).pan(0.3)))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Two days, they say, to open the sea,",
+        "a plan passed hand to hand,",
+        "in Frankfurt glass across the street,",
+        "in Warsaw the judges stand."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "A bus pulls in from Oleshky,",
+        "a mother knows a face,",
+        "and past the cold edge of Pluto",
+        "a small world finds its place."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Hold still, hold still,",
+        "the calm is thin as wire,",
+        "count the two days slowly,",
+        "and don't feed the fire."
+      ]
+    }
+  ]
+}
