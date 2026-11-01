@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Only When Wrong — Experiment 107</title>
+<meta name="description" content="Rosenblatt's 1958 perceptron: a line learns to split two colours of points by checking one point at a time and moving only when it gets one wrong. Every nudge leaves a trace; XOR never settles until you give it one more feature." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+
+  /* ---- Panels ---- */
+  .ui, .side {
+    position: fixed;
+    z-index: 10;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui {
+    left: 24px; top: 24px;
+    width: 330px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 17px 20px;
+  }
+  .side {
+    right: 24px; top: 24px;
+    width: 300px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 15px 16px;
+    display: grid; gap: 10px;
+  }
+  .ui.hidden, .side.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.8rem; line-height: 1.55; color: #b4b4c8; margin-bottom: 12px; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .group-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #7c7cff; margin-top: 2px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].rose::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].rose::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .btn-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 7px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.on { background: rgba(124,124,255,0.42); border-color: rgba(170,170,255,0.8); color: #fff; }
+  .btn.pink.on { background: rgba(255,124,195,0.38); border-color: rgba(255,170,215,0.85); color: #fff; }
+  .btn.third { flex: 1 1 30%; }
+  .btn.big { flex: 2 1 45%; font-weight: 600; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.dim { color: #9a9ab0; font-weight: 500; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7c7cff; }
+
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem; line-height: 1.55;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 8px 6px;
+    color: #9a9ab0; white-space: pre; overflow-x: auto;
+  }
+  .code span { display: block; padding: 0 6px; border-radius: 5px; transition: background 0.15s ease, color 0.15s ease; }
+  .code span.on { background: rgba(124,124,255,0.22); color: #f0f0ff; }
+  .code span.hit { background: rgba(255,124,195,0.24); color: #fff; }
+  .code i { font-style: normal; color: #6f6f88; }
+
+  .note { font-size: 0.7rem; color: #8f8fa6; line-height: 1.55; }
+  .note b { color: #cfcfe6; font-weight: 600; }
+  .note.live { min-height: 4.6em; }
+
+  .bars { display: flex; align-items: flex-end; gap: 2px; height: 54px; padding: 0 2px; }
+  .bars div { flex: 1; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, #ff7cc3, #7c7cff); opacity: 0.85; min-height: 2px; transition: height 0.3s ease; }
+  .bars div.zero { background: #9cf0c8; opacity: 1; }
+  .bars-x { display: flex; justify-content: space-between; font-size: 0.62rem; color: #6f6f88; padding: 0 2px; font-variant-numeric: tabular-nums; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 12px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; width: max-content; max-width: 90vw;
+  }
+  .toast {
+    position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 12;
+    background: rgba(156,240,200,0.13); border: 1px solid rgba(156,240,200,0.5); color: #e2fff1;
+    border-radius: 999px; padding: 8px 16px; font-size: 0.8rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    max-width: 92vw; text-align: center;
+  }
+  .toast.pinkt { background: rgba(255,124,195,0.16); border-color: rgba(255,124,195,0.5); color: #ffe0f1; }
+  .toast.on { opacity: 1; }
+
+  @media (max-width: 1080px) {
+    .side { top: auto; bottom: 24px; width: 290px; max-height: 42vh; }
+    .side .bars-wrap, .side .note.extra { display: none; }
+    .hint { display: none; }
+  }
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 42vh;
+      padding: 14px 16px;
+    }
+    .side {
+      left: 12px; right: 12px; top: 12px; bottom: auto;
+      width: auto; max-width: none; max-height: 20vh;
+      padding: 10px 12px; gap: 6px;
+    }
+    .side .section-label { display: none; }
+    .code { font-size: 0.62rem; padding: 5px 3px; }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .story-card { padding: 28px 24px; }
+    .toast { top: auto; bottom: calc(42vh + 22px); }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panels (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Only When Wrong</h1>
+    <p class="sub">Experiment № 107 · November 1, 2026</p>
+    <p class="lede">
+      <b>Frank Rosenblatt</b>'s 1958 perceptron learns a line that puts <b>pink</b> on one side and
+      <b>violet</b> on the other. It looks at one point at a time. If the point is on the right side,
+      nothing happens. If it's on the <b>wrong</b> side, the line is nudged toward it, by exactly that
+      point. Every nudge leaves a trace. When a whole pass goes by with no mistakes, it stops.
+    </p>
+
+    <div class="controls">
+      <div class="btn-row">
+        <button class="btn big" id="playBtn">Pause</button>
+        <button class="btn" id="stepBtn">Step</button>
+        <button class="btn" id="resetBtn">Reset line</button>
+      </div>
+      <div class="row">
+        <label for="speed">Points checked per second <b id="speedV">20</b></label>
+        <input type="range" id="speed" min="0" max="100" value="39" />
+      </div>
+      <div class="row">
+        <label for="eta">Nudge size η <b id="etaV">1.00</b></label>
+        <input type="range" id="eta" class="rose" min="0" max="300" value="200" />
+      </div>
+      <div class="btn-row">
+        <button class="btn on" id="tZero">Start from zero</button>
+        <button class="btn" id="tRand">Start at random</button>
+      </div>
+
+      <p class="group-label">Points</p>
+      <div class="btn-row">
+        <button class="btn pink on" id="pCamps">Two camps</button>
+        <button class="btn pink" id="pHair">Hairline</button>
+        <button class="btn pink" id="pXor">XOR</button>
+        <button class="btn pink" id="pRing">Ring</button>
+      </div>
+      <div class="row">
+        <label for="gap">Room between the camps <b id="gapV">0.12</b></label>
+        <input type="range" id="gap" class="rose" min="1" max="40" value="12" />
+      </div>
+      <div class="row">
+        <label for="num">How many points <b id="numV">80</b></label>
+        <input type="range" id="num" min="10" max="300" value="80" />
+      </div>
+      <div class="btn-row">
+        <button class="btn pink" id="newBtn">New points</button>
+        <button class="btn" id="brushBtn">Click adds: pink</button>
+      </div>
+
+      <p class="group-label">What the perceptron sees</p>
+      <div class="btn-row">
+        <button class="btn third on" id="fLine">x, y</button>
+        <button class="btn third" id="fCirc">+ x² + y²</button>
+        <button class="btn third" id="fXy">+ x · y</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn on" id="tTrails">Trails: on</button>
+        <button class="btn" id="tAuto">Auto: off</button>
+      </div>
+
+      <div class="readout">
+        <span class="k">points (pink · violet)</span><span class="v" id="rPts">—</span>
+        <span class="k">pass</span><span class="v violet" id="rEpoch">—</span>
+        <span class="k">points checked</span><span class="v dim" id="rChecks">—</span>
+        <span class="k">nudges (mistakes)</span><span class="v pinkv" id="rUpd">—</span>
+        <span class="k">mistakes this pass</span><span class="v pinkv" id="rEpM">—</span>
+        <hr />
+        <span class="k">wrong side right now</span><span class="v" id="rWrong">—</span>
+        <span class="k">closest point to the line</span><span class="v violet" id="rMargin">—</span>
+        <span class="k">Novikoff: nudges at most</span><span class="v mint" id="rBound">—</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+  <button id="showUi">show panels</button>
+
+  <div class="side" id="side">
+    <p class="section-label">The whole learning rule</p>
+    <div class="code" id="code"><span id="k0">repeat, in a shuffled order:</span><span id="k1">  for each point x with label y:  <i>// y = ±1</i></span><span id="k2">    guess = sign(w · x + b)</span><span id="k3">    if guess ≠ y:               <i>// wrong side</i></span><span id="k4">      w += η · y · x</span><span id="k5">      b += η · y</span><span id="k6">until a whole pass is clean</span></div>
+    <p class="note live" id="liveNote"></p>
+    <div class="bars-wrap">
+      <p class="section-label" style="margin-bottom:6px">Mistakes in each pass</p>
+      <div class="bars" id="bars"></div>
+      <div class="bars-x" id="barsX"></div>
+    </div>
+    <p class="note extra">The arrow is <b>w</b>, pointing to the pink side. A nudge adds the wrong point to it (or subtracts it, for violet), so the line swings toward that point. After any number of nudges from zero, <b>w is just the sum of the points it got wrong</b>, each signed by its colour. Correct points never touch it.</p>
+  </div>
+
+  <p class="hint" id="hint">Click to add a point · click a point to remove it · right-click adds the other colour · space plays · S steps · R resets the line · N new points · H hides panels</p>
+  <div class="toast" id="toast"></div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 107 · The story</p>
+      <h2>Only When Wrong</h2>
+
+      <h3>Why I picked it</h3>
+      <p>The collection already has Kohonen's self-organizing map and Shannon's word-counting text machine, but not the perceptron, which most of modern machine learning traces back to. Frank Rosenblatt described it in 1958, and at the Cornell Aeronautical Laboratory he built it as hardware, the Mark I Perceptron: a camera of 400 photocells wired at random to a layer of units, with weights stored in potentiometers that electric motors turned during learning. The press got carried away and promised machines that would soon walk, talk and know themselves. Four years later Albert Novikoff proved something modest and solid: if any line separates the two classes, the perceptron finds one after a bounded number of mistakes. In 1969 Minsky and Papert's book <i>Perceptrons</i> showed how much a single layer can't do, with XOR as the famous example, and funding for neural networks dried up for over a decade. The whole rise and fall fits in a two-dimensional picture, so I wanted to draw it.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>It only learns from mistakes. A point on the correct side costs nothing and changes nothing, however close it is to the line. So if you start from zero, the weight vector at any moment is literally the sum of the points it has got wrong, each signed by its colour. Because of that, the nudge size η makes no difference from a zero start: every nudge is scaled by the same η, so the line is the same, just with longer arrows. Switch to a random start and it suddenly matters. I like the trails too. On a separable set the old lines fan in toward the gap. On XOR they never settle, and after a few hundred passes they have drawn a rosette, the record of a learner that can't find an answer because none exists. Then press <b>+ x · y</b>. The learner doesn't change at all. It only gets one more number to look at for each point, and XOR becomes separable and is solved in a handful of nudges.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Novikoff's bound doesn't depend on how many points there are. It depends on how much room there is between the two groups relative to how spread out they are: halve the gap and the worst case gets four times longer. Drag the room slider down to see the nudge count climb while the number of points stays the same. And when a process that only corrects its mistakes never settles, adding more passes won't help. Look at what the learner is able to see. Sometimes the fix is an extra feature, not more effort.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- The perceptron ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv');
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, DPR = 1, SC = 1, CX = 0, CY = 0;
+
+    const VIO = [124, 124, 255], PNK = [255, 124, 195], MINT = [156, 240, 200];
+    const BASE = [5, 5, 10];
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+    const mix = (t, a = 1) =>
+      `rgba(${Math.round(VIO[0] + (PNK[0] - VIO[0]) * t)},${Math.round(VIO[1] + (PNK[1] - VIO[1]) * t)},${Math.round(VIO[2] + (PNK[2] - VIO[2]) * t)},${a})`;
+
+    // ---------- state ----------
+    let pts = [];                 // { x, y, c: +1 pink | -1 violet }
+    let feat = 'line';            // 'line' | 'circle' | 'xy'
+    let w = [0, 0, 0, 0];         // [wx, wy, wq, b]   (wq weights the extra feature)
+    let dispW = w.slice();
+    let tween = null;
+    let history = [];             // weight vectors after each nudge
+    const HCAP = 900;
+    let order = [], cursor = 0, epoch = 1, epochMistakes = 0, checks = 0, updates = 0;
+    let epochLog = [];
+    let converged = false, playing = true;
+    let rate = 20, eta = 1, startRandom = false, trails = true, auto = false;
+    let separators = [];          // known separating vectors { v, feat }
+    let preset = 'camps', N = 80, gap = 0.12, brush = 1;
+    let lastCheck = null;         // { i, mistake, t }
+    let acc = 0, autoTimer = -1, now = 0, frameNo = 0;
+    let stuckNoted = false;
+
+    // ---------- maths ----------
+    function qf(x, y) { return feat === 'circle' ? x * x + y * y : feat === 'xy' ? 2 * x * y : 0; }
+    function phi(x, y) { return [x, y, qf(x, y), 1]; }
+    function score(v, x, y) { return v[0] * x + v[1] * y + v[2] * qf(x, y) + v[3]; }
+    function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]; }
+    const norm = (v) => Math.hypot(v[0], v[1], v[2], v[3]);
+    function shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; const t = a[i]; a[i] = a[j]; a[j] = t; }
+      return a;
+    }
+    function rebuildOrder() { order = shuffle(pts.map((_, i) => i)); cursor = 0; epochMistakes = 0; }
+
+    // ---------- datasets ----------
+    function genCamps(n, g) {
+      for (let tries = 0; tries < 50; tries++) {
+        const th = Math.random() * Math.PI * 2, c = (Math.random() - 0.5) * 0.6;
+        const ux = Math.cos(th), uy = Math.sin(th);
+        const out = []; let guard = 0;
+        while (out.length < n && guard++ < 200000) {
+          const x = Math.random() * 2 - 1, y = Math.random() * 2 - 1;
+          const d = ux * x + uy * y - c;
+          if (Math.abs(d) < g / 2) continue;
+          out.push({ x, y, c: d > 0 ? 1 : -1 });
+        }
+        const pinks = out.filter((p) => p.c > 0).length;
+        if (pinks >= 2 && out.length - pinks >= 2) {
+          pts = out;
+          separators = [{ v: [ux, uy, 0, -c], feat: 'line' }];
+          return;
+        }
+      }
+    }
+    function genXor(n) {
+      const out = []; const s = 0.19;
+      const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+      let k = 0;
+      while (out.length < n) {
+        const sx = k % 2 ? 1 : -1, sy = (k >> 1) % 2 ? 1 : -1;
+        const x = sx * 0.5 + gauss() * s, y = sy * 0.5 + gauss() * s;
+        if (Math.sign(x) !== sx || Math.sign(y) !== sy || Math.abs(x) < 0.05 || Math.abs(y) < 0.05 || Math.abs(x) > 1 || Math.abs(y) > 1) continue;
+        out.push({ x, y, c: sx * sy });
+        k++;
+      }
+      pts = out;
+      separators = [{ v: [0, 0, 1, 0], feat: 'xy' }];
+    }
+    function genRing(n) {
+      const out = [];
+      while (out.length < n) {
+        const r = Math.sqrt(Math.random()) * 0.95, a = Math.random() * Math.PI * 2;
+        if (r > 0.4 && r < 0.6) continue;
+        out.push({ x: r * Math.cos(a), y: r * Math.sin(a), c: r < 0.5 ? 1 : -1 });
+      }
+      pts = out;
+      separators = [{ v: [0, 0, -1, 0.25], feat: 'circle' }];
+    }
+    function generate() {
+      if (preset === 'camps') genCamps(N, gap);
+      else if (preset === 'hair') genCamps(N, 0.01);
+      else if (preset === 'xor') genXor(N);
+      else genRing(N);
+      resetLine();
+    }
+
+    // ---------- learning ----------
+    function resetLine() {
+      w = startRandom ? [Math.random() * 2 - 1, Math.random() * 2 - 1, feat === 'line' ? 0 : Math.random() * 2 - 1, Math.random() - 0.5] : [0, 0, 0, 0];
+      dispW = w.slice(); tween = null;
+      history = norm(w) > 0 ? [w.slice()] : [];
+      epoch = 1; checks = 0; updates = 0; epochLog = [];
+      converged = false; stuckNoted = false; lastCheck = null; autoTimer = -1;
+      rebuildOrder();
+      renderBars();
+      hideToast();
+    }
+
+    function step() {
+      if (!pts.length || converged) return;
+      if (order.length !== pts.length || cursor >= order.length) rebuildOrder();
+      const i = order[cursor];
+      const p = pts[i];
+      const z = phi(p.x, p.y);
+      const s = dot(w, z);
+      checks++;
+      const mistake = p.c * s <= 0;
+      if (mistake) {
+        for (let k = 0; k < 4; k++) w[k] += eta * p.c * z[k];
+        updates++; epochMistakes++;
+        history.push(w.slice());
+        if (history.length > HCAP) history.shift();
+        if (rate <= 25 && playing || !playing) {
+          tween = { from: dispW.slice(), to: w.slice(), t: 0, dur: Math.min(0.35, 0.9 / Math.max(rate, 1)) };
+        } else tween = null;
+      }
+      lastCheck = { i, mistake, t: now };
+      setCode(mistake);
+      cursor++;
+      if (cursor >= order.length) {
+        epochLog.push(epochMistakes);
+        if (epochLog.length > 60) epochLog.shift();
+        renderBars();
+        if (epochMistakes === 0) { converged = true; onConverge(); }
+        else { epoch++; rebuildOrder(); }
+      }
+    }
+
+    function onConverge() {
+      playing = false; syncPlay();
+      separators.push({ v: w.slice(), feat });
+      const b = bound();
+      showToast(`A clean pass: every point on its own side after ${updates} nudge${updates === 1 ? '' : 's'}` +
+        (b != null ? ` (Novikoff promised at most ${fmtBig(b)})` : '') + '.', false);
+      if (auto) autoTimer = 3.2;
+    }
+
+    // ---------- code highlight ----------
+    const codeEls = [0, 1, 2, 3, 4, 5, 6].map((k) => $('k' + k));
+    let codeHold = 0;
+    function setCode(mistake) {
+      codeEls.forEach((e) => e.classList.remove('on', 'hit'));
+      codeEls[2].classList.add('on');
+      if (mistake) { codeEls[3].classList.add('hit'); codeEls[4].classList.add('hit'); codeEls[5].classList.add('hit'); }
+      codeHold = 0.25;
+    }
+
+    // ---------- measurements ----------
+    function bound() {
+      if (!pts.length) return null;
+      let R2 = 0;
+      const Z = pts.map((p) => { const z = phi(p.x, p.y); R2 = Math.max(R2, z[0] * z[0] + z[1] * z[1] + z[2] * z[2] + 1); return z; });
+      let best = Infinity;
+      for (const s of separators) {
+        if (s.feat !== 'line' && s.feat !== feat) continue;
+        const n = norm(s.v); if (n < 1e-12) continue;
+        let g = Infinity;
+        for (let i = 0; i < pts.length; i++) g = Math.min(g, pts[i].c * dot(s.v, Z[i]) / n);
+        if (g > 1e-9) best = Math.min(best, R2 / (g * g));
+      }
+      return isFinite(best) ? Math.floor(best) : null;
+    }
+    function fmtBig(x) { return x >= 1e7 ? x.toExponential(1) : Math.round(x).toLocaleString(); }
+
+    // ---------- view ----------
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      if (W <= 700) {
+        // visible band between the top panel (20vh) and the bottom panel (42vh)
+        SC = Math.min(W * 0.9, H * 0.36) / 2.1;
+        CX = W / 2; CY = H * 0.39;
+      } else if (W <= 1080) {
+        SC = Math.min(W - 380, H) / 2.4;
+        CX = 354 + (W - 354) / 2; CY = H / 2;
+      } else {
+        SC = Math.min(W - 700, H) / 2.35;
+        SC = Math.max(SC, Math.min(W, H) / 3.2);
+        CX = 354 + (W - 354 - 324) / 2; CY = H / 2;
+      }
+      makeField();
+    }
+    const toS = (x, y) => [CX + x * SC, CY - y * SC];
+    const toW = (sx, sy) => [(sx - CX) / SC, (CY - sy) / SC];
+
+    // ---------- shaded decision field ----------
+    const FSTEP = 6;
+    const fc = document.createElement('canvas');
+    const fctx = fc.getContext('2d');
+    let fimg = null;
+    function makeField() {
+      fc.width = Math.max(1, Math.ceil(W / FSTEP)); fc.height = Math.max(1, Math.ceil(H / FSTEP));
+      fimg = fctx.createImageData(fc.width, fc.height);
+    }
+    function drawField(v) {
+      const d = fimg.data, fw = fc.width, fh = fc.height;
+      const n = Math.hypot(v[0], v[1], v[2]);
+      for (let j = 0; j < fh; j++) {
+        for (let i = 0; i < fw; i++) {
+          const k = (j * fw + i) * 4;
+          let r = BASE[0], g = BASE[1], b = BASE[2];
+          if (n > 1e-9) {
+            const [x, y] = toW((i + 0.5) * FSTEP, (j + 0.5) * FSTEP);
+            const t = Math.tanh(score(v, x, y) / n * 5);
+            const c = t > 0 ? PNK : VIO;
+            const a = 0.035 + 0.11 * Math.abs(t);
+            r = r * (1 - a) + c[0] * a; g = g * (1 - a) + c[1] * a; b = b * (1 - a) + c[2] * a;
+          }
+          d[k] = r; d[k + 1] = g; d[k + 2] = b; d[k + 3] = 255;
+        }
+      }
+      fctx.putImageData(fimg, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(fc, 0, 0, fw * FSTEP, fh * FSTEP);
+    }
+
+    // ---------- boundaries ----------
+    function linePath(v) {
+      const a = v[0], b = v[1], c = v[3];
+      const n2 = a * a + b * b;
+      if (n2 < 1e-14) return null;
+      const n = Math.sqrt(n2);
+      const fx = -c * a / n2, fy = -c * b / n2;
+      const dx = -b / n, dy = a / n;
+      return { fx, fy, dx, dy, nx: a / n, ny: b / n };
+    }
+    function strokeLine(v) {
+      const L = linePath(v); if (!L) return;
+      const E = 40;
+      const [x1, y1] = toS(L.fx - L.dx * E, L.fy - L.dy * E);
+      const [x2, y2] = toS(L.fx + L.dx * E, L.fy + L.dy * E);
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    }
+    let msBuf = new Float32Array(0);
+    function contour(v, stepPx) {
+      const cols = Math.ceil(W / stepPx) + 1, rows = Math.ceil(H / stepPx) + 1;
+      if (msBuf.length < cols * rows) msBuf = new Float32Array(cols * rows);
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+        const [x, y] = toW(i * stepPx, j * stepPx);
+        msBuf[j * cols + i] = score(v, x, y);
+      }
+      const cr = [];
+      for (let j = 0; j < rows - 1; j++) for (let i = 0; i < cols - 1; i++) {
+        const a = msBuf[j * cols + i], b = msBuf[j * cols + i + 1], c = msBuf[(j + 1) * cols + i + 1], d = msBuf[(j + 1) * cols + i];
+        const X = i * stepPx, Y = j * stepPx;
+        cr.length = 0;
+        if ((a > 0) !== (b > 0)) cr.push(X + stepPx * a / (a - b), Y);
+        if ((b > 0) !== (c > 0)) cr.push(X + stepPx, Y + stepPx * b / (b - c));
+        if ((d > 0) !== (c > 0)) cr.push(X + stepPx * d / (d - c), Y + stepPx);
+        if ((a > 0) !== (d > 0)) cr.push(X, Y + stepPx * a / (a - d));
+        if (cr.length >= 4) { ctx.moveTo(cr[0], cr[1]); ctx.lineTo(cr[2], cr[3]); }
+        if (cr.length >= 8) { ctx.moveTo(cr[4], cr[5]); ctx.lineTo(cr[6], cr[7]); }
+      }
+    }
+    function hueOf(v) {
+      // colour a trail by the direction its normal points, mirrored so it cycles violet → pink → violet
+      const a = Math.atan2(v[1] + v[2] * 0.6, v[0] + v[2] * 0.3);
+      return 0.5 - 0.5 * Math.cos(a);
+    }
+
+    // ---------- draw ----------
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      drawField(dispW);
+
+      // frame of the unit square and axes
+      ctx.save();
+      const [ax, ay] = toS(-1, 1), [bx, by] = toS(1, -1);
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 6]);
+      ctx.strokeRect(ax, ay, bx - ax, by - ay);
+      ctx.beginPath();
+      const [ox, oy] = toS(0, 0);
+      ctx.moveTo(ax, oy); ctx.lineTo(bx, oy); ctx.moveTo(ox, ay); ctx.lineTo(ox, by);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // trails: every line the perceptron has held
+      if (trails && history.length) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineWidth = 1;
+        const n = history.length;
+        if (feat === 'line') {
+          for (let i = 0; i < n; i++) {
+            const f = (i + 1) / n;
+            ctx.strokeStyle = mix(hueOf(history[i]), 0.035 + 0.25 * f * f * f);
+            ctx.beginPath(); strokeLine(history[i]); ctx.stroke();
+          }
+        } else {
+          const start = Math.max(0, n - 36);
+          for (let i = start; i < n; i++) {
+            const f = (i - start + 1) / (n - start);
+            ctx.strokeStyle = mix(hueOf(history[i]), 0.05 + 0.3 * f * f);
+            ctx.beginPath(); contour(history[i], 14); ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+
+      // the current boundary
+      const has = Math.hypot(dispW[0], dispW[1], dispW[2]) > 1e-9;
+      if (has) {
+        ctx.save();
+        ctx.shadowColor = converged ? rgba(MINT, 0.9) : 'rgba(190,190,255,0.9)';
+        ctx.shadowBlur = 14;
+        ctx.strokeStyle = converged ? rgba(MINT, 0.95) : 'rgba(236,236,255,0.92)';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        if (feat === 'line') strokeLine(dispW); else contour(dispW, 5);
+        ctx.stroke();
+        ctx.restore();
+
+        // the weight vector w, drawn as an arrow toward the pink side
+        if (feat === 'line') {
+          const L = linePath(dispW);
+          if (L) {
+            let fx = L.fx, fy = L.fy;
+            // keep the arrow's foot inside the view
+            const lim = 1.05;
+            if (Math.abs(fx) > lim || Math.abs(fy) > lim) { const s = lim / Math.max(Math.abs(fx), Math.abs(fy)); fx *= s; fy *= s; }
+            const len = 0.24;
+            const [sx, sy] = toS(fx, fy), [ex, ey] = toS(fx + L.nx * len, fy + L.ny * len);
+            ctx.save();
+            ctx.strokeStyle = rgba(PNK, 0.9); ctx.fillStyle = rgba(PNK, 0.9); ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+            const ang = Math.atan2(ey - sy, ex - sx);
+            ctx.beginPath();
+            ctx.moveTo(ex, ey);
+            ctx.lineTo(ex - 9 * Math.cos(ang - 0.42), ey - 9 * Math.sin(ang - 0.42));
+            ctx.lineTo(ex - 9 * Math.cos(ang + 0.42), ey - 9 * Math.sin(ang + 0.42));
+            ctx.closePath(); ctx.fill();
+            ctx.font = 'italic 600 13px ui-serif, Georgia, serif';
+            ctx.fillText('w', ex + 6 * Math.cos(ang) - 4, ey + 6 * Math.sin(ang) + 4);
+            ctx.restore();
+          }
+        }
+      }
+
+      // points
+      const r = W <= 700 ? 3.6 : 4.6;
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        const [sx, sy] = toS(p.x, p.y);
+        const wrong = has ? p.c * score(dispW, p.x, p.y) <= 0 : true;
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fillStyle = p.c > 0 ? rgba(PNK, 0.95) : rgba(VIO, 0.95);
+        ctx.fill();
+        if (wrong && has) {
+          ctx.beginPath(); ctx.arc(sx, sy, r + 3.4 + Math.sin(now * 5 + i) * 0.8, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.1; ctx.stroke();
+        }
+      }
+
+      // the point just checked
+      if (lastCheck && pts[lastCheck.i]) {
+        const age = now - lastCheck.t;
+        const life = lastCheck.mistake ? 0.9 : 0.45;
+        if (age < life) {
+          const p = pts[lastCheck.i];
+          const [sx, sy] = toS(p.x, p.y);
+          const f = age / life;
+          ctx.save();
+          ctx.beginPath(); ctx.arc(sx, sy, r + 4 + f * (lastCheck.mistake ? 22 : 9), 0, Math.PI * 2);
+          ctx.strokeStyle = lastCheck.mistake ? rgba(PNK, 0.9 * (1 - f)) : rgba(VIO, 0.7 * (1 - f));
+          ctx.lineWidth = lastCheck.mistake ? 2.4 : 1.4;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+
+    // ---------- readouts & notes ----------
+    function updateReadouts() {
+      const pinks = pts.filter((p) => p.c > 0).length;
+      $('rPts').textContent = `${pts.length} (${pinks} · ${pts.length - pinks})`;
+      $('rEpoch').textContent = pts.length ? epoch : '—';
+      $('rChecks').textContent = checks.toLocaleString();
+      $('rUpd').textContent = updates.toLocaleString();
+      $('rEpM').textContent = epochMistakes;
+      let wrong = 0, margin = Infinity;
+      const nw = Math.hypot(w[0], w[1]);
+      for (const p of pts) {
+        const s = p.c * score(w, p.x, p.y);
+        if (s <= 0) wrong++;
+        else if (feat === 'line' && nw > 1e-12) margin = Math.min(margin, s / nw);
+      }
+      $('rWrong').textContent = pts.length ? wrong : '—';
+      $('rMargin').textContent = feat === 'line' && wrong === 0 && pts.length && isFinite(margin) ? margin.toFixed(3) : '—';
+      const b = bound();
+      $('rBound').textContent = b == null ? 'no line known' : fmtBig(b);
+      $('rBound').className = 'v ' + (b == null ? 'dim' : 'mint');
+      updateNote(b, wrong);
+    }
+
+    function updateNote(b, wrong) {
+      const el = $('liveNote');
+      let t;
+      if (!pts.length) t = 'No points yet. <b>Click</b> to add some, or pick a set above.';
+      else if (converged) {
+        t = `<b>Converged.</b> A whole pass of ${pts.length} checks with no mistakes, after ${updates} nudge${updates === 1 ? '' : 's'}.` +
+          (b != null ? ` Novikoff's 1962 proof says it could never have needed more than <b>${fmtBig(b)}</b>, whatever the order.` : '') +
+          (feat !== 'line' ? ' With the extra feature, a flat cut in three numbers is a curve back in the plane.' : '');
+      } else if (b == null && epoch > 25) {
+        t = `<b>Pass ${epoch}, still wrong.</b> If no ${feat === 'line' ? 'straight line' : 'boundary of this shape'} separates these points, the perceptron never stops: every pass finds a mistake, and the line keeps swinging. ` +
+          (preset === 'xor' && feat !== 'xy' ? 'Try <b>+ x · y</b>.' : preset === 'ring' && feat !== 'circle' ? 'Try <b>+ x² + y²</b>.' : 'Nothing here can save it but a different view of the points.');
+      } else if (b == null) {
+        t = `Pass ${epoch}. No separating ${feat === 'line' ? 'line' : 'boundary'} is known for these points, so there's no promise this ends.`;
+      } else {
+        t = `Pass ${epoch}. A separator exists, so this must end: at most <b>${fmtBig(b)}</b> nudges in all, set by the room between the colours, not by how many points there are.`;
+      }
+      if (el.innerHTML !== t) el.innerHTML = t;
+    }
+
+    function renderBars() {
+      const el = $('bars');
+      const maxv = Math.max(1, ...epochLog);
+      let html = '';
+      const start = Math.max(0, epochLog.length - 40);
+      for (let i = start; i < epochLog.length; i++) {
+        const m = epochLog[i];
+        html += `<div class="${m === 0 ? 'zero' : ''}" style="height:${m === 0 ? 3 : Math.max(4, 100 * m / maxv)}%" title="${m} mistake${m === 1 ? '' : 's'}"></div>`;
+      }
+      el.innerHTML = html || '<div style="height:2%;opacity:.25"></div>';
+      $('barsX').innerHTML = epochLog.length ? `<span>max ${maxv}</span><span>last ${epochLog[epochLog.length - 1]}</span>` : '<span>no full pass yet</span>';
+    }
+
+    // ---------- toast ----------
+    const toastEl = $('toast');
+    let toastT = null;
+    function showToast(msg, pink, ms = 5200) {
+      toastEl.textContent = msg;
+      toastEl.classList.toggle('pinkt', !!pink);
+      toastEl.classList.add('on');
+      clearTimeout(toastT);
+      toastT = setTimeout(hideToast, ms);
+    }
+    function hideToast() { toastEl.classList.remove('on'); }
+
+    // ---------- controls ----------
+    function syncPlay() { $('playBtn').textContent = playing ? 'Pause' : (converged ? 'Again' : 'Play'); }
+    function togglePlay() {
+      if (!playing && converged) { resetLine(); playing = true; }
+      else playing = !playing;
+      syncPlay();
+    }
+    $('playBtn').addEventListener('click', togglePlay);
+    $('stepBtn').addEventListener('click', () => { playing = false; syncPlay(); if (converged) return; step(); });
+    $('resetBtn').addEventListener('click', () => { resetLine(); syncPlay(); });
+
+    const speedEl = $('speed');
+    function readSpeed() {
+      rate = Math.pow(10, speedEl.value / 100 * 3.3);
+      $('speedV').textContent = rate < 10 ? rate.toFixed(1) : Math.round(rate).toLocaleString();
+    }
+    speedEl.addEventListener('input', readSpeed);
+
+    const etaEl = $('eta');
+    function readEta() {
+      eta = Math.pow(10, -2 + etaEl.value / 100);   // 0.01 … 10
+      $('etaV').textContent = eta < 0.1 ? eta.toFixed(3) : eta.toFixed(2);
+    }
+    etaEl.addEventListener('input', readEta);
+
+    function setStart(r) {
+      startRandom = r;
+      $('tZero').classList.toggle('on', !r); $('tRand').classList.toggle('on', r);
+      resetLine(); syncPlay();
+    }
+    $('tZero').addEventListener('click', () => setStart(false));
+    $('tRand').addEventListener('click', () => setStart(true));
+
+    const presetBtns = { camps: $('pCamps'), hair: $('pHair'), xor: $('pXor'), ring: $('pRing') };
+    function setPreset(p) {
+      preset = p;
+      for (const k in presetBtns) presetBtns[k].classList.toggle('on', k === p);
+      $('gap').disabled = p !== 'camps';
+      $('gap').parentElement.style.opacity = p === 'camps' ? 1 : 0.45;
+      generate(); playing = true; syncPlay();
+    }
+    for (const k in presetBtns) presetBtns[k].addEventListener('click', () => setPreset(k));
+
+    $('gap').addEventListener('input', (e) => {
+      gap = e.target.value / 100; $('gapV').textContent = gap.toFixed(2);
+    });
+    $('gap').addEventListener('change', () => { if (preset === 'camps') { generate(); playing = true; syncPlay(); } });
+    $('num').addEventListener('input', (e) => { N = +e.target.value; $('numV').textContent = N; });
+    $('num').addEventListener('change', () => { generate(); playing = true; syncPlay(); });
+    $('newBtn').addEventListener('click', () => { generate(); playing = true; syncPlay(); });
+
+    function setBrush(c) {
+      brush = c;
+      const b = $('brushBtn');
+      b.textContent = 'Click adds: ' + (c > 0 ? 'pink' : 'violet');
+      b.classList.toggle('pink', c > 0);
+    }
+    $('brushBtn').addEventListener('click', () => setBrush(-brush));
+
+    const featBtns = { line: $('fLine'), circle: $('fCirc'), xy: $('fXy') };
+    function setFeat(f) {
+      feat = f;
+      for (const k in featBtns) featBtns[k].classList.toggle('on', k === f);
+      resetLine(); playing = true; syncPlay();
+    }
+    for (const k in featBtns) featBtns[k].addEventListener('click', () => setFeat(k));
+
+    $('tTrails').addEventListener('click', (e) => { trails = !trails; e.target.classList.toggle('on', trails); e.target.textContent = 'Trails: ' + (trails ? 'on' : 'off'); });
+    $('tAuto').addEventListener('click', (e) => {
+      auto = !auto; e.target.classList.toggle('on', auto); e.target.textContent = 'Auto: ' + (auto ? 'on' : 'off');
+      if (auto && converged) autoTimer = 1.2;
+    });
+
+    // ---------- pointer: add / remove points ----------
+    function editAt(sx, sy, cls) {
+      let best = -1, bd = 14 * 14;
+      for (let i = 0; i < pts.length; i++) {
+        const [px, py] = toS(pts[i].x, pts[i].y);
+        const d = (px - sx) ** 2 + (py - sy) ** 2;
+        if (d < bd) { bd = d; best = i; }
+      }
+      if (best >= 0) pts.splice(best, 1);
+      else { const [x, y] = toW(sx, sy); pts.push({ x, y, c: cls }); }
+      if (auto) { auto = false; $('tAuto').classList.remove('on'); $('tAuto').textContent = 'Auto: off'; }
+      autoTimer = -1;
+      lastCheck = null;
+      const wasConverged = converged;
+      converged = false; stuckNoted = false;
+      rebuildOrder();
+      if (wasConverged) { playing = true; syncPlay(); }
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      if (e.button === 1) return;
+      e.preventDefault();
+      editAt(e.clientX, e.clientY, e.button === 2 || e.shiftKey ? -brush : brush);
+    });
+    cv.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // ---------- panels ----------
+    function setPanels(show) {
+      $('ui').classList.toggle('hidden', !show); $('side').classList.toggle('hidden', !show);
+      $('showUi').classList.toggle('on', !show);
+    }
+    $('collapse').addEventListener('click', () => setPanels(false));
+    $('showUi').addEventListener('click', () => setPanels(true));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' && e.target.type !== 'range')) return;
+      const k = e.key.toLowerCase();
+      if (e.key === 'Escape') { story.classList.remove('open'); return; }
+      if (story.classList.contains('open')) return;
+      if (k === 'h') setPanels($('ui').classList.contains('hidden'));
+      else if (k === ' ') { e.preventDefault(); togglePlay(); }
+      else if (k === 's') { playing = false; syncPlay(); step(); }
+      else if (k === 'r') { resetLine(); syncPlay(); }
+      else if (k === 'n') { generate(); playing = true; syncPlay(); }
+    });
+
+    window.addEventListener('resize', resize);
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function frame(t) {
+      const dt = Math.min(0.1, (t - last) / 1000); last = t;
+      now += dt;
+      if (playing && !converged && pts.length) {
+        acc += dt * rate;
+        let k = Math.min(Math.floor(acc), 6000);
+        acc -= Math.floor(acc);
+        while (k-- > 0 && !converged) step();
+      }
+      if (tween) {
+        tween.t += dt / tween.dur;
+        const f = Math.min(1, tween.t), e = f * f * (3 - 2 * f);
+        dispW = tween.from.map((a, i) => a + (tween.to[i] - a) * e);
+        if (f >= 1) tween = null;
+      } else dispW = w.slice();
+      if (codeHold > 0) { codeHold -= dt; if (codeHold <= 0 && !playing) codeEls.forEach((el) => el.classList.remove('on', 'hit')); }
+      if (converged) { codeEls.forEach((el) => el.classList.remove('on', 'hit')); codeEls[6].classList.add('on'); }
+      if (autoTimer > 0) {
+        autoTimer -= dt;
+        if (autoTimer <= 0) {
+          autoTimer = -1;
+          if (auto) {
+            const list = ['camps', 'camps', 'hair', 'camps'];
+            if (preset === 'xor' || preset === 'ring') generate(); else { preset = list[(Math.random() * list.length) | 0]; setPreset(preset); }
+            playing = true; syncPlay();
+          }
+        }
+      }
+      draw();
+      if (frameNo++ % 4 === 0) updateReadouts();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- go ----------
+    resize();
+    readSpeed(); readEta();
+    $('gap').disabled = false;
+    generate();
+    syncPlay();
+    updateReadouts();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
