@@ -1,57 +1,57 @@
 {
-  "date": "2026-10-31",
+  "date": "2026-11-01",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Ending Soon",
+  "title": "Two Days to Open the Sea",
   "mood": {
     "label": "Uneasy calm",
     "score": -0.12,
-    "summary": "Uneasy calm: tankers burn in Hormuz while Trump says the war ends soon, Ebola deaths in Congo pass 5,000 and Port Sudan rations water. Yet rescued orangutans return to Borneo's forest, Hokkaido has a bumper potato harvest, and a diabetes trial sends half into remission.",
+    "summary": "Uneasy calm: talks on a two-day plan to reopen Hormuz, but riots in Frankfurt, a court standoff in Poland and a record crypto heist. Evacuees from Oleshky reunite with family, and astronomers spot a possible dwarf planet beyond Pluto.",
     "palette": {
-      "bg": "#141820",
-      "bg2": "#232b36",
-      "accent": "#c9a46b",
-      "accent2": "#7fa6b8",
-      "text": "#e9e7e2"
+      "bg": "#16131d",
+      "bg2": "#262033",
+      "accent": "#b48ad6",
+      "accent2": "#d6a35e",
+      "text": "#ebe6f0"
     }
   },
   "style": {
-    "genre": "neo-soul — jazz guitar, flute, finger bass, Oberheim DMX",
-    "key": "Eb",
-    "scale": "melodic minor",
-    "bpm": 92,
-    "swing": 0.12
+    "genre": "minimal EBM — harpsichord, pizzicato strings, celesta, TR-606",
+    "key": "Bb",
+    "scale": "harmonic minor",
+    "bpm": 118,
+    "swing": 0
   },
   "sampleSources": [
-    "Strudel default library (GM jazz guitar, GM flute, GM finger bass, Oberheim DMX)"
+    "Strudel default library (GM harpsichord, GM pizzicato strings, GM celesta, GM synth bass, Roland TR-606)"
   ],
-  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"OberheimDMX\").gain(0.55).room(0.15), s(\"hh*8\").bank(\"OberheimDMX\").gain(perlin.range(0.07,0.15)).hpf(6000).pan(sine.range(0.4,0.6).slow(8)), s(\"~ rim ~ ~ ~ ~ rim ~\").bank(\"OberheimDMX\").gain(0.14).delay(0.2).delaytime(0.33), note(\"<[ef2 ~ bf1 ~ ef2 ~ gf2 f2] [af1 ~ ef2 ~ af1 ~ c2 ~] [f1 ~ c2 ~ f2 ~ af1 ~] [bf1 ~ f2 ~ d2 ~ bf1 ~]>\").s(\"gm_electric_bass_finger\").gain(0.55).lpf(900), note(\"<[ef3,gf3,bf3,d4] [af2,c3,ef3,gf3] [f3,af3,c4,ef4] [bf2,d3,f3,af3]>\").struct(\"~ x ~ x@2 ~ x ~\").s(\"gm_electric_guitar_jazz\").gain(0.32).room(0.35).lpf(sine.range(1400,2600).slow(16)), note(\"<[bf4 ~ gf4 ~ f4 ~ ef4 ~] [c5 ~ ~ bf4 ~ gf4 ~ ~] [af4 ~ c5 ~ ef5 ~ ~ ~] [d5 ~ c5 ~ bf4 ~ af4 ~]>\").s(\"gm_flute\").gain(0.36).room(0.5).delay(0.25).delaytime(0.49).off(0.25, x => x.add(note(-12)).gain(0.1).pan(0.7)))",
+  "pattern": "stack(s(\"bd*4, ~ sd ~ sd\").bank(\"RolandTR606\").gain(0.6).room(0.1), s(\"hh*8\").bank(\"RolandTR606\").gain(perlin.range(0.08,0.18)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ ~ ~ oh ~ ~ ~ oh\").bank(\"RolandTR606\").gain(0.1), note(\"<[bf1 bf1 ~ bf1 ~ bf1 f1 ~] [gf1 gf1 ~ gf1 ~ gf1 df2 ~] [ef1 ef1 ~ ef1 ~ ef1 bf1 ~] [f1 f1 ~ f1 ~ a1 c2 ~]>\").s(\"gm_synth_bass_1\").gain(0.55).lpf(sine.range(500,1100).slow(16)), note(\"<[bf3 df4 f4 df4 bf3 df4 f4 a4] [gf3 bf3 df4 bf3 gf3 bf3 df4 f4] [ef3 gf3 bf3 gf3 ef3 gf3 bf3 df4] [f3 a3 c4 a3 f3 a3 c4 ef4]>\").s(\"gm_harpsichord\").gain(0.3).lpf(sine.range(1800,4200).slow(12)).jux(rev).room(0.25), note(\"<[bf2,df3,f3] [gf2,bf2,df3] [ef3,gf3,bf3] [f2,a2,c3]>\").struct(\"x ~ ~ x ~ ~ x ~\").s(\"gm_pizzicato_strings\").gain(0.4).room(0.3), note(\"<[f5 ~ ~ gf5 f5 ~ df5 ~] [~ ~ df5 ~ bf4 ~ ~ ~] [gf5 ~ f5 ~ ef5 ~ df5 ~] [c5 ~ ~ a4 ~ ~ ~ ~]>\").s(\"gm_celesta\").gain(0.32).room(0.5).delay(0.3).delaytime(0.381).off(0.25, x => x.add(note(-12)).gain(0.12).pan(0.3)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Four tankers burning in the strait,",
-        "a voice says soon, the end is near,",
-        "in Congo five thousand gone,",
-        "in Port Sudan the water's dear."
+        "Two days, they say, to open the sea,",
+        "a plan passed hand to hand,",
+        "in Frankfurt glass across the street,",
+        "in Warsaw the judges stand."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Nine orangutans climb back home",
-        "through Borneo's unburnt green,",
-        "Hokkaido digs its best in years,",
-        "the station hums with power clean."
+        "A bus pulls in from Oleshky,",
+        "a mother knows a face,",
+        "and past the cold edge of Pluto",
+        "a small world finds its place."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Soon, they say, soon,",
-        "keep the lamp lit low,",
-        "half of what was broken mends,",
-        "and half we've yet to know."
+        "Hold still, hold still,",
+        "the calm is thin as wire,",
+        "count the two days slowly,",
+        "and don't feed the fire."
       ]
     }
   ]
