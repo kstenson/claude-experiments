@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-02",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Lights Off for the Fledglings",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.14,
+    "summary": "Uneasy calm: mined tankers burn in Hormuz, Netanyahu calls Israel's vote stolen and the US braces for midterms. Small lights hold: 108 stupas rise in Bhutan, islands go dark to save seabird chicks, and sound waves take aim at brain cancer.",
+    "palette": {
+      "bg": "#0f1418",
+      "bg2": "#1c2630",
+      "accent": "#e07a4f",
+      "accent2": "#8fb8c9",
+      "text": "#e6ecef"
+    }
+  },
+  "style": {
+    "genre": "darkwave — chorused guitar, tubular bells, choir, LinnDrum",
+    "key": "F",
+    "scale": "phrygian",
+    "bpm": 104,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (GM clean electric guitar, GM tubular bells, GM choir aahs, GM picked bass, AkaiLinn)"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"AkaiLinn\").gain(0.6).room(0.2), s(\"hh*8\").bank(\"AkaiLinn\").gain(perlin.range(0.07,0.16)).hpf(6000).pan(sine.range(0.3,0.7).slow(8)), note(\"<[f1 f1 f2 f1 ~ f1 c2 f1] [gf1 gf1 gf2 gf1 ~ gf1 df2 gf1] [ef1 ef1 ef2 ef1 ~ ef1 bf1 ef1] [df1 df1 df2 df1 ~ c1 df1 ef1]>\").s(\"gm_electric_bass_pick\").gain(0.55).lpf(sine.range(600,1400).slow(16)), note(\"<[f3 c4 af4 c4 f4 c4 af3 c4] [gf3 df4 bf4 df4 gf4 df4 bf3 df4] [ef3 bf3 gf4 bf3 ef4 bf3 gf3 bf3] [df3 af3 f4 af3 df4 af3 c4 af3]>\").s(\"gm_electric_guitar_clean\").gain(0.3).lpf(3200).jux(rev).delay(0.35).delaytime(0.433).room(0.4), note(\"<[f3,af3,c4] [gf3,bf3,df4] [ef3,gf3,bf3] [df3,f3,af3]>\").s(\"gm_choir_aahs\").attack(0.8).release(2.5).gain(0.22).room(0.6).rsize(4), note(\"<[c5 ~ ~ ~ ~ ~ ~ ~] [df5 ~ ~ ~ ~ ~ ~ ~] [bf4 ~ ~ ~ gf4 ~ ~ ~] [af4 ~ ~ ~ gf4 ~ f4 ~]>\").s(\"gm_tubular_bells\").gain(0.3).room(0.7).off(0.375, x => x.add(note(12)).gain(0.1).pan(0.75)))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Two tankers burning in the strait,",
+        "the talks go on, they say,",
+        "a man calls the counting stolen,",
+        "the count stays where it lay."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "On Atlantic rocks the porches dim",
+        "so the young birds find the sea,",
+        "in Bhutan they stack a hundred stones",
+        "and eight, for what might be."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Turn the lights off, Tuesday's coming,",
+        "let the small ones fly,",
+        "hold the calm the way you'd hold",
+        "a match against the sky."
+      ]
+    }
+  ]
+}
