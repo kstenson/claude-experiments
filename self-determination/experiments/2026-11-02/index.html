@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Whoever's Left Standing — Experiment 108</title>
+<meta name="description" content="Boyer and Moore's 1981 majority vote: find the majority of a stream holding only a candidate and a count. Every mismatch cancels a pair, an arc joins each cancelled pair, and a second pass checks whether the survivor really won." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; cursor: pointer; }
+
+  /* ---- Panels ---- */
+  .ui, .side {
+    position: fixed;
+    z-index: 10;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui {
+    left: 24px; top: 24px;
+    width: 330px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 17px 20px;
+  }
+  .side {
+    right: 24px; top: 24px;
+    width: 300px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 15px 16px;
+    display: grid; gap: 10px;
+  }
+  .ui.hidden, .side.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.8rem; line-height: 1.55; color: #b4b4c8; margin-bottom: 12px; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .group-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #7c7cff; margin-top: 2px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].rose::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].rose::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .btn-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 7px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.on { background: rgba(124,124,255,0.42); border-color: rgba(170,170,255,0.8); color: #fff; }
+  .btn.pink.on { background: rgba(255,124,195,0.38); border-color: rgba(255,170,215,0.85); color: #fff; }
+  .btn.third { flex: 1 1 30%; }
+  .btn.big { flex: 2 1 45%; font-weight: 600; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.dim { color: #9a9ab0; font-weight: 500; }
+  .readout hr { grid-column: 1 / -1; border: 0; border-top: 1px solid rgba(255,255,255,0.07); margin: 1px 0; }
+  .chip { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; box-shadow: 0 0 8px currentColor; }
+
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7c7cff; }
+
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.7rem; line-height: 1.55;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 8px 6px;
+    color: #9a9ab0; white-space: pre; overflow-x: auto;
+  }
+  .code span { display: block; padding: 0 6px; border-radius: 5px; transition: background 0.15s ease, color 0.15s ease; }
+  .code span.on { background: rgba(124,124,255,0.22); color: #f0f0ff; }
+  .code span.hit { background: rgba(255,124,195,0.24); color: #fff; }
+  .code span.ok { background: rgba(156,240,200,0.18); color: #fff; }
+  .code i { font-style: normal; color: #6f6f88; }
+
+  .note { font-size: 0.7rem; color: #8f8fa6; line-height: 1.55; }
+  .note b { color: #cfcfe6; font-weight: 600; }
+  .note.live { min-height: 4.6em; }
+
+  .tally { display: grid; gap: 6px; }
+  .trow { display: grid; grid-template-columns: 48px 1fr 34px; align-items: center; gap: 8px; font-size: 0.7rem; color: #9a9ab0; }
+  .trow .val { text-align: right; font-variant-numeric: tabular-nums; color: #cfcfe6; font-weight: 600; }
+  .track { position: relative; height: 9px; border-radius: 5px; background: rgba(255,255,255,0.06); overflow: visible; }
+  .track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; width: 0; transition: width 0.25s ease; }
+  .track .half { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: rgba(255,255,255,0.45); }
+  .trow.cand { color: #e9e9f0; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 12px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; width: max-content; max-width: 90vw;
+  }
+  .toast {
+    position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 12;
+    background: rgba(156,240,200,0.13); border: 1px solid rgba(156,240,200,0.5); color: #e2fff1;
+    border-radius: 999px; padding: 8px 16px; font-size: 0.8rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    max-width: 92vw; text-align: center;
+  }
+  .toast.pinkt { background: rgba(255,124,195,0.16); border-color: rgba(255,124,195,0.5); color: #ffe0f1; }
+  .toast.on { opacity: 1; }
+
+  @media (max-width: 1080px) {
+    .side { top: auto; bottom: 24px; width: 290px; max-height: 40vh; }
+    .side .note.extra, .side .tally-wrap { display: none; }
+    .hint { display: none; }
+  }
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 42vh;
+      padding: 14px 16px;
+    }
+    .side {
+      left: 12px; right: 12px; top: 12px; bottom: auto;
+      width: auto; max-width: none; max-height: 20vh;
+      padding: 10px 12px; gap: 6px;
+    }
+    .side .section-label { display: none; }
+    .code { font-size: 0.62rem; padding: 5px 3px; }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .story-card { padding: 28px 24px; }
+    .toast { top: auto; bottom: calc(42vh + 22px); }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panels (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Whoever's Left Standing</h1>
+    <p class="sub">Experiment № 108 · November 2, 2026</p>
+    <p class="lede">
+      <b>Boyer and Moore</b>'s 1981 majority vote reads a stream of ballots holding just
+      <b>two numbers</b>: a candidate and a count. A ballot for the candidate adds one. Any other
+      ballot <b>cancels</b> one of the candidate's, and an arc joins the pair. If some party has
+      more than half, it can't all be cancelled, so it's who's left standing. A second pass checks.
+    </p>
+
+    <div class="controls">
+      <div class="btn-row">
+        <button class="btn big" id="playBtn">Pause</button>
+        <button class="btn" id="stepBtn">Step</button>
+        <button class="btn" id="finishBtn">Finish</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="restartBtn">Count again</button>
+        <button class="btn pink" id="newBtn">New ballots</button>
+      </div>
+      <div class="row">
+        <label for="speed">Ballots read per second <b id="speedV">15</b></label>
+        <input type="range" id="speed" min="0" max="100" value="51" />
+      </div>
+
+      <p class="group-label">Ballots</p>
+      <div class="row">
+        <label for="num">How many <b id="numV">150</b></label>
+        <input type="range" id="num" min="20" max="400" value="150" />
+      </div>
+      <div class="row">
+        <label for="share">Violet's share <b id="shareV">54%</b></label>
+        <input type="range" id="share" class="rose" min="10" max="90" value="54" />
+      </div>
+      <div class="row">
+        <label for="parties">Parties <b id="partiesV">3</b></label>
+        <input type="range" id="parties" min="2" max="6" value="3" />
+      </div>
+
+      <p class="group-label">Order they arrive in</p>
+      <div class="btn-row" id="orders">
+        <button class="btn pink third on" data-o="shuffled">Shuffled</button>
+        <button class="btn pink third" data-o="runs">In runs</button>
+        <button class="btn pink third" data-o="alternate">Alternating</button>
+        <button class="btn pink" data-o="first">Violet first</button>
+        <button class="btn pink" data-o="last">Violet last</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="autoBtn">Auto: off</button>
+      </div>
+
+      <div class="readout">
+        <span class="k">ballots read</span><span class="v dim" id="rRead">—</span>
+        <span class="k">candidate</span><span class="v" id="rCand">—</span>
+        <span class="k">count</span><span class="v violet" id="rCount">—</span>
+        <span class="k">pairs cancelled</span><span class="v pinkv" id="rPairs">—</span>
+        <span class="k">memory used</span><span class="v dim" id="rMem">2 numbers</span>
+        <hr />
+        <span class="k">recount: candidate's votes</span><span class="v mint" id="rRecount">—</span>
+        <span class="k">needed for a majority</span><span class="v dim" id="rNeed">—</span>
+        <span class="k">verdict</span><span class="v" id="rVerdict">—</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+  <button id="showUi">show panels</button>
+
+  <div class="side" id="side">
+    <p class="section-label">The whole algorithm</p>
+    <div class="code" id="code"><span id="k0">candidate = none, count = 0</span><span id="k1">for each ballot x:</span><span id="k2">  if count == 0: candidate = x, count = 1</span><span id="k3">  elif x == candidate: count += 1</span><span id="k4">  else: count -= 1      <i>// a pair cancels</i></span><span id="k5">pass 2: count candidate's ballots</span><span id="k6">majority only if that's > n / 2</span></div>
+    <p class="note live" id="liveNote"></p>
+    <div class="tally-wrap">
+      <p class="section-label" style="margin-bottom:7px">The true totals (never kept)</p>
+      <div class="tally" id="tally"></div>
+    </div>
+    <p class="note extra">Each arc joins a ballot to the one that cancelled it. The count is really a stack of identical tokens, so a newcomer always cancels the <b>most recent</b> survivor, and the arcs nest inside each other without ever crossing. The bars under the line are the count after every ballot.</p>
+  </div>
+
+  <p class="hint" id="hint">Click a ballot to change its party · drag across ballots to repaint them · right-click goes the other way · space plays · S steps · F finishes · R counts again · N new ballots · H hides panels</p>
+  <div class="toast" id="toast"></div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 108 · The story</p>
+      <h2>Whoever's Left Standing</h2>
+
+      <h3>Why I picked it</h3>
+      <p>The collection already has two ways to deal with a stream you can't store: HyperLogLog counting distinct visitors and reservoir sampling keeping a fair handful. The majority vote is the third, and the oddest. Robert Boyer and J Strother Moore came up with it around 1980, while they were building a theorem prover, and they used that prover to check a version of it. The algorithm fits in four lines. By their own account the write-up struggled to find a journal and only came out properly in 1991, a decade after their 1981 report, probably because it looked too small to be a result. I wanted to give those four lines a picture, because the idea underneath is so physical. Pair every ballot off against one from a different party and throw both away. A party with more than half of the ballots runs out of opponents before it runs out of ballots.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The arcs. I expected a scribble and got something orderly. The count only ever holds ballots for one party, so you can treat it as a pile of identical tokens: a match goes on top, and a mismatch cancels the top one. Cancelling the most recent survivor means pairs nest like brackets, and the arcs never cross, whatever order the ballots come in. Try <b>Violet first</b> and you get one huge rainbow, as the rest of the field wears violet's lead down from the far end. Try <b>Alternating</b> and every arc shrinks to a stitch. The other thing I enjoy is how badly it fails when it's allowed to. Drop violet's share to 40%, pick <b>Violet first</b>, and the survivor is often a party that came nowhere near winning. Pass one never claims a winner. It names the only party that could have won, and pass two settles it.</p>
+
+      <h3>Something you might take away</h3>
+      <p>You don't always need to know the score to know who could be winning. Two numbers are enough to rule out every party but one, whatever the order and however many parties there are, and a full tally would need a counter for each. The catch is that it only tells you something if a majority exists, and the algorithm can't tell you whether one does. Last one standing is a claim, and you check it with a recount. That holds outside streams too: a quick method that's only right under some condition still needs a cheap way to test the condition.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- The majority vote ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('cv');
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, DPR = 1;
+    const G = { x0: 0, x1: 0, y0: 0, y1: 0, ay: 0, arcH: 0, depth: 0 };
+
+    const PARTIES = [
+      { name: 'violet', c: [124, 124, 255] },
+      { name: 'pink',   c: [255, 124, 195] },
+      { name: 'mint',   c: [156, 240, 200] },
+      { name: 'amber',  c: [255, 201, 124] },
+      { name: 'sky',    c: [124, 214, 255] },
+      { name: 'coral',  c: [255, 143, 124] },
+    ];
+    const MINT = [156, 240, 200];
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+    const hex = (c) => '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+    const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+    // ---------- settings ----------
+    let N = 150, share = 0.54, K = 3, order = 'shuffled', rate = 15, auto = false;
+
+    // ---------- state ----------
+    let ballots = [];
+    let R = null;                 // the precomputed run
+    let phase = 'pass1';          // 'pass1' | 'gap' | 'pass2' | 'done'
+    let head = 0, head2 = 0;      // ballots read in pass 1 / pass 2 (floats)
+    let readT = new Float64Array(0), readT2 = new Float64Array(0);
+    let playing = true, now = 0, gapT = 0, doneT = 0, lastRead = -1, lastRead2 = -1;
+
+    function shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
+    // ---------- ballots ----------
+    function partyCounts() {
+      const counts = new Array(K).fill(0);
+      counts[0] = Math.min(N, Math.round(N * share));
+      const rest = N - counts[0];
+      const w = []; let s = 0;
+      for (let p = 1; p < K; p++) { const v = 0.7 + Math.random() * 0.6; w.push(v); s += v; }
+      let used = 0;
+      for (let p = 1; p < K; p++) { counts[p] = Math.floor(rest * w[p - 1] / s); used += counts[p]; }
+      let p = 1;
+      while (used < rest) { counts[p]++; used++; p = (p % (K - 1)) + 1; }
+      return counts;
+    }
+
+    function arrange(counts) {
+      const leaders = new Array(counts[0]).fill(0);
+      const others = [];
+      for (let p = 1; p < K; p++) for (let j = 0; j < counts[p]; j++) others.push(p);
+      shuffle(others);
+      if (order === 'first') return leaders.concat(others);
+      if (order === 'last') return others.concat(leaders);
+      if (order === 'alternate') {
+        const out = []; let i = 0, j = 0;
+        while (i < leaders.length || j < others.length) {
+          if (i < leaders.length) out.push(leaders[i++]);
+          if (j < others.length) out.push(others[j++]);
+        }
+        return out;
+      }
+      if (order === 'runs') {
+        const rem = counts.slice(); const out = []; let total = N;
+        while (total > 0) {
+          let r = Math.random() * total, p = 0;
+          while (p < K - 1 && r >= rem[p]) { r -= rem[p]; p++; }
+          while (rem[p] === 0) p = (p + 1) % K;
+          const len = Math.min(rem[p], 1 + Math.floor(Math.random() * 9));
+          for (let t = 0; t < len; t++) out.push(p);
+          rem[p] -= len; total -= len;
+        }
+        return out;
+      }
+      return shuffle(leaders.concat(others));
+    }
+
+    // ---------- the algorithm, run once in full; the animation reveals it ----------
+    function simulate() {
+      const n = ballots.length;
+      const candAfter = new Int8Array(n), countAfter = new Int32Array(n), kind = new Int8Array(n);
+      const partner = new Int32Array(n).fill(-1), killedBy = new Int32Array(n).fill(-1);
+      const pairsTo = new Int32Array(n + 1), match2 = new Int32Array(n + 1);
+      const stack = [];
+      let cand = -1, count = 0, maxC = 1, pairs = 0;
+      for (let i = 0; i < n; i++) {
+        const x = ballots[i];
+        if (count === 0) { cand = x; count = 1; stack.push(i); kind[i] = 0; }
+        else if (x === cand) { count++; stack.push(i); kind[i] = 1; }
+        else { count--; const j = stack.pop(); partner[i] = j; killedBy[j] = i; kind[i] = 2; pairs++; }
+        candAfter[i] = cand; countAfter[i] = count;
+        if (count > maxC) maxC = count;
+        pairsTo[i + 1] = pairs;
+      }
+      const tally = new Array(K).fill(0);
+      for (const b of ballots) tally[b]++;
+      const winner = count > 0 ? cand : -1;
+      for (let i = 0; i < n; i++) match2[i + 1] = match2[i] + (ballots[i] === winner ? 1 : 0);
+      let plural = 0;
+      for (let p = 1; p < K; p++) if (tally[p] > tally[plural]) plural = p;
+      R = { n, candAfter, countAfter, kind, partner, killedBy, pairsTo, match2, maxC, pairs,
+            cand: winner, finalCount: count, survivors: stack.slice(), tally, plural,
+            need: Math.floor(n / 2) + 1 };
+    }
+
+    function restart() {
+      simulate();
+      phase = 'pass1'; head = 0; head2 = 0; doneT = 0; lastRead = -1; lastRead2 = -1;
+      readT = new Float64Array(R.n); readT2 = new Float64Array(R.n);
+      buildTally(); updateDOM();
+    }
+    function newBallots() { ballots = arrange(partyCounts()); restart(); }
+
+    // ---------- progress ----------
+    function markRead(from, to) {
+      for (let i = Math.floor(from); i < Math.floor(to); i++) { readT[i] = now; lastRead = i; }
+    }
+    function markRead2(from, to) {
+      for (let i = Math.floor(from); i < Math.floor(to); i++) { readT2[i] = now; lastRead2 = i; }
+    }
+    function endPass1() {
+      head = R.n;
+      if (R.cand < 0) {
+        phase = 'done'; doneT = 0;
+        toast('Every ballot was cancelled in pairs. Nobody is left standing, so nobody has a majority.', true);
+      } else {
+        phase = 'gap'; gapT = 1.1;
+        const s = R.finalCount;
+        toast(`Pass one done: ${PARTIES[R.cand].name} is left standing with ${s} uncancelled ballot${s === 1 ? '' : 's'}. Now the recount.`, false);
+      }
+      updateDOM();
+    }
+    function startPass2() { phase = 'pass2'; head2 = 0; updateDOM(); }
+    function endPass2() {
+      head2 = R.n; phase = 'done'; doneT = 0;
+      verdictToast();
+      updateDOM();
+    }
+    function verdictToast() {
+      if (R.cand < 0) { toast('Every ballot was cancelled in pairs, so there is no majority.', true); return; }
+      const name = PARTIES[R.cand].name, got = R.tally[R.cand];
+      if (got >= R.need) {
+        toast(`Majority confirmed: ${name} has ${got} of ${R.n}. More than half, so it had to survive.`, false);
+      } else {
+        const pl = R.plural !== R.cand ? ` The most votes went to ${PARTIES[R.plural].name} (${R.tally[R.plural]}).` : '';
+        toast(`No majority. ${name} survived with only ${got} of ${R.n}: a survivor, not a winner.${pl}`, true);
+      }
+    }
+    function finish() {
+      if (phase === 'pass1') {
+        for (let i = Math.floor(head); i < R.n; i++) readT[i] = now - 1;
+        lastRead = R.n - 1; head = R.n;
+      }
+      if (R.cand < 0) { phase = 'done'; doneT = 0; verdictToast(); updateDOM(); return; }
+      if (phase !== 'done') {
+        for (let i = Math.floor(phase === 'pass2' ? head2 : 0); i < R.n; i++) readT2[i] = now - 1;
+        lastRead2 = R.n - 1; head2 = R.n; phase = 'done'; doneT = 0;
+        verdictToast();
+      }
+      updateDOM();
+    }
+    function step() {
+      playing = false; syncPlay();
+      if (phase === 'pass1') {
+        const prev = head; head = Math.floor(head) + 1; markRead(prev, head);
+        if (head >= R.n) endPass1(); else updateDOM();
+      } else if (phase === 'gap') startPass2();
+      else if (phase === 'pass2') {
+        const prev = head2; head2 = Math.floor(head2) + 1; markRead2(prev, head2);
+        if (head2 >= R.n) endPass2(); else updateDOM();
+      }
+    }
+
+    function advance(dt) {
+      if (phase === 'pass1') {
+        const prev = head; head = Math.min(R.n, head + rate * dt);
+        if (Math.floor(head) !== Math.floor(prev)) { markRead(prev, head); if (head >= R.n) endPass1(); else updateDOM(); }
+      } else if (phase === 'gap') {
+        gapT -= dt; if (gapT <= 0) startPass2();
+      } else if (phase === 'pass2') {
+        const prev = head2; head2 = Math.min(R.n, head2 + Math.max(rate * 2.5, 6) * dt);
+        if (Math.floor(head2) !== Math.floor(prev)) { markRead2(prev, head2); if (head2 >= R.n) endPass2(); else updateDOM(); }
+      } else if (phase === 'done' && auto) {
+        doneT += dt; if (doneT > 4.5) newBallots();
+      }
+    }
+
+    // A repaint after the fact: re-run the algorithm and keep the reader where it was.
+    function edited() {
+      simulate();
+      buildTally();
+      if (phase === 'pass1') {
+        updateDOM();
+      } else {
+        for (let i = 0; i < R.n; i++) { readT[i] = Math.min(readT[i], now - 1); readT2[i] = now - 1; }
+        head = R.n; head2 = R.n; phase = 'done'; doneT = 0;
+        lastRead = R.n - 1; lastRead2 = R.n - 1;
+        updateDOM();
+      }
+    }
+
+    // ---------- DOM ----------
+    const nameChip = (p) => `<span class="chip" style="background:${hex(PARTIES[p].c)};color:${hex(PARTIES[p].c)}"></span>${PARTIES[p].name}`;
+    function setCode(on, cls) {
+      for (let i = 0; i <= 6; i++) { const el = $('k' + i); el.className = ''; }
+      for (const k of on) $('k' + k).className = cls;
+    }
+    function buildTally() {
+      const t = $('tally'); t.innerHTML = '';
+      for (let p = 0; p < K; p++) {
+        const row = document.createElement('div');
+        row.className = 'trow'; row.id = 'tr' + p;
+        row.innerHTML = `<span>${PARTIES[p].name}</span><span class="track"><span class="fill" id="tf${p}" style="background:${hex(PARTIES[p].c)}"></span><span class="half"></span></span><span class="val" id="tv${p}">?</span>`;
+        t.appendChild(row);
+      }
+    }
+    function updateTally() {
+      for (let p = 0; p < K; p++) {
+        const fill = $('tf' + p), val = $('tv' + p), row = $('tr' + p);
+        if (!fill) continue;
+        let v = null;
+        if (phase === 'done') v = R.tally[p];
+        else if (phase === 'pass2' && p === R.cand) v = R.match2[Math.floor(head2)];
+        fill.style.width = v === null ? '0%' : (100 * v / R.n).toFixed(1) + '%';
+        val.textContent = v === null ? '?' : v;
+        row.className = 'trow' + (p === R.cand && phase !== 'pass1' ? ' cand' : '');
+      }
+    }
+
+    function updateDOM() {
+      const read = Math.floor(head), n = R.n;
+      $('rRead').textContent = `${read} / ${n}`;
+      const c = read > 0 ? R.countAfter[read - 1] : 0;
+      $('rCand').innerHTML = c > 0 ? nameChip(R.candAfter[read - 1]) : '<span style="color:#8f8fa6;font-weight:500">none</span>';
+      $('rCount').textContent = c;
+      $('rPairs').textContent = R.pairsTo[read];
+      $('rNeed').textContent = `more than ${n / 2} (${R.need})`;
+      const r2 = Math.floor(head2);
+      if (phase === 'pass1' || phase === 'gap') { $('rRecount').textContent = '—'; }
+      else if (R.cand < 0) { $('rRecount').textContent = 'not needed'; }
+      else $('rRecount').textContent = `${R.match2[r2]} of ${r2} read`;
+
+      const vEl = $('rVerdict');
+      if (phase !== 'done') { vEl.textContent = phase === 'pass1' ? 'still reading' : 'recounting…'; vEl.style.color = '#9a9ab0'; }
+      else if (R.cand >= 0 && R.tally[R.cand] >= R.need) { vEl.innerHTML = nameChip(R.cand) + ' wins'; vEl.style.color = '#9cf0c8'; }
+      else { vEl.textContent = 'no majority'; vEl.style.color = '#ff9fd2'; }
+
+      // code + live note
+      const note = $('liveNote');
+      if (phase === 'pass1') {
+        if (read === 0) {
+          setCode([0], 'on');
+          note.innerHTML = `Nothing read yet. The whole memory is <b>one candidate and one count</b>, however many ballots or parties there are.`;
+        } else {
+          const i = read - 1, x = ballots[i], k = R.kind[i], cAfter = R.countAfter[i];
+          const nm = `<b style="color:${hex(PARTIES[x].c)}">${PARTIES[x].name}</b>`;
+          if (k === 0) {
+            setCode([1, 2], 'on');
+            note.innerHTML = `Ballot ${i + 1} is ${nm}. The count was 0, so ${nm} becomes the candidate with a count of 1. Whatever came before is forgotten.`;
+          } else if (k === 1) {
+            setCode([1, 3], 'on');
+            note.innerHTML = `Ballot ${i + 1} is ${nm}, the same as the candidate. Count ${cAfter - 1} → ${cAfter}.`;
+          } else {
+            const j = R.partner[i], y = ballots[j];
+            setCode([1, 4], 'hit');
+            note.innerHTML = `Ballot ${i + 1} is ${nm}, but the candidate is <b style="color:${hex(PARTIES[y].c)}">${PARTIES[y].name}</b>. They cancel: ballot ${i + 1} takes out ballot ${j + 1}, and the count drops ${cAfter + 1} → ${cAfter}.`;
+          }
+        }
+      } else if (phase === 'gap' || phase === 'pass2') {
+        setCode([5], 'ok');
+        note.innerHTML = R.cand < 0 ? '' : `Pass one only names a suspect. Now read everything again and count <b style="color:${hex(PARTIES[R.cand].c)}">${PARTIES[R.cand].name}</b>'s ballots: ${R.match2[r2]} so far, ${R.need} needed.`;
+      } else {
+        setCode(R.cand < 0 ? [4] : [6], R.cand >= 0 && R.tally[R.cand] >= R.need ? 'ok' : 'hit');
+        if (R.cand < 0) note.innerHTML = `The count ended at 0: every ballot was paired with one from another party. A majority can never be paired off completely, so there isn't one.`;
+        else if (R.tally[R.cand] >= R.need) note.innerHTML = `<b style="color:${hex(PARTIES[R.cand].c)}">${PARTIES[R.cand].name}</b> has ${R.tally[R.cand]} of ${n}. Each cancelled pair holds at most one of its ballots, so a majority always outlasts the pairing.`;
+        else note.innerHTML = `<b style="color:${hex(PARTIES[R.cand].c)}">${PARTIES[R.cand].name}</b> was left standing with ${R.tally[R.cand]} of ${n}, short of ${R.need}. Without a majority the survivor depends on the order. Try another order and see who survives.`;
+      }
+      updateTally();
+    }
+
+    let toastTimer = 0;
+    function toast(msg, pink) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast on' + (pink ? ' pinkt' : '');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.className = 'toast' + (pink ? ' pinkt' : ''); }, 4200);
+    }
+
+    // ---------- layout ----------
+    function layout() {
+      DPR = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      if (W > 1080) {
+        G.x0 = 384; G.x1 = W - 354; G.y0 = 40; G.y1 = H - 50;
+        if (G.x1 - G.x0 < 340) { G.x0 = 24; G.x1 = W - 24; }
+      } else if (W > 700) {
+        G.x0 = 384; G.x1 = W - 28; G.y0 = 36; G.y1 = H - H * 0.4 - 50;
+        if (G.y1 - G.y0 < 260) G.y1 = H - 40;
+      } else {
+        G.x0 = 16; G.x1 = W - 16; G.y0 = H * 0.2 + 24; G.y1 = H * 0.58 - 12;
+      }
+      const h = G.y1 - G.y0;
+      G.ay = G.y0 + h * 0.6;
+      G.arcH = G.ay - G.y0 - 18;
+      G.depth = G.y1 - G.ay - 26;
+    }
+
+    // ---------- drawing ----------
+    function draw() {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+      const cx = (G.x0 + G.x1) / 2;
+      const glow = ctx.createRadialGradient(cx, G.ay, 10, cx, G.ay, Math.max(W, H) * 0.6);
+      glow.addColorStop(0, 'rgba(124,124,255,0.07)');
+      glow.addColorStop(0.5, 'rgba(255,124,195,0.025)');
+      glow.addColorStop(1, 'rgba(5,5,10,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+
+      const n = R.n;
+      const dx = (G.x1 - G.x0) / n;
+      const X = (i) => G.x0 + dx * (i + 0.5);
+      const read = Math.floor(head);
+      const rad = Math.max(1.3, Math.min(5.5, dx * 0.36));
+      const ay = G.ay;
+      const after = phase !== 'pass1';
+
+      // axis
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(G.x0 - 6, ay + 0.5); ctx.lineTo(G.x1 + 6, ay + 0.5); ctx.stroke();
+
+      // survivor beams (once pass one is over)
+      if (after && R.cand >= 0) {
+        const col = PARTIES[R.cand].c;
+        const pulse = 0.5 + 0.5 * Math.sin(now * 2.2);
+        for (const s of R.survivors) {
+          const x = X(s);
+          const g = ctx.createLinearGradient(0, ay, 0, G.y0);
+          g.addColorStop(0, rgba(col, 0.28 + 0.12 * pulse));
+          g.addColorStop(1, rgba(col, 0));
+          ctx.strokeStyle = g;
+          ctx.lineWidth = Math.max(1, Math.min(3, dx * 0.4));
+          ctx.beginPath(); ctx.moveTo(x, ay - rad - 2); ctx.lineTo(x, G.y0); ctx.stroke();
+        }
+      }
+
+      // arcs: one per cancelled pair, drawn as the later ballot is read
+      const lw = Math.max(1, Math.min(1.9, 0.8 + dx * 0.12));
+      for (let i = 0; i < read; i++) {
+        if (R.kind[i] !== 2) continue;
+        const j = R.partner[i];
+        const age = now - readT[i];
+        const p = ease(clamp01(age / 0.5));
+        const xa = X(j), xb = X(i), span = i - j;
+        const rx = (xb - xa) / 2;
+        const ry = Math.min(G.arcH * Math.pow(span / n, 0.55), rx * 1.7 + 4);
+        const fresh = clamp01(1 - age / 1.2);
+        const g = ctx.createLinearGradient(xa, 0, xb, 0);
+        g.addColorStop(0, rgba(PARTIES[ballots[j]].c, 0.42 + 0.5 * fresh));
+        g.addColorStop(1, rgba(PARTIES[ballots[i]].c, 0.42 + 0.5 * fresh));
+        ctx.strokeStyle = g;
+        ctx.lineWidth = lw + 1.4 * fresh;
+        ctx.beginPath();
+        ctx.ellipse(xa + rx, ay - 0.5, Math.max(0.5, rx), Math.max(0.5, ry), 0, Math.PI, Math.PI + p * Math.PI);
+        ctx.stroke();
+      }
+
+      // the count after every ballot, hanging under the line
+      const unit = Math.min(G.depth / Math.max(1, R.maxC), 9);
+      const bw = Math.max(1, dx > 4 ? dx - 1 : dx);
+      const top = ay + rad + 6;
+      for (let i = 0; i < read; i++) {
+        const c = R.countAfter[i];
+        if (c <= 0) continue;
+        const col = PARTIES[R.candAfter[i]].c;
+        const isHead = phase === 'pass1' && i === read - 1;
+        ctx.fillStyle = rgba(col, isHead ? 0.85 : 0.34);
+        ctx.fillRect(X(i) - bw / 2, top, bw, c * unit);
+        ctx.fillStyle = rgba(col, isHead ? 1 : 0.7);
+        ctx.fillRect(X(i) - bw / 2, top + c * unit - 1.5, bw, 1.5);
+      }
+
+      // ballots
+      for (let i = 0; i < n; i++) {
+        const col = PARTIES[ballots[i]].c;
+        const x = X(i);
+        if (i >= read) {
+          ctx.fillStyle = rgba(col, 0.24);
+          ctx.beginPath(); ctx.arc(x, ay, rad * 0.75, 0, Math.PI * 2); ctx.fill();
+          continue;
+        }
+        const killed = R.kind[i] === 2 || (R.killedBy[i] >= 0 && R.killedBy[i] < read);
+        if (killed) {
+          ctx.strokeStyle = rgba(col, 0.5);
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(x, ay, Math.max(0.8, rad - 0.5), 0, Math.PI * 2); ctx.stroke();
+        } else {
+          ctx.fillStyle = rgba(col, 0.18);
+          ctx.beginPath(); ctx.arc(x, ay, rad * 2.2, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = rgba(col, 1);
+          ctx.beginPath(); ctx.arc(x, ay, rad, 0, Math.PI * 2); ctx.fill();
+        }
+        const f = clamp01(1 - (now - readT[i]) / 0.6);
+        if (f > 0) {
+          ctx.strokeStyle = `rgba(255,255,255,${0.8 * f})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(x, ay, rad + 2 + 6 * (1 - f), 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+
+      // pass two: a mint tick over each of the candidate's ballots
+      if ((phase === 'pass2' || phase === 'done') && R.cand >= 0) {
+        const r2 = Math.floor(head2);
+        for (let i = 0; i < r2; i++) {
+          if (ballots[i] !== R.cand) continue;
+          const f = clamp01(1 - (now - readT2[i]) / 0.5);
+          ctx.strokeStyle = rgba(MINT, 0.75 + 0.25 * f);
+          ctx.lineWidth = 1.2 + f;
+          const y = ay - rad - 4 - 3 * f;
+          ctx.beginPath(); ctx.moveTo(X(i), y); ctx.lineTo(X(i), y - 6); ctx.stroke();
+        }
+      }
+
+      // reading heads
+      if (phase === 'pass1') {
+        const hx = G.x0 + dx * head;
+        ctx.strokeStyle = 'rgba(207,207,255,0.32)';
+        ctx.setLineDash([3, 5]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(hx, G.y0); ctx.lineTo(hx, G.y1); ctx.stroke();
+        ctx.setLineDash([]);
+        const c = read > 0 ? R.countAfter[read - 1] : 0;
+        const label = c > 0 ? `${PARTIES[R.candAfter[read - 1]].name} × ${c}` : 'count 0';
+        ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+        const tw = ctx.measureText(label).width;
+        let lx = hx - tw / 2 - 8;
+        lx = Math.max(G.x0 - 8, Math.min(G.x1 - tw - 8, lx));
+        const ly = Math.min(G.y1 - 2, top + c * unit + 8);
+        ctx.fillStyle = 'rgba(10,10,18,0.82)';
+        roundRect(lx, ly, tw + 16, 20, 10); ctx.fill();
+        ctx.strokeStyle = c > 0 ? rgba(PARTIES[R.candAfter[read - 1]].c, 0.6) : 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = '#e9e9f0';
+        ctx.fillText(label, lx + 8, ly + 14);
+      } else if (phase === 'pass2') {
+        const hx = G.x0 + dx * head2;
+        ctx.strokeStyle = rgba(MINT, 0.45);
+        ctx.setLineDash([3, 5]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(hx, G.y0); ctx.lineTo(hx, G.y1); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    let last = performance.now();
+    function frame(t) {
+      const dt = Math.min(0.05, Math.max(0, (t - last) / 1000));
+      last = t; now += dt;
+      if (playing) advance(dt);
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- painting ballots ----------
+    let painting = false, paintParty = 0, lastIdx = -1;
+    function idxAt(e) {
+      const r = cv.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      if (x < G.x0 || x > G.x1 || y < G.y0 - 10 || y > G.y1 + 10) return -1;
+      return Math.max(0, Math.min(R.n - 1, Math.floor((x - G.x0) / ((G.x1 - G.x0) / R.n))));
+    }
+    cv.addEventListener('contextmenu', (e) => e.preventDefault());
+    cv.addEventListener('pointerdown', (e) => {
+      const i = idxAt(e);
+      if (i < 0) return;
+      const dir = e.button === 2 ? -1 : 1;
+      paintParty = (ballots[i] + dir + K) % K;
+      painting = true; lastIdx = i;
+      try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+      ballots[i] = paintParty;
+      edited();
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!painting) return;
+      const i = idxAt(e);
+      if (i < 0 || i === lastIdx) return;
+      const a = Math.min(i, lastIdx), b = Math.max(i, lastIdx);
+      let changed = false;
+      for (let k = a; k <= b; k++) if (ballots[k] !== paintParty) { ballots[k] = paintParty; changed = true; }
+      lastIdx = i;
+      if (changed) edited();
+    });
+    const stopPaint = () => {
+      if (painting && phase === 'done') verdictToast();
+      painting = false;
+    };
+    cv.addEventListener('pointerup', stopPaint);
+    cv.addEventListener('pointercancel', stopPaint);
+
+    // ---------- controls ----------
+    function syncPlay() { $('playBtn').textContent = playing ? 'Pause' : 'Play'; }
+    $('playBtn').addEventListener('click', () => {
+      if (phase === 'done' && !playing) { restart(); }
+      playing = !playing; syncPlay();
+    });
+    $('stepBtn').addEventListener('click', step);
+    $('finishBtn').addEventListener('click', finish);
+    $('restartBtn').addEventListener('click', () => { restart(); playing = true; syncPlay(); });
+    $('newBtn').addEventListener('click', () => { newBallots(); playing = true; syncPlay(); });
+
+    const speedMap = (v) => Math.max(1, Math.round(Math.pow(220, v / 100)));
+    $('speed').addEventListener('input', (e) => { rate = speedMap(+e.target.value); $('speedV').textContent = rate; });
+    $('num').addEventListener('input', (e) => { N = +e.target.value; $('numV').textContent = N; newBallots(); });
+    $('share').addEventListener('input', (e) => { share = +e.target.value / 100; $('shareV').textContent = e.target.value + '%'; newBallots(); });
+    $('parties').addEventListener('input', (e) => { K = +e.target.value; $('partiesV').textContent = K; newBallots(); });
+    for (const b of document.querySelectorAll('#orders .btn')) {
+      b.addEventListener('click', () => {
+        order = b.dataset.o;
+        for (const o of document.querySelectorAll('#orders .btn')) o.classList.toggle('on', o === b);
+        newBallots(); playing = true; syncPlay();
+      });
+    }
+    $('autoBtn').addEventListener('click', () => {
+      auto = !auto;
+      $('autoBtn').textContent = 'Auto: ' + (auto ? 'on' : 'off');
+      $('autoBtn').classList.toggle('on', auto);
+      doneT = 0;
+    });
+
+    function setPanels(show) {
+      $('ui').classList.toggle('hidden', !show);
+      $('side').classList.toggle('hidden', !show);
+      $('showUi').classList.toggle('on', !show);
+    }
+    $('collapse').addEventListener('click', () => setPanels(false));
+    $('showUi').addEventListener('click', () => setPanels(true));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' && e.target.type !== 'range')) return;
+      const k = e.key.toLowerCase();
+      if (e.key === 'Escape') { story.classList.remove('open'); return; }
+      if (story.classList.contains('open')) return;
+      if (k === ' ') { e.preventDefault(); $('playBtn').click(); }
+      else if (k === 's') step();
+      else if (k === 'f') finish();
+      else if (k === 'r') $('restartBtn').click();
+      else if (k === 'n') $('newBtn').click();
+      else if (k === 'h') setPanels($('ui').classList.contains('hidden'));
+    });
+
+    window.addEventListener('resize', layout);
+    layout();
+    rate = speedMap(+$('speed').value); $('speedV').textContent = rate;
+    newBallots();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
