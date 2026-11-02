@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-01",
+    "lastUpdated": "2026-11-02",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5046,7 +5046,7 @@
     {
       "id": "2026-11-01",
       "date": "2026-11-01",
-      "headline": true,
+      "headline": false,
       "topic": "Whether the triple lock change will save £15bn a year by the end of the 2030s",
       "claim": "This will save £15bn a year by the end of the 2030s, £50bn by 2050.",
       "speaker": "John Healey",
@@ -5086,6 +5086,56 @@
         {
           "title": "Euronews — UK Budget: five key takeaways from the Chancellor's speech",
           "url": "https://www.euronews.com/2026/10/28/uk-budget-heres-five-key-takeaways-from-the-chancellors-speech"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-02",
+      "date": "2026-11-02",
+      "headline": true,
+      "topic": "Whether Labour's plans leave a £49bn black hole in the public finances",
+      "claim": "Labour's plans leave \"a £49bn black hole at the heart of the public finances\" and mean raising taxes \"by £1,700 for every household.\"",
+      "speaker": "Kemi Badenoch",
+      "party": "Conservative",
+      "role": "Leader of the Opposition",
+      "discussionScore": 62,
+      "discussionNote": "Badenoch's Sunday Telegraph article set the weekend's post-Budget attack line, picked up by City AM, GB News and others; the Treasury called the figures \"fiction\".",
+      "score": 40,
+      "verdict": "Mostly False",
+      "explanation": "The OBR says the Budget meets the government's main fiscal rule with £15bn to spare, so current plans have no hole in the usual sense. Badenoch's £49bn instead adds up the cost of promises not yet funded: an £11bn defence gap, £17bn for a National Care Service and £4bn for council housing. Reports itemise only £32bn of the total, and nobody has officially costed the care service; the OBR says its cost depends on design. The underlying point stands: the OBR flags care, defence and spending pressures it has not costed, and the IFS thinks services and defence could need about £35bn in tax rises or cuts by 2030-31. But calling a Conservative tally of future pledges a black hole overstates it.",
+      "evidence": [
+        "OBR October 2026: current budget surplus in 2029-30 met with a £15bn margin, down £7bn, with a 56% chance of meeting it.",
+        "Conservative breakdown as reported: defence £11bn, National Care Service £17bn, council housing £4bn. That is £32bn; the remaining ~£17bn is not itemised.",
+        "The OBR gives no cost for expanding social care, saying it depends on final design and timing.",
+        "IFS: protecting services and funding higher defence could need around £35bn of tax rises or benefit cuts by 2030-31.",
+        "The triple lock savings meant to fund care barely start by 2030-31, reaching £15bn only in 2039-40.",
+        "The Treasury called the claims \"fiction\" and says the Budget fully funds the defence investment plan."
+      ],
+      "confidence": "Medium: the OBR and IFS figures are solid, but the Conservative workings behind £49bn and £1,700 are unpublished.",
+      "sources": [
+        {
+          "title": "OBR — Economic and fiscal outlook, October 2026",
+          "url": "https://obr.uk/efo/economic-and-fiscal-outlook-october-2026/"
+        },
+        {
+          "title": "IFS — Autumn Budget 2026: initial response",
+          "url": "https://ifs.org.uk/articles/autumn-budget-2026-initial-response"
+        },
+        {
+          "title": "City AM — Healey has left £49bn black hole, claims Badenoch",
+          "url": "https://www.cityam.com/healey-has-left-49bn-blackhole-in-britains-finances-claims-badenoch/"
+        },
+        {
+          "title": "London Loves Business — Badenoch targets Healey over unfunded commitments",
+          "url": "https://londonlovesbusiness.com/badenoch-targets-healey-over-billions-in-unfunded-commitments-as-the-numbers-dont-add-up/"
+        },
+        {
+          "title": "Brit Brief — IFS warns tax rises may be needed to protect services",
+          "url": "https://britbrief.co.uk/business/economy/budget-2026-tax-rises-may-be-needed-to-protect-services.html"
+        },
+        {
+          "title": "DWP — State Pension uprating analysis 2026",
+          "url": "https://www.gov.uk/government/publications/state-pension-uprating-analysis-2026/state-pension-uprating"
         }
       ]
     }
