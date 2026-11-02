@@ -1,57 +1,57 @@
 {
-  "date": "2026-11-01",
+  "date": "2026-11-02",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Two Days to Open the Sea",
+  "title": "Lights Off for the Fledglings",
   "mood": {
     "label": "Uneasy calm",
-    "score": -0.12,
-    "summary": "Uneasy calm: talks on a two-day plan to reopen Hormuz, but riots in Frankfurt, a court standoff in Poland and a record crypto heist. Evacuees from Oleshky reunite with family, and astronomers spot a possible dwarf planet beyond Pluto.",
+    "score": -0.14,
+    "summary": "Uneasy calm: mined tankers burn in Hormuz, Netanyahu calls Israel's vote stolen and the US braces for midterms. Small lights hold: 108 stupas rise in Bhutan, islands go dark to save seabird chicks, and sound waves take aim at brain cancer.",
     "palette": {
-      "bg": "#16131d",
-      "bg2": "#262033",
-      "accent": "#b48ad6",
-      "accent2": "#d6a35e",
-      "text": "#ebe6f0"
+      "bg": "#0f1418",
+      "bg2": "#1c2630",
+      "accent": "#e07a4f",
+      "accent2": "#8fb8c9",
+      "text": "#e6ecef"
     }
   },
   "style": {
-    "genre": "minimal EBM — harpsichord, pizzicato strings, celesta, TR-606",
-    "key": "Bb",
-    "scale": "harmonic minor",
-    "bpm": 118,
+    "genre": "darkwave — chorused guitar, tubular bells, choir, LinnDrum",
+    "key": "F",
+    "scale": "phrygian",
+    "bpm": 104,
     "swing": 0
   },
   "sampleSources": [
-    "Strudel default library (GM harpsichord, GM pizzicato strings, GM celesta, GM synth bass, Roland TR-606)"
+    "Strudel default library (GM clean electric guitar, GM tubular bells, GM choir aahs, GM picked bass, AkaiLinn)"
   ],
-  "pattern": "stack(s(\"bd*4, ~ sd ~ sd\").bank(\"RolandTR606\").gain(0.6).room(0.1), s(\"hh*8\").bank(\"RolandTR606\").gain(perlin.range(0.08,0.18)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ ~ ~ oh ~ ~ ~ oh\").bank(\"RolandTR606\").gain(0.1), note(\"<[bf1 bf1 ~ bf1 ~ bf1 f1 ~] [gf1 gf1 ~ gf1 ~ gf1 df2 ~] [ef1 ef1 ~ ef1 ~ ef1 bf1 ~] [f1 f1 ~ f1 ~ a1 c2 ~]>\").s(\"gm_synth_bass_1\").gain(0.55).lpf(sine.range(500,1100).slow(16)), note(\"<[bf3 df4 f4 df4 bf3 df4 f4 a4] [gf3 bf3 df4 bf3 gf3 bf3 df4 f4] [ef3 gf3 bf3 gf3 ef3 gf3 bf3 df4] [f3 a3 c4 a3 f3 a3 c4 ef4]>\").s(\"gm_harpsichord\").gain(0.3).lpf(sine.range(1800,4200).slow(12)).jux(rev).room(0.25), note(\"<[bf2,df3,f3] [gf2,bf2,df3] [ef3,gf3,bf3] [f2,a2,c3]>\").struct(\"x ~ ~ x ~ ~ x ~\").s(\"gm_pizzicato_strings\").gain(0.4).room(0.3), note(\"<[f5 ~ ~ gf5 f5 ~ df5 ~] [~ ~ df5 ~ bf4 ~ ~ ~] [gf5 ~ f5 ~ ef5 ~ df5 ~] [c5 ~ ~ a4 ~ ~ ~ ~]>\").s(\"gm_celesta\").gain(0.32).room(0.5).delay(0.3).delaytime(0.381).off(0.25, x => x.add(note(-12)).gain(0.12).pan(0.3)))",
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"AkaiLinn\").gain(0.6).room(0.2), s(\"hh*8\").bank(\"AkaiLinn\").gain(perlin.range(0.07,0.16)).hpf(6000).pan(sine.range(0.3,0.7).slow(8)), note(\"<[f1 f1 f2 f1 ~ f1 c2 f1] [gf1 gf1 gf2 gf1 ~ gf1 df2 gf1] [ef1 ef1 ef2 ef1 ~ ef1 bf1 ef1] [df1 df1 df2 df1 ~ c1 df1 ef1]>\").s(\"gm_electric_bass_pick\").gain(0.55).lpf(sine.range(600,1400).slow(16)), note(\"<[f3 c4 af4 c4 f4 c4 af3 c4] [gf3 df4 bf4 df4 gf4 df4 bf3 df4] [ef3 bf3 gf4 bf3 ef4 bf3 gf3 bf3] [df3 af3 f4 af3 df4 af3 c4 af3]>\").s(\"gm_electric_guitar_clean\").gain(0.3).lpf(3200).jux(rev).delay(0.35).delaytime(0.433).room(0.4), note(\"<[f3,af3,c4] [gf3,bf3,df4] [ef3,gf3,bf3] [df3,f3,af3]>\").s(\"gm_choir_aahs\").attack(0.8).release(2.5).gain(0.22).room(0.6).rsize(4), note(\"<[c5 ~ ~ ~ ~ ~ ~ ~] [df5 ~ ~ ~ ~ ~ ~ ~] [bf4 ~ ~ ~ gf4 ~ ~ ~] [af4 ~ ~ ~ gf4 ~ f4 ~]>\").s(\"gm_tubular_bells\").gain(0.3).room(0.7).off(0.375, x => x.add(note(12)).gain(0.1).pan(0.75)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Two days, they say, to open the sea,",
-        "a plan passed hand to hand,",
-        "in Frankfurt glass across the street,",
-        "in Warsaw the judges stand."
+        "Two tankers burning in the strait,",
+        "the talks go on, they say,",
+        "a man calls the counting stolen,",
+        "the count stays where it lay."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "A bus pulls in from Oleshky,",
-        "a mother knows a face,",
-        "and past the cold edge of Pluto",
-        "a small world finds its place."
+        "On Atlantic rocks the porches dim",
+        "so the young birds find the sea,",
+        "in Bhutan they stack a hundred stones",
+        "and eight, for what might be."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Hold still, hold still,",
-        "the calm is thin as wire,",
-        "count the two days slowly,",
-        "and don't feed the fire."
+        "Turn the lights off, Tuesday's coming,",
+        "let the small ones fly,",
+        "hold the calm the way you'd hold",
+        "a match against the sky."
       ]
     }
   ]
