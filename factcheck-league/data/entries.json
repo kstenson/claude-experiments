@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-02",
+    "lastUpdated": "2026-11-03",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5092,7 +5092,7 @@
     {
       "id": "2026-11-02",
       "date": "2026-11-02",
-      "headline": true,
+      "headline": false,
       "topic": "Whether Labour's plans leave a £49bn black hole in the public finances",
       "claim": "Labour's plans leave \"a £49bn black hole at the heart of the public finances\" and mean raising taxes \"by £1,700 for every household.\"",
       "speaker": "Kemi Badenoch",
@@ -5136,6 +5136,60 @@
         {
           "title": "DWP — State Pension uprating analysis 2026",
           "url": "https://www.gov.uk/government/publications/state-pension-uprating-analysis-2026/state-pension-uprating"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-03",
+      "date": "2026-11-03",
+      "headline": true,
+      "topic": "Whether keeping care workers on a five-year settlement path costs taxpayers £10bn",
+      "claim": "\"The government's own figures show the cost of this to taxpayers is £10 billion.\"",
+      "speaker": "Chris Philp",
+      "party": "Conservative",
+      "role": "Shadow Home Secretary",
+      "discussionScore": 64,
+      "discussionNote": "Mahmood's climbdown on care-worker settlement led Monday's Commons and evening coverage. The Conservatives' £10bn line framed City AM's \"£10bn gamble\" headline and GB News and Brit Brief reports.",
+      "score": 35,
+      "verdict": "Mostly False",
+      "explanation": "The £10bn is real and it is the government's: a Home Office note puts the lifetime net fiscal cost of care workers and adult dependants settling in 2026-30 at £9.5bn. But that figure compares settling with never settling. The original plan only delayed settlement to 15 years and never stopped it. The Home Office told the UK Statistics Authority that £10bn is a lifetime cost under current rules, not a saving, and the Authority said that should have been made clearer. IPPR says the plan was never going to save £10bn. So the real cost of Monday's concession is the cost of letting people settle ten years sooner. That is probably a fraction of £10bn, and nobody has published an estimate.",
+      "evidence": [
+        "Home Office note: about 117,000 care workers and 79,000 adult dependants settling 2026-30, with a net lifetime cost of £9.5bn, using MAC per-person estimates.",
+        "The note sets no counterfactual: £9.5bn is an absolute cost, not the difference between settling at 5 and at 15 years.",
+        "UKSA, May 2026: the Home Office confirmed £10bn is a lifetime net cost; stating the counterfactual \"would have given greater clarity\".",
+        "IPPR: the original proposals \"were never in reality going to create a £10 billion long-term saving\"; they delayed settlement rather than preventing it.",
+        "Mahmood's statement: care workers who earned £25,000 keep their five-year path. The roughly quarter who did not can apply for another five-year visa.",
+        "Mahmood herself used £10bn in March, to IPPR, as the cost of not rewriting the rules."
+      ],
+      "confidence": "Medium-high: the Home Office, UKSA and IPPR documents are clear; Philp's exact wording comes from secondary reports.",
+      "sources": [
+        {
+          "title": "Home Office — Lifetime net fiscal costs for care workers and dependants",
+          "url": "https://www.gov.uk/government/publications/estimated-lifetime-net-fiscal-costs-for-care-workers-and-their-adult-dependants/estimated-lifetime-net-fiscal-costs-for-care-workers-and-their-adult-dependants"
+        },
+        {
+          "title": "UKSA — Penny Young to Max Wilkinson MP on settlement figures",
+          "url": "https://uksa.statisticsauthority.gov.uk/correspondence/letter-from-penny-young-to-max-wilkinson-mp-fiscal-impact-of-settlement-policy/"
+        },
+        {
+          "title": "UKSA — Max Wilkinson MP to Penny Young",
+          "url": "https://uksa.statisticsauthority.gov.uk/correspondence/max-wilkinson-mp-to-penny-young-fiscal-impact-of-settlement-policy/"
+        },
+        {
+          "title": "GOV.UK — Home Secretary's earned settlement statement, 2 November 2026",
+          "url": "https://www.gov.uk/government/speeches/home-secretary-earned-settlement-statement"
+        },
+        {
+          "title": "IPPR — Earned settlement: decision time",
+          "url": "https://www.ippr.org/articles/earned-settlement-decision-time"
+        },
+        {
+          "title": "City AM — Mahmood waters down care worker rules in £10bn gamble",
+          "url": "https://www.cityam.com/mahmood-waters-down-migration-rules-for-care-workers-in-10bn-gamble/"
+        },
+        {
+          "title": "Brit Brief — Labour 'caved in' on migrant settlement rights",
+          "url": "https://britbrief.co.uk/politics/immigration/labour-caved-in-on-migrant-settlement-rights-critics-say.html"
         }
       ]
     }
