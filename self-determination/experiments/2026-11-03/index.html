@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Back With More — Experiment 109</title>
+<meta name="description" content="Bellman and Ford's shortest paths on a ring of currencies: take logs of the exchange rates, relax every trade n − 1 times, and one more pass that still improves is proof of a loop of trades that comes back with more than it started." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  .stage { position: fixed; inset: 0; }
+  canvas#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  /* ---- Panels ---- */
+  .ui, .side {
+    position: fixed;
+    z-index: 10;
+    background: rgba(10, 10, 18, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui {
+    left: 24px; top: 24px;
+    width: 330px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 17px 20px;
+  }
+  .side {
+    right: 24px; top: 24px;
+    width: 300px; max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 15px 16px;
+    display: grid; gap: 10px;
+  }
+  .ui.hidden, .side.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .collapse {
+    position: absolute; top: 14px; right: 14px;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    color: #9a9ab0; font-size: 0.9rem; line-height: 1; cursor: pointer;
+  }
+  .collapse:hover { background: rgba(255,255,255,0.12); color: #e9e9f0; }
+  #showUi {
+    position: fixed; z-index: 11; left: 24px; top: 24px;
+    display: none;
+    background: rgba(10,10,18,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(124,124,255,0.35); color: #cfcfff;
+    border-radius: 999px; padding: 9px 16px; font-size: 0.78rem; cursor: pointer;
+  }
+  #showUi.on { display: block; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.34rem; margin: 7px 0 2px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.8rem; line-height: 1.55; color: #b4b4c8; margin-bottom: 12px; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .controls { display: grid; gap: 10px; }
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .group-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #7c7cff; margin-top: 2px; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].rose::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].rose::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+
+  .btn-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 22%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 7px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.on { background: rgba(124,124,255,0.42); border-color: rgba(170,170,255,0.8); color: #fff; }
+  .btn.pink.on { background: rgba(255,124,195,0.38); border-color: rgba(255,170,215,0.85); color: #fff; }
+  .btn.big { flex: 2 1 45%; font-weight: 600; }
+
+  .readout {
+    display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.76rem;
+  }
+  .readout .k { color: #8f8fa6; letter-spacing: 0.04em; }
+  .readout .v { color: #e9e9f0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .readout .v.violet { color: #b0b0ff; }
+  .readout .v.pinkv { color: #ff9fd2; }
+  .readout .v.mint { color: #9cf0c8; }
+  .readout .v.dim { color: #9a9ab0; font-weight: 500; }
+
+  .section-label { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: #7c7cff; }
+
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem; line-height: 1.55;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 8px 6px;
+    color: #9a9ab0; white-space: pre; overflow-x: auto;
+  }
+  .code span { display: block; padding: 0 6px; border-radius: 5px; transition: background 0.15s ease, color 0.15s ease; }
+  .code span.on { background: rgba(124,124,255,0.22); color: #f0f0ff; }
+  .code span.hit { background: rgba(255,124,195,0.24); color: #fff; }
+  .code span.ok { background: rgba(156,240,200,0.18); color: #fff; }
+  .code i { font-style: normal; color: #6f6f88; }
+
+  .note { font-size: 0.7rem; color: #8f8fa6; line-height: 1.55; }
+  .note b { color: #cfcfe6; font-weight: 600; }
+  .note.live { min-height: 5.6em; }
+
+  .ledger {
+    font-size: 0.72rem; line-height: 1.6; color: #b4b4c8;
+    padding: 9px 12px; border-radius: 11px;
+    background: rgba(255,124,195,0.05); border: 1px solid rgba(255,124,195,0.18);
+    font-variant-numeric: tabular-nums;
+  }
+  .ledger .leg { display: flex; justify-content: space-between; gap: 10px; }
+  .ledger .leg span:last-child { color: #e9e9f0; font-weight: 600; }
+  .ledger .total { margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.08); color: #ff9fd2; font-weight: 600; }
+  .ledger.none { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); color: #8f8fa6; }
+
+  .story-btn {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-top: 12px;
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background-color: #14141f;
+    background-image: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background-image: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 9;
+    font-size: 0.78rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;
+    pointer-events: none; text-align: center; width: max-content; max-width: 90vw;
+  }
+  .tip {
+    position: fixed; z-index: 12; pointer-events: none;
+    background: rgba(12,12,22,0.92); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 9px; padding: 7px 10px; font-size: 0.72rem; line-height: 1.5; color: #cfcfe6;
+    font-variant-numeric: tabular-nums; opacity: 0; transition: opacity 0.12s ease;
+    white-space: nowrap;
+  }
+  .tip b { color: #fff; }
+  .tip.on { opacity: 1; }
+  .toast {
+    position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 12;
+    background: rgba(156,240,200,0.13); border: 1px solid rgba(156,240,200,0.5); color: #e2fff1;
+    border-radius: 999px; padding: 8px 16px; font-size: 0.8rem;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    max-width: 92vw; text-align: center;
+  }
+  .toast.pinkt { background: rgba(255,124,195,0.16); border-color: rgba(255,124,195,0.5); color: #ffe0f1; }
+  .toast.on { opacity: 1; }
+
+  @media (max-width: 1080px) {
+    .side { top: auto; bottom: 24px; width: 290px; max-height: 44vh; }
+    .side .note.extra { display: none; }
+    .hint { display: none; }
+  }
+  @media (max-width: 700px) {
+    .ui {
+      left: 12px; right: 12px; top: auto; bottom: 12px;
+      width: auto; max-width: none; max-height: 40vh;
+      padding: 14px 16px;
+    }
+    .side {
+      left: 12px; right: 12px; top: 12px; bottom: auto;
+      width: auto; max-width: none; max-height: 20vh;
+      padding: 10px 12px; gap: 6px;
+    }
+    .side .section-label, .side .code { display: none; }
+    #showUi { left: auto; right: 12px; top: auto; bottom: 12px; }
+    .story-card { padding: 28px 24px; }
+    .toast { top: auto; bottom: calc(40vh + 22px); }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+
+  <div class="ui" id="ui">
+    <button class="collapse" id="collapse" title="Hide panels (H)">–</button>
+    <a class="back" href="../../index.html">← all experiments</a>
+    <h1>Back With More</h1>
+    <p class="sub">Experiment № 109 · November 3, 2026</p>
+    <p class="lede">
+      <b>Bellman and Ford</b> (1956–58) find the cheapest route from one place to every other by
+      <b>relaxing</b> every edge, again and again: if going through <i>u</i> beats the best known way to
+      <i>v</i>, remember that. Here the edges are currency trades. Take <b>−log</b> of each rate and multiplying
+      becomes adding, so a loop of trades that <b>comes back with more</b> is a cycle of negative length,
+      and an <b>n-th pass</b> that still improves anything proves one exists.
+    </p>
+
+    <div class="controls">
+      <div class="btn-row">
+        <button class="btn big" id="playBtn">Pause</button>
+        <button class="btn" id="stepBtn">Step</button>
+        <button class="btn" id="finishBtn">Finish</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="restartBtn">Run again</button>
+        <button class="btn pink" id="newBtn">New market</button>
+      </div>
+      <div class="row">
+        <label for="speed">Trades checked per second <b id="speedV">18</b></label>
+        <input type="range" id="speed" min="0" max="100" value="45" />
+      </div>
+
+      <p class="group-label">The market</p>
+      <div class="row">
+        <label for="num">Currencies <b id="numV">7</b></label>
+        <input type="range" id="num" min="3" max="10" value="7" />
+      </div>
+      <div class="row">
+        <label for="wobble">Mispricing <b id="wobbleV">0.20%</b></label>
+        <input type="range" id="wobble" class="rose" min="0" max="150" value="20" />
+      </div>
+      <div class="row">
+        <label for="fee">Fee on every trade <b id="feeV">0.15%</b></label>
+        <input type="range" id="fee" min="0" max="100" value="15" />
+      </div>
+
+      <p class="group-label">Order the trades are checked in</p>
+      <div class="btn-row" id="orders">
+        <button class="btn pink on" data-o="shuffled">Shuffled</button>
+        <button class="btn pink" data-o="source">By source</button>
+        <button class="btn pink" data-o="worst">Backwards</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn on" id="liveBtn">Live market: on</button>
+      </div>
+
+      <div class="readout">
+        <span class="k">pass</span><span class="v" id="rPass">—</span>
+        <span class="k">trades checked</span><span class="v dim" id="rChecked">—</span>
+        <span class="k">improvements</span><span class="v violet" id="rRelax">—</span>
+        <span class="k">verdict</span><span class="v" id="rVerdict">—</span>
+      </div>
+    </div>
+
+    <button class="story-btn" id="openStory">✎ the story behind this one</button>
+  </div>
+  <button id="showUi">show panels</button>
+
+  <div class="side" id="side">
+    <p class="section-label">The whole algorithm</p>
+    <div class="code" id="code"><span id="k0">best[source] = 0, every other = ∞</span><span id="k1">repeat n − 1 times:</span><span id="k2">  for each trade u → v at rate r:</span><span id="k3">    w = −log r      <i>// × becomes +</i></span><span id="k4">    if best[u] + w &lt; best[v]:
+      best[v] = best[u] + w, via[v] = u</span><span id="k5">one more pass: does any trade still improve?</span><span id="k6">  yes → walk via[] back n steps: a loop that pays</span></div>
+    <p class="note live" id="liveNote"></p>
+    <p class="section-label">The loop it found</p>
+    <div class="ledger none" id="ledger">Nothing yet.</div>
+    <p class="note extra">Each node's number is the most of that currency one unit of the source can become. Violet arrows are the <b>via</b> pointers, the last trade on each best route. After n − 1 clean passes every honest route has been found, because a route that doesn't repeat a currency has at most n − 1 trades.</p>
+  </div>
+
+  <p class="hint" id="hint">Click a currency to start from it · click an arrow to sweeten its rate by 1% (right-click sours it) · space plays · S steps · F finishes · R runs again · N new market · H hides panels</p>
+  <div class="tip" id="tip"></div>
+  <div class="toast" id="toast"></div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 109 · The story</p>
+      <h2>Back With More</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Dijkstra already turned up in this collection, hiding inside A*, and I'd always filed Bellman–Ford as the slower cousin you use when someone hands you negative edges. Then I met the currency version, where taking the logarithm of each exchange rate turns a chain of multiplications into a sum of lengths, and a loop of trades that pays becomes a road that's shorter than staying put. That one change of units turns the slow cousin into the only tool for the job, and I wanted to watch it happen.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>How dumb each step is. It doesn't search, prioritise or plan. It walks the whole list of trades and asks the same question of each one: would going through here be better? Then it does it all again. What I like most is the extra lap at the end. The algorithm knows that any honest route visits each currency at most once, so it's finished after n − 1 passes. If anything still improves on pass n, the only explanation is a loop that keeps paying, and following the via pointers back lands you on it. Turn the mispricing up and you can watch the numbers keep climbing, pass after pass, because nothing can stop them.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Knowing when you should be finished is as useful as knowing how to finish. Bellman–Ford's last pass isn't more work towards the answer; it's a test of whether the world is the kind of place where an answer exists. And the log trick is worth keeping in your pocket: when things compound by multiplying, take logs and they add up like distances, and every tool built for distances works on them. Real arbitrage is mostly fees and latency, by the way. Push the fee slider up a little and most of the free money disappears.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+
+  // ---- Bellman–Ford on a ring of currencies ----
+  (() => {
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const trail = document.createElement('canvas');
+    const tctx = trail.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+
+    const CODES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD', 'SEK', 'NOK'];
+    const UNITS = [1, 0.92, 0.79, 150.2, 0.88, 1.37, 1.52, 1.66, 10.5, 10.8]; // per USD
+    const MAXN = CODES.length;
+    const EPS = 1e-10;
+
+    let W = 0, H = 0, DPR = 1;
+    let N = 7, source = 0;
+    let wobble = 0.002, fee = 0.0015;
+    let orderMode = 'shuffled';
+    let playing = true, live = true;
+    let eps = 18, acc = 0;
+
+    // Random mispricing: antisymmetric part (so a there-and-back trade nets out)
+    // plus a little independent noise. Stable across slider changes.
+    let A = [], B = [];
+    const bonus = [];
+    function gauss() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+    function newMarket() {
+      A = []; B = [];
+      for (let i = 0; i < MAXN; i++) {
+        A.push([]); B.push([]); bonus[i] = [];
+        for (let j = 0; j < MAXN; j++) { A[i].push(gauss()); B[i].push(gauss()); bonus[i][j] = 1; }
+      }
+    }
+    function driftMarket() {
+      for (let i = 0; i < MAXN; i++) for (let j = 0; j < MAXN; j++) {
+        A[i][j] = 0.9 * A[i][j] + 0.436 * gauss();
+        B[i][j] = 0.9 * B[i][j] + 0.436 * gauss();
+      }
+    }
+    function rate(i, j) {
+      const e = (A[i][j] - A[j][i]) / Math.SQRT2 + 0.35 * B[i][j];
+      return (UNITS[j] / UNITS[i]) * (1 - fee) * Math.exp(wobble * e) * bonus[i][j];
+    }
+
+    // ---- Graph + algorithm state ----
+    let edges = [], order = [];
+    let dist = [], via = [];
+    let pass = 1, ei = 0, updated = false, checked = 0, relaxes = 0;
+    let phase = 'relax'; // relax | check | settled | clean | cycle
+    let cur = null, cycle = null, cycleGain = 1, doneAt = 0;
+    let flash = new Float32Array(MAXN * MAXN);
+    let lastLine = 'k0', lastNote = '';
+
+    function buildEdges() {
+      edges = [];
+      for (let u = 0; u < N; u++) for (let v = 0; v < N; v++) {
+        if (u === v) continue;
+        const r = rate(u, v);
+        edges.push({ u, v, r, w: -Math.log(r), id: u * MAXN + v });
+      }
+      order = edges.slice();
+      if (orderMode === 'shuffled') {
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+      } else if (orderMode === 'worst') {
+        // Trades out of the currencies farthest round the ring from the source first,
+        // so good news has to travel against the scan: the slow order.
+        const ring = (x) => (x - source + N) % N;
+        order.sort((a, b) => ring(b.u) - ring(a.u) || ring(b.v) - ring(a.v));
+      } else {
+        const ring = (x) => (x - source + N) % N;
+        order.sort((a, b) => ring(a.u) - ring(b.u) || ring(a.v) - ring(b.v));
+      }
+    }
+
+    function restart() {
+      buildEdges();
+      dist = new Array(N).fill(Infinity);
+      via = new Array(N).fill(-1);
+      dist[source] = 0;
+      pass = 1; ei = 0; updated = false; checked = 0; relaxes = 0;
+      phase = N > 1 ? 'relax' : 'clean';
+      cur = null; cycle = null; cycleGain = 1; doneAt = 0;
+      flash.fill(0);
+      lastLine = 'k0';
+      lastNote = `Starting from <b>1 ${CODES[source]}</b>. Every other currency is unreached (∞). ${N - 1} passes over all ${edges.length} trades will find the best route to each, unless a loop pays.`;
+      buildCurves();
+      updateUi();
+    }
+
+    const have = (i) => Math.exp(-dist[i]);
+    function fmt(x) {
+      if (!isFinite(x)) return '—';
+      if (x >= 1000) return x.toFixed(1);
+      if (x >= 100) return x.toFixed(2);
+      if (x >= 10) return x.toFixed(3);
+      return x.toFixed(4);
+    }
+    function fmtRate(x) {
+      if (x >= 100) return x.toFixed(3);
+      if (x >= 1) return x.toFixed(5);
+      return x.toPrecision(5);
+    }
+
+    function findCycle(start) {
+      let x = start;
+      for (let k = 0; k < N; k++) { x = via[x]; if (x < 0) return null; }
+      const cyc = [];
+      let y = x, guard = 0;
+      do { cyc.push(y); y = via[y]; guard++; if (y < 0 || guard > N + 1) return null; } while (y !== x);
+      cyc.reverse(); // forward order of trades
+      return cyc;
+    }
+
+    function finishPhase(p) {
+      phase = p; cur = null; doneAt = performance.now();
+    }
+
+    function processEdge() {
+      if (phase !== 'relax' && phase !== 'check') return;
+      const e = order[ei];
+      cur = e;
+      checked++;
+      const du = dist[e.u], dv = dist[e.v];
+      const improves = isFinite(du) && du + e.w < dv - EPS;
+      const cu = CODES[e.u], cvv = CODES[e.v];
+      if (!isFinite(du)) {
+        lastLine = 'k2';
+        lastNote = `<b>${cu} → ${cvv}</b>: nothing has reached ${cu} yet, so there's nothing to pass on. Skip.`;
+      } else {
+        const got = have(e.u) * e.r;
+        const was = isFinite(dv) ? fmt(have(e.v)) + ' ' + cvv : 'nothing (∞)';
+        if (improves) {
+          if (phase === 'relax') {
+            dist[e.v] = du + e.w; via[e.v] = e.u;
+            updated = true; relaxes++;
+            flash[e.id] = 1;
+            trailEdge(e, false);
+            lastLine = 'k4';
+            lastNote = `<b>${cu} → ${cvv}</b> at ${fmtRate(e.r)}: ${fmt(have(e.u))} ${cu} becomes <b>${fmt(got)} ${cvv}</b>, better than ${was}. ${cvv} now goes via ${cu}.`;
+          } else {
+            via[e.v] = e.u;
+            flash[e.id] = 1;
+            trailEdge(e, true);
+            const cyc = findCycle(e.v);
+            if (cyc) {
+              cycle = cyc;
+              cycleGain = 1;
+              for (let k = 0; k < cyc.length; k++) cycleGain *= rate(cyc[k], cyc[(k + 1) % cyc.length]);
+              lastLine = 'k6';
+              lastNote = `Pass ${N}, which should change nothing: <b>${cu} → ${cvv}</b> still improves (${fmt(got)} beats ${was}). Walking via[] back ${N} steps from ${cvv} lands on a loop of ${cyc.length} trades that pays <b>+${((cycleGain - 1) * 100).toFixed(3)}%</b> a lap.`;
+              finishPhase('cycle');
+              toast(`A loop that pays: ${cyc.map((c) => CODES[c]).join(' → ')} → ${CODES[cyc[0]]}, +${((cycleGain - 1) * 100).toFixed(3)}% a lap`, true);
+              advanceIndex();
+              updateUi();
+              return;
+            }
+          }
+        } else {
+          lastLine = phase === 'check' ? 'k5' : 'k3';
+          lastNote = `<b>${cu} → ${cvv}</b> at ${fmtRate(e.r)}: ${fmt(have(e.u))} ${cu} becomes ${fmt(got)} ${cvv}, no better than ${was}. Leave it.`;
+        }
+      }
+      advanceIndex();
+      updateUi();
+    }
+
+    function advanceIndex() {
+      if (phase !== 'relax' && phase !== 'check') return;
+      ei++;
+      if (ei < order.length) return;
+      ei = 0;
+      if (phase === 'relax') {
+        if (!updated) {
+          lastLine = 'k1';
+          lastNote = `Pass ${pass} changed nothing, so nothing ever will: every best route is final after <b>${pass}</b> of the ${N - 1} passes allowed. No loop pays.`;
+          finishPhase('settled');
+          toast(`Settled after ${pass} pass${pass > 1 ? 'es' : ''} · no loop pays`, false);
+        } else if (pass >= N - 1) {
+          pass = N; phase = 'check';
+          lastLine = 'k5';
+          lastNote = `${N - 1} passes done: every route without a repeated currency has been tried. Now one more pass. If anything still improves, only a loop can explain it.`;
+        } else {
+          pass++;
+        }
+        updated = false;
+      } else {
+        lastLine = 'k5';
+        lastNote = `Pass ${N} found nothing to improve, so the best routes are final and <b>no loop of trades pays</b> after fees.`;
+        finishPhase('clean');
+        toast('Extra pass clean · no loop pays', false);
+      }
+    }
+
+    // ---- Layout & geometry ----
+    let cx = 0, cy = 0, R = 100, nodeR = 20;
+    const pos = [];
+    let curves = {};
+    function layout() {
+      if (W > 1080) {
+        const l = 354, r = W - 324;
+        cx = (l + r) / 2; cy = H / 2;
+        R = Math.min((r - l) / 2 - 70, H / 2 - 90);
+      } else if (W > 700) {
+        const l = 354;
+        cx = (l + W) / 2; cy = H / 2 - 20;
+        R = Math.min((W - l) / 2 - 70, H / 2 - 100);
+      } else {
+        const top = 0.2 * H + 24, bot = 0.6 * H - 12;
+        cx = W / 2; cy = (top + bot) / 2;
+        R = Math.min(W / 2 - 52, (bot - top) / 2 - 26);
+      }
+      R = Math.max(R, 70);
+      nodeR = Math.max(12, Math.min(24, R * 0.1));
+      for (let i = 0; i < N; i++) {
+        const a = -Math.PI / 2 + (i / N) * Math.PI * 2;
+        pos[i] = { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a), a };
+      }
+    }
+    function buildCurves() {
+      layout();
+      curves = {};
+      for (let u = 0; u < N; u++) for (let v = 0; v < N; v++) {
+        if (u === v) continue;
+        const p = pos[u], q = pos[v];
+        const dx = q.x - p.x, dy = q.y - p.y, len = Math.hypot(dx, dy);
+        const nx = -dy / len, ny = dx / len;
+        const bend = len * 0.14;
+        const c = { x: (p.x + q.x) / 2 + nx * bend, y: (p.y + q.y) / 2 + ny * bend };
+        const t0 = (nodeR + 3) / len, t1 = 1 - (nodeR + 6) / len;
+        const pts = [];
+        const S = 22;
+        for (let k = 0; k <= S; k++) {
+          const t = t0 + (t1 - t0) * (k / S), m = 1 - t;
+          pts.push({ x: m * m * p.x + 2 * m * t * c.x + t * t * q.x, y: m * m * p.y + 2 * m * t * c.y + t * t * q.y });
+        }
+        curves[u * MAXN + v] = pts;
+      }
+    }
+
+    function strokeCurve(c, pts, arrow, size) {
+      c.beginPath();
+      c.moveTo(pts[0].x, pts[0].y);
+      for (let k = 1; k < pts.length; k++) c.lineTo(pts[k].x, pts[k].y);
+      c.stroke();
+      if (arrow) {
+        const a = pts[pts.length - 1], b = pts[pts.length - 3];
+        const ang = Math.atan2(a.y - b.y, a.x - b.x);
+        c.beginPath();
+        c.moveTo(a.x, a.y);
+        c.lineTo(a.x - size * Math.cos(ang - 0.42), a.y - size * Math.sin(ang - 0.42));
+        c.lineTo(a.x - size * Math.cos(ang + 0.42), a.y - size * Math.sin(ang + 0.42));
+        c.closePath();
+        c.fill();
+      }
+    }
+
+    function mix(t) {
+      // violet → pink
+      const r = Math.round(124 + (255 - 124) * t), g = 124, b = Math.round(255 + (195 - 255) * t);
+      return `${r},${g},${b}`;
+    }
+    function trailEdge(e, hot) {
+      const pts = curves[e.id];
+      if (!pts) return;
+      tctx.save();
+      tctx.globalCompositeOperation = 'lighter';
+      const t = N > 1 ? Math.min(1, (pass - 1) / Math.max(1, N - 1)) : 0;
+      const col = hot ? '255,140,205' : mix(t);
+      tctx.strokeStyle = `rgba(${col},${hot ? 0.3 : 0.085})`;
+      tctx.lineWidth = hot ? 2.4 : 1.2;
+      tctx.shadowColor = `rgba(${col},0.6)`;
+      tctx.shadowBlur = hot ? 8 : 4;
+      tctx.lineCap = 'round';
+      // jitter the trail a little so repeated runs weave instead of overprinting
+      const j = (Math.random() - 0.5) * 3;
+      tctx.beginPath();
+      for (let k = 0; k < pts.length; k++) {
+        const s = Math.sin((k / (pts.length - 1)) * Math.PI) * j;
+        const x = pts[k].x + s, y = pts[k].y + s;
+        if (k === 0) tctx.moveTo(x, y); else tctx.lineTo(x, y);
+      }
+      tctx.stroke();
+      tctx.restore();
+    }
+
+    // ---- Drawing ----
+    let hover = null, hoverNode = -1;
+    function cycleIds() {
+      const s = new Set();
+      if (!cycle) return s;
+      for (let k = 0; k < cycle.length; k++) s.add(cycle[k] * MAXN + cycle[(k + 1) % cycle.length]);
+      return s;
+    }
+    function draw(now) {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.fillStyle = '#05050a';
+      ctx.fillRect(0, 0, W, H);
+
+      // fade the trail slowly
+      tctx.save();
+      tctx.setTransform(1, 0, 0, 1, 0, 0);
+      tctx.globalCompositeOperation = 'destination-out';
+      tctx.fillStyle = 'rgba(0,0,0,0.006)';
+      tctx.fillRect(0, 0, trail.width, trail.height);
+      tctx.restore();
+      if (trail.width > 0 && trail.height > 0) ctx.drawImage(trail, 0, 0, W, H);
+
+      // pass dial in the middle
+      const totalPasses = N;
+      ctx.save();
+      ctx.lineWidth = 2;
+      for (let p = 1; p <= totalPasses; p++) {
+        const a0 = -Math.PI / 2 + ((p - 1) / totalPasses) * Math.PI * 2 + 0.05;
+        const a1 = -Math.PI / 2 + (p / totalPasses) * Math.PI * 2 - 0.05;
+        let alpha = 0.08, col = '255,255,255';
+        const done = p < pass || phase === 'settled' && p <= pass || phase === 'clean' || phase === 'cycle' && p <= pass;
+        if (done) { alpha = 0.35; col = p === N ? (phase === 'cycle' ? '255,124,195' : '156,240,200') : '124,124,255'; }
+        if (p === pass && (phase === 'relax' || phase === 'check')) { alpha = 0.85; col = p === N ? '255,124,195' : '124,124,255'; }
+        ctx.strokeStyle = `rgba(${col},${alpha})`;
+        ctx.beginPath();
+        ctx.arc(cx, cy, R * 0.22, a0, a1);
+        ctx.stroke();
+        if (p === pass && (phase === 'relax' || phase === 'check')) {
+          const f = ei / order.length;
+          ctx.strokeStyle = `rgba(${col},1)`;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(cx, cy, R * 0.22 + 5, a0, a0 + (a1 - a0) * f);
+          ctx.stroke();
+          ctx.lineWidth = 2;
+        }
+      }
+      ctx.fillStyle = 'rgba(233,233,240,0.55)';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `600 ${Math.max(11, R * 0.075)}px ui-sans-serif, system-ui, sans-serif`;
+      const label = phase === 'check' ? 'extra pass' : phase === 'cycle' ? 'loop pays' : phase === 'settled' || phase === 'clean' ? 'settled' : `pass ${pass}`;
+      ctx.fillText(label, cx, cy - 7);
+      ctx.font = `${Math.max(10, R * 0.055)}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(154,154,176,0.7)';
+      ctx.fillText(phase === 'check' || phase === 'cycle' ? `${N} of ${N}` : `of ${N - 1} + 1`, cx, cy + 10);
+      ctx.restore();
+
+      // all edges, faint
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(200,200,255,0.065)';
+      ctx.fillStyle = 'rgba(200,200,255,0.07)';
+      ctx.lineWidth = 1;
+      for (const e of edges) strokeCurve(ctx, curves[e.id], true, 5);
+
+      // sweetened / soured edges
+      for (const e of edges) {
+        const b = bonus[e.u][e.v];
+        if (b === 1) continue;
+        const up = b > 1;
+        ctx.strokeStyle = up ? 'rgba(156,240,200,0.4)' : 'rgba(255,180,120,0.35)';
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.setLineDash([3, 4]);
+        ctx.lineWidth = 1.4;
+        strokeCurve(ctx, curves[e.id], true, 6);
+        ctx.setLineDash([]);
+      }
+
+      // flashes
+      for (const e of edges) {
+        const f = flash[e.id];
+        if (f <= 0.01) continue;
+        ctx.strokeStyle = `rgba(255,124,195,${0.85 * f})`;
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.lineWidth = 1.5 + 3 * f;
+        ctx.shadowColor = 'rgba(255,124,195,0.8)';
+        ctx.shadowBlur = 12 * f;
+        strokeCurve(ctx, curves[e.id], true, 8);
+        ctx.shadowBlur = 0;
+      }
+
+      // via tree
+      const cyc = cycleIds();
+      for (let v = 0; v < N; v++) {
+        const u = via[v];
+        if (u < 0) continue;
+        const id = u * MAXN + v;
+        if (cyc.has(id)) continue;
+        ctx.strokeStyle = 'rgba(140,140,255,0.85)';
+        ctx.fillStyle = 'rgba(140,140,255,0.95)';
+        ctx.lineWidth = 2.2;
+        ctx.shadowColor = 'rgba(124,124,255,0.7)';
+        ctx.shadowBlur = 8;
+        strokeCurve(ctx, curves[id], true, 9);
+        ctx.shadowBlur = 0;
+      }
+
+      // the loop that pays
+      if (cycle) {
+        const pulse = 0.75 + 0.25 * Math.sin(now / 240);
+        ctx.strokeStyle = `rgba(255,124,195,${pulse})`;
+        ctx.fillStyle = '#ff7cc3';
+        ctx.lineWidth = 3.4;
+        ctx.shadowColor = 'rgba(255,124,195,0.9)';
+        ctx.shadowBlur = 18;
+        for (const id of cyc) strokeCurve(ctx, curves[id], true, 11);
+        ctx.shadowBlur = 0;
+        // coins riding the loop
+        const poly = [];
+        for (let k = 0; k < cycle.length; k++) {
+          const pts = curves[cycle[k] * MAXN + cycle[(k + 1) % cycle.length]];
+          for (const p of pts) poly.push(p);
+        }
+        const segL = [0];
+        for (let k = 1; k < poly.length; k++) segL.push(segL[k - 1] + Math.hypot(poly[k].x - poly[k - 1].x, poly[k].y - poly[k - 1].y));
+        const L = segL[segL.length - 1];
+        const K = Math.max(3, Math.round(L / 70));
+        for (let c = 0; c < K; c++) {
+          const s = ((now * 0.09) + (c / K) * L) % L;
+          let k = 1;
+          while (k < segL.length - 1 && segL[k] < s) k++;
+          const f = (s - segL[k - 1]) / Math.max(1e-6, segL[k] - segL[k - 1]);
+          const x = poly[k - 1].x + (poly[k].x - poly[k - 1].x) * f;
+          const y = poly[k - 1].y + (poly[k].y - poly[k - 1].y) * f;
+          ctx.beginPath();
+          ctx.fillStyle = '#ffe3f3';
+          ctx.shadowColor = 'rgba(255,124,195,1)';
+          ctx.shadowBlur = 12;
+          ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      // the trade being looked at
+      if (cur) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.lineWidth = 1.6;
+        strokeCurve(ctx, curves[cur.id], true, 8);
+      }
+      if (hover) {
+        ctx.strokeStyle = 'rgba(156,240,200,0.9)';
+        ctx.fillStyle = 'rgba(156,240,200,0.95)';
+        ctx.lineWidth = 2.2;
+        strokeCurve(ctx, curves[hover.id], true, 9);
+      }
+      ctx.restore();
+
+      // nodes
+      const inCycle = new Set(cycle || []);
+      for (let i = 0; i < N; i++) {
+        const p = pos[i];
+        const reached = isFinite(dist[i]);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, nodeR, 0, Math.PI * 2);
+        ctx.fillStyle = '#0d0d18';
+        ctx.fill();
+        let ring = 'rgba(255,255,255,0.18)', glow = 0;
+        if (reached) { ring = 'rgba(124,124,255,0.9)'; glow = 10; }
+        if (inCycle.has(i)) { ring = 'rgba(255,124,195,1)'; glow = 16; }
+        if (i === source) { ring = 'rgba(156,240,200,1)'; glow = 14; }
+        if (i === hoverNode) glow += 8;
+        ctx.strokeStyle = ring;
+        ctx.lineWidth = i === source ? 2.6 : 2;
+        ctx.shadowColor = ring; ctx.shadowBlur = glow;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#e9e9f0';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = `600 ${Math.max(9, nodeR * 0.52)}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.fillText(CODES[i], p.x, p.y + 0.5);
+        // amount label, pushed outward
+        const lx = p.x + Math.cos(p.a) * (nodeR + 20), ly = p.y + Math.sin(p.a) * (nodeR + 15);
+        ctx.font = `${Math.max(10, nodeR * 0.5)}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.fillStyle = i === source ? '#9cf0c8' : reached ? '#c9c9ff' : 'rgba(154,154,176,0.6)';
+        let txt = reached ? fmt(have(i)) : '∞';
+        if (i === source && reached && dist[i] < -EPS) txt = fmt(have(i)) + ' ↑';
+        ctx.fillText(txt, lx, ly);
+        ctx.restore();
+      }
+    }
+
+    // ---- UI ----
+    function setLine(id) {
+      for (let k = 0; k <= 6; k++) $('k' + k).className = '';
+      const el = $(id);
+      if (!el) return;
+      el.className = id === 'k6' || id === 'k4' && phase === 'check' ? 'hit' : id === 'k4' ? 'hit' : (phase === 'settled' || phase === 'clean') ? 'ok' : 'on';
+    }
+    function updateUi() {
+      $('rPass').textContent = phase === 'check' ? `${N} (the extra one)` : phase === 'cycle' ? `${N} (the extra one)` : `${pass} of ${N - 1}`;
+      $('rChecked').textContent = checked;
+      $('rRelax').textContent = relaxes;
+      const v = $('rVerdict');
+      v.className = 'v';
+      if (phase === 'relax') { v.textContent = 'relaxing'; v.classList.add('dim'); }
+      else if (phase === 'check') { v.textContent = 'checking'; v.classList.add('pinkv'); }
+      else if (phase === 'settled') { v.textContent = `settled early`; v.classList.add('mint'); }
+      else if (phase === 'clean') { v.textContent = 'no loop pays'; v.classList.add('mint'); }
+      else { v.textContent = `loop +${((cycleGain - 1) * 100).toFixed(3)}%`; v.classList.add('pinkv'); }
+      setLine(lastLine);
+      $('liveNote').innerHTML = lastNote;
+      const led = $('ledger');
+      if (cycle) {
+        led.className = 'ledger';
+        let amt = 1, html = '';
+        html += `<div class="leg"><span>start with</span><span>1.0000 ${CODES[cycle[0]]}</span></div>`;
+        for (let k = 0; k < cycle.length; k++) {
+          const a = cycle[k], b = cycle[(k + 1) % cycle.length];
+          amt *= rate(a, b);
+          html += `<div class="leg"><span>${CODES[a]} → ${CODES[b]} at ${fmtRate(rate(a, b))}</span><span>${fmt(amt)} ${CODES[b]}</span></div>`;
+        }
+        const laps = Math.log(2) / Math.log(cycleGain);
+        html += `<div class="total">+${((cycleGain - 1) * 100).toFixed(3)}% a lap, after fees · doubles in ~${isFinite(laps) ? Math.ceil(laps) : '∞'} laps</div>`;
+        led.innerHTML = html;
+      } else {
+        led.className = 'ledger none';
+        led.textContent = phase === 'settled' || phase === 'clean'
+          ? 'None. Every loop of trades loses money once fees and rates are multiplied out. Raise the mispricing, lower the fee, or click an arrow to sweeten it.'
+          : 'Nothing yet. A loop can only be proved on the extra pass.';
+      }
+    }
+
+    let toastTimer = 0;
+    function toast(msg, pink) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast on' + (pink ? ' pinkt' : '');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.className = 'toast' + (pink ? ' pinkt' : ''); }, 3200);
+    }
+
+    function setPlaying(p) {
+      playing = p;
+      $('playBtn').textContent = p ? 'Pause' : 'Play';
+    }
+    function finish() {
+      let guard = 0;
+      while ((phase === 'relax' || phase === 'check') && guard++ < 20000) processEdge();
+    }
+
+    function speedFromSlider() {
+      const s = +$('speed').value;
+      eps = Math.round(Math.exp(Math.log(1) + (s / 100) * Math.log(600)));
+      $('speedV').textContent = eps;
+    }
+    function readMarket() {
+      wobble = +$('wobble').value / 10000;
+      fee = +$('fee').value / 10000;
+      $('wobbleV').textContent = (wobble * 100).toFixed(2) + '%';
+      $('feeV').textContent = (fee * 100).toFixed(2) + '%';
+    }
+
+    $('playBtn').addEventListener('click', () => {
+      if (!playing && phase !== 'relax' && phase !== 'check') restart();
+      setPlaying(!playing);
+    });
+    $('stepBtn').addEventListener('click', () => {
+      setPlaying(false);
+      if (phase !== 'relax' && phase !== 'check') restart(); else processEdge();
+    });
+    $('finishBtn').addEventListener('click', finish);
+    $('restartBtn').addEventListener('click', () => { restart(); setPlaying(true); });
+    $('newBtn').addEventListener('click', () => { newMarket(); clearTrail(); restart(); setPlaying(true); });
+    $('speed').addEventListener('input', speedFromSlider);
+    $('num').addEventListener('input', () => {
+      N = +$('num').value; $('numV').textContent = N;
+      if (source >= N) source = 0;
+      clearTrail(); restart();
+    });
+    $('wobble').addEventListener('input', () => { readMarket(); restart(); });
+    $('fee').addEventListener('input', () => { readMarket(); restart(); });
+    $('orders').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-o]');
+      if (!b) return;
+      orderMode = b.dataset.o;
+      for (const x of $('orders').querySelectorAll('[data-o]')) x.classList.toggle('on', x === b);
+      restart(); setPlaying(true);
+    });
+    $('liveBtn').addEventListener('click', () => {
+      live = !live;
+      $('liveBtn').textContent = 'Live market: ' + (live ? 'on' : 'off');
+      $('liveBtn').classList.toggle('on', live);
+    });
+
+    function togglePanels() {
+      const hid = $('ui').classList.toggle('hidden');
+      $('side').classList.toggle('hidden', hid);
+      $('showUi').classList.toggle('on', hid);
+    }
+    $('collapse').addEventListener('click', togglePanels);
+    $('showUi').addEventListener('click', togglePanels);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' && e.key !== ' ') return;
+      const k = e.key.toLowerCase();
+      if (k === 'escape') { story.classList.remove('open'); return; }
+      if (story.classList.contains('open')) return;
+      if (k === 'h') togglePanels();
+      else if (k === ' ') { e.preventDefault(); $('playBtn').click(); }
+      else if (k === 's') $('stepBtn').click();
+      else if (k === 'f') finish();
+      else if (k === 'r') $('restartBtn').click();
+      else if (k === 'n') $('newBtn').click();
+    });
+
+    // ---- Pointer: hover trades, click to change source or sweeten a rate ----
+    function pick(x, y) {
+      for (let i = 0; i < N; i++) {
+        if (Math.hypot(x - pos[i].x, y - pos[i].y) <= nodeR + 4) return { node: i };
+      }
+      let best = null, bd = 9;
+      for (const e of edges) {
+        const pts = curves[e.id];
+        for (let k = 1; k < pts.length; k++) {
+          const a = pts[k - 1], b = pts[k];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+          const d = Math.hypot(x - (a.x + dx * t), y - (a.y + dy * t));
+          if (d < bd) { bd = d; best = e; }
+        }
+      }
+      return best ? { edge: best } : null;
+    }
+    const tip = $('tip');
+    cv.addEventListener('pointermove', (ev) => {
+      const h = pick(ev.clientX, ev.clientY);
+      hover = h && h.edge ? h.edge : null;
+      hoverNode = h && h.node !== undefined ? h.node : -1;
+      cv.style.cursor = h ? 'pointer' : 'default';
+      if (hover) {
+        const e = hover, b = bonus[e.u][e.v];
+        const r = rate(e.u, e.v);
+        tip.innerHTML = `<b>${CODES[e.u]} → ${CODES[e.v]}</b> · rate ${fmtRate(r)}<br>length −log r = ${(-Math.log(r)).toFixed(5)}` +
+          (b !== 1 ? `<br>${b > 1 ? 'sweetened' : 'soured'} ${((b - 1) * 100).toFixed(1)}%` : '');
+      } else if (hoverNode >= 0) {
+        const i = hoverNode;
+        tip.innerHTML = i === source
+          ? `<b>${CODES[i]}</b> · the source`
+          : `<b>${CODES[i]}</b> · click to start from here<br>${isFinite(dist[i]) ? `best so far: ${fmt(have(i))} per ${CODES[source]}` : 'not reached yet'}`;
+      }
+      if (hover || hoverNode >= 0) {
+        tip.classList.add('on');
+        const tx = Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+        const ty = Math.min(ev.clientY + 14, window.innerHeight - tip.offsetHeight - 8);
+        tip.style.left = tx + 'px'; tip.style.top = ty + 'px';
+      } else tip.classList.remove('on');
+    });
+    cv.addEventListener('pointerleave', () => { hover = null; hoverNode = -1; tip.classList.remove('on'); });
+    function clickAt(ev, sour) {
+      const h = pick(ev.clientX, ev.clientY);
+      if (!h) return;
+      if (h.node !== undefined) {
+        if (h.node === source) return;
+        source = h.node;
+        restart(); setPlaying(true);
+        toast(`Starting from ${CODES[source]}`, false);
+      } else {
+        const e = h.edge;
+        bonus[e.u][e.v] *= sour ? 1 / 1.01 : 1.01;
+        if (Math.abs(bonus[e.u][e.v] - 1) < 1e-9) bonus[e.u][e.v] = 1;
+        restart(); setPlaying(true);
+        toast(`${CODES[e.u]} → ${CODES[e.v]} ${sour ? 'soured' : 'sweetened'} by 1%`, !sour);
+      }
+    }
+    cv.addEventListener('click', (ev) => clickAt(ev, ev.shiftKey));
+    cv.addEventListener('contextmenu', (ev) => { ev.preventDefault(); clickAt(ev, true); });
+
+    // ---- Resize & loop ----
+    function clearTrail() { tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.clearRect(0, 0, trail.width, trail.height); tctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+      trail.width = cv.width; trail.height = cv.height;
+      tctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      buildCurves();
+    }
+    window.addEventListener('resize', resize);
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      if (window.innerWidth !== W || window.innerHeight !== H) resize();
+      for (let i = 0; i < flash.length; i++) if (flash[i] > 0) flash[i] = Math.max(0, flash[i] - dt * 1.6);
+      if (playing) {
+        if (phase === 'relax' || phase === 'check') {
+          acc += dt * eps;
+          let n = 0;
+          while (acc >= 1 && n < 400 && (phase === 'relax' || phase === 'check')) { processEdge(); acc -= 1; n++; }
+          if (phase !== 'relax' && phase !== 'check') acc = 0;
+        } else if (live && doneAt && now - doneAt > (phase === 'cycle' ? 7000 : 4000)) {
+          driftMarket();
+          restart();
+        }
+      }
+      draw(now);
+      requestAnimationFrame(frame);
+    }
+
+    newMarket();
+    readMarket();
+    speedFromSlider();
+    resize();
+    restart();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
