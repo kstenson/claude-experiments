@@ -1,57 +1,57 @@
 {
-  "date": "2026-11-02",
+  "date": "2026-11-03",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Lights Off for the Fledglings",
+  "title": "The Whales Came Back on Tuesday",
   "mood": {
     "label": "Uneasy calm",
-    "score": -0.14,
-    "summary": "Uneasy calm: mined tankers burn in Hormuz, Netanyahu calls Israel's vote stolen and the US braces for midterms. Small lights hold: 108 stupas rise in Bhutan, islands go dark to save seabird chicks, and sound waves take aim at brain cancer.",
+    "score": -0.16,
+    "summary": "Uneasy calm: strikes in Hormuz even as talks are said to progress, an aid hub hit in Ukraine and Americans voting. Small mercies: 750 civilians evacuated under a truce and right whales back off Florida.",
     "palette": {
-      "bg": "#0f1418",
-      "bg2": "#1c2630",
-      "accent": "#e07a4f",
-      "accent2": "#8fb8c9",
-      "text": "#e6ecef"
+      "bg": "#0c1420",
+      "bg2": "#18263a",
+      "accent": "#d9a441",
+      "accent2": "#6fb3a8",
+      "text": "#e8eef2"
     }
   },
   "style": {
-    "genre": "darkwave — chorused guitar, tubular bells, choir, LinnDrum",
-    "key": "F",
-    "scale": "phrygian",
-    "bpm": 104,
-    "swing": 0
+    "genre": "half-time liquid drum-and-bass — marimba, harp, strings, TR-808",
+    "key": "C",
+    "scale": "harmonic minor",
+    "bpm": 122,
+    "swing": 0.05
   },
   "sampleSources": [
-    "Strudel default library (GM clean electric guitar, GM tubular bells, GM choir aahs, GM picked bass, AkaiLinn)"
+    "Strudel default library (GM marimba, GM orchestral harp, GM string ensemble, GM acoustic bass, RolandTR808)"
   ],
-  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"AkaiLinn\").gain(0.6).room(0.2), s(\"hh*8\").bank(\"AkaiLinn\").gain(perlin.range(0.07,0.16)).hpf(6000).pan(sine.range(0.3,0.7).slow(8)), note(\"<[f1 f1 f2 f1 ~ f1 c2 f1] [gf1 gf1 gf2 gf1 ~ gf1 df2 gf1] [ef1 ef1 ef2 ef1 ~ ef1 bf1 ef1] [df1 df1 df2 df1 ~ c1 df1 ef1]>\").s(\"gm_electric_bass_pick\").gain(0.55).lpf(sine.range(600,1400).slow(16)), note(\"<[f3 c4 af4 c4 f4 c4 af3 c4] [gf3 df4 bf4 df4 gf4 df4 bf3 df4] [ef3 bf3 gf4 bf3 ef4 bf3 gf3 bf3] [df3 af3 f4 af3 df4 af3 c4 af3]>\").s(\"gm_electric_guitar_clean\").gain(0.3).lpf(3200).jux(rev).delay(0.35).delaytime(0.433).room(0.4), note(\"<[f3,af3,c4] [gf3,bf3,df4] [ef3,gf3,bf3] [df3,f3,af3]>\").s(\"gm_choir_aahs\").attack(0.8).release(2.5).gain(0.22).room(0.6).rsize(4), note(\"<[c5 ~ ~ ~ ~ ~ ~ ~] [df5 ~ ~ ~ ~ ~ ~ ~] [bf4 ~ ~ ~ gf4 ~ ~ ~] [af4 ~ ~ ~ gf4 ~ f4 ~]>\").s(\"gm_tubular_bells\").gain(0.3).room(0.7).off(0.375, x => x.add(note(12)).gain(0.1).pan(0.75)))",
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~\").bank(\"RolandTR808\").gain(0.65).room(0.15), s(\"hh*16\").bank(\"RolandTR808\").gain(perlin.range(0.05,0.14)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ rim ~ ~ ~ ~ rim ~\").bank(\"RolandTR808\").gain(0.18).delay(0.25).delaytime(0.123), note(\"<[c2 ~ ~ c2 ~ ~ g1 ~] [af1 ~ ~ af1 ~ ~ ef2 ~] [f1 ~ ~ f1 ~ ~ c2 ~] [g1 ~ ~ g1 ~ b1 d2 ~]>\").s(\"gm_acoustic_bass\").gain(0.6).lpf(900), note(\"<[c3,ef3,g3] [af2,c3,ef3] [f2,af2,c3] [g2,b2,d3]>\").s(\"gm_string_ensemble_1\").attack(1).release(3).gain(0.2).room(0.6).rsize(4).lpf(sine.range(900,2200).slow(16)), note(\"<[c4 ef4 g4 c5 g4 ef4 g4 ef4] [af3 c4 ef4 af4 ef4 c4 ef4 c4] [f3 af3 c4 f4 c4 af3 c4 af3] [g3 b3 d4 g4 d4 b3 f4 d4]>\").s(\"gm_marimba\").gain(0.32).jux(rev).room(0.35), note(\"<[g5 ~ ~ ~ ef5 ~ ~ ~] [~ ~ c5 ~ ~ ~ ~ ~] [af5 ~ ~ ~ g5 ~ f5 ~] [~ ~ b4 ~ d5 ~ ~ ~]>\").s(\"gm_orchestral_harp\").gain(0.3).room(0.7).off(0.25, x => x.add(note(-12)).gain(0.12).pan(0.2)))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Two tankers burning in the strait,",
-        "the talks go on, they say,",
-        "a man calls the counting stolen,",
-        "the count stays where it lay."
+        "Fire on an island in the strait,",
+        "they call it a defence,",
+        "and someone says the talks are close,",
+        "and no one makes it make sense."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "On Atlantic rocks the porches dim",
-        "so the young birds find the sea,",
-        "in Bhutan they stack a hundred stones",
-        "and eight, for what might be."
+        "Seven hundred fifty climbing out",
+        "on buses through the truce,",
+        "and off the Florida shore the whales",
+        "come home with nothing to prove."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Turn the lights off, Tuesday's coming,",
-        "let the small ones fly,",
-        "hold the calm the way you'd hold",
-        "a match against the sky."
+        "Go and cast it, Tuesday,",
+        "the water's holding still,",
+        "the big ones came back slowly,",
+        "maybe we will."
       ]
     }
   ]

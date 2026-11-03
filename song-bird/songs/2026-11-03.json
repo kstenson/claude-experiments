@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-03",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "The Whales Came Back on Tuesday",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.16,
+    "summary": "Uneasy calm: strikes in Hormuz even as talks are said to progress, an aid hub hit in Ukraine and Americans voting. Small mercies: 750 civilians evacuated under a truce and right whales back off Florida.",
+    "palette": {
+      "bg": "#0c1420",
+      "bg2": "#18263a",
+      "accent": "#d9a441",
+      "accent2": "#6fb3a8",
+      "text": "#e8eef2"
+    }
+  },
+  "style": {
+    "genre": "half-time liquid drum-and-bass — marimba, harp, strings, TR-808",
+    "key": "C",
+    "scale": "harmonic minor",
+    "bpm": 122,
+    "swing": 0.05
+  },
+  "sampleSources": [
+    "Strudel default library (GM marimba, GM orchestral harp, GM string ensemble, GM acoustic bass, RolandTR808)"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~\").bank(\"RolandTR808\").gain(0.65).room(0.15), s(\"hh*16\").bank(\"RolandTR808\").gain(perlin.range(0.05,0.14)).hpf(7000).pan(sine.range(0.35,0.65).slow(6)), s(\"~ rim ~ ~ ~ ~ rim ~\").bank(\"RolandTR808\").gain(0.18).delay(0.25).delaytime(0.123), note(\"<[c2 ~ ~ c2 ~ ~ g1 ~] [af1 ~ ~ af1 ~ ~ ef2 ~] [f1 ~ ~ f1 ~ ~ c2 ~] [g1 ~ ~ g1 ~ b1 d2 ~]>\").s(\"gm_acoustic_bass\").gain(0.6).lpf(900), note(\"<[c3,ef3,g3] [af2,c3,ef3] [f2,af2,c3] [g2,b2,d3]>\").s(\"gm_string_ensemble_1\").attack(1).release(3).gain(0.2).room(0.6).rsize(4).lpf(sine.range(900,2200).slow(16)), note(\"<[c4 ef4 g4 c5 g4 ef4 g4 ef4] [af3 c4 ef4 af4 ef4 c4 ef4 c4] [f3 af3 c4 f4 c4 af3 c4 af3] [g3 b3 d4 g4 d4 b3 f4 d4]>\").s(\"gm_marimba\").gain(0.32).jux(rev).room(0.35), note(\"<[g5 ~ ~ ~ ef5 ~ ~ ~] [~ ~ c5 ~ ~ ~ ~ ~] [af5 ~ ~ ~ g5 ~ f5 ~] [~ ~ b4 ~ d5 ~ ~ ~]>\").s(\"gm_orchestral_harp\").gain(0.3).room(0.7).off(0.25, x => x.add(note(-12)).gain(0.12).pan(0.2)))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Fire on an island in the strait,",
+        "they call it a defence,",
+        "and someone says the talks are close,",
+        "and no one makes it make sense."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Seven hundred fifty climbing out",
+        "on buses through the truce,",
+        "and off the Florida shore the whales",
+        "come home with nothing to prove."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Go and cast it, Tuesday,",
+        "the water's holding still,",
+        "the big ones came back slowly,",
+        "maybe we will."
+      ]
+    }
+  ]
+}
