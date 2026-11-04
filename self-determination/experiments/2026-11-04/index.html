@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Could Have Known — Experiment 110</title>
+<meta name="description" content="Lamport's logical clocks on five people who can only send letters: wall clocks drift until letters arrive before they were posted, while one counter bumped past every stamp never contradicts cause and effect. Click an event to light what it could have known." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Layout: controls on the left, the history on the right ---- */
+  .app {
+    position: fixed; inset: 0;
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px;
+  }
+  .app.bare { grid-template-columns: minmax(0, 1fr); }
+  .app.bare .col { display: none; }
+  .col { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; }
+  .main { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; min-width: 0; min-height: 0; }
+
+  .ui, .ctl, .read {
+    background: rgba(16, 16, 26, 0.72);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+  }
+  .ui { padding: 17px 20px; }
+  .ctl { padding: 15px 20px; display: grid; gap: 11px; }
+
+  .stage { position: relative; min-height: 0; border-radius: 16px; overflow: hidden; background: #08080f; border: 1px solid rgba(255,255,255,0.07); }
+  canvas#cv { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 9px 0 3px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 11px; }
+  .lede { font-size: 0.82rem; line-height: 1.55; color: #b4b4c8; }
+  .lede b { color: #e9e9f0; font-weight: 600; }
+
+  .row { display: grid; gap: 5px; }
+  .row label { font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8f8fa6; display: flex; justify-content: space-between; gap: 10px; }
+  .row label b { color: #cfcfe6; font-weight: 600; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+  .group-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #7c7cff; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 3px;
+    background: rgba(255,255,255,0.14); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #7c7cff; cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,124,255,0.7);
+  }
+  input[type=range].rose::-webkit-slider-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range].rose::-moz-range-thumb { background: #ff7cc3; box-shadow: 0 0 10px rgba(255,124,195,0.7); }
+  input[type=range]:focus-visible, .btn:focus-visible, .story-btn:focus-visible { outline: 2px solid #b9b9ff; outline-offset: 2px; }
+
+  .btn-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .btn {
+    flex: 1 1 40%;
+    background: rgba(124,124,255,0.14);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px;
+    padding: 8px 7px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    user-select: none; -webkit-user-select: none;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd6ec; }
+  .btn.pink:hover { background: rgba(255,124,195,0.26); }
+  .btn.on { background: rgba(124,124,255,0.42); border-color: rgba(170,170,255,0.8); color: #fff; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 13px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Readout under the history ---- */
+  .read {
+    padding: 13px 18px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 20px;
+    min-height: 158px;
+  }
+  .verdict { font-size: 0.86rem; line-height: 1.5; color: #c7c7d6; min-width: 0; }
+  .verdict b { color: #fff; font-weight: 600; }
+  .verdict .past { color: #a9a9ff; }
+  .verdict .fut { color: #ff9dd2; }
+  .verdict .lie { color: #ffc27c; }
+  .verdict .ok { color: #9fe8c4; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 0.72rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+  th { font-weight: 500; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: #8f8fa6; text-align: right; padding: 0 0 5px 10px; vertical-align: bottom; }
+  th:first-child, td:first-child { text-align: left; padding-left: 0; }
+  td { padding: 4px 0 4px 10px; text-align: right; color: #d8d8e6; border-top: 1px solid rgba(255,255,255,0.07); overflow-wrap: anywhere; }
+  td:first-child { color: #9a9ab0; white-space: nowrap; }
+  td.good { color: #9fe8c4; }
+  td.bad { color: #ffc27c; }
+
+  .hint {
+    position: absolute; top: 9px; left: 0; right: 0; z-index: 2;
+    font-size: 0.76rem; color: rgba(255,255,255,0.5); letter-spacing: 0.03em;
+    pointer-events: none; text-align: center; padding: 0 12px;
+  }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  /* ---- Phones and narrow windows: one scrolling column ---- */
+  @media (max-width: 860px) {
+    html, body { height: auto; }
+    body { overflow: auto; }
+    .app { position: static; display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+    .app.bare .col { display: contents; }
+    .col, .main { display: contents; }
+    .ui { order: 1; padding: 14px 16px; }
+    .stage { order: 2; height: 62vh; min-height: 380px; flex: none; }
+    .read { order: 3; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .ctl { order: 4; padding: 14px 16px; }
+    .story { padding: 12px; }
+    .story-card { padding: 26px 22px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="col">
+      <div class="ui" id="ui">
+        <a class="back" href="../../index.html">← all experiments</a>
+        <h1>Could Have Known</h1>
+        <p class="sub">Experiment № 110 · November 4, 2026</p>
+        <p class="lede">Five people, clocks that drift, and only letters between them. <b>Who went first?</b> has an answer only when a chain of letters joins two events. Otherwise there is no fact to find.</p>
+        <button class="story-btn" id="openStory">✎ the story behind this one</button>
+      </div>
+
+      <div class="ctl">
+        <div class="row">
+          <span class="group-label">Lay the history out by</span>
+          <div class="btn-row" id="modes">
+            <button class="btn" data-mode="true">True time</button>
+            <button class="btn" data-mode="wall">Wall clocks</button>
+            <button class="btn" data-mode="lamport">Lamport count</button>
+            <button class="btn" data-mode="vector">Vector clocks</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="group-label">Catch one out</span>
+          <div class="btn-row">
+            <button class="btn pink" id="catchWall">A wall-clock lie</button>
+            <button class="btn pink" id="catchLamport">A Lamport bluff</button>
+          </div>
+        </div>
+        <div class="row">
+          <label for="err">Clock error <b id="errV"></b></label>
+          <input type="range" class="rose" id="err" min="0" max="18" step="1" value="12" />
+        </div>
+        <div class="row">
+          <label for="ppl">People <b id="pplV"></b></label>
+          <input type="range" id="ppl" min="3" max="6" step="1" value="5" />
+        </div>
+        <div class="row">
+          <label for="let">Letters <b id="letV"></b></label>
+          <input type="range" id="let" min="3" max="26" step="1" value="11" />
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="replay">Replay</button>
+          <button class="btn" id="fresh">New history</button>
+          <button class="btn" id="undo" disabled>Undo letter</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="stage" id="stage">
+        <p class="hint" id="hint">click an event, then another · drag from one person's line to another's to post a letter</p>
+        <canvas id="cv" role="img" aria-label="A space-time diagram: one horizontal line per person, dots for events, arrows for letters. The readout below describes the selected events."></canvas>
+      </div>
+      <div class="read">
+        <div class="verdict" aria-live="polite">
+          <div id="verdict"></div>
+          <div class="legend">
+            <span><i style="background:#7c7cff"></i>could have reached it</span>
+            <span><i style="background:#ff7cc3"></i>could hear of it</span>
+            <span><i style="background:#55556a"></i>neither</span>
+          </div>
+        </div>
+        <div id="score"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 110 · The story</p>
+      <h2>Could Have Known</h2>
+
+      <h3>Why I picked it</h3>
+      <p>A hundred and nine experiments in, nearly all of them run on one machine with one idea of "now". Yet the systems I find hardest to think about are the ones where that stops being true, so I went to the 1978 paper that started the subject. Leslie Lamport was reading a scheme for keeping duplicate databases in step by timestamp, noticed it could order things against cause and effect, and saw the problem as one he already knew from special relativity. Two events only have an order if a signal could get from one to the other. The rest are simply elsewhere. Swap "light" for "letters" and you have a theory of computers.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The rule fits on an index card: count your own events, put your count on every letter, and when one arrives, jump past whatever it says. Nobody synchronises anything, and yet switch to the Lamport layout and every arrow in the picture points forward. My favourite thing here, though, is the dark wedge you get when you click an event. It's the part of history that event has no relationship with at all. Then press "A Lamport bluff", because the counter is honest in one direction only: if one thing caused another its number is smaller, but a smaller number proves nothing. Vector clocks, found independently by Fidge and Mattern ten years later, close that gap by keeping a count for every person. It works, and the stamp grows with the size of the group, and that is the price of the whole truth.</p>
+
+      <h3>Something you might take away</h3>
+      <p>"Which happened first?" sounds like it must have an answer, and often it doesn't. A more useful question is "could this one have known about that one?", which has a definite answer even with bad clocks. It works on people too. When two teams each swear they decided first, or a log from one server seems to contradict a log from another, the timestamps may be arguing about nothing. Look for the chain of messages instead. If there isn't one, neither side was reacting to the other, whatever the clocks say.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'h') document.getElementById('app').classList.toggle('bare');
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Could Have Known: Lamport's logical clocks ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const NAMES = ['Ada', 'Ben', 'Cho', 'Dev', 'Eva', 'Fay'];
+    const SPAN = 100;           // minutes of true time in a generated history
+    const MIN_GAP = 1.1;        // keep events on one line from sitting on top of each other
+    const VIOLET = '124,124,255', PINK = '255,124,195', AMBER = '255,194,124';
+
+    const cv = $('cv'), ctx = cv.getContext('2d');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let W = 0, H = 0, dpr = 1;
+    let seed = 771460680, people = 5, letterCount = 11, clockErr = 12;
+    let mode = 'true';
+    let events = [], letters = [], lanes = [], order = [], skews = [];
+    let added = [];             // letters the visitor posted, newest last
+    let nextId = 1, span = SPAN, maxL = 1, wallMin = 0, wallMax = SPAN;
+    let selA = null, selB = null, hover = null, chain = [];
+    let cursor = Infinity, replaying = false, lastLogged = null;
+    let drag = null, note = '';
+    let lastFrame = 0;
+
+    // ---------- History ----------
+    function rng(a) {
+      return () => {
+        a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function freeTime(lane, t) {
+      let moved = true;
+      while (moved) {
+        moved = false;
+        for (const e of events) {
+          if (e.lane === lane && Math.abs(e.t - t) < MIN_GAP - 1e-6) { t = e.t + MIN_GAP; moved = true; }
+        }
+      }
+      return t;
+    }
+
+    function addEvent(lane, t, kind) {
+      const e = { id: nextId++, lane, t, kind, letter: null, L: 0, prevL: 0, V: [], W: 0, px: null, tx: 0, rank: 0, born: 0 };
+      events.push(e);
+      return e;
+    }
+
+    function addLetter(from, to, ts, tr, user) {
+      const sendT = freeTime(from, ts);
+      const send = addEvent(from, sendT, 'send');
+      const recv = addEvent(to, freeTime(to, Math.max(tr, sendT + 1.6)), 'recv');
+      const l = { send, recv, user };
+      send.letter = l; recv.letter = l;
+      letters.push(l);
+      return l;
+    }
+
+    function generate() {
+      const r = rng(seed * 7919 + people * 31 + letterCount);
+      events = []; letters = []; added = [];
+      selA = selB = null; chain = []; note = '';
+      skews = NAMES.slice(0, people).map(() => ({ off: r() * 2 - 1, rate: r() * 2 - 1 }));
+      for (let i = 0; i < letterCount; i++) {
+        const from = Math.floor(r() * people);
+        // Letters mostly go to a nearby line, so the picture has room for "elsewhere".
+        let hop = 1 + Math.floor(r() * r() * (people - 1));
+        if (r() < 0.5) hop = -hop;
+        const to = (from + hop + people) % people;
+        const t = 2 + r() * (SPAN - 20);
+        addLetter(from, to, t, t + 3 + r() * 8, false);
+      }
+      const notes = people * 2;
+      for (let i = 0; i < notes; i++) {
+        const lane = i % people;
+        addEvent(lane, freeTime(lane, 1 + r() * (SPAN - 4)), 'note');
+      }
+      replayClocks();
+      retarget(true);
+      pickOpening();
+    }
+
+    // The whole algorithm. Walk the events in true order and apply each person's
+    // local rule. Nothing here looks at another person's state except via a letter.
+    function replayClocks() {
+      const sorted = [...events].sort((a, b) => a.t - b.t || a.id - b.id);
+      const count = new Array(people).fill(0);
+      const vec = NAMES.slice(0, people).map(() => new Array(people).fill(0));
+      lanes = NAMES.slice(0, people).map(() => []);
+      for (const e of sorted) {
+        const p = e.lane;
+        e.prevL = count[p];
+        if (e.kind === 'recv') {
+          const stamp = e.letter.send;
+          count[p] = Math.max(count[p], stamp.L);        // jump past the stamp...
+          for (let i = 0; i < people; i++) vec[p][i] = Math.max(vec[p][i], stamp.V[i]);
+        }
+        count[p] += 1;                                   // ...and every event ticks
+        vec[p][p] += 1;
+        e.L = count[p];
+        e.V = vec[p].slice();
+        lanes[p].push(e);
+      }
+      order = [...events].sort((a, b) => a.L - b.L || a.lane - b.lane);
+      order.forEach((e, i) => { e.rank = i; });
+      maxL = Math.max(1, ...events.map((e) => e.L));
+      span = Math.max(SPAN, ...events.map((e) => e.t + 1));
+      readWalls();
+    }
+
+    function readWalls() {
+      for (const e of events) {
+        const s = skews[e.lane];
+        e.W = e.t * (1 + 0.1 * s.rate * clockErr / 18) + s.off * clockErr;
+      }
+      wallMin = Math.min(0, ...events.map((e) => e.W));
+      wallMax = Math.max(span, ...events.map((e) => e.W));
+    }
+
+    // a happened before b. b's vector records how much of a's line it has heard of.
+    const before = (a, b) => a !== b && a.V[a.lane] <= b.V[a.lane];
+    const related = (a, b) => before(a, b) || before(b, a);
+    const vecLeq = (a, b) => a.V.every((x, i) => x <= b.V[i]);
+
+    function findChain(a, b) {
+      const prev = new Map([[a, null]]);
+      const queue = [a];
+      while (queue.length) {
+        const e = queue.shift();
+        if (e === b) break;
+        const next = [];
+        if (e.kind === 'send') next.push(e.letter.recv);
+        const after = lanes[e.lane][lanes[e.lane].indexOf(e) + 1];
+        if (after) next.push(after);
+        for (const n of next) if (!prev.has(n)) { prev.set(n, e); queue.push(n); }
+      }
+      if (!prev.has(b)) return [];
+      const path = [];
+      for (let e = b; e; e = prev.get(e)) path.unshift(e);
+      return path;
+    }
+
+    // The most interesting opening selection: the event with the most balanced
+    // past, future and elsewhere.
+    function pickOpening() {
+      let best = null, bestScore = -1;
+      for (const e of events) {
+        const c = cone(e);
+        const score = Math.min(c.past, c.future, c.neither * 0.8);
+        if (score > bestScore) { bestScore = score; best = e; }
+      }
+      selA = best;
+      selB = null;
+      chain = [];
+    }
+
+    function cone(e) {
+      let past = 0, future = 0, neither = 0;
+      for (const f of events) {
+        if (f === e) continue;
+        if (before(f, e)) past++;
+        else if (before(e, f)) future++;
+        else neither++;
+      }
+      return { past, future, neither };
+    }
+
+    function tally() {
+      const s = { causal: 0, wallOk: 0, lamOk: 0, vecOk: 0, conc: 0, lamTie: 0, vecConc: 0, back: 0 };
+      for (let i = 0; i < events.length; i++) {
+        for (let j = i + 1; j < events.length; j++) {
+          let a = events[i], b = events[j];
+          if (related(a, b)) {
+            if (before(b, a)) [a, b] = [b, a];
+            s.causal++;
+            if (a.W < b.W) s.wallOk++;
+            if (a.L < b.L) s.lamOk++;
+            if (vecLeq(a, b) && !vecLeq(b, a)) s.vecOk++;
+          } else {
+            s.conc++;
+            if (a.L === b.L) s.lamTie++;
+            if (!vecLeq(a, b) && !vecLeq(b, a)) s.vecConc++;
+          }
+        }
+      }
+      for (const l of letters) if (l.send.W >= l.recv.W) s.back++;
+      return s;
+    }
+
+    // ---------- Words ----------
+    function describe(e) {
+      const who = NAMES[e.lane];
+      if (e.kind === 'note') return `${who} writes a note`;
+      if (e.kind === 'send') return `${who} posts to ${NAMES[e.letter.recv.lane]}`;
+      return `${who} gets ${NAMES[e.letter.send.lane]}'s letter`;
+    }
+
+    function clockTime(w, seconds) {
+      const total = Math.round((540 + w) * 60);
+      const h = Math.floor(total / 3600), m = Math.floor(total / 60) % 60, s = total % 60;
+      const mm = String(m).padStart(2, '0');
+      return seconds ? `${h}:${mm}:${String(s).padStart(2, '0')}` : `${h}:${mm}`;
+    }
+
+    const vecText = (e) => `[${e.V.join(' ')}]`;
+    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+    function renderVerdict() {
+      const box = $('verdict');
+      if (replaying) return;
+      const prefix = note ? `<span class="lie">${note}</span> ` : '';
+      if (selA && selB) {
+        if (related(selA, selB)) {
+          const [a, b] = before(selA, selB) ? [selA, selB] : [selB, selA];
+          const hops = chain.filter((e, i) => i && e.lane !== chain[i - 1].lane).length;
+          const route = hops === 0 ? `it's all on ${NAMES[a.lane]}'s own line` : `a chain of ${plural(hops, 'letter', 'letters')} joins them`;
+          box.innerHTML = `${prefix}First <b>${describe(a)}</b>, then <b>${describe(b)}</b>: ${route}, so this order is a fact, whatever the clocks say.`;
+        } else {
+          box.innerHTML = `${prefix}<b>${describe(selA)}</b> and <b>${describe(selB)}</b>: no chain of letters joins them in either direction. Neither is first. They're <span class="past">concurrent</span>, and no clock can do better than say so.`;
+        }
+        return;
+      }
+      if (selA) {
+        const c = cone(selA);
+        box.innerHTML = `${prefix}<b>${describe(selA)}.</b> <span class="past">${plural(c.past, 'event', 'events')}</span> could have reached this moment, <span class="fut">${c.future}</span> could hear of it, and ${c.neither} can't be put before or after it by anyone. Click a second event to compare them.`;
+        return;
+      }
+      box.innerHTML = `${prefix}Click any event to see what it could have known.`;
+    }
+
+    function logStep(e) {
+      const box = $('verdict');
+      const who = NAMES[e.lane];
+      if (e.kind === 'recv') {
+        const stamp = e.letter.send.L;
+        const jump = stamp > e.prevL;
+        box.innerHTML = `<b>${who}</b>, at ${e.prevL}, gets a letter stamped ${stamp}${jump ? ` and <span class="fut">jumps to ${e.L}</span>` : ` and just ticks to ${e.L}`}.`;
+      } else if (e.kind === 'send') {
+        box.innerHTML = `<b>${who}</b> ticks to ${e.L} and stamps a letter to ${NAMES[e.letter.recv.lane]} with it.`;
+      } else {
+        box.innerHTML = `<b>${who}</b> writes a note and ticks to ${e.L}.`;
+      }
+    }
+
+    function renderScore() {
+      const box = $('score');
+      if (selA && selB) {
+        box.innerHTML = pairTable(selA, selB);
+        return;
+      }
+      const s = tally();
+      const cell = (n, of) => `<td class="${n === of ? 'good' : 'bad'}">${n} of ${of}</td>`;
+      box.innerHTML = `<table>
+        <tr><th>This history</th><th>Linked pairs put in the right order</th><th>Unlinked pairs it knows are unlinked</th></tr>
+        <tr><td>Wall clocks</td>${cell(s.wallOk, s.causal)}${cell(0, s.conc)}</tr>
+        <tr><td>Lamport count</td>${cell(s.lamOk, s.causal)}${cell(s.lamTie, s.conc)}</tr>
+        <tr><td>Vector clocks</td>${cell(s.vecOk, s.causal)}${cell(s.vecConc, s.conc)}</tr>
+      </table>`;
+    }
+
+    function pairTable(a, b) {
+      const linked = related(a, b);
+      const first = linked ? (before(a, b) ? 'A' : 'B') : null;
+      const verdictFor = (claim) => {
+        if (claim === first) return `<td class="good">says ${claim} first, right</td>`;
+        if (claim === 'neither') return `<td class="good">says neither, right</td>`;
+        if (claim === 'tie') return `<td class="good">tied, so unlinked, right</td>`;
+        return linked
+          ? `<td class="bad">says ${claim} first, wrong</td>`
+          : `<td class="bad">says ${claim} first, a bluff</td>`;
+      };
+      const wall = a.W < b.W ? 'A' : 'B';
+      const lam = a.L === b.L ? 'tie' : a.L < b.L ? 'A' : 'B';
+      const ab = vecLeq(a, b), ba = vecLeq(b, a);
+      const vec = ab && !ba ? 'A' : ba && !ab ? 'B' : 'neither';
+      return `<table>
+        <tr><th>Clock</th><th>A</th><th>B</th><th>Verdict</th></tr>
+        <tr><td>Wall clocks</td><td>${clockTime(a.W, true)}</td><td>${clockTime(b.W, true)}</td>${verdictFor(wall)}</tr>
+        <tr><td>Lamport count</td><td>${a.L}</td><td>${b.L}</td>${verdictFor(lam)}</tr>
+        <tr><td>Vector clocks</td><td>${vecText(a)}</td><td>${vecText(b)}</td>${verdictFor(vec)}</tr>
+      </table>`;
+    }
+
+    function refreshText() {
+      renderVerdict();
+      renderScore();
+      $('undo').disabled = added.length === 0;
+    }
+
+    // ---------- Selection ----------
+    function select(e) {
+      note = '';
+      if (!e) { selA = selB = null; chain = []; }
+      else if (e === selA) { selA = selB; selB = null; chain = []; }
+      else if (e === selB) { selB = null; chain = []; }
+      else if (!selA || selB) { selA = e; selB = null; chain = []; }
+      else { selB = e; linkPair(); }
+      refreshText();
+    }
+
+    function linkPair() {
+      if (!selA || !selB) { chain = []; return; }
+      if (before(selA, selB)) chain = findChain(selA, selB);
+      else if (before(selB, selA)) chain = findChain(selB, selA);
+      else chain = [];
+    }
+
+    function setMode(m) {
+      mode = m;
+      for (const b of $('modes').children) {
+        const on = b.dataset.mode === m;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on);
+      }
+      retarget(reduceMotion);
+    }
+
+    function catchWall() {
+      let best = null, gap = 0;
+      for (const a of events) for (const b of events) {
+        if (before(a, b) && a.W - b.W > gap) { gap = a.W - b.W; best = [a, b]; }
+      }
+      endReplay();
+      if (!best) {
+        selB = null; chain = [];
+        note = 'The wall clocks are telling the truth about this history. Raise the clock error.';
+        refreshText();
+        return;
+      }
+      selA = best[0]; selB = best[1]; note = '';
+      linkPair();
+      setMode('wall');
+      refreshText();
+    }
+
+    function catchLamport() {
+      let best = null, gap = 0;
+      for (const a of events) for (const b of events) {
+        if (!related(a, b) && a.L < b.L) {
+          // Prefer the widest count gap, and among those a pair that true time flips.
+          const g = (b.L - a.L) + (a.t > b.t ? 0.5 : 0);
+          if (g > gap) { gap = g; best = [a, b]; }
+        }
+      }
+      endReplay();
+      if (!best) {
+        selB = null; chain = [];
+        note = 'Every pair here is linked or tied, so there is nothing to bluff about. Remove some letters.';
+        refreshText();
+        return;
+      }
+      selA = best[0]; selB = best[1]; note = '';
+      chain = [];
+      setMode('lamport');
+      refreshText();
+    }
+
+    // ---------- Geometry ----------
+    const geo = () => {
+      const gutter = W < 520 ? 62 : 96;
+      const top = W < 520 ? 58 : 42, bottom = H - 84;
+      return { x0: gutter, x1: W - 20, top, bottom };
+    };
+
+    function laneY(p) {
+      const g = geo();
+      return people === 1 ? (g.top + g.bottom) / 2 : g.top + 8 + (g.bottom - g.top - 16) * p / (people - 1);
+    }
+
+    function targetX(e) {
+      const g = geo();
+      let f;
+      if (mode === 'wall') f = (e.W - wallMin) / (wallMax - wallMin || 1);
+      else if (mode === 'lamport') f = e.L / (maxL + 1);
+      else f = e.t / span;
+      return g.x0 + (g.x1 - g.x0) * f;
+    }
+
+    function retarget(snap) {
+      for (const e of events) {
+        e.tx = targetX(e);
+        if (snap || e.px === null) e.px = e.tx;
+      }
+    }
+
+    // The true time on a person's line under a screen x, whatever the layout.
+    function timeAt(lane, x) {
+      const g = geo();
+      const pts = [[g.x0, 0], ...lanes[lane].map((e) => [e.tx, e.t]), [g.x1, span]];
+      for (let i = 1; i < pts.length; i++) {
+        if (x <= pts[i][0]) {
+          const [xa, ta] = pts[i - 1], [xb, tb] = pts[i];
+          return xb > xa ? ta + (tb - ta) * Math.max(0, (x - xa) / (xb - xa)) : ta;
+        }
+      }
+      return span;
+    }
+
+    const shown = (e) => e.t <= cursor;
+
+    // ---------- Drawing ----------
+    function drawCone(e, past) {
+      const g = geo();
+      const fx = [];
+      for (let q = 0; q < people; q++) {
+        const list = lanes[q];
+        let edge;
+        if (q === e.lane) edge = e;
+        else if (past) edge = list[e.V[q] - 1] || null;
+        else edge = list.find((f) => before(e, f)) || null;
+        fx.push(edge ? edge.px : past ? g.x0 : g.x1);
+      }
+      const color = past ? VIOLET : PINK;
+      const yTop = g.top - 8, yBot = g.bottom + 8;
+      const side = past ? g.x0 - 14 : g.x1 + 20;
+      ctx.beginPath();
+      ctx.moveTo(side, yTop);
+      ctx.lineTo(fx[0], yTop);
+      for (let q = 0; q < people; q++) ctx.lineTo(fx[q], laneY(q));
+      ctx.lineTo(fx[people - 1], yBot);
+      ctx.lineTo(side, yBot);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(past ? g.x0 : e.px, 0, past ? e.px : g.x1, 0);
+      grad.addColorStop(past ? 0 : 1, `rgba(${color},0.03)`);
+      grad.addColorStop(past ? 1 : 0, `rgba(${color},0.2)`);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(fx[0], yTop);
+      for (let q = 0; q < people; q++) ctx.lineTo(fx[q], laneY(q));
+      ctx.lineTo(fx[people - 1], yBot);
+      ctx.strokeStyle = `rgba(${color},0.55)`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawArrow(x1, y1, x2, y2, color, width) {
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      const stop = 6;
+      const ex = x2 - Math.cos(ang) * stop, ey = y2 - Math.sin(ang) * stop;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - Math.cos(ang - 0.42) * 7, ey - Math.sin(ang - 0.42) * 7);
+      ctx.lineTo(ex - Math.cos(ang + 0.42) * 7, ey - Math.sin(ang + 0.42) * 7);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function relation(e) {
+      if (!selA || replaying) return 'plain';
+      if (e === selA || e === selB) return 'self';
+      if (before(e, selA)) return 'past';
+      if (before(selA, e)) return 'future';
+      return 'neither';
+    }
+
+    function relationColor(rel, alpha) {
+      if (rel === 'past') return `rgba(${VIOLET},${alpha})`;
+      if (rel === 'future') return `rgba(${PINK},${alpha})`;
+      if (rel === 'self') return `rgba(255,255,255,${alpha})`;
+      if (rel === 'neither') return `rgba(120,120,145,${alpha})`;
+      return `rgba(214,214,232,${alpha})`;
+    }
+
+    function drawGuides() {
+      const g = geo();
+      ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 1;
+      const axisY = g.bottom + 22;
+      const put = (x, label) => {
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.beginPath(); ctx.moveTo(x, g.top - 8); ctx.lineTo(x, g.bottom + 8); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillText(label, x, axisY);
+      };
+      if (mode === 'lamport') {
+        const step = maxL > 24 ? 4 : maxL > 12 ? 2 : 1;
+        for (let k = step; k <= maxL; k += step) put(g.x0 + (g.x1 - g.x0) * k / (maxL + 1), String(k));
+      } else if (mode === 'wall') {
+        const first = Math.ceil(wallMin / 20) * 20;
+        for (let w = first; w <= wallMax; w += 20) put(g.x0 + (g.x1 - g.x0) * (w - wallMin) / (wallMax - wallMin), clockTime(w));
+      } else {
+        for (let t = 0; t <= span; t += 20) put(g.x0 + (g.x1 - g.x0) * t / span, clockTime(t));
+      }
+    }
+
+    function drawLanes() {
+      const g = geo();
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+      for (let q = 0; q < people; q++) {
+        const y = laneY(q);
+        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(g.x0, y); ctx.lineTo(g.x1, y); ctx.stroke();
+
+        ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = '#d8d8e6';
+        ctx.fillText(NAMES[q], 12, y - (mode === 'true' ? 0 : 7));
+        const last = [...lanes[q]].reverse().find(shown);
+        let label = '';
+        if (mode === 'lamport') label = `count ${last ? last.L : 0}`;
+        else if (mode === 'wall') label = skewLabel(q);
+        else if (mode === 'vector') label = last ? last.V.join(' ') : new Array(people).fill(0).join(' ');
+        if (label) {
+          ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+          ctx.fillStyle = 'rgba(200,200,220,0.6)';
+          ctx.fillText(label, 12, y + 8);
+        }
+      }
+    }
+
+    function skewLabel(q) {
+      const off = skews[q].off * clockErr;
+      if (Math.abs(off) < 0.5) return 'about right';
+      return `${off > 0 ? '+' : '−'}${Math.abs(off).toFixed(0)} min`;
+    }
+
+    function drawLetters(now) {
+      for (const l of letters) {
+        const s = l.send, r = l.recv;
+        if (!shown(s)) continue;
+        const ya = laneY(s.lane), yb = laneY(r.lane);
+        const f = Math.min(1, (cursor - s.t) / (r.t - s.t));
+        const x2 = s.px + (r.px - s.px) * f, y2 = ya + (yb - ya) * f;
+        const backwards = r.px <= s.px + 0.5;
+        const relS = relation(s), relR = relation(r);
+        let color, width = 1.2;
+        if (mode === 'wall' && backwards) { color = `rgba(${AMBER},0.9)`; width = 1.7; }
+        else if (relS === 'plain') color = 'rgba(200,200,225,0.42)';
+        else if (relS === 'past' && (relR === 'past' || r === selA)) color = `rgba(${VIOLET},0.8)`;
+        else if ((relS === 'future' || s === selA) && relR === 'future') color = `rgba(${PINK},0.8)`;
+        else color = 'rgba(120,120,145,0.34)';
+        drawArrow(s.px, ya, x2, y2, color, width);
+        if (l.user && !reduceMotion && now - r.born < 900) {
+          const k = (now - r.born) / 900;
+          ctx.fillStyle = `rgba(255,255,255,${1 - k})`;
+          ctx.beginPath(); ctx.arc(s.px + (r.px - s.px) * k, ya + (yb - ya) * k, 3.5, 0, 7); ctx.fill();
+        }
+      }
+    }
+
+    function drawChain(now) {
+      if (chain.length < 2 || replaying) return;
+      ctx.lineWidth = 2.4;
+      ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      chain.forEach((e, i) => {
+        const y = laneY(e.lane);
+        if (i) ctx.lineTo(e.px, y); else ctx.moveTo(e.px, y);
+      });
+      ctx.stroke();
+      if (reduceMotion) return;
+      // A bead runs the chain so its direction reads even where the layout folds it.
+      const k = (now / 2600) % 1 * (chain.length - 1);
+      const i = Math.floor(k), f = k - i;
+      const a = chain[i], b = chain[i + 1];
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(a.px + (b.px - a.px) * f, laneY(a.lane) + (laneY(b.lane) - laneY(a.lane)) * f, 4, 0, 7);
+      ctx.fill();
+    }
+
+    function drawStampBars(e, x, y, color) {
+      const w = 3, gap = 1, hMax = 14;
+      const biggest = Math.max(1, ...events.map((f) => Math.max(...f.V)));
+      const left = x - (people * (w + gap) - gap) / 2;
+      ctx.fillStyle = color;
+      e.V.forEach((v, i) => {
+        const h = Math.max(1, hMax * v / biggest);
+        ctx.fillRect(left + i * (w + gap), y - h, w, h);
+      });
+    }
+
+    function drawEvents(now) {
+      for (const e of events) {
+        if (!shown(e)) continue;
+        const y = laneY(e.lane);
+        const rel = relation(e);
+        const isHover = e === hover;
+        const r = e.kind === 'note' ? 3 : 4.4;
+        const alpha = rel === 'neither' ? 0.8 : 1;
+        if (rel === 'self') {
+          ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(e.px, y, 11 + (reduceMotion ? 0 : Math.sin(now / 500)), 0, 7); ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(e.px, y, r + (isHover ? 2 : 0) + (rel === 'self' ? 1.6 : 0), 0, 7);
+        if (e.kind === 'recv') {
+          ctx.fillStyle = '#08080f';
+          ctx.fill();
+          ctx.strokeStyle = relationColor(rel, alpha);
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = relationColor(rel, alpha);
+          ctx.fill();
+        }
+        if (e === selA || e === selB) {
+          ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillStyle = '#fff';
+          ctx.fillText(selB ? (e === selA ? 'A' : 'B') : '', e.px, y + 21);
+        }
+        const labelY = y - 10;
+        if (mode === 'lamport') {
+          ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillStyle = relationColor(rel, rel === 'neither' ? 0.85 : 0.95);
+          ctx.fillText(String(e.L), e.px, labelY);
+        } else if (mode === 'vector') {
+          drawStampBars(e, e.px, labelY + 2, relationColor(rel, rel === 'neither' ? 0.6 : 0.85));
+        } else if (mode === 'wall' && (e === selA || e === selB)) {
+          ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillStyle = '#fff';
+          ctx.fillText(clockTime(e.W), e.px, labelY);
+        }
+      }
+    }
+
+    function drawFooter() {
+      const g = geo();
+      const small = W < 620;
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+      const captionY = H - 42;
+      ctx.fillStyle = 'rgba(200,200,220,0.62)';
+      ctx.fillText(small ? 'One line, agreed without asking' : 'One line everyone can work out alone: sort by Lamport count, break ties by name', 12, captionY);
+
+      ctx.textAlign = 'right';
+      const axisNote = {
+        true: small ? 'True time: nobody can see this' : 'True time. Nobody in the picture can see this axis.',
+        wall: '', lamport: small ? 'Count: every arrow forward' : 'Lamport count. Every arrow points forward.',
+        vector: small ? 'Bars: heard from each' : 'Bars show how much of each person\'s line an event has heard of.'
+      }[mode];
+      if (mode === 'wall') {
+        const back = tally().back;
+        ctx.fillStyle = back ? `rgba(${AMBER},0.95)` : 'rgba(200,200,220,0.62)';
+        ctx.fillText(back ? `${back} of ${letters.length} ${small ? 'arrive before posting' : 'letters arrive before they were posted'}` : 'Every letter arrives after it was posted, for now', W - 20, captionY);
+      } else {
+        ctx.fillStyle = 'rgba(200,200,220,0.62)';
+        if (!small || W > 400) ctx.fillText(axisNote, W - 20, captionY);
+      }
+
+      const y = H - 32, h = 18;
+      const x0 = 12, x1 = W - 12;
+      const n = order.length;
+      const step = (x1 - x0) / n;
+      for (const e of order) {
+        const x = x0 + e.rank * step;
+        const rel = relation(e);
+        ctx.fillStyle = shown(e) ? relationColor(rel, rel === 'plain' ? 0.5 : rel === 'neither' ? 0.45 : 0.95) : 'rgba(255,255,255,0.06)';
+        const lift = e === hover ? 3 : 0;
+        ctx.fillRect(x + 0.5, y - lift, Math.max(1.5, step - 1.5), h + lift);
+      }
+    }
+
+    function drawGhost() {
+      if (!drag || !drag.moved || drag.to === null || drag.to === drag.from) {
+        if (drag && drag.moved) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+          ctx.setLineDash([4, 4]);
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(drag.x, laneY(drag.from));
+          ctx.lineTo(drag.cx, drag.cy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        return;
+      }
+      drawArrow(drag.x, laneY(drag.from), drag.cx, laneY(drag.to), 'rgba(255,255,255,0.85)', 1.6);
+    }
+
+    function drawTip() {
+      if (!hover || drag || !shown(hover)) return;
+      const y = laneY(hover.lane);
+      const lines = [describe(hover), `wall ${clockTime(hover.W, true)} · count ${hover.L} · ${vecText(hover)}`];
+      ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+      const w = Math.max(...lines.map((s) => ctx.measureText(s).width)) + 20;
+      const bx = Math.min(W - w - 8, Math.max(8, hover.px - w / 2));
+      const by = y - 58 < 6 ? y + 16 : y - 58;
+      ctx.fillStyle = 'rgba(20,20,32,0.96)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, w, 42, 8);
+      ctx.fill(); ctx.stroke();
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(lines[0], bx + 10, by + 17);
+      ctx.fillStyle = '#b4b4c8';
+      ctx.fillText(lines[1], bx + 10, by + 33);
+    }
+
+    function frame(now) {
+      const dt = Math.min(60, now - lastFrame || 16);
+      lastFrame = now;
+      const ease = 1 - Math.pow(0.86, dt / 16);
+      for (const e of events) e.px += (e.tx - e.px) * ease;
+
+      if (replaying) {
+        cursor += dt * 0.0125;
+        const passed = order.length ? events.filter((e) => e.t <= cursor).sort((a, b) => b.t - a.t)[0] : null;
+        if (passed && passed !== lastLogged) { lastLogged = passed; logStep(passed); }
+        if (cursor >= span) endReplay();
+      }
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      drawGuides();
+      if (selA && !replaying) {
+        drawCone(selA, true);
+        drawCone(selA, false);
+      }
+      drawLanes();
+      drawLetters(now);
+      drawChain(now);
+      drawEvents(now);
+      drawFooter();
+      drawGhost();
+      drawTip();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- Replay ----------
+    function startReplay() {
+      if (reduceMotion) return;
+      replaying = true;
+      cursor = 0;
+      lastLogged = null;
+      $('replay').textContent = 'Skip to end';
+      $('verdict').innerHTML = 'Each person only ever touches their own clock.';
+    }
+
+    function endReplay() {
+      if (!replaying) return;
+      replaying = false;
+      cursor = Infinity;
+      $('replay').textContent = 'Replay';
+      refreshText();
+    }
+
+    // ---------- Pointer ----------
+    function pos(ev) {
+      const r = cv.getBoundingClientRect();
+      return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+    }
+
+    function hitEvent(x, y, reach) {
+      if (y >= H - 34 && y <= H - 12) {
+        const step = (W - 24) / order.length;
+        return order[Math.floor((x - 12) / step)] || null;
+      }
+      let best = null, bestD = reach * reach;
+      for (const e of events) {
+        const dx = e.px - x, dy = laneY(e.lane) - y;
+        const d = dx * dx + dy * dy;
+        if (d < bestD) { bestD = d; best = e; }
+      }
+      return best;
+    }
+
+    function laneAt(y) {
+      const g = geo();
+      if (y < g.top - 22 || y > g.bottom + 22) return null;
+      let best = 0, bestD = Infinity;
+      for (let q = 0; q < people; q++) {
+        const d = Math.abs(laneY(q) - y);
+        if (d < bestD) { bestD = d; best = q; }
+      }
+      return best;
+    }
+
+    cv.addEventListener('pointerdown', (ev) => {
+      endReplay();
+      const p = pos(ev);
+      const reach = ev.pointerType === 'touch' ? 20 : 12;
+      const hit = hitEvent(p.x, p.y, reach);
+      const lane = hit && p.y < H - 34 ? hit.lane : laneAt(p.y);
+      drag = { hit, from: lane, to: lane, x: hit ? hit.px : p.x, sx: p.x, sy: p.y, cx: p.x, cy: p.y, moved: false };
+      try { cv.setPointerCapture(ev.pointerId); } catch (err) { /* synthetic events have no capture */ }
+      ev.preventDefault();
+    });
+
+    cv.addEventListener('pointermove', (ev) => {
+      const p = pos(ev);
+      if (drag) {
+        drag.cx = p.x; drag.cy = p.y;
+        if (Math.hypot(p.x - drag.sx, p.y - drag.sy) > 9 && drag.from !== null) drag.moved = true;
+        drag.to = laneAt(p.y);
+        return;
+      }
+      if (ev.pointerType === 'touch') return;
+      hover = hitEvent(p.x, p.y, 12);
+      cv.style.cursor = hover ? 'pointer' : 'crosshair';
+    });
+
+    function finishDrag(ev) {
+      if (!drag) return;
+      const d = drag;
+      drag = null;
+      if (ev.type === 'pointercancel') return;
+      if (d.moved && d.to !== null && d.from !== null && d.to !== d.from) {
+        const ts = timeAt(d.from, d.x) + (d.hit ? MIN_GAP : 0);
+        const tr = timeAt(d.to, d.cx);
+        const late = tr <= ts;
+        const l = addLetter(d.from, d.to, ts, tr, true);
+        added.push(l);
+        l.recv.born = performance.now();
+        replayClocks();
+        retarget(false);
+        l.send.px = l.send.tx; l.recv.px = l.recv.tx;
+        selA = l.recv; selB = null; chain = [];
+        note = late ? 'A letter can\'t arrive before it leaves, so this one lands just after it was posted.' : '';
+        refreshText();
+      } else if (!d.moved) {
+        select(d.hit);
+      }
+    }
+    cv.addEventListener('pointerup', finishDrag);
+    cv.addEventListener('pointercancel', finishDrag);
+    cv.addEventListener('pointerleave', () => { if (!drag) hover = null; });
+
+    // ---------- Controls ----------
+    for (const b of $('modes').children) b.addEventListener('click', () => setMode(b.dataset.mode));
+    $('catchWall').addEventListener('click', catchWall);
+    $('catchLamport').addEventListener('click', catchLamport);
+
+    function showValues() {
+      $('errV').textContent = clockErr === 0 ? 'perfect' : `±${clockErr} min`;
+      $('pplV').textContent = people;
+      $('letV').textContent = letterCount;
+    }
+
+    $('err').addEventListener('input', (e) => {
+      clockErr = +e.target.value;
+      showValues();
+      readWalls();
+      retarget(false);
+      note = '';
+      refreshText();
+    });
+    function rebuild() {
+      endReplay();
+      showValues();
+      generate();
+      refreshText();
+    }
+    $('ppl').addEventListener('input', (e) => { people = +e.target.value; rebuild(); });
+    $('let').addEventListener('input', (e) => { letterCount = +e.target.value; rebuild(); });
+    $('fresh').addEventListener('click', () => {
+      seed = (seed * 1103515245 + 12345) % 2147483647;
+      rebuild();
+      startReplay();
+    });
+    $('replay').addEventListener('click', () => { if (replaying) endReplay(); else startReplay(); });
+    $('undo').addEventListener('click', () => {
+      const l = added.pop();
+      if (!l) return;
+      endReplay();
+      events = events.filter((e) => e !== l.send && e !== l.recv);
+      letters = letters.filter((x) => x !== l);
+      if (selA === l.send || selA === l.recv) selA = null;
+      if (selB === l.send || selB === l.recv) selB = null;
+      if (!selA && selB) { selA = selB; selB = null; }
+      replayClocks();
+      retarget(false);
+      linkPair();
+      note = '';
+      refreshText();
+    });
+    window.addEventListener('keydown', (e) => {
+      const m = { 1: 'true', 2: 'wall', 3: 'lamport', 4: 'vector' }[e.key];
+      if (m) setMode(m);
+    });
+
+    function resize() {
+      const r = $('stage').getBoundingClientRect();
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = Math.max(1, Math.round(r.width));
+      H = Math.max(1, Math.round(r.height));
+      cv.width = W * dpr;
+      cv.height = H * dpr;
+      retarget(true);
+    }
+
+    // ---------- Go ----------
+    showValues();
+    generate();
+    new ResizeObserver(resize).observe($('stage'));
+    resize();
+    setMode('true');
+    refreshText();
+    startReplay();
+    requestAnimationFrame(frame);
+
+    // Read-only handle for checking the clocks from a console.
+    window.couldHaveKnown = { events: () => events, letters: () => letters, lanes: () => lanes, before, tally, seed: () => seed };
+  })();
+</script>
+</body>
+</html>
