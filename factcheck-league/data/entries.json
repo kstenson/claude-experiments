@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-03",
+    "lastUpdated": "2026-11-04",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5142,7 +5142,7 @@
     {
       "id": "2026-11-03",
       "date": "2026-11-03",
-      "headline": true,
+      "headline": false,
       "topic": "Whether keeping care workers on a five-year settlement path costs taxpayers £10bn",
       "claim": "\"The government's own figures show the cost of this to taxpayers is £10 billion.\"",
       "speaker": "Chris Philp",
@@ -5190,6 +5190,69 @@
         {
           "title": "Brit Brief — Labour 'caved in' on migrant settlement rights",
           "url": "https://britbrief.co.uk/politics/immigration/labour-caved-in-on-migrant-settlement-rights-critics-say.html"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-04",
+      "date": "2026-11-04",
+      "headline": true,
+      "topic": "Whether Reeves's tax rises saved families £800 on their mortgages",
+      "claim": "Reeves said her tax rises helped bring interest rates down and \"saved families up to £800 on their mortgages\".",
+      "speaker": "Rachel Reeves",
+      "party": "Labour",
+      "role": "Former Chancellor; Labour MP",
+      "discussionScore": 58,
+      "discussionNote": "Reeves's Harvard speech on Monday was her first major address since leaving the Treasury. City AM, GB News and London Business News led on her defence of £66bn in tax rises; Brit Brief disputed the mortgage figure.",
+      "score": 40,
+      "verdict": "Mostly False",
+      "explanation": "The £800 is a modelled counterfactual, not a measured saving, and we could not find the modelling published. Its first step holds up: her tax rises are worth about 1% of GDP, so removing them alone would add about £30bn to borrowing. But that separates the tax from the spending it paid for. The OBR found her 2024 Budget added £32.3bn a year to borrowing overall and raised its gilt and Bank Rate assumptions by a quarter point to reflect that loosening. Her 2025 Budget added £6bn in 2026-27. So her Budgets raised near-term borrowing, which is the opposite pressure on rates. Tax rises alone may have restrained rates, but £800 needs a large effect, and it rests on Treasury sensitivities reported as above external estimates. Mortgages are now dearer, though mainly because of the Middle East conflict.",
+      "evidence": [
+        "Reported basis: Treasury modelling of a £200,000 two-year fix, with borrowing 1% of GDP (about £30bn) higher this year without her tax decisions.",
+        "OBR, October 2024: tax measures raise £36.2bn (1.1% of GDP) a year, but spending adds £69.5bn; net borrowing rises £32.3bn a year.",
+        "OBR, November 2025: Budget policies increase borrowing by £6bn in 2026-27 and reduce it by £15bn in 2029-30.",
+        "OBR raised Bank Rate and gilt yields by ¼ point in October 2024 because markets had not fully priced the fiscal loosening.",
+        "Our calculation: £800 a year on £200,000 over 25 years implies about 0.55 points on the rate. Reports do not say whether £800 is annual.",
+        "Jessop, 2024: an earlier Treasury range was 0.5-1.25 points per 1% of GDP, which the Treasury called \"higher\" than external literature.",
+        "Moneyfacts average two-year fix: 5.40% in October 2024, 5.97% on 30 October 2026. The Bank says quoted rates rose about 95bp after the Middle East conflict began."
+      ],
+      "confidence": "Medium: OBR figures are firm, but we saw press reports of the speech, not its text or the Treasury modelling.",
+      "sources": [
+        {
+          "title": "OBR — Economic and fiscal outlook, October 2024",
+          "url": "https://obr.uk/efo/economic-and-fiscal-outlook-october-2024/"
+        },
+        {
+          "title": "OBR — Economic and fiscal outlook, November 2025",
+          "url": "https://obr.uk/efo/economic-and-fiscal-outlook-november-2025/"
+        },
+        {
+          "title": "Bank of England — Monetary Policy Summary and minutes, September 2026",
+          "url": "https://www.bankofengland.co.uk/monetary-policy-summary-and-minutes/2026/september-2026"
+        },
+        {
+          "title": "London Business News — £66bn in tax rises and Reeves's Harvard speech",
+          "url": "https://londonlovesbusiness.com/66bn-in-tax-rises-a-five-year-unemployment-high-and-reeves-says-britain-should-thank-her/"
+        },
+        {
+          "title": "City AM — Rachel Reeves claims £66bn tax raid made UK stronger",
+          "url": "https://www.cityam.com/rachel-reeves-claims-66bn-tax-raid-made-uk-stronger/"
+        },
+        {
+          "title": "Brit Brief — Reeves defends legacy in Harvard speech",
+          "url": "https://britbrief.co.uk/politics/westminster/reeves-defends-legacy-in-harvard-speech-as-critics-cry-foul.html"
+        },
+        {
+          "title": "Spectator — Rachel Reeves £4,800 mortgage claim is a house of cards",
+          "url": "https://spectator.com/article/rachel-reeves-4800-mortgage-claim-is-a-house-of-cards/"
+        },
+        {
+          "title": "Mortgage Strategy — Average fixed rates stay steady this week",
+          "url": "https://www.mortgagestrategy.co.uk/news/average-fixed-rates-stay-steady-this-week-says-moneyfacts/"
+        },
+        {
+          "title": "Moneyfacts — Mortgage product choice rises as rates fall, October 2024",
+          "url": "https://moneyfactscompare.co.uk/news/mortgages/mortgage-product-choice-rises-as-rates-fall/"
         }
       ]
     }
