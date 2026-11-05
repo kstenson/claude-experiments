@@ -1,57 +1,57 @@
 {
-  "date": "2026-11-04",
+  "date": "2026-11-05",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "All Five",
+  "title": "Two Tankers and a Tugboat",
   "mood": {
     "label": "Uneasy calm",
-    "score": -0.14,
-    "summary": "Uneasy calm: Democrats took Congress and Georgia made history, but strikes on Iran, Ukraine's toll of 31 and North Korea's missiles weighed harder. Five survived three months adrift, and all five genetic letters turned up in an ancient asteroid.",
+    "score": -0.08,
+    "summary": "Uneasy calm, a shade lighter: markets rallied after the Democratic sweep and Brent slid near $94, while tankers burned in Hormuz, Russia's aid-site strike killed 40, and the last Wairarapa whales died. Ebola vaccine trials and a bigger Pantanal park offered small, real relief.",
     "palette": {
-      "bg": "#0a1a1f",
-      "bg2": "#12303a",
-      "accent": "#e8a86b",
-      "accent2": "#7fd1c0",
-      "text": "#eaf3f1"
+      "bg": "#14181a",
+      "bg2": "#262d2f",
+      "accent": "#e8743b",
+      "accent2": "#7bd88f",
+      "text": "#eef0ea"
     }
   },
   "style": {
-    "genre": "seafaring dub — accordion, koto, music box, KR-55",
-    "key": "G",
-    "scale": "mixolydian",
-    "bpm": 96,
-    "swing": 0.08
+    "genre": "motorik krautrock — saxello, balafon, bowed vibraphone, Minipops",
+    "key": "D",
+    "scale": "melodic minor",
+    "bpm": 106,
+    "swing": 0
   },
   "sampleSources": [
-    "Strudel default library (GM accordion, GM koto, GM music box, GM electric bass pick, KorgKR55)"
+    "Strudel default library (VCSL saxello, balafon, bowed vibraphone, pipe organ pedal, ocean drum; KorgMinipops), triangle-oscillator bass"
   ],
-  "pattern": "stack(s(\"~ ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ ~ rim ~ ~ ~ ~ ~ ~ ~\").bank(\"KorgKR55\").gain(0.6).room(0.25).delay(0.2).delaytime(0.469).delayfeedback(0.4), s(\"~ hh ~ hh ~ hh ~ hh\").bank(\"KorgKR55\").gain(perlin.range(0.1,0.2)).hpf(6000).pan(sine.range(0.35,0.65).slow(8)), note(\"<[g1 ~ ~ g1 ~ ~ d2 ~] [f1 ~ ~ f1 ~ ~ c2 ~] [c2 ~ ~ c2 ~ e2 g1 ~] [g1 ~ ~ g1 ~ f1 a1 b1]>\").s(\"gm_electric_bass_pick\").gain(0.62).lpf(750), note(\"<g1 f1 c2 g1>\").s(\"sine\").attack(0.1).release(0.8).gain(0.16), note(\"<[~ [g3,b3,d4] ~ [g3,b3,d4]] [~ [f3,a3,c4] ~ [f3,a3,c4]] [~ [e3,g3,c4] ~ [e3,g3,c4]] [~ [g3,b3,d4] ~ [f3,b3,d4]]>\").s(\"gm_koto\").gain(0.34).hpf(300).lpf(sine.range(1400,3200).slow(16)).room(0.4).delay(0.4).delaytime(0.469).delayfeedback(0.5).pan(0.4), note(\"<[b4 ~ d5 ~ ~ ~ ~ ~] [c5 ~ a4 ~ f4 ~ ~ ~] [g4 ~ ~ e4 ~ g4 ~ ~] [d4 ~ ~ ~ ~ ~ ~ ~] [~ ~ d5 e5 ~ d5 ~ ~] [f5 ~ e5 c5 ~ ~ ~ ~] [e5 ~ d5 ~ c5 ~ a4 ~] [b4 ~ ~ ~ ~ ~ ~ ~]>\").s(\"gm_accordion\").attack(0.06).decay(0.3).sustain(0.55).release(0.9).lpf(3000).gain(0.3).room(0.5).rsize(4).delay(0.3).delaytime(0.469).delayfeedback(0.45).pan(0.6), note(\"<~ ~ ~ [g5 a5 b5 d6 e6 ~ ~ ~]>\").s(\"gm_music_box\").gain(0.24).room(0.7).rsize(5).jux(rev).delay(0.35).delaytime(0.3125))",
+  "pattern": "stack(s(\"bd ~ ~ ~ bd bd ~ ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"KorgMinipops\").gain(0.62).room(0.15), s(\"hh*8\").bank(\"KorgMinipops\").gain(perlin.range(0.16,0.26)).hpf(5000).pan(sine.range(0.4,0.6).slow(8)), note(\"<[d2 d2 d2 d2 d2 d2 a1 cs2] [d2 d2 d2 d2 d2 d2 a1 d2] [g1 g1 g1 g1 g1 g1 d2 b1] [g1 g1 g1 g1 g1 g1 a1 b1] [e2 e2 e2 e2 e2 e2 b1 g1] [a1 a1 a1 a1 a1 a1 e2 cs2] [d2 d2 d2 d2 d2 d2 f2 e2] [a1 a1 a1 a1 a1 cs2 e2 cs2]>\").s(\"triangle\").decay(0.16).sustain(0.35).release(0.08).gain(0.5).lpf(800), note(\"<[d4 a4 f4 a4 cs5 a4 f4 a4] [d4 a4 f4 a4 cs5 a4 f4 a4] [d4 b4 g4 b4 d5 b4 g4 b4] [d4 b4 g4 b4 d5 b4 g4 b4] [e4 b4 g4 b4 e5 b4 g4 b4] [e4 a4 cs5 a4 e5 a4 cs5 a4] [d4 a4 f4 a4 d5 a4 f4 a4] [e4 a4 cs5 a4 e5 a4 cs5 a4]>\").s(\"balafon\").gain(0.36).lpf(sine.range(1500,3800).slow(16)).pan(0.38).delay(0.25).delaytime(0.4245).delayfeedback(0.35), note(\"<[d3,f3,a3,cs4] [d3,f3,a3,cs4] [g3,b3,d4] [g3,b3,d4] [e3,g3,b3] [e3,a3,cs4] [d3,f3,a3] [e3,a3,cs4]>\").s(\"vibraphone_bowed\").attack(0.4).release(1.5).gain(0.28).room(0.5).rsize(4).jux(rev), note(\"<[d5 ~ ~ cs5 d5 ~ ~ ~] [a4 ~ ~ ~ ~ ~ ~ ~] [b4 ~ ~ d5 ~ ~ b4 ~] [g4 ~ ~ ~ ~ a4 b4 ~] [e5 ~ ~ d5 b4 ~ ~ ~] [cs5 ~ ~ ~ a4 ~ e4 ~] [f4 ~ ~ a4 ~ ~ ~ ~] [e4 ~ ~ ~ ~ ~ ~ ~]>\").s(\"saxello\").mask(\"<1 0>/8\").attack(0.04).release(0.7).gain(0.34).lpf(3200).room(0.45).rsize(3).delay(0.3).delaytime(0.4245).delayfeedback(0.4).pan(0.62), note(\"<d2 ~ ~ ~ ~ ~ ~ ~>\").s(\"pipeorgan_quiet_pedal\").attack(0.3).release(2).gain(0.22).lpf(700).room(0.6).rsize(5), s(\"oceandrum/8\").gain(0.1).hpf(400).room(0.4))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Three months gone in a small boat,",
-        "no shore on any side,",
-        "then Kiribati, and five came in",
-        "on a slow and ordinary tide."
+        "Two tankers and a tugboat",
+        "burning in the strait,",
+        "and the oil slid down to ninety-four.",
+        "The market doesn't wait."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "The toll reached thirty-one today,",
-        "the strait still wears its guns,",
-        "and a Georgia door that never swung",
-        "swung open, just this once."
+        "Forty counted at the aid site,",
+        "fifty-nine not found.",
+        "The last whales of the stranding",
+        "died on solid ground."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "All five letters on a stone",
-        "older than the sea.",
-        "All five living off the boat.",
-        "Count them slow with me."
+        "Green across the ticker,",
+        "black smoke far away.",
+        "Call it calm, the number says.",
+        "Call it calm today."
       ]
     }
   ]
