@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wait in the Siding — Experiment 111</title>
+<meta name="description" content="Dijkstra's shunting-yard algorithm as a working railway: numbers run straight through, operators wait in a siding, and an expression tree grows from the line you typed." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---- Stage: the yard and the tree ---- */
+  .stage { position: fixed; top: 0; right: 0; bottom: 0; left: 368px; transition: left 0.3s ease; }
+  body.bare .stage { left: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; }
+
+  .signal {
+    position: absolute; left: 16px; top: 16px; width: min(34%, 300px);
+    pointer-events: none;
+  }
+  .signal .lbl, .score .lbl, .readout .lbl {
+    display: block; font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: #7c7cff;
+  }
+  .signal p { margin-top: 6px; font-size: 0.92rem; line-height: 1.45; color: #d6d6e4; min-height: 4.2em; }
+  .signal p.bad { color: #ff9c9c; }
+
+  .score { position: absolute; right: 16px; top: 16px; text-align: right; width: min(34%, 300px); pointer-events: none; }
+  .score b { display: block; font-size: 1.7rem; font-weight: 600; color: #ff7cc3; margin-top: 4px; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+  .score small { display: block; margin-top: 4px; color: #9a9ab0; font-size: 0.76rem; line-height: 1.4; }
+
+  .choice {
+    position: absolute; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 5;
+    width: max-content; max-width: calc(100% - 24px);
+  }
+  .choice[hidden] { display: none; }
+  .choice button {
+    background: #1a1a2b; border: 1px solid rgba(255,124,195,0.6); color: #ffd9ee;
+    border-radius: 10px; padding: 9px 12px; font-size: 0.84rem; font-weight: 600; cursor: pointer;
+  }
+  .choice button:hover { background: #2c1d33; }
+
+  .readout {
+    position: absolute; left: 16px; right: 16px; bottom: 12px;
+    display: grid; grid-template-columns: 74px 1fr; gap: 3px 10px; align-items: baseline;
+    font-size: 0.84rem; color: #c7c7d6; pointer-events: none;
+  }
+  .readout .lbl { color: #9a9ab0; font-size: 0.62rem; letter-spacing: 0.14em; }
+  .readout code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; min-height: 1.3em; }
+
+  /* ---- Panel ---- */
+  .ui {
+    position: fixed;
+    z-index: 10;
+    left: 24px;
+    top: 24px;
+    width: 320px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .ui.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; margin-bottom: 16px; }
+
+  .controls { display: grid; gap: 12px; }
+  .field-label { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; display: block; }
+  #expr {
+    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 10px;
+    color: #f2f2fa; font: 0.98rem ui-monospace, SFMono-Regular, Menlo, monospace; padding: 10px 11px; outline: none;
+  }
+  #expr:focus { border-color: #7c7cff; }
+  .err { color: #ff9c9c; font-size: 0.78rem; margin-top: 6px; min-height: 1.1em; line-height: 1.35; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip, .tbtn, .rank button, .lean {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.13); color: #d5d5e4;
+    border-radius: 8px; font-size: 0.76rem; padding: 6px 9px; cursor: pointer; transition: background 0.15s ease;
+  }
+  .chip:hover, .tbtn:hover, .rank button:hover, .lean:hover { background: rgba(124,124,255,0.2); }
+  .chip.on, .rank button.on, .tbtn.on { background: rgba(124,124,255,0.3); border-color: rgba(124,124,255,0.75); color: #fff; }
+  .rules { display: grid; grid-template-columns: 44px 1fr auto; gap: 6px 8px; align-items: center; margin-top: 8px; }
+  .rules .ops { font: 0.92rem ui-monospace, SFMono-Regular, Menlo, monospace; color: #ff7cc3; }
+  .rank { display: flex; gap: 4px; }
+  .rank button { flex: 1; padding: 4px 0; }
+  .lean { padding: 4px 8px; min-width: 76px; }
+  .transport { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+  .tbtn { padding: 8px 6px; font-size: 0.82rem; }
+  .speed { display: flex; align-items: center; gap: 10px; font-size: 0.76rem; color: #9a9ab0; }
+  .speed input { flex: 1; accent-color: #7c7cff; }
+  #drive { width: 100%; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  .hint { margin-top: 12px; font-size: 0.74rem; color: rgba(255,255,255,0.42); line-height: 1.45; }
+
+  /* ---- Phones and narrow windows: title, then the yard, then the controls ---- */
+  @media (max-width: 820px) {
+    html, body { height: auto; }
+    body { overflow: auto; display: flex; flex-direction: column; }
+    .ui, .ui.hidden { display: contents; }
+    .head { order: 0; padding: 16px 16px 4px; }
+    .sub { margin-bottom: 6px; }
+    .stage { order: 1; position: relative; left: 0; top: auto; right: auto; bottom: auto; height: 72vh; min-height: 500px; }
+    .rest { order: 2; padding: 14px 16px 28px; }
+    .signal { left: 12px; top: 8px; width: 38%; }
+    .signal p { font-size: 0.78rem; }
+    .score { right: 12px; top: 8px; width: 38%; }
+    .score b { font-size: 1.2rem; }
+    .readout { left: 12px; right: 12px; font-size: 0.76rem; grid-template-columns: 58px 1fr; }
+    .story-card { padding: 26px 22px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+    <div class="signal"><span class="lbl">Signal box</span><p id="say"></p></div>
+    <div class="score"><span class="lbl">Answer</span><b id="answer">…</b><small id="stats"></small></div>
+    <div class="choice" id="choice" hidden>
+      <button id="goWait">↑ wait in the siding</button>
+      <button id="goPull">← pull the top car out</button>
+    </div>
+    <div class="readout" id="readout">
+      <span class="lbl">Postfix</span><code id="rpn"></code>
+      <span class="lbl" id="readLbl">Read as</span><code id="paren"></code>
+    </div>
+  </div>
+
+  <div class="ui" id="ui">
+    <div class="head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Wait in the Siding</h1>
+      <p class="sub">Experiment № 111 · November 5, 2026</p>
+    </div>
+
+    <div class="rest">
+      <div class="controls">
+        <div>
+          <label class="field-label" for="expr">Expression</label>
+          <input id="expr" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" inputmode="text" maxlength="90" />
+          <p class="err" id="err"></p>
+          <div class="chips" id="samples"></div>
+        </div>
+        <div>
+          <span class="field-label">The rules</span>
+          <div class="chips" id="rulesets"></div>
+          <div class="rules" id="ruletable"></div>
+        </div>
+        <div class="transport">
+          <button class="tbtn" id="play">Pause</button>
+          <button class="tbtn" id="step">Step</button>
+          <button class="tbtn" id="end">To the end</button>
+        </div>
+        <label class="speed">Speed <input id="speed" type="range" min="0.3" max="3" step="0.1" value="1" /></label>
+        <button class="tbtn" id="drive">Work the points yourself</button>
+      </div>
+
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+      <p class="hint">Hover or tap the tree to read any branch. Space plays, → steps, H hides this panel.</p>
+    </div>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 111 · The story</p>
+      <h2>Wait in the Siding</h2>
+
+      <h3>Why I picked it</h3>
+      <p>A hundred and ten of these and none has been about reading. I've sorted, hashed, compressed and routed, yet every page here only runs because something first turned a line of symbols into an order of work, and I had never drawn that step. Dijkstra worked it out for the ALGOL 60 compiler he and Jaap Zonneveld built in Amsterdam, and he named it after what it looks like. When the picture is already in the name, my job is just to lay the track.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The tree turned out to need no layout at all. Read an expression tree left to right and you get the tokens back in the order they were typed, so each operator can keep its own column and simply rise to its height. I found that while building this, and it's my favourite thing on the page: change one rule and nothing moves sideways, the same line just grows a different shape. I also like how little separates ^ from − in the code. One word, "right" instead of "left", decides whether the newcomer waits or the old car leaves.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Precedence is a convention, and numbers have no view on it. 2 + 3 × 4 is 14 at school and 20 on a four-function calculator, and APL reads 2 × 3 + 4 as 14 where school says 10. Each is consistent, and a machine only needs one to be chosen. Notice too what happens to the brackets: they steer the traffic and are lifted off the track, and the output runs perfectly well without them. When a line of anything looks tangled, a small waiting room and one rule for who may leave it can go a long way.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target.closest && e.target.closest('input')) return;
+    if (e.key.toLowerCase() === 'h') {
+      document.getElementById('ui').classList.toggle('hidden');
+      document.body.classList.toggle('bare');
+    }
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- CORE: tokenizer, shunting yard, tree (no DOM) ----
+  const GROUP = { '+': 'add', '−': 'add', '×': 'mul', '÷': 'mul', '^': 'pow' };
+  const RULESETS = {
+    School:     { add: { rank: 1, lean: 'L' }, mul: { rank: 2, lean: 'L' }, pow: { rank: 3, lean: 'R' } },
+    Calculator: { add: { rank: 1, lean: 'L' }, mul: { rank: 1, lean: 'L' }, pow: { rank: 1, lean: 'L' } },
+    APL:        { add: { rank: 1, lean: 'R' }, mul: { rank: 1, lean: 'R' }, pow: { rank: 1, lean: 'R' } },
+    Backwards:  { add: { rank: 3, lean: 'L' }, mul: { rank: 2, lean: 'L' }, pow: { rank: 1, lean: 'L' } },
+  };
+  const OPS = { '+': '+', '-': '−', '−': '−', '–': '−', '*': '×', '×': '×', '/': '÷', '÷': '÷', '^': '^' };
+  const MAX_TOKENS = 40;
+
+  function tokenize(src) {
+    const tokens = [];
+    let i = 0, wantValue = true;
+    const push = (t) => { t.i = tokens.length; tokens.push(t); };
+    while (i < src.length) {
+      const c = src[i];
+      if (/\s/.test(c)) { i++; continue; }
+      const num = /^(\d+\.?\d*|\.\d+)/.exec(src.slice(i));
+      if (num) {
+        if (!wantValue) return { error: `Two values in a row near "${num[0]}": put an operator between them.` };
+        push({ k: 'num', s: num[0], v: parseFloat(num[0]) });
+        i += num[0].length; wantValue = false; continue;
+      }
+      if (c === '(') {
+        if (!wantValue) return { error: 'Put an operator before that "(": there is no implied ×.' };
+        push({ k: 'open', s: '(' }); i++; continue;
+      }
+      if (c === ')') {
+        if (wantValue) return { error: 'A ")" needs a value in front of it.' };
+        push({ k: 'close', s: ')' }); i++; continue;
+      }
+      if (OPS[c]) {
+        const op = OPS[c];
+        if (wantValue) {
+          if (op === '−') push({ k: 'neg', s: 'neg' });
+          else if (op !== '+') return { error: `"${op}" needs a value on its left.` };
+        } else {
+          push({ k: 'op', s: op }); wantValue = true;
+        }
+        i++; continue;
+      }
+      return { error: `I can't read "${c}". Numbers, + − × ÷ ^ and brackets only.` };
+    }
+    if (!tokens.length) return { error: 'Type an expression.' };
+    if (wantValue) return { error: 'The line ends on an operator with nothing to act on.' };
+    if (tokens.length > MAX_TOKENS) return { error: `That's ${tokens.length} cars. The yard holds ${MAX_TOKENS}.` };
+    return { tokens };
+  }
+
+  // Prefix minus binds just under ^ when ^ is strictly strongest, tightest of all otherwise.
+  function rankOf(tok, rules) {
+    if (tok.k === 'neg') {
+      const { add, mul, pow } = rules;
+      const top = Math.max(add.rank, mul.rank);
+      return pow.rank > top ? pow.rank - 0.5 : Math.max(top, pow.rank) + 0.5;
+    }
+    return rules[GROUP[tok.s]].rank;
+  }
+  const leanOf = (tok, rules) => rules[GROUP[tok.s]].lean;
+
+  function shunt(tokens, rules) {
+    const moves = [], rpn = [], stack = [];
+    let depth = 0;
+    const top = () => tokens[stack[stack.length - 1]];
+    const pushTo = (i, why, decide) => {
+      stack.push(i); depth = Math.max(depth, stack.length);
+      moves.push({ t: 'push', i, why, decide: !!decide });
+    };
+    const popOut = (why, decide) => {
+      const i = stack.pop(); rpn.push(i);
+      moves.push({ t: 'pop', i, why, decide: !!decide });
+    };
+    for (const tok of tokens) {
+      if (tok.k === 'num') {
+        rpn.push(tok.i);
+        moves.push({ t: 'through', i: tok.i, why: `A number never waits. ${tok.s} goes straight through.` });
+      } else if (tok.k === 'neg') {
+        pushTo(tok.i, 'A prefix minus has nothing behind it to settle yet, so it just waits.');
+      } else if (tok.k === 'open') {
+        pushTo(tok.i, 'A ( backs into the siding and walls off everything behind it.');
+      } else if (tok.k === 'op') {
+        const r = rankOf(tok, rules), lean = leanOf(tok, rules);
+        for (;;) {
+          const t = top();
+          if (!t) { pushTo(tok.i, `The siding is clear, so ${tok.s} waits there.`); break; }
+          if (t.k === 'open') { pushTo(tok.i, `The ( is a wall. ${tok.s} waits in front of it.`); break; }
+          const tr = rankOf(t, rules);
+          if (tr > r) popOut(`${t.s} outranks ${tok.s}, so ${t.s} has to leave first.`, true);
+          else if (tr === r && lean === 'L') popOut(`${t.s} and ${tok.s} tie and ${tok.s} leans left, so the older car leaves first.`, true);
+          else if (tr === r) { pushTo(tok.i, `${t.s} and ${tok.s} tie and ${tok.s} leans right, so the newcomer waits on top.`, true); break; }
+          else { pushTo(tok.i, `${tok.s} outranks ${t.s}, so it waits on top of it.`, true); break; }
+        }
+      } else if (tok.k === 'close') {
+        while (top() && top().k !== 'open') popOut(`The ) clears everything down to its (. ${top().s} leaves.`);
+        if (!top()) {
+          moves.push({ t: 'error', i: tok.i, why: 'This ) cleared the whole siding and never found its (.' });
+          return { moves, rpn, depth, err: 'A ) with no ( to meet.' };
+        }
+        moves.push({ t: 'cancel', a: stack.pop(), b: tok.i, why: 'The brackets meet and are lifted off the track. They never reach the output.' });
+      }
+    }
+    while (stack.length) {
+      if (top().k === 'open') {
+        moves.push({ t: 'error', i: stack[stack.length - 1], why: 'The input ran out with a ( still in the siding. Its ) never came.' });
+        return { moves, rpn, depth, err: 'A ( with no ) to meet.' };
+      }
+      popOut(`The input is finished, so the siding drains, newest first. ${top().s} leaves.`);
+    }
+    return { moves, rpn, depth, err: null };
+  }
+
+  function applyOp(s, a, b) {
+    if (s === '+') return a + b;
+    if (s === '−') return a - b;
+    if (s === '×') return a * b;
+    if (s === '÷') return a / b;
+    return Math.pow(a, b);
+  }
+
+  function buildTree(tokens, rpn) {
+    const nodes = {}, st = [];
+    let maxH = 0;
+    for (const i of rpn) {
+      const tok = tokens[i];
+      let n;
+      if (tok.k === 'num') n = { i, tok, kids: [], h: 0, val: tok.v };
+      else if (tok.k === 'neg') {
+        const a = st.pop();
+        if (!a) break;
+        n = { i, tok, kids: [a], h: a.h + 1, val: -a.val };
+      } else {
+        const b = st.pop(), a = st.pop();
+        if (!a || !b) break;
+        n = { i, tok, kids: [a, b], h: Math.max(a.h, b.h) + 1, val: applyOp(tok.s, a.val, b.val) };
+      }
+      nodes[i] = n; st.push(n); maxH = Math.max(maxH, n.h);
+    }
+    return { nodes, roots: st, maxH };
+  }
+
+  function written(n, outer) {
+    if (n.tok.k === 'num') return n.tok.s;
+    if (n.tok.k === 'neg') return '−' + written(n.kids[0]);
+    const s = `${written(n.kids[0])} ${n.tok.s} ${written(n.kids[1])}`;
+    return outer ? s : `(${s})`;
+  }
+
+  function fmt(v) {
+    if (Number.isNaN(v)) return 'undefined';
+    if (!Number.isFinite(v)) return v < 0 ? '−∞' : '∞';
+    const a = Math.abs(v);
+    const s = (a !== 0 && (a >= 1e10 || a < 1e-5)) ? v.toExponential(3) : String(parseFloat(v.toPrecision(9)));
+    return s.replace('-', '−');
+  }
+  // ---- END CORE ----
+
+  // ---- The yard ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const stage = $('stage'), cv = $('c'), ctx = cv.getContext('2d');
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const COL = { num: '#7c7cff', op: '#ff7cc3', neg: '#ff7cc3', open: '#ffc97c', close: '#ffc97c' };
+    const SAMPLES = [
+      ['Textbook', '3 + 4 × 2 ÷ (1 − 5) ^ 2 ^ 3'],
+      ['2 + 3 × 4', '2 + 3 × 4'],
+      ['Leans left', '10 − 4 − 3'],
+      ['Leans right', '2 ^ 3 ^ 2'],
+      ['Deep siding', '1 + 2 × 3 ^ (4 − 5 ÷ (6 − 1))'],
+      ['Prefix minus', '−2 ^ 2 + −3'],
+      ['Broken', '(1 + 2) × (3 + 4'],
+    ];
+
+    let W = 0, H = 0, L = {};
+    let rules = JSON.parse(JSON.stringify(RULESETS.School));
+    let speed = 1;
+    const S = {
+      tokens: [], plan: { moves: [], rpn: [], depth: 0, err: null }, tree: { nodes: {}, roots: [], maxH: 0 },
+      cars: [], inQ: [], stack: [], outQ: [], idx: 0, playing: false, done: false, thought: false,
+      await: false, drive: false, missed: false, right: 0, calls: 0, hot: [], route: null, nextAt: 0,
+      emitted: [], hover: null, sparks: [], shakeAt: -1e9,
+    };
+    const dur = () => 560 / speed;
+
+    function say(text, bad) { const p = $('say'); p.textContent = text; p.classList.toggle('bad', !!bad); }
+
+    // -- geometry --
+    function arc(cx, cy, r, a0, a1) {
+      const pts = [];
+      for (let k = 0; k <= 14; k++) { const a = a0 + (a1 - a0) * k / 14; pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }); }
+      return pts;
+    }
+    function layout() {
+      const box = stage.getBoundingClientRect();
+      W = box.width; H = box.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = Math.max(S.tokens.length, 1), depth = Math.max(S.plan.depth, 4);
+      // Long trains may run off the edge: the ground row and postfix strip still show all of it.
+      const p = clamp(Math.floor((W * 0.5 - 30) / n), W < 500 ? 22 : 27, 42);
+      const R = Math.max(30, p * 1.2), xJ = Math.round(W * 0.5);
+      const yM = Math.round(clamp(H * 0.42, 170, 380));
+      const yBuf = Math.max(14, yM - R - p * (depth + 1.2));
+      const sp = Math.min(p, (yM - R - yBuf - 4) / Math.max(S.plan.depth, 1));
+      const ro = $('readout').offsetHeight;
+      const treeTop = yM + p * 0.5 + 18, ground = H - ro - 30;
+      const colW = Math.min(50, (W - 28) / n), x0 = (W - colW * n) / 2 + colW / 2;
+      const dy = Math.min(52, (ground - treeTop - 12) / Math.max(S.tree.maxH, 1));
+      const nodeR = clamp(Math.min(colW * 0.47, dy * 0.44), 8, 16);
+      const curveIn = arc(xJ + R, yM - R, R, Math.PI / 2, Math.PI);
+      const curveOut = arc(xJ - R, yM - R, R, 0, Math.PI / 2);
+      L = { p, R, xJ, yM, yBuf, sp, treeTop, ground, colW, x0, dy, nodeR, curveIn, curveOut };
+      L.main = [{ x: -20, y: yM }, { x: W + 20, y: yM }];
+      L.siding = [{ x: xJ, y: yM - R }, { x: xJ, y: yBuf - 4 }];
+      $('choice').style.top = `${yM + p * 0.5 + 8}px`;
+    }
+    const inPose = (q) => ({ x: L.xJ + L.R + L.p * (q + 0.6), y: L.yM, a: 0 });
+    const outPose = (q) => ({ x: L.xJ - L.R - L.p * (q + 0.6), y: L.yM, a: 0 });
+    const sidPose = (i) => ({ x: L.xJ, y: L.yBuf + L.sp * (i + 0.5), a: Math.PI / 2 });
+    const colX = (i) => L.x0 + i * L.colW;
+    const nodeTargetY = (n) => L.ground - n.h * L.dy;
+
+    function targets() {
+      S.inQ.forEach((c, q) => { c.to = inPose(q); });
+      S.stack.forEach((c, i) => { c.to = sidPose(i); });
+      S.outQ.forEach((c, j) => { c.to = outPose(S.outQ.length - 1 - j); });
+    }
+    function snap() {
+      targets();
+      for (const c of S.cars) if (c.to) { c.x = c.to.x; c.y = c.to.y; c.a = c.to.a; }
+    }
+
+    function tween(car, pts, done) {
+      const cum = [0];
+      for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y));
+      car.tw = { pts, cum, total: cum[cum.length - 1] || 1, t0: performance.now(), d: dur(), done };
+    }
+    function runTween(car, now, force) {
+      const tw = car.tw;
+      let u = force ? 1 : clamp((now - tw.t0) / tw.d, 0, 1);
+      const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+      const d = e * tw.total;
+      let k = 1;
+      while (k < tw.pts.length - 1 && tw.cum[k] < d) k++;
+      const a = tw.pts[k - 1], b = tw.pts[k], seg = (tw.cum[k] - tw.cum[k - 1]) || 1, f = clamp((d - tw.cum[k - 1]) / seg, 0, 1);
+      car.x = a.x + (b.x - a.x) * f; car.y = a.y + (b.y - a.y) * f;
+      car.a = Math.atan2(b.y - a.y, b.x - a.x);
+      if (u >= 1) {
+        car.tw = null; S.route = null; S.hot = [];
+        if (tw.done) tw.done();
+      }
+    }
+    const busy = () => S.cars.some((c) => c.tw);
+    function flush() { for (const c of S.cars) if (c.tw) runTween(c, 0, true); }
+
+    function reveal(i, instant) {
+      const n = S.tree.nodes[i];
+      if (!n) return;
+      n.born = instant ? -1e9 : performance.now();
+      if (n.y === undefined) n.y = nodeTargetY(n);
+      S.emitted.push(S.tokens[i].s);
+      $('rpn').textContent = S.emitted.join(' ');
+    }
+
+    // -- one move of the yard --
+    function apply(m, animate) {
+      say(m.why, m.t === 'error');
+      if (m.t === 'through') {
+        const c = S.inQ.shift();
+        S.outQ.push(c); targets();
+        const done = () => reveal(m.i, !animate);
+        if (animate) { S.route = 'through'; S.hot = [c]; tween(c, [{ x: c.x, y: c.y }, c.to], done); } else done();
+      } else if (m.t === 'push') {
+        const c = S.inQ.shift();
+        S.stack.push(c); targets();
+        if (animate) {
+          S.route = 'push'; S.hot = [c];
+          tween(c, [{ x: c.x, y: c.y }, ...L.curveIn, c.to]);
+        }
+      } else if (m.t === 'pop') {
+        const c = S.stack.pop();
+        S.outQ.push(c); targets();
+        const done = () => reveal(m.i, !animate);
+        if (animate) {
+          S.route = 'pop'; S.hot = [c];
+          tween(c, [{ x: c.x, y: c.y }, ...L.curveOut, c.to], done);
+        } else done();
+      } else if (m.t === 'cancel') {
+        const open = S.stack.pop(), close = S.inQ[0];
+        const done = () => {
+          S.inQ.shift(); open.gone = close.gone = true; targets();
+          if (animate) burst(close.x - L.p * 0.5, close.y);
+        };
+        if (animate) {
+          S.route = 'push'; S.hot = [open, close];
+          const meet = { x: close.x - L.p * 0.9, y: L.yM };
+          tween(open, [{ x: open.x, y: open.y }, ...L.curveIn.slice().reverse(), meet], done);
+        } else done();
+      } else if (m.t === 'error') {
+        const c = S.cars[m.i];
+        c.bad = true; S.shakeAt = performance.now();
+      }
+    }
+
+    function burst(x, y) {
+      for (let k = 0; k < 16; k++) {
+        const a = Math.random() * Math.PI * 2, v = 30 + Math.random() * 70;
+        S.sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t0: performance.now(), life: 400 + Math.random() * 300 });
+      }
+    }
+
+    function finish(quiet) {
+      S.done = true; S.playing = false; S.await = false;
+      $('choice').hidden = true;
+      const { err } = S.plan;
+      if (err) {
+        $('answer').textContent = 'stuck';
+        $('paren').textContent = err;
+      } else {
+        const root = S.tree.roots[0];
+        $('answer').textContent = fmt(root.val);
+        $('paren').textContent = `${written(root, true)} = ${fmt(root.val)}`;
+        if (!quiet) {
+          const left = S.outQ.length, all = S.tokens.length;
+          say(left === all
+            ? 'Done. Every car reached the output, and the order alone now carries the meaning.'
+            : `Done. ${left} of ${all} cars reached the output, with no brackets left. The order alone now carries the meaning.`);
+        }
+      }
+      stats(); buttons();
+    }
+    function stats() {
+      let s = `deepest siding ${S.plan.depth} · ${S.plan.moves.length} moves`;
+      if (S.drive) s += ` · right first time ${S.right}/${S.calls}`;
+      $('stats').textContent = s;
+    }
+    function buttons() {
+      $('play').textContent = S.playing ? 'Pause' : (S.done ? 'Run again' : 'Play');
+      $('drive').classList.toggle('on', S.drive);
+    }
+
+    function next(now) {
+      if (S.idx >= S.plan.moves.length) { finish(); return; }
+      const m = S.plan.moves[S.idx];
+      if (m.decide && !S.thought) {
+        S.thought = true;
+        const head = S.inQ[0], top = S.stack[S.stack.length - 1];
+        S.hot = [head, top];
+        if (S.drive) {
+          S.await = true; $('choice').hidden = false;
+          say(`${head.tok.s} at the points, ${top.tok.s} at the mouth of the siding. Who goes next?`);
+          return;
+        }
+        say(m.why);
+        S.nextAt = now + dur() * 0.6;
+        return;
+      }
+      S.thought = false;
+      apply(m, true);
+      S.idx++;
+      S.nextAt = now + dur() + 90 / speed;
+      if (S.idx >= S.plan.moves.length && m.t === 'error') S.nextAt = now + 30;
+    }
+
+    function choose(kind) {
+      if (!S.await) return;
+      const m = S.plan.moves[S.idx];
+      const want = m.t === 'push' ? 'wait' : 'pull';
+      if (kind !== want) {
+        S.missed = true; S.shakeAt = performance.now();
+        say(`Not that way. ${m.why}`, true);
+        return;
+      }
+      S.calls++; if (!S.missed) S.right++;
+      S.missed = false; S.await = false; S.thought = false;
+      $('choice').hidden = true;
+      apply(m, true); S.idx++;
+      S.nextAt = performance.now() + dur() + 90 / speed;
+      stats();
+    }
+
+    // -- loading an expression --
+    function reset(tokens, plan, keepY) {
+      const old = S.tree.nodes;
+      S.tokens = tokens; S.plan = plan; S.tree = buildTree(tokens, plan.rpn);
+      S.cars = tokens.map((tok) => ({ tok, x: 0, y: 0, a: 0, tw: null, to: null, gone: false, bad: false }));
+      S.inQ = S.cars.slice(); S.stack = []; S.outQ = [];
+      S.idx = 0; S.done = false; S.thought = false; S.await = false; S.missed = false;
+      S.right = 0; S.calls = 0; S.hot = []; S.route = null; S.emitted = []; S.hover = null; S.sparks = [];
+      if (keepY) for (const k in S.tree.nodes) if (old[k] && old[k].y !== undefined) S.tree.nodes[k].y = old[k].y;
+      $('choice').hidden = true;
+      $('rpn').textContent = ''; $('paren').textContent = ''; $('answer').textContent = '…';
+      layout(); snap(); stats();
+      say('Numbers run straight through. Operators wait here until something weaker arrives.');
+    }
+    function jumpToEnd(quiet) {
+      flush();
+      S.thought = false; S.await = false;
+      while (S.idx < S.plan.moves.length) { apply(S.plan.moves[S.idx], false); S.idx++; }
+      snap();
+      finish(quiet);
+    }
+    function load(opts = {}) {
+      const res = tokenize($('expr').value);
+      $('err').textContent = res.error || '';
+      if (res.error) return false;
+      const wasDone = S.done;
+      reset(res.tokens, shunt(res.tokens, rules), opts.keep && wasDone);
+      if (opts.keep && wasDone) {
+        jumpToEnd(true);
+        say('Same line, new rules. The columns stay put and the tree regrows.');
+      } else {
+        S.playing = opts.play !== false; S.nextAt = performance.now() + 500;
+      }
+      buttons();
+      return true;
+    }
+
+    // -- drawing --
+    function polyline(pts) {
+      ctx.beginPath();
+      pts.forEach((q, k) => (k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+    }
+    function drawTrack(pts, hot) {
+      const g = L.p * 0.26, step = 13;
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = hot ? 'rgba(255,124,195,0.32)' : 'rgba(255,255,255,0.09)';
+      ctx.lineWidth = 2;
+      let carry = 0;
+      const left = [], right = [];
+      for (let k = 1; k < pts.length; k++) {
+        const a = pts[k - 1], b = pts[k], len = Math.hypot(b.x - a.x, b.y - a.y);
+        if (!len) continue;
+        const nx = -(b.y - a.y) / len, ny = (b.x - a.x) / len;
+        if (k === 1) { left.push({ x: a.x + nx * g, y: a.y + ny * g }); right.push({ x: a.x - nx * g, y: a.y - ny * g }); }
+        left.push({ x: b.x + nx * g, y: b.y + ny * g }); right.push({ x: b.x - nx * g, y: b.y - ny * g });
+        let d = step - carry;
+        ctx.beginPath();
+        while (d < len) {
+          const x = a.x + (b.x - a.x) * d / len, y = a.y + (b.y - a.y) * d / len;
+          ctx.moveTo(x + nx * g * 1.5, y + ny * g * 1.5); ctx.lineTo(x - nx * g * 1.5, y - ny * g * 1.5);
+          d += step;
+        }
+        ctx.stroke();
+        carry = (carry + len) % step;
+      }
+      ctx.lineWidth = hot ? 1.7 : 1.2;
+      ctx.strokeStyle = hot ? '#ff7cc3' : 'rgba(190,190,225,0.42)';
+      polyline(left); ctx.stroke();
+      polyline(right); ctx.stroke();
+    }
+    function drawYard() {
+      const r = S.route;
+      const through = r === 'through', push = r === 'push', pop = r === 'pop';
+      drawTrack(L.main, false);
+      if (through) drawTrack([{ x: L.xJ + L.R + L.p, y: L.yM }, { x: L.xJ - L.R - L.p, y: L.yM }], true);
+      drawTrack(L.curveIn, push);
+      drawTrack(L.curveOut, pop);
+      drawTrack(L.siding, push || pop);
+      // buffer stop at the dead end
+      ctx.strokeStyle = '#ffc97c'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(L.xJ - L.p * 0.45, L.yBuf - 5); ctx.lineTo(L.xJ + L.p * 0.45, L.yBuf - 5); ctx.stroke();
+      ctx.fillStyle = 'rgba(200,200,225,0.46)';
+      ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'right'; ctx.fillText('INPUT', W - 12, L.yM + L.p * 0.5 + 15);
+      ctx.textAlign = 'left'; ctx.fillText('OUTPUT', 12, L.yM + L.p * 0.5 + 15);
+      ctx.fillText('SIDING', L.xJ + L.p * 0.62, L.yBuf + 6);
+    }
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+    function drawCar(c, now) {
+      const hot = S.hot.includes(c);
+      const inSiding = S.stack.includes(c) && !c.tw;
+      const len = inSiding ? Math.min(L.p - 5, L.sp - 2) : L.p - 5;
+      const wid = Math.min(L.p - 5, 34);
+      const col = c.bad ? '#ff6b6b' : COL[c.tok.k];
+      const age = now - S.shakeAt;
+      const shake = ((hot || c.bad) && age < 380) ? Math.sin(age / 22) * 3.5 * (1 - age / 380) : 0;
+      ctx.save();
+      ctx.translate(c.x + shake, c.y);
+      ctx.save();
+      ctx.rotate(c.a);
+      if (hot) { ctx.shadowColor = col; ctx.shadowBlur = 16; }
+      rr(-len / 2, -wid / 2, len, wid, Math.min(7, len / 3));
+      ctx.fillStyle = '#14141f'; ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = hot ? 0.34 : 0.16; ctx.fillStyle = col; ctx.fill();
+      ctx.globalAlpha = 1; ctx.strokeStyle = col; ctx.lineWidth = hot ? 1.8 : 1.1; ctx.stroke();
+      ctx.restore();
+      let size = Math.min(L.p * 0.5, 17, len * 0.72);
+      const family = 'ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.font = `600 ${size}px ${family}`;
+      const tw = ctx.measureText(c.tok.s).width, room = Math.max(len, wid) - 6;
+      if (tw > room) { size *= room / tw; ctx.font = `600 ${size}px ${family}`; }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f4f4fb';
+      ctx.fillText(c.tok.s, 0, 0.5);
+      ctx.restore();
+    }
+    function hoverSet() {
+      if (!S.hover) return null;
+      const set = new Set();
+      (function walk(n) { set.add(n.i); n.kids.forEach(walk); })(S.hover);
+      return set;
+    }
+    function drawTree(now, dt) {
+      const family = 'ui-monospace, SFMono-Regular, Menlo, monospace';
+      const sel = hoverSet();
+      const gsize = clamp(L.colW * 0.56, 11, 18);
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(14, L.ground + 16); ctx.lineTo(W - 14, L.ground + 16); ctx.stroke();
+
+      const nodes = Object.values(S.tree.nodes).filter((n) => n.born !== undefined);
+      const k = 1 - Math.exp(-dt / 110);
+      for (const n of nodes) n.y += (nodeTargetY(n) - n.y) * k;
+
+      // the typed line is the ground: every token keeps its own column
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      S.tokens.forEach((tok, i) => {
+        const n = S.tree.nodes[i];
+        const lit = n && n.born !== undefined;
+        const inSel = !sel || sel.has(i);
+        if (tok.k === 'num') return;
+        ctx.font = `500 ${gsize}px ${family}`;
+        ctx.globalAlpha = (lit ? 0.3 : 0.62) * (inSel ? 1 : 0.5);
+        ctx.fillStyle = COL[tok.k];
+        ctx.fillText(tok.k === 'neg' ? '−' : tok.s, colX(i), L.ground);
+      });
+      ctx.globalAlpha = 1;
+      for (const n of Object.values(S.tree.nodes)) {
+        if (n.tok.k === 'num' && n.born === undefined) {
+          ctx.font = `500 ${gsize}px ${family}`; ctx.globalAlpha = 0.62; ctx.fillStyle = COL.num;
+          ctx.fillText(n.tok.s, colX(n.i), L.ground);
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // tethers and branches
+      for (const n of nodes) {
+        const t = clamp((now - n.born) / 340, 0, 1);
+        const dim = sel && !sel.has(n.i) ? 0.2 : 1, x = colX(n.i);
+        if (n.h > 0) {
+          ctx.globalAlpha = 0.16 * t * dim; ctx.strokeStyle = '#ff7cc3'; ctx.lineWidth = 1;
+          ctx.setLineDash([2, 4]);
+          ctx.beginPath(); ctx.moveTo(x, n.y + L.nodeR); ctx.lineTo(x, L.ground - gsize * 0.7); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        for (const kid of n.kids) {
+          const kx = colX(kid.i);
+          ctx.globalAlpha = t * dim * 0.85;
+          ctx.strokeStyle = sel && sel.has(n.i) ? '#ff9fd4' : 'rgba(172,152,255,0.8)';
+          ctx.lineWidth = sel && sel.has(n.i) ? 2 : 1.4;
+          ctx.beginPath(); ctx.moveTo(x, n.y);
+          ctx.quadraticCurveTo(kx, n.y, kx, kid.y - (kid.h ? 0 : gsize * 0.6));
+          ctx.stroke();
+        }
+      }
+      // nodes
+      for (const n of nodes) {
+        const t = clamp((now - n.born) / 300, 0, 1);
+        const pop = 1 + 0.35 * Math.sin(t * Math.PI);
+        const dim = sel && !sel.has(n.i) ? 0.25 : 1, x = colX(n.i), col = COL[n.tok.k];
+        ctx.globalAlpha = t * dim;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        if (n.h === 0) {
+          ctx.font = `600 ${gsize * Math.min(pop, 1.2)}px ${family}`;
+          ctx.fillStyle = '#d6d6ff';
+          const tw = ctx.measureText(n.tok.s).width;
+          if (tw > L.colW * 1.02) ctx.font = `600 ${gsize * L.colW * 1.02 / tw}px ${family}`;
+          ctx.fillText(n.tok.s, x, n.y);
+        } else {
+          const r = L.nodeR * pop;
+          ctx.beginPath(); ctx.arc(x, n.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = '#17121f'; ctx.fill();
+          ctx.strokeStyle = col; ctx.lineWidth = S.hover === n ? 2.4 : 1.3; ctx.stroke();
+          ctx.fillStyle = '#ffe3f2';
+          ctx.font = `600 ${n.tok.k === 'neg' ? L.nodeR * 0.72 : L.nodeR * 1.05}px ${family}`;
+          ctx.fillText(n.tok.s, x, n.y + 0.5);
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      if (sel) {
+        const cols = [...sel];
+        const a = colX(Math.min(...cols)) - L.colW * 0.4, b = colX(Math.max(...cols)) + L.colW * 0.4;
+        ctx.strokeStyle = '#ff7cc3'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(a, L.ground + 16); ctx.lineTo(b, L.ground + 16); ctx.stroke();
+      }
+    }
+    function drawSparks(now) {
+      S.sparks = S.sparks.filter((s) => now - s.t0 < s.life);
+      for (const s of S.sparks) {
+        const t = (now - s.t0) / s.life, d = (now - s.t0) / 1000;
+        ctx.globalAlpha = 1 - t; ctx.fillStyle = '#ffc97c';
+        ctx.beginPath(); ctx.arc(s.x + s.vx * d, s.y + s.vy * d, 2 * (1 - t) + 0.5, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(now - last, 60); last = now;
+      if (S.playing && !S.await && !busy() && now >= S.nextAt) next(now);
+      targets();
+      const k = 1 - Math.exp(-dt / 80);
+      for (const c of S.cars) {
+        if (c.tw) runTween(c, now);
+        else if (c.to && !c.gone) { c.x += (c.to.x - c.x) * k; c.y += (c.to.y - c.y) * k; c.a = c.to.a; }
+      }
+      ctx.clearRect(0, 0, W, H);
+      drawYard();
+      drawTree(now, dt);
+      if (S.hot.length === 2 && !S.hot[0].gone && S.thought) {
+        ctx.strokeStyle = 'rgba(255,124,195,0.65)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(S.hot[0].x, S.hot[0].y); ctx.lineTo(S.hot[1].x, S.hot[1].y); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      for (const c of S.cars) if (!c.gone) drawCar(c, now);
+      drawSparks(now);
+      requestAnimationFrame(frame);
+    }
+
+    // -- controls --
+    function rulesUI() {
+      const match = Object.keys(RULESETS).find((k) => JSON.stringify(RULESETS[k]) === JSON.stringify(rules));
+      [...$('rulesets').children].forEach((b) => b.classList.toggle('on', b.textContent === match));
+      const t = $('ruletable');
+      t.textContent = '';
+      for (const [g, label] of [['add', '+ −'], ['mul', '× ÷'], ['pow', '^']]) {
+        const ops = document.createElement('span');
+        ops.className = 'ops'; ops.textContent = label;
+        const rank = document.createElement('div');
+        rank.className = 'rank';
+        for (const v of [1, 2, 3]) {
+          const b = document.createElement('button');
+          b.textContent = v; b.setAttribute('aria-label', `${label} rank ${v}`);
+          b.classList.toggle('on', rules[g].rank === v);
+          b.addEventListener('click', () => { rules[g].rank = v; rulesChanged(); });
+          rank.appendChild(b);
+        }
+        const lean = document.createElement('button');
+        lean.className = 'lean';
+        lean.textContent = rules[g].lean === 'L' ? '← leans left' : 'leans right →';
+        lean.addEventListener('click', () => { rules[g].lean = rules[g].lean === 'L' ? 'R' : 'L'; rulesChanged(); });
+        t.append(ops, rank, lean);
+      }
+    }
+    function rulesChanged() { rulesUI(); load({ keep: true }); }
+
+    for (const [name, text] of SAMPLES) {
+      const b = document.createElement('button');
+      b.className = 'chip'; b.textContent = name;
+      b.addEventListener('click', () => { $('expr').value = text; load(); });
+      $('samples').appendChild(b);
+    }
+    for (const name of Object.keys(RULESETS)) {
+      const b = document.createElement('button');
+      b.className = 'chip'; b.textContent = name;
+      b.addEventListener('click', () => { rules = JSON.parse(JSON.stringify(RULESETS[name])); rulesChanged(); });
+      $('rulesets').appendChild(b);
+    }
+
+    let typing = 0;
+    $('expr').addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => load(), 380); });
+    function togglePlay() {
+      if (S.done) { load(); return; }
+      S.playing = !S.playing;
+      S.nextAt = performance.now();
+      buttons();
+    }
+    function step() {
+      if (S.await) return;
+      if (S.done) { load({ play: false }); return; }
+      S.playing = false; buttons();
+      flush();
+      next(performance.now());
+    }
+    $('play').addEventListener('click', togglePlay);
+    $('step').addEventListener('click', step);
+    $('end').addEventListener('click', () => { if (!S.done) jumpToEnd(); });
+    $('speed').addEventListener('input', (e) => { speed = parseFloat(e.target.value); });
+    $('drive').addEventListener('click', () => { S.drive = !S.drive; load(); });
+    $('goWait').addEventListener('click', () => choose('wait'));
+    $('goPull').addEventListener('click', () => choose('pull'));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target.closest && e.target.closest('input, button')) return;
+      if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+      if (e.key === 'ArrowRight') step();
+      if (e.key === 'ArrowUp') { e.preventDefault(); choose('wait'); }
+      if (e.key === 'ArrowLeft') choose('pull');
+    });
+
+    function pick(e) {
+      const box = cv.getBoundingClientRect(), x = e.clientX - box.left, y = e.clientY - box.top;
+      let best = null, bd = Math.max(L.nodeR + 8, 18);
+      for (const n of Object.values(S.tree.nodes)) {
+        if (n.born === undefined) continue;
+        const d = Math.hypot(colX(n.i) - x, n.y - y);
+        if (d < bd) { bd = d; best = n; }
+      }
+      if (best === S.hover) return;
+      S.hover = best;
+      cv.style.cursor = best ? 'pointer' : 'default';
+      if (best) {
+        $('readLbl').textContent = 'This branch';
+        $('paren').textContent = `${written(best, true)} = ${fmt(best.val)}`;
+      } else {
+        $('readLbl').textContent = 'Read as';
+        const root = S.tree.roots[0];
+        $('paren').textContent = S.done ? (S.plan.err || `${written(root, true)} = ${fmt(root.val)}`) : '';
+      }
+    }
+    cv.addEventListener('pointermove', pick);
+    cv.addEventListener('pointerdown', pick);
+    cv.addEventListener('pointerleave', () => pick({ clientX: -999, clientY: -999 }));
+
+    const refit = new ResizeObserver(() => { layout(); snap(); });
+    refit.observe(stage);
+    refit.observe($('readout'));
+
+    $('expr').value = SAMPLES[0][1];
+    rulesUI();
+    load();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) jumpToEnd();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
