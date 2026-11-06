@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-05",
+    "lastUpdated": "2026-11-06",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5259,7 +5259,7 @@
     {
       "id": "2026-11-05",
       "date": "2026-11-05",
-      "headline": true,
+      "headline": false,
       "topic": "Whether Burnham is talking about spending tens or hundreds of millions on slavery reparations",
       "claim": "Now he's talking about spending potentially tens if not hundreds of millions of your taxpayer pounds on foreign 'reparations' for the 500-year-old transatlantic slave trade.",
       "speaker": "Nigel Farage",
@@ -5320,6 +5320,70 @@
         {
           "title": "GOV.UK — UK funding for Montserrat port development",
           "url": "https://www.gov.uk/government/news/uk-provides-additional-funding-to-boost-port-development-in-montserrat"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-06",
+      "date": "2026-11-06",
+      "headline": true,
+      "topic": "Whether working-age welfare is a record £183bn, more than defence, schools and policing combined",
+      "claim": "This year, how much will the Government spend on working-age welfare? ... The answer is £183 billion. That is the highest figure ever. It is higher than anything during covid; it is higher than spending on defence, schools and policing combined. It is nearly £10,000 for every working household in this country.",
+      "speaker": "Alex Burghart",
+      "party": "Conservative",
+      "role": "Deputy Leader, Conservative Party; MP for Brentwood and Ongar",
+      "discussionScore": 60,
+      "discussionNote": "The opening exchange of Louise Haigh's first PMQs on Wednesday, standing in for Burnham. The £183bn figure led Spectator and video coverage after Haigh gave no number or date for cutting the bill.",
+      "score": 55,
+      "verdict": "Half True / Needs Context",
+      "explanation": "Burghart's £183bn matches the OBR's total welfare bill minus its \"pensioner spending\" line. The sum works, the label doesn't: the remainder includes £17.1bn of health and disability spending on pensioners and £13.7bn of Child Benefit. DWP's own working-age figure is £136.1bn, though that is narrower and GB-only. \"Highest ever\" and \"higher than anything during covid\" hold in cash and real terms on our calculation, but not as a share of GDP. The defence, schools and policing comparison works only against England-based budgets; on UK-wide Treasury figures those three exceed £183bn. \"Nearly £10,000\" is fair for his total if a working household means any household with someone in work. He is right that the bill is large and rising, but the headline number is inflated and one comparison fails like for like.",
+      "evidence": [
+        "OBR, October 2026: total welfare £352.7bn minus pensioner spending £169.8bn gives £182.9bn for 2026-27. That derivation is our inference; we found no published Conservative workings.",
+        "OBR's footnotes put Attendance Allowance under disability benefits, not pensioner spending. Its memo shows £17.1bn of health and disability spending on pensioners. Child Benefit is £13.7bn.",
+        "DWP Spring 2026 tables: £136.1bn directed at working age in 2026/27, against £186.8bn for pensioners and £6.1bn for children. Great Britain only.",
+        "Our calculation from DWP tables: non-pensioner GB welfare is £156bn in 2026/27, against £140bn in 2020/21 at 2026/27 prices, a real-terms record.",
+        "Same series as a share of GDP: 4.9% in 2026/27, against 5.4% in 2020/21 and 5.8% in 2009/10.",
+        "PESA 2025-26 outturn, UK: defence £65.4bn, primary and secondary education £94.6bn, police excluding immigration £26.8bn. That totals £186.8bn, before another year of growth.",
+        "Narrower budgets fit his line: £67bn core schools (England), up to £21bn policing (England and Wales) and £65.4bn defence total about £153bn.",
+        "ONS: 22.02m households, 59.7% working and 25.9% mixed. About 18.8m have someone in work, giving £9,700. On \"working\" alone, about 13.1m, it is £13,900."
+      ],
+      "confidence": "High on OBR, DWP and PESA figures; medium on how £183bn was derived, as that is inferred. No Full Fact check of this claim found.",
+      "sources": [
+        {
+          "title": "Hansard via TheyWorkForYou — PMQs, 4 November 2026",
+          "url": "https://www.theyworkforyou.com/debates/?id=2026-11-04a.903.8"
+        },
+        {
+          "title": "OBR — Economic and fiscal outlook, October 2026",
+          "url": "https://obr.uk/efo/economic-and-fiscal-outlook-october-2026/"
+        },
+        {
+          "title": "DWP — Benefit expenditure and caseload tables 2026",
+          "url": "https://www.gov.uk/government/publications/benefit-expenditure-and-caseload-tables-2026"
+        },
+        {
+          "title": "HM Treasury — Public Expenditure Statistical Analyses 2026",
+          "url": "https://assets.publishing.service.gov.uk/media/6a5771e2822fbe6b8245c99f/PESA_2026.pdf"
+        },
+        {
+          "title": "ONS — Working and workless households, April to June 2026",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/bulletins/workingandworklesshouseholds/apriltojune2026"
+        },
+        {
+          "title": "DfE — Schools' costs 2025 to 2029",
+          "url": "https://assets.publishing.service.gov.uk/media/69a5c57e46e50eda5c46b5b5/Schools_costs_technical_note_2025_to_2029_.pdf"
+        },
+        {
+          "title": "Police Professional — Final police funding settlement 2026/27",
+          "url": "https://policeprofessional.com/news/government-sets-out-final-police-funding-settlement-for-2026-27/"
+        },
+        {
+          "title": "Spectator — Louise Haigh shuns detail in first PMQs outing",
+          "url": "https://spectator.com/article/louise-haigh-shuns-detail-in-first-pmqs-outing/"
+        },
+        {
+          "title": "PA via AOL — What does the UK spend on welfare?",
+          "url": "https://www.aol.co.uk/articles/does-uk-spend-welfare-much-124450000.html"
         }
       ]
     }
