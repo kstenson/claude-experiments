@@ -1,0 +1,133 @@
+{
+  "date": "2026-11-06",
+  "score": 41,
+  "label": "Rattled and uneasy",
+  "emoji": "🌥️",
+  "summary": "A global tech rout set the tone. The S&P 500 fell 4.4% on Thursday, its worst day since April 2025, and the Nasdaq dropped 5.5% into correction on fears Democrats will curb AI data centres. Japan's Nikkei entered a bear market and Seoul's Kospi tripped circuit breakers. Brent neared $100 as ship attacks continued and Trump warned the US may have to 'destroy' the rest of Iran, though Tehran sent a nuclear proposal via Qatar. Trump said a Russia-Ukraine deal was close, but the two traded strikes and the Komyshuvakha toll reached 43. Paraguay's Congress refused President Peña's resignation after a bank collapse stranded about 3 million customers. France saw mass cost-of-living protests, and Macao jailed a former lawmaker. Fiji edged toward a drought emergency. California's governor moved to commute all 548 death sentences, and astronauts finished the ISS solar upgrade. The weighted formula gave 41; no editorial adjustment.",
+  "dimensions": {
+    "conflict": 30,
+    "economy": 33,
+    "climate": 42,
+    "humanInterest": 45,
+    "techProgress": 66
+  },
+  "regions": {
+    "northAmerica": 46,
+    "southAmerica": 40,
+    "europe": 37,
+    "africa": 35,
+    "middleEast": 26,
+    "asia": 32,
+    "oceania": 45
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Trump: US may have to 'destroy' rest of Iran; 'you'll know soon enough'",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/11/6/iran-war-live-trump-warns-us-may-have-to-destroy-rest-of-iran",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Russia and Ukraine exchange airstrikes as U.S. envoy describes renewed security talks as productive",
+      "source": "NBC News",
+      "url": "https://www.nbcnews.com/world/ukraine/russia-ukraine-exchange-airstrikes-us-envoy-describes-renewed-security-rcna607778",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Trump says Russia-Ukraine deal is near after meeting Putin's envoy",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/11/6/trump-met-russian-envoy-after-he-appeared-with-melania-trump-and-ukrainians",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "down",
+      "headline": "Sudan, Ethiopia shut each other's consulates in tit-for-tat move: Reports",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/11/4/sudan-ethiopia-order-tit-for-tat-diplomatic-expulsions",
+      "dimension": "conflict",
+      "region": "africa"
+    },
+    {
+      "direction": "down",
+      "headline": "Nasdaq sell-off batters Asian chip stocks as SK Hynix, Samsung, Softbank, TSMC tumble",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/11/06/tech-stocks-sk-hynix-samsung-softbank.html",
+      "dimension": "economy",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Dow sheds more than 1,800 points as midterm results spur investor exodus from tech and AI",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/stocks-midterm-elections-tech-companies-ai-data-centers/",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Paraguay Congress rejects President Pena's resignation after bank collapse",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/11/5/paraguay-president-pena-resigns-in-wake-of-bank-collapse",
+      "dimension": "economy",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Fiji PM Rabuka downplays El Niño impact: 'Are people dying? No. We can manage'",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/pacific/2355926/fiji-pm-rabuka-downplays-el-nino-impact-are-people-dying-no-we-can-manage",
+      "dimension": "climate",
+      "region": "oceania"
+    },
+    {
+      "direction": "up",
+      "headline": "Seabird Sees Miracle Recovery After Avian Flu Wiped Them Out",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/miracle-recovery-sees-seabirds-reclaim-former-colony-after-avian-flu-wiped-them-out/",
+      "dimension": "climate",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "California governor commutes sentences of more than 500 people on death row",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/11/6/california-governor-commutes-sentences-of-more-than-500-people-on-death-row",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Former pro-democracy lawmaker sentenced to 12 1/2 years in Macao's first national security case",
+      "source": "NBC News",
+      "url": "https://www.nbcnews.com/world/asia/former-democracy-lawmaker-sentenced-12-years-macao-national-security-rcna607796",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Spacewalkers install final add-on solar array, completing space station power upgrade",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/spacewalkers-install-final-solar-array-space-station-upgrade/",
+      "dimension": "techProgress"
+    }
+  ],
+  "sources_consulted": [
+    "Al Jazeera",
+    "NBC News",
+    "CBS News",
+    "ABC News",
+    "CNBC",
+    "Euronews",
+    "RNZ",
+    "Associated Press (via NBC and ABC)",
+    "Reuters (via RNZ)",
+    "ScienceDaily",
+    "Good News Network"
+  ]
+}
