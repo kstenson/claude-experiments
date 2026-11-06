@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leave It Even — Experiment 112</title>
+<meta name="description" content="Play Nim against a machine that cannot be beaten by luck, then turn on Bouton's 1901 trick and watch every pile split into powers of two." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.10), transparent 70%), #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* ---- Page: two panels on the left, the table on the right ---- */
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 24px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px 22px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 12px; }
+  .field > span { display: block; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 3px; }
+  .seg button {
+    background: transparent; border: 0; color: #b4b4c6; border-radius: 8px; padding: 8px 6px;
+    font: inherit; font-size: 0.82rem; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #fff; }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.28); color: #fff; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 0.84rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.38; cursor: default; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .trick {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: rgba(255,124,195,0.10); border: 1px solid rgba(255,124,195,0.4); color: #ffd9ee;
+    border-radius: 11px; padding: 11px 14px; font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .trick:hover { background: rgba(255,124,195,0.2); }
+  .trick i { flex: none; width: 34px; height: 20px; border-radius: 20px; background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease; }
+  .trick i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform 0.2s ease; }
+  .trick[aria-pressed="true"] i { background: #ff7cc3; }
+  .trick[aria-pressed="true"] i::after { transform: translateX(14px); }
+  .trick.nudge { animation: nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge { 50% { box-shadow: 0 0 0 5px rgba(255,124,195,0.22); } }
+
+  .tally { display: flex; justify-content: space-between; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .why { display: none; font-size: 0.82rem; line-height: 1.5; color: #c7c7d6; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .why ol { padding-left: 18px; display: grid; gap: 6px; }
+  body.xray .why { display: block; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Status line ---- */
+  .status { min-height: 76px; }
+  .status b { display: block; font-size: 1.22rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 4px; font-size: 0.9rem; line-height: 1.45; color: #b9b9ca; }
+  .status.good b { color: #a9a9ff; }
+  .status.bad b { color: #ff7cc3; }
+
+  /* ---- The table ---- */
+  .board { position: relative; width: 100%; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
+  .band {
+    position: absolute; left: 0; right: 0; border-radius: 9px;
+    background: rgba(124,124,255,0.07); border: 1px solid rgba(124,124,255,0.16);
+    opacity: 0; transition: opacity 0.35s ease, background 0.2s ease, border-color 0.2s ease;
+    pointer-events: none;
+  }
+  body.xray .band { opacity: 1; }
+  .band.odd { background: rgba(255,124,195,0.15); border-color: rgba(255,124,195,0.5); }
+  .band em {
+    position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+    font-style: normal; font-size: 0.72rem; color: #b5b5f5; white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .band.odd em { color: #ff9fd3; font-weight: 600; }
+
+  .block {
+    position: absolute; border-radius: 7px; border: 1px dashed rgba(255,255,255,0.07);
+    opacity: 0; transition: opacity 0.35s ease; pointer-events: none;
+  }
+  body.xray .block { opacity: 1; }
+
+  .floor { position: absolute; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.16); transition: left 0.4s ease, width 0.4s ease; }
+
+  .stone {
+    position: absolute; left: 0; top: 0;
+    border: 0; padding: 0; border-radius: 7px; cursor: pointer;
+    background: linear-gradient(180deg, #4d4d68, #33334a);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);
+    transition: transform 0.42s cubic-bezier(.3,.8,.3,1), opacity 0.32s ease, background 0.15s ease, width 0.3s ease;
+    animation: arrive 0.4s backwards;
+    animation-delay: var(--d, 0ms);
+  }
+  @keyframes arrive { from { opacity: 0; } }
+  body.xray .stone { background: linear-gradient(180deg, #8080f0, #5a5ac8); }
+  .stone.sel, body.xray .stone.sel { background: linear-gradient(180deg, #ff9fd3, #e05aa6); }
+  .stone.gone { opacity: 0; pointer-events: none; }
+  .board.locked .stone { cursor: default; }
+  .stone:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+  .plabel { position: absolute; text-align: center; font-size: 0.82rem; color: #c7c7d6; transition: left 0.4s ease, width 0.4s ease; }
+  .plabel small { display: block; margin-top: 2px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.74rem; letter-spacing: 0.06em; color: #9a9ab0; visibility: hidden; }
+  body.xray .plabel small { visibility: visible; }
+  .plabel.empty { color: #66667c; }
+
+  /* ---- Move log ---- */
+  .log { list-style: none; max-height: 132px; overflow-y: auto; font-size: 0.84rem; line-height: 1.5; color: #b9b9ca; }
+  .log li { padding: 2px 0; }
+  .log li:first-child { color: #e9e9f0; }
+  .log b { font-weight: 600; }
+  .log .m b { color: #ff9fd3; }
+  .log .y b { color: #a9a9ff; }
+  .log .bin { display: none; color: #9a9ab0; }
+  body.xray .log .bin { display: inline; }
+  .log .slip { color: #ff9fd3; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 860px) {
+    .page {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: none;
+      grid-template-areas: "head" "stage" "ctrl";
+      padding: 16px;
+      gap: 14px;
+    }
+    .panel { padding: 16px 18px; }
+    .lede { display: none; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stone, .band, .block, .plabel, .floor, .story, .story-card { transition: none; animation: none; }
+    .trick.nudge { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Leave It Even</h1>
+      <p class="sub">Experiment № 112 · November 6, 2026</p>
+      <p class="lede">Nim: on your turn, take as many stones as you like from one pile. You go first. The machine has never needed luck.</p>
+    </header>
+
+    <main class="stage">
+      <div class="status" id="status" aria-live="polite"><b></b><span></span></div>
+      <div class="board" id="board"></div>
+      <ol class="log" id="log" aria-label="Moves, newest first"></ol>
+    </main>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <button class="trick" id="trick" aria-pressed="false"><span>Show the trick</span><i></i></button>
+        <div class="row">
+          <button class="btn" id="deal">New deal</button>
+          <button class="btn" id="hint">Show me the move</button>
+        </div>
+        <button class="btn" id="undo" disabled>Take back my move</button>
+        <div class="field">
+          <span>The deal</span>
+          <div class="seg" id="dealMode">
+            <button data-v="fair" aria-pressed="true">Winnable</button>
+            <button data-v="rigged" aria-pressed="false">Rigged</button>
+          </div>
+        </div>
+        <div class="field">
+          <span>Last stone</span>
+          <div class="seg" id="ruleMode">
+            <button data-v="normal" aria-pressed="true">Wins</button>
+            <button data-v="misere" aria-pressed="false">Loses</button>
+          </div>
+        </div>
+        <p class="tally"><span>You <b id="tYou">0</b></span><span>Machine <b id="tBot">0</b></span></p>
+        <div class="why">
+          <ol>
+            <li>All even, and any move breaks it: changing one pile changes at least one size, so that count turns odd.</li>
+            <li>Anything odd, and one move mends it: find a pile holding the largest odd size and rebuild it. Dropping that block pays for the rest.</li>
+            <li>The empty table is all even. So whoever keeps leaving even takes the last stone.</li>
+          </ol>
+        </div>
+      </div>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 112 · The story</p>
+      <h2>Leave It Even</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Most of these pages ask you to watch. This one had to let you lose. Charles Bouton's 1901 paper in the Annals of Mathematics gave Nim its name and its complete solution, which makes it one of the first games anyone ever solved outright. It then became one of the first games a machine played in public: Edward Condon's Nimatron at the 1940 New York World's Fair, and Ferranti's Nimrod at the Festival of Britain in 1951. No. 071 here plays by searching a tree of replies. Nim needs no search at all, and I wanted to put that difference on a table where you could feel it.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment I like most is the switch. You play a few rounds against something that seems to see everything, then you press one button and the same stones slide apart into blocks of eight, four, two and one, and the opponent turns out to be counting. Its whole strategy is a single exclusive-or, shorter than any sentence on this page that describes it. I also like the Rigged deal, which is a position where the best thing you can do is lose slowly, and last-stone-loses, where Bouton's rule holds right up to the end and flips only when one big pile remains. Before publishing I checked the rule against a plain brute-force search of the game, in both versions, because a page that claims to be unbeatable ought to be.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A winning strategy doesn't have to be a plan. The machine never looks ahead. It keeps one property true after each of its moves, and the proof only needs three facts: the end state has the property, your opponent can't keep it, and you can always bring it back. That shape, an invariant you keep restoring, is how you reason about loops, locks and ledgers as well as games. And Nim turned out to be bigger than itself: in the 1930s Sprague and Grundy showed that every impartial game, however strange its rules, behaves like a Nim pile of some size.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- The rules: everything the machine knows ----
+  const nimSum = (ps) => ps.reduce((a, b) => a ^ b, 0);
+
+  // True when whoever must move now loses against perfect play.
+  function losing(ps, misere) {
+    if (misere && Math.max(...ps) <= 1) return ps.filter((n) => n === 1).length % 2 === 1;
+    return nimSum(ps) === 0;
+  }
+
+  // Every move { p, k } (pile p left holding k) that hands over a lost position.
+  function winningMoves(ps, misere) {
+    const out = [];
+    ps.forEach((n, p) => {
+      for (let k = 0; k < n; k++) {
+        const after = ps.slice();
+        after[p] = k;
+        if (losing(after, misere)) out.push({ p, k });
+      }
+    });
+    return out;
+  }
+  // ---- end of the rules ----
+
+  (() => {
+    const SIZES = [
+      { b: 8, start: 0, idx: 0 },
+      { b: 4, start: 8, idx: 1 },
+      { b: 2, start: 12, idx: 2 },
+      { b: 1, start: 14, idx: 3 },
+    ];
+    const GAP = 12, LABEL_H = 46, TOP = 6, GUTTER = 82;
+    const LETTERS = 'ABCDE';
+
+    const $ = (id) => document.getElementById(id);
+    const board = $('board'), statusEl = $('status'), logEl = $('log');
+    const trickBtn = $('trick'), undoBtn = $('undo'), hintBtn = $('hint');
+
+    let piles = [], stones = [], bands = [], blocks = [], labels = [], floors = [];
+    let turn = 'you';            // 'you' | 'bot' | 'over'
+    let xray = false, misere = false, rigged = false;
+    let preview = null;          // { p, k }: what a move would do, before it's made
+    let history = [];            // positions before each of your moves
+    let moves = [];              // the log, oldest first
+    let slip = null;             // your first move that gave away a won position
+    let outcome = null;          // 'you' | 'bot' once a game ends
+    let tally = { you: 0, bot: 0 };
+    let note = '';               // one-off line for the status
+    let timers = [];
+    let lastPointer = 'mouse';
+    let geo = { slot: 24, base: 0, colW: 0, stoneW: 0, gutter: 0 };
+
+    const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+    const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+    const rand = (n) => Math.floor(Math.random() * n);
+
+    function oddSizes(ps) {
+      const x = nimSum(ps);
+      return SIZES.filter((s) => x & s.b).map((s) => s.b + 's');
+    }
+    function joinAnd(list) {
+      if (list.length < 2) return list.join('');
+      return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
+    }
+    const isAre = (list) => (list.length === 1 ? 'is' : 'are');
+
+    // ---- Dealing ----
+    function drawPiles() {
+      for (let tries = 0; tries < 5000; tries++) {
+        const count = 3 + rand(3);
+        const ps = Array.from({ length: count }, () => 1 + rand(15));
+        const total = ps.reduce((a, b) => a + b, 0);
+        if (total < 14) continue;
+        if (rigged) {
+          if (new Set(ps).size === count && losing(ps, misere)) return ps;
+        } else if (!losing(ps, misere)) {
+          return ps;
+        }
+      }
+      return rigged ? [5, 6, 3] : [3, 5, 7];
+    }
+
+    function newDeal() {
+      clearTimers();
+      piles = drawPiles();
+      turn = 'you';
+      preview = null;
+      history = [];
+      moves = [];
+      slip = null;
+      outcome = null;
+      note = '';
+      build();
+      render();
+    }
+
+    // ---- Building the table ----
+    function build() {
+      board.textContent = '';
+      bands = SIZES.map((s) => {
+        const el = document.createElement('div');
+        el.className = 'band';
+        el.appendChild(document.createElement('em'));
+        board.appendChild(el);
+        return el;
+      });
+      blocks = piles.map(() => SIZES.map(() => {
+        const el = document.createElement('div');
+        el.className = 'block';
+        board.appendChild(el);
+        return el;
+      }));
+      floors = piles.map(() => {
+        const el = document.createElement('div');
+        el.className = 'floor';
+        board.appendChild(el);
+        return el;
+      });
+      labels = piles.map(() => {
+        const el = document.createElement('div');
+        el.className = 'plabel';
+        el.innerHTML = '<span></span><small></small>';
+        board.appendChild(el);
+        return el;
+      });
+      stones = piles.map((n, p) => Array.from({ length: n }, (_, i) => {
+        const el = document.createElement('button');
+        el.className = 'stone';
+        el.type = 'button';
+        el.dataset.p = p;
+        el.style.setProperty('--d', (p * 50 + i * 16) + 'ms');
+        board.appendChild(el);
+        return el;
+      }));
+    }
+
+    // Where stone i of a pile holding n sits: a plain stack, or, with the trick
+    // on, split into the blocks of n's binary expansion.
+    function place(i, n) {
+      if (!xray) return { slot: i, idx: 0 };
+      let seen = 0;
+      for (const s of SIZES) {
+        if (!(n & s.b)) continue;
+        if (i < seen + s.b) return { slot: s.start + (i - seen), idx: s.idx };
+        seen += s.b;
+      }
+      return { slot: 0, idx: 0 };
+    }
+
+    function measure() {
+      const W = board.clientWidth || 320;
+      const slot = Math.max(17, Math.min(26, Math.floor((window.innerHeight - 300) / 17)));
+      const H = TOP + 15 * slot + 3 * GAP + LABEL_H;
+      const gutter = xray ? GUTTER : 0;
+      const colW = (W - gutter) / piles.length;
+      geo = { slot, H, base: H - LABEL_H, colW, gutter, stoneW: Math.min(96, colW - 8) };
+      board.style.height = H + 'px';
+    }
+
+    const stoneX = (p) => p * geo.colW + (geo.colW - geo.stoneW) / 2;
+    const stoneY = (pos) => geo.base - (pos.slot + 1) * geo.slot - pos.idx * GAP;
+
+    function layout() {
+      measure();
+      SIZES.forEach((s, j) => {
+        const top = geo.base - (s.start + s.b) * geo.slot - s.idx * GAP - 4;
+        const height = s.b * geo.slot + 5;
+        bands[j].style.top = top + 'px';
+        bands[j].style.height = height + 'px';
+        blocks.forEach((row, p) => {
+          const el = row[j];
+          el.style.left = (stoneX(p) - 2) + 'px';
+          el.style.width = (geo.stoneW + 4) + 'px';
+          el.style.top = (top + 2) + 'px';
+          el.style.height = (height - 4) + 'px';
+        });
+      });
+      piles.forEach((n, p) => {
+        floors[p].style.left = stoneX(p) + 'px';
+        floors[p].style.width = geo.stoneW + 'px';
+        floors[p].style.top = (geo.base + 3) + 'px';
+        labels[p].style.left = (p * geo.colW) + 'px';
+        labels[p].style.width = geo.colW + 'px';
+        labels[p].style.top = (geo.base + 10) + 'px';
+        labels[p].classList.toggle('empty', n === 0);
+        labels[p].firstChild.textContent = LETTERS[p] + ' · ' + n;
+        labels[p].lastChild.textContent = n.toString(2).padStart(4, '0');
+        stones[p].forEach((el, i) => {
+          el.style.width = geo.stoneW + 'px';
+          el.style.height = (geo.slot - 3) + 'px';
+          el.style.transform = `translate(${stoneX(p)}px, ${stoneY(place(i, n))}px)`;
+          el.dataset.i = i;
+          el.setAttribute('aria-label', `Pile ${LETTERS[p]}: take ${n - i}, leaving ${i}`);
+        });
+      });
+    }
+
+    // ---- Words and colour ----
+    function shownPiles() {
+      if (!preview) return piles;
+      const ps = piles.slice();
+      ps[preview.p] = preview.k;
+      return ps;
+    }
+
+    function paintBands() {
+      const ps = shownPiles();
+      SIZES.forEach((s, j) => {
+        const count = ps.filter((n) => n & s.b).length;
+        const odd = count % 2 === 1;
+        bands[j].classList.toggle('odd', odd);
+        bands[j].firstChild.textContent = `${s.b}s ×${count} ${odd ? 'odd' : 'even'}`;
+      });
+      piles.forEach((n, p) => {
+        blocks[p].forEach((el, j) => { el.style.visibility = (n & SIZES[j].b) ? 'hidden' : 'visible'; });
+      });
+    }
+
+    function paintSelection() {
+      stones.forEach((row, p) => row.forEach((el, i) => {
+        el.classList.toggle('sel', !!preview && preview.p === p && i >= preview.k);
+      }));
+    }
+
+    function endgame(ps) {
+      return misere && ps.filter((n) => n > 1).length <= 1;
+    }
+
+    function readPosition(ps) {
+      const odd = oddSizes(ps);
+      if (endgame(ps)) {
+        return losing(ps, misere)
+          ? 'Only single stones, and an odd number of them. The last one falls to whoever moves now.'
+          : 'Last-stone-loses endgame. Forget the sizes: leave an odd number of single stones.';
+      }
+      if (!odd.length) return 'Every size is even, which is bad news for whoever moves now: any move breaks it.';
+      return `${joinAnd(odd)} ${isAre(odd)} odd. One move makes every size even again.`;
+    }
+
+    function readPreview() {
+      const ps = shownPiles();
+      const odd = oddSizes(ps);
+      if (losing(ps, misere)) {
+        return endgame(ps)
+          ? 'That leaves an odd number of single stones. The machine gets the last one.'
+          : 'That leaves every size even. The machine can only break it.';
+      }
+      if (odd.length) return `That leaves ${joinAnd(odd)} odd. The machine will mend it.`;
+      return 'Sizes are even, but this close to the end the singles decide, and that count is wrong.';
+    }
+
+    function setStatus(head, line, tone) {
+      statusEl.className = 'status' + (tone ? ' ' + tone : '');
+      statusEl.firstChild.textContent = head;
+      statusEl.lastChild.textContent = line;
+    }
+
+    function writeStatus() {
+      if (turn === 'over') {
+        const lastTaker = moves[moves.length - 1].who;
+        const how = misere
+          ? (lastTaker === 'you' ? 'You took the last stone, so you lose.' : 'The machine took the last stone, so you win.')
+          : (lastTaker === 'you' ? 'You took the last stone. You win.' : 'The machine took the last stone.');
+        let line;
+        if (outcome === 'you') {
+          line = 'You never let it back in. Every position you left, it could only break.';
+        } else if (slip) {
+          line = `Your slip: ${slip.said}. ${slip.better} would have held it.`;
+        } else {
+          line = 'This deal was lost before you touched it: the machine only had to answer.';
+        }
+        if (outcome === 'bot' && !xray) line += ' Turn on Show the trick to see what it was doing.';
+        setStatus(how, line, outcome === 'you' ? 'good' : 'bad');
+        return;
+      }
+      if (turn === 'bot') {
+        setStatus('The machine is moving…', xray ? readPosition(piles) : 'It never takes long.');
+        return;
+      }
+      if (preview) {
+        const c = piles[preview.p] - preview.k;
+        const head = `Take ${c} from ${LETTERS[preview.p]}, leaving ${preview.k}.`;
+        const mouse = lastPointer === 'mouse';
+        const line = xray ? readPreview() + (mouse ? '' : ' Tap the same stone again to take.')
+          : (mouse ? 'Click to take them.' : 'Tap the same stone again to take.');
+        setStatus(head, line);
+        return;
+      }
+      if (note) { setStatus('Your move.', note); return; }
+      if (xray) { setStatus('Your move.', readPosition(piles)); return; }
+      if (!moves.length) {
+        setStatus('Your move.', rigged
+          ? 'Pick a stone: it and everything above it go. This deal can\'t be won, and you\'re welcome to try.'
+          : 'Pick a stone: it and everything above it go. This deal can be won, and the machine needs one slip.');
+        return;
+      }
+      setStatus('Your move.', 'Pick a stone: it and everything above it go.');
+    }
+
+    function writeLog() {
+      logEl.textContent = '';
+      moves.slice().reverse().forEach((m) => {
+        const li = document.createElement('li');
+        li.className = m.who === 'you' ? 'y' : 'm';
+        const who = document.createElement('b');
+        who.textContent = m.who === 'you' ? 'You' : 'Machine';
+        li.appendChild(who);
+        li.appendChild(document.createTextNode(` took ${m.c} from ${m.letter}${m.stall ? ', with nothing good left to do' : ''} `));
+        const bin = document.createElement('span');
+        bin.className = 'bin';
+        bin.textContent = m.after;
+        li.appendChild(bin);
+        if (turn === 'over' && slip && slip.move === m) {
+          const s = document.createElement('span');
+          s.className = 'slip';
+          s.textContent = ' ← the slip';
+          li.appendChild(s);
+        }
+        logEl.appendChild(li);
+      });
+    }
+
+    function render() {
+      layout();
+      paintBands();
+      paintSelection();
+      writeStatus();
+      writeLog();
+      board.classList.toggle('locked', turn !== 'you');
+      undoBtn.disabled = !history.length || turn === 'bot';
+      hintBtn.disabled = turn !== 'you';
+      $('tYou').textContent = tally.you;
+      $('tBot').textContent = tally.bot;
+    }
+
+    // ---- Playing ----
+    function take(p, k, who, stall) {
+      const before = piles.slice();
+      const c = piles[p] - k;
+      const leaving = stones[p].splice(k);
+      leaving.forEach((el) => {
+        const t = el.style.transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\)/);
+        el.classList.remove('sel');
+        el.classList.add('gone');
+        if (t) el.style.transform = `translate(${t[1]}px, ${parseFloat(t[2]) - 40}px)`;
+        setTimeout(() => el.remove(), 420);
+      });
+      piles[p] = k;
+      preview = null;
+      note = '';
+
+      const odd = oddSizes(piles);
+      const move = {
+        who, c, stall, letter: LETTERS[p],
+        after: odd.length ? `→ ${joinAnd(odd)} odd` : '→ all even',
+      };
+      moves.push(move);
+
+      if (who === 'you' && !slip && !losing(before, misere) && !losing(piles, misere)) {
+        const best = winningMoves(before, misere)[0];
+        slip = {
+          move,
+          said: `taking ${c} from ${LETTERS[p]}`,
+          better: `Taking ${before[best.p] - best.k} from ${LETTERS[best.p]}`,
+        };
+      }
+
+      if (piles.every((n) => n === 0)) {
+        outcome = (who === 'you') !== misere ? 'you' : 'bot';
+        tally[outcome]++;
+        turn = 'over';
+        if (outcome === 'bot' && !xray) trickBtn.classList.add('nudge');
+      } else {
+        turn = who === 'you' ? 'bot' : 'you';
+      }
+      render();
+      if (turn === 'bot') later(machineMoves, 620);
+      if (turn === 'you' && lastPointer === 'key') focusFirstStone();
+    }
+
+    function machineMoves() {
+      const options = winningMoves(piles, misere);
+      let move, stall = false;
+      if (options.length) {
+        move = options[rand(options.length)];
+      } else {
+        // Lost against perfect play: shave the biggest pile and hope.
+        const p = piles.indexOf(Math.max(...piles));
+        move = { p, k: piles[p] - 1 };
+        stall = true;
+      }
+      stones[move.p].forEach((el, i) => el.classList.toggle('sel', i >= move.k));
+      later(() => take(move.p, move.k, 'bot', stall), 620);
+    }
+
+    function focusFirstStone() {
+      const row = stones.find((r) => r.length);
+      if (row) row[row.length - 1].focus();
+    }
+
+    function setPreview(next) {
+      if (turn !== 'you') return;
+      preview = next;
+      note = '';
+      paintBands();
+      paintSelection();
+      writeStatus();
+    }
+
+    const stoneOf = (e) => {
+      const el = e.target.closest ? e.target.closest('.stone') : null;
+      return el && !el.classList.contains('gone') ? { p: +el.dataset.p, k: +el.dataset.i } : null;
+    };
+
+    board.addEventListener('pointerdown', (e) => { lastPointer = e.pointerType || 'mouse'; });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab' || e.key === 'Enter' || e.key === ' ') lastPointer = 'key';
+    });
+    board.addEventListener('pointerover', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      lastPointer = 'mouse';
+      const hit = stoneOf(e);
+      if (hit) setPreview(hit);
+    });
+    board.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse' && preview) setPreview(null);
+    });
+    board.addEventListener('focusin', (e) => {
+      if (lastPointer !== 'key') return;
+      const hit = stoneOf(e);
+      if (hit) setPreview(hit);
+    });
+    board.addEventListener('click', (e) => {
+      if (turn !== 'you') return;
+      const hit = stoneOf(e);
+      if (!hit) { if (preview) setPreview(null); return; }
+      const touch = lastPointer === 'touch' || lastPointer === 'pen';
+      if (touch && !(preview && preview.p === hit.p && preview.k === hit.k)) {
+        setPreview(hit);   // a finger gets a look first: stones are small, moves are final
+        return;
+      }
+      history.push({
+        piles: piles.slice(), moves: moves.slice(), slip,
+      });
+      take(hit.p, hit.k, 'you', false);
+    });
+
+    undoBtn.addEventListener('click', () => {
+      const snap = history.pop();
+      if (!snap || turn === 'bot') return;
+      clearTimers();
+      if (outcome) { tally[outcome]--; outcome = null; }
+      piles = snap.piles;
+      moves = snap.moves;
+      slip = snap.slip;
+      turn = 'you';
+      preview = null;
+      note = '';
+      build();
+      render();
+    });
+
+    hintBtn.addEventListener('click', () => {
+      if (turn !== 'you') return;
+      const options = winningMoves(piles, misere);
+      if (options.length) {
+        setPreview(options[0]);
+      } else {
+        preview = null;
+        paintBands();
+        paintSelection();
+        note = 'There isn\'t one. Whatever you take, the machine has an answer. Take a little and make it work.';
+        writeStatus();
+      }
+    });
+
+    function setTrick(on) {
+      xray = on;
+      document.body.classList.toggle('xray', on);
+      trickBtn.setAttribute('aria-pressed', String(on));
+      trickBtn.classList.remove('nudge');
+      render();
+    }
+    trickBtn.addEventListener('click', () => setTrick(!xray));
+    $('deal').addEventListener('click', newDeal);
+
+    function segment(id, onChange) {
+      const root = $(id);
+      root.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn || btn.getAttribute('aria-pressed') === 'true') return;
+        root.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+        onChange(btn.dataset.v);
+        newDeal();
+      });
+    }
+    segment('dealMode', (v) => { rigged = v === 'rigged'; });
+    segment('ruleMode', (v) => { misere = v === 'misere'; });
+
+    window.addEventListener('resize', layout);
+    if (window.ResizeObserver) new ResizeObserver(() => layout()).observe(board);
+
+    newDeal();
+  })();
+</script>
+</body>
+</html>
