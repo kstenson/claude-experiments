@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Without Multiplying — Experiment 113</title>
+<meta name="description" content="Volder's 1956 CORDIC: sine, cosine, angle and length from a table of turns, using nothing but shifts and adds. Drag the target, or steer the needle yourself." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.10), transparent 70%), #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  /* ---- Page: two panels on the left, the machine on the right ---- */
+  .page {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  /* The story button — prominent on purpose, every page has one */
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 3px; }
+  .seg button {
+    background: transparent; border: 0; color: #b4b4c6; border-radius: 8px; padding: 8px 6px;
+    font: inherit; font-size: 0.8rem; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover { color: #fff; }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.28); color: #fff; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 0.84rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.38; cursor: default; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .toggle {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: rgba(255,124,195,0.10); border: 1px solid rgba(255,124,195,0.4); color: #ffd9ee;
+    border-radius: 11px; padding: 10px 14px; font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease; text-align: left;
+  }
+  .toggle:hover { background: rgba(255,124,195,0.2); }
+  .toggle i { flex: none; width: 34px; height: 20px; border-radius: 20px; background: rgba(255,255,255,0.14); position: relative; transition: background 0.2s ease; }
+  .toggle i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform 0.2s ease; }
+  .toggle[aria-pressed="true"] i { background: #ff7cc3; }
+  .toggle[aria-pressed="true"] i::after { transform: translateX(14px); }
+  .toggle.nudge { animation: nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge { 50% { box-shadow: 0 0 0 5px rgba(255,124,195,0.22); } }
+
+  /* ---- Status line ---- */
+  .status { min-height: 84px; }
+  .status b { display: block; font-size: 1.16rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 4px; font-size: 0.88rem; line-height: 1.45; color: #b9b9ca; }
+  .status.good b { color: #a9a9ff; }
+  .status.bad b { color: #ff7cc3; }
+
+  /* ---- Dial and machine ---- */
+  .bench { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; }
+  .dialbox { padding: 8px; display: flex; align-items: center; justify-content: center; }
+  #dial { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: none; cursor: grab; border-radius: 10px; }
+  #dial:active { cursor: grabbing; }
+  #dial:focus-visible, .chip:focus-visible, button:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+  .machine { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+  .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.86rem; line-height: 1.6; color: #d7d7ff; margin-top: 6px; }
+  .code .z { color: #ff9fd3; }
+  .regs { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.74rem; line-height: 1.55; color: #9a9ab0; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 8px; margin-top: 8px; overflow: hidden; }
+  .regs div { display: flex; gap: 8px; white-space: nowrap; }
+  .regs u { text-decoration: none; flex: none; width: 3.6em; color: #7c7cff; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+  th { font-weight: 400; color: #9a9ab0; text-align: right; font-size: 0.7rem; padding: 2px 0 4px 6px; }
+  th:first-child, td:first-child { text-align: left; padding-left: 0; }
+  td { text-align: right; padding: 3px 0 3px 6px; border-top: 1px solid rgba(255,255,255,0.07); }
+  td:first-child { color: #9a9ab0; }
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; margin-top: 10px; font-size: 0.8rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tally b.zero { color: #a9a9ff; }
+
+  .lensbox { padding: 12px 14px; }
+  .lensbox .cap { display: flex; justify-content: space-between; gap: 10px; }
+  .lensbox .cap b { font-weight: 500; letter-spacing: 0.02em; text-transform: none; color: #c7c7d6; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #lens { display: block; width: 100%; height: 74px; margin-top: 8px; }
+
+  .steer { display: grid; grid-template-columns: 1fr 1fr 0.8fr 0.8fr; gap: 8px; }
+  .steer .btn { padding: 12px 6px; }
+  .steer .turn { font-weight: 600; font-size: 0.92rem; }
+
+  .rom { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 5px; margin-top: 8px; }
+  .chip {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 8px;
+    padding: 5px 6px; font: inherit; color: #9a9ab0; text-align: left; cursor: pointer; min-width: 0;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .chip small { display: flex; justify-content: space-between; font-size: 0.66rem; }
+  .chip span { display: block; font-size: 0.72rem; font-variant-numeric: tabular-nums; color: #c7c7d6; white-space: nowrap; overflow: hidden; }
+  .chip.done { background: rgba(124,124,255,0.13); border-color: rgba(124,124,255,0.3); }
+  .chip.skip { background: rgba(255,124,195,0.10); border-color: rgba(255,124,195,0.35); }
+  .chip.now { border-color: #ff7cc3; box-shadow: 0 0 0 1px #ff7cc3; }
+  .chip:disabled { cursor: default; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 1040px) {
+    .bench { grid-template-columns: minmax(0, 1fr); }
+    .dialbox { max-width: 520px; width: 100%; margin: 0 auto; }
+  }
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .steer { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .toggle.nudge { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Without Multiplying</h1>
+      <p class="sub">Experiment № 113 · November 7, 2026</p>
+      <p class="lede">Volder's CORDIC, 1956. To turn a needle you normally need sines, cosines and multiplication. This one has a short table of turns, and pushes the tip sideways by a shifted copy of itself.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div class="field">
+          <span>The question</span>
+          <div class="seg" id="mode" role="group" aria-label="What the machine computes">
+            <button data-v="rotate" aria-pressed="true">Sine &amp; cosine</button>
+            <button data-v="vector" aria-pressed="false">Angle &amp; length</button>
+          </div>
+        </div>
+        <label class="field">
+          <span><em id="angleName" style="font-style:normal">Target angle</em><b id="angleOut"></b></span>
+          <input type="range" id="angle" min="-180" max="180" step="0.5" value="57" />
+        </label>
+        <label class="field">
+          <span>Turns in the table<b id="turnsOut"></b></span>
+          <input type="range" id="turns" min="4" max="24" step="1" value="16" />
+        </label>
+        <button class="toggle" id="short" aria-pressed="false">Start short<i></i></button>
+        <button class="toggle" id="steerOn" aria-pressed="false">You steer<i></i></button>
+        <div class="row" id="autoRow">
+          <button class="btn" id="run">▶ Run</button>
+          <button class="btn" id="step">Next turn</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="stage">
+      <div class="panel status" id="status" aria-live="polite"><b id="statusHead"></b><span id="statusBody"></span></div>
+
+      <div class="bench">
+        <div class="panel dialbox">
+          <canvas id="dial" tabindex="0" role="slider" aria-label="Target direction. Drag, or use the arrow keys." aria-valuemin="-180" aria-valuemax="180" aria-valuenow="57"></canvas>
+        </div>
+        <div class="machine">
+          <div class="panel">
+            <div class="cap" id="codeCap">The whole machine</div>
+            <div class="code" id="code"></div>
+            <div class="regs" id="regs"></div>
+          </div>
+          <div class="panel">
+            <div class="cap">The answer so far</div>
+            <table>
+              <thead><tr><th></th><th>machine</th><th>true</th><th>off by</th></tr></thead>
+              <tbody id="answers"></tbody>
+            </table>
+            <div class="tally">
+              <span>bits right <b id="bits"></b></span>
+              <span>shifts <b id="shifts"></b></span>
+              <span>adds <b id="adds"></b></span>
+              <span>multiplies <b id="muls"></b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="steer" id="steerRow" hidden>
+        <button class="btn turn" id="ccw">↺ Left</button>
+        <button class="btn turn" id="cw">↻ Right</button>
+        <button class="btn" id="skip">Skip it</button>
+        <button class="btn" id="undo">Undo</button>
+      </div>
+
+      <div class="panel lensbox">
+        <div class="cap"><span>Up close: the target stays inside what's left</span><b id="lensOut"></b></div>
+        <canvas id="lens" aria-hidden="true"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="cap">The table: each turn has a tangent of 1 / 2ⁱ</div>
+        <div class="rom" id="rom"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 113 · The story</p>
+      <h2>Without Multiplying</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I write Math.sin as if it were free, the way you flick a light switch without thinking about the power station. So I wanted to look behind one. Jack Volder needed trigonometry for the navigation computer of a bomber in 1956, on hardware where a multiplier was expensive and slow, and his answer sat underneath pocket calculators for decades. It still gets built into chips today. After a run of games and graphs, I liked the idea of a piece about something so humble it has disappeared.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment the trick stops being a trick. Rotating properly needs a cosine and a sine, which are the very things you're trying to compute. Volder throws the cosine away and keeps the tangent, then chooses only angles whose tangent is one half, one quarter, one eighth. Now a turn is just "push the tip sideways by a shifted copy of itself". Watch the trail: it's straight, at right angles to the needle, and that's why the needle gets longer.</p>
+      <p>That looks like a defect, and I love that it isn't. Each stretch depends only on the size of the turn, never on its direction, so as long as no turn is skipped the total is the same for every angle: 1.6468. Press Skip while steering and you'll break that. Keep every turn, and the error is known before you start, so you begin short by exactly that much and land on the circle.</p>
+
+      <h3>Something you might take away</h3>
+      <p>A fault you can't remove may still be one you can make constant, and a constant fault can be paid for in advance. It's also a good picture of how to search with fixed moves: each one is small enough that the rest can always undo it, so you never need to stop and think, you only need to know which side you're on. The second mode is the same loop with one line changed, steering y to zero instead of z, and it gives you an arctangent and a square root for nothing.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- The machine ----
+  // Real fixed-point CORDIC on 32-bit integers, with 28 fractional bits. The table is
+  // built with Math.atan once at start-up, standing in for a ROM burned at the factory.
+  // After that, turn() and quarter() use only shifts, adds and swaps. Everywhere else
+  // Math.* is the display and the "true" column, never the machine.
+  const CORDIC = (() => {
+    const ONE = 268435456;              // 2^28
+    const MAX_TURNS = 24;
+    const TABLE = [];                   // atan(2^-i) in radians, as an integer
+    const STRETCH = [1];                // STRETCH[n]: total growth after n turns
+    for (let i = 0; i < MAX_TURNS; i++) {
+      const t = Math.pow(2, -i);
+      TABLE.push(Math.round(Math.atan(t) * ONE));
+      STRETCH.push(STRETCH[i] * Math.sqrt(1 + t * t));
+    }
+    const QUARTER = Math.round((Math.PI / 2) * ONE);
+
+    function turn(s, i, d) {
+      const dx = s.y >> i, dy = s.x >> i;
+      if (d > 0) return { x: s.x - dx, y: s.y + dy, z: s.z - TABLE[i] };
+      if (d < 0) return { x: s.x + dx, y: s.y - dy, z: s.z + TABLE[i] };
+      return s;
+    }
+    const quarter = (s, d) => (d > 0
+      ? { x: -s.y, y: s.x, z: s.z - QUARTER }
+      : { x: s.y, y: -s.x, z: s.z + QUARTER });
+
+    // The only line that differs between the two questions.
+    const decide = (mode, s) => (mode === 'rotate' ? (s.z >= 0 ? 1 : -1) : (s.y >= 0 ? -1 : 1));
+
+    // A quarter turn is a swap and a sign, so it costs nothing and gets past the
+    // 99.9 degrees the table can reach on its own.
+    function needsQuarter(mode, s) {
+      if (mode === 'rotate') return Math.abs(s.z) > QUARTER ? (s.z > 0 ? 1 : -1) : 0;
+      return s.x < 0 ? (s.y >= 0 ? -1 : 1) : 0;
+    }
+
+    function start(mode, deg, r, n, short) {
+      const rad = deg * Math.PI / 180;
+      if (mode === 'rotate') {
+        return { x: short ? Math.round(ONE / STRETCH[n]) : ONE, y: 0, z: Math.round(rad * ONE) };
+      }
+      return { x: Math.round(r * Math.cos(rad) * ONE), y: Math.round(r * Math.sin(rad) * ONE), z: 0 };
+    }
+
+    // Returns every state from the start. With `choices`, stops where they run out.
+    function trace(mode, s0, n, choices) {
+      const states = [{ s: s0, kind: 'start' }];
+      let s = s0;
+      const q = needsQuarter(mode, s);
+      if (q) { s = quarter(s, q); states.push({ s, kind: 'quarter', d: q }); }
+      for (let i = 0; i < n; i++) {
+        const d = choices ? choices[i] : decide(mode, s);
+        if (d === undefined) break;
+        s = turn(s, i, d);
+        states.push({ s, kind: 'turn', i, d });
+      }
+      return { states, pre: q ? 1 : 0 };
+    }
+    return { ONE, TABLE, STRETCH, MAX_TURNS, turn, quarter, decide, start, trace };
+  })();
+  window.CORDIC = CORDIC;
+
+  // ---- The page ----
+  (() => {
+    const { ONE, TABLE, STRETCH } = CORDIC;
+    const $ = (id) => document.getElementById(id);
+    const dial = $('dial'), lens = $('lens');
+    const dctx = dial.getContext('2d'), lctx = lens.getContext('2d');
+    const DEG = 180 / Math.PI;
+    const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const tableDeg = TABLE.map((t) => t / ONE * DEG);
+
+    let mode = 'rotate';
+    let theta = 57;      // target direction, or the point's direction when vectoring
+    let radius = 0.8;    // the point's length when vectoring
+    let n = 16;
+    let short = false;
+    let steering = false;
+    let choices = [];
+    let states = [], pre = 0;
+    let k = 0, goal = 0; // shown position along states; may be fractional mid-animation
+    let raf = 0, lastT = 0;
+    let shortTried = false;
+
+    const wrap = (a) => { a %= 360; if (a > 180) a -= 360; if (a <= -180) a += 360; return a; };
+    const total = () => pre + n;
+    const finished = () => states.length - 1 === total() && k >= total();
+    const goalAngle = () => (mode === 'rotate' ? theta : 0);
+    const angleOf = (s) => Math.atan2(s.y, s.x) * DEG;
+
+    function fmtDeg(a) {
+      const v = Math.abs(a);
+      if (v >= 10) return a.toFixed(2) + '°';
+      if (v >= 0.01) return a.toFixed(3) + '°';
+      return a.toPrecision(3) + '°';
+    }
+    const fmtNum = (v) => v.toFixed(6);
+    const fmtErr = (e) => (e === 0 ? '0' : Math.abs(e) >= 0.001 ? e.toFixed(4) : e.toExponential(1));
+    const bitString = (v) => {
+      const b = (v >>> 12).toString(2).padStart(20, '0');
+      return b.slice(0, 4) + '.' + b.slice(4);
+    };
+
+    // Sum of the turns from index i on: how far the needle can still travel.
+    function reach(i) {
+      let sum = 0;
+      for (let j = i; j < n; j++) sum += tableDeg[j];
+      return sum;
+    }
+    // Which table entry comes after state number idx.
+    const turnIndexAt = (idx) => Math.max(0, idx - pre);
+
+    function rebuild() {
+      const s0 = CORDIC.start(mode, theta, radius, n, short);
+      const t = CORDIC.trace(mode, s0, n, steering ? choices : null);
+      states = t.states;
+      pre = t.pre;
+    }
+
+    function settle() {           // show the finished answer straight away
+      rebuild();
+      if (steering) { choices = []; rebuild(); k = 0; goal = states.length - 1; animate(); return; }
+      stop();
+      k = goal = states.length - 1;
+      draw();
+    }
+
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
+    function animate() {
+      if (calm) { k = goal; draw(); return; }
+      if (raf) return;
+      lastT = 0;
+      raf = requestAnimationFrame(tick);
+    }
+    function tick(t) {
+      const dt = lastT ? Math.min(t - lastT, 60) : 16;
+      lastT = t;
+      const dur = steering ? 260 : Math.max(230, 640 - 42 * Math.floor(k));
+      k = Math.min(goal, k + dt / dur);
+      draw();
+      raf = k < goal ? requestAnimationFrame(tick) : 0;
+    }
+
+    // ---- Where the needle is at fractional position k ----
+    function tipAt(pos) {
+      const f = Math.min(Math.floor(pos), states.length - 1);
+      const a = states[f].s;
+      if (f === states.length - 1) return { x: a.x / ONE, y: a.y / ONE };
+      const t0 = pos - f, t = t0 * t0 * (3 - 2 * t0);
+      const next = states[f + 1], b = next.s;
+      if (next.kind === 'quarter') {            // a swap has no path; show it as a sweep
+        const r = Math.hypot(a.x, a.y) / ONE, ang = Math.atan2(a.y, a.x) + next.d * t * Math.PI / 2;
+        return { x: r * Math.cos(ang), y: r * Math.sin(ang) };
+      }
+      return { x: (a.x + (b.x - a.x) * t) / ONE, y: (a.y + (b.y - a.y) * t) / ONE };
+    }
+    function reachAt(pos) {       // eased between states, on a log scale
+      const f = Math.floor(pos), t = pos - f, floor = tableDeg[n - 1];
+      const r0 = reach(turnIndexAt(f)) + floor;
+      const r1 = reach(turnIndexAt(Math.min(f + 1, total()))) + floor;
+      return Math.exp(Math.log(r0) * (1 - t) + Math.log(r1) * t);
+    }
+
+    // ---- The dial ----
+    function fit(c) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = c.clientWidth, h = c.clientHeight;
+      if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
+        c.width = Math.round(w * dpr);
+        c.height = Math.round(h * dpr);
+      }
+      c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { w, h };
+    }
+    const dialGeom = () => {
+      const S = dial.clientWidth;
+      return { c: S / 2, U: S / 2 / 1.9 };
+    };
+
+    function drawDial() {
+      const { w, h } = fit(dial);
+      if (!w) return;
+      const { c, U } = dialGeom();
+      const g = dctx;
+      const X = (x) => c + x * U, Y = (y) => c - y * U;
+      g.clearRect(0, 0, w, h);
+      const gain = STRETCH[n];
+      const tip = tipAt(k);
+      const needle = Math.atan2(tip.y, tip.x);
+      const left = reachAt(k) / DEG;
+
+      // What the remaining turns can still reach
+      if (!finished()) {
+        g.beginPath();
+        g.moveTo(c, c);
+        if (left >= Math.PI) g.arc(c, c, 1.76 * U, 0, Math.PI * 2);
+        else g.arc(c, c, 1.76 * U, -needle - left, -needle + left);
+        g.closePath();
+        g.fillStyle = 'rgba(124,124,255,0.11)';
+        g.fill();
+      }
+
+      // Axes and rings
+      g.strokeStyle = 'rgba(255,255,255,0.08)';
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(X(-1.8), c); g.lineTo(X(1.8), c);
+      g.moveTo(c, Y(-1.8)); g.lineTo(c, Y(1.8));
+      g.stroke();
+      const ring = (r, style, dash) => {
+        g.beginPath();
+        g.setLineDash(dash || []);
+        g.strokeStyle = style;
+        g.arc(c, c, r * U, 0, Math.PI * 2);
+        g.stroke();
+        g.setLineDash([]);
+      };
+      ring(1, 'rgba(255,255,255,0.3)');
+      ring(gain, 'rgba(124,124,255,0.3)', [3, 5]);
+      if (short && mode === 'rotate') ring(1 / gain, 'rgba(255,124,195,0.3)', [3, 5]);
+      g.font = '11px ui-sans-serif, system-ui, sans-serif';
+      g.textAlign = 'left';
+      g.fillStyle = 'rgba(255,255,255,0.45)';
+      g.fillText('1', X(1) + 4, c + 13);
+      g.fillStyle = 'rgba(160,160,255,0.75)';
+      g.fillText(gain.toFixed(3), X(gain) - 34, c + 13 + 13);
+
+      // The target
+      g.lineCap = 'round';
+      if (mode === 'rotate') {
+        const a = theta / DEG, hx = 1.74 * Math.cos(a), hy = 1.74 * Math.sin(a);
+        g.strokeStyle = 'rgba(255,124,195,0.75)';
+        g.lineWidth = 1.5;
+        g.setLineDash([5, 5]);
+        g.beginPath(); g.moveTo(c, c); g.lineTo(X(hx), Y(hy)); g.stroke();
+        g.setLineDash([]);
+        g.fillStyle = '#ff7cc3';
+        g.beginPath(); g.arc(X(hx), Y(hy), 7, 0, Math.PI * 2); g.fill();
+      } else {
+        g.strokeStyle = 'rgba(255,124,195,0.75)';
+        g.lineWidth = 1.5;
+        g.setLineDash([5, 5]);
+        g.beginPath(); g.moveTo(c, c); g.lineTo(X(1.8), c); g.stroke();
+        g.setLineDash([]);
+        const px = states[0].s.x / ONE, py = states[0].s.y / ONE;
+        g.strokeStyle = '#ff7cc3';
+        g.lineWidth = 2;
+        g.beginPath(); g.arc(X(px), Y(py), 7, 0, Math.PI * 2); g.stroke();
+      }
+
+      // The trail: straight pushes, each at right angles to the needle
+      g.strokeStyle = 'rgba(179,136,255,0.9)';
+      g.lineWidth = 1.5;
+      g.lineJoin = 'round';
+      g.beginPath();
+      const f = Math.min(Math.floor(k), states.length - 1);
+      for (let j = 0; j <= f; j++) {
+        const p = states[j].s;
+        if (j === 0) g.moveTo(X(p.x / ONE), Y(p.y / ONE));
+        else if (states[j].kind === 'quarter') g.moveTo(X(p.x / ONE), Y(p.y / ONE));
+        else g.lineTo(X(p.x / ONE), Y(p.y / ONE));
+      }
+      const nextKind = states[f + 1] && states[f + 1].kind;
+      if (nextKind !== 'quarter') g.lineTo(X(tip.x), Y(tip.y));
+      g.stroke();
+      g.fillStyle = 'rgba(200,180,255,0.9)';
+      for (let j = 0; j <= f; j++) {
+        const p = states[j].s;
+        g.beginPath(); g.arc(X(p.x / ONE), Y(p.y / ONE), 2, 0, Math.PI * 2); g.fill();
+      }
+
+      // Cosine and sine, read off the axes
+      if (mode === 'rotate' && finished()) {
+        g.strokeStyle = 'rgba(255,255,255,0.32)';
+        g.lineWidth = 1;
+        g.setLineDash([2, 4]);
+        g.beginPath();
+        g.moveTo(X(tip.x), Y(tip.y)); g.lineTo(X(tip.x), c);
+        g.moveTo(X(tip.x), Y(tip.y)); g.lineTo(c, Y(tip.y));
+        g.stroke();
+        g.setLineDash([]);
+        g.fillStyle = 'rgba(255,255,255,0.6)';
+        g.textAlign = 'center';
+        g.fillText('x', X(tip.x), c + (tip.y >= 0 ? 14 : -7));
+        g.fillText('y', c + (tip.x >= 0 ? -9 : 9), Y(tip.y) + 4);
+      }
+
+      // The needle
+      g.strokeStyle = '#a9a9ff';
+      g.lineWidth = 3;
+      g.beginPath(); g.moveTo(c, c); g.lineTo(X(tip.x), Y(tip.y)); g.stroke();
+      g.fillStyle = '#fff';
+      g.beginPath(); g.arc(X(tip.x), Y(tip.y), 4, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#7c7cff';
+      g.beginPath(); g.arc(c, c, 4, 0, Math.PI * 2); g.fill();
+    }
+
+    // ---- The lens: same needle, zoomed so the remaining reach always fits ----
+    function drawLens() {
+      const { w, h } = fit(lens);
+      if (!w) return;
+      const g = lctx;
+      g.clearRect(0, 0, w, h);
+      const tip = tipAt(k);
+      const err = wrap(Math.atan2(tip.y, tip.x) * DEG - goalAngle());
+      const R = reachAt(k);
+      const span = Math.min(R * 3.2, 400);    // degrees across the window
+      const X = (a) => w / 2 + a / span * w;
+      const mid = h / 2;
+
+      g.fillStyle = 'rgba(124,124,255,0.16)';
+      const l = Math.max(0, X(err - R)), r = Math.min(w, X(err + R));
+      if (r > l) { g.beginPath(); g.roundRect(l, 10, r - l, h - 20, 6); g.fill(); }
+
+      g.strokeStyle = 'rgba(255,255,255,0.14)';
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(0, mid); g.lineTo(w, mid); g.stroke();
+
+      const f = Math.min(Math.floor(k), states.length - 1);
+      g.fillStyle = 'rgba(200,180,255,0.45)';
+      for (let j = 0; j < f; j++) {
+        const e = wrap(angleOf(states[j].s) - goalAngle());
+        const px = X(e);
+        if (px > -4 && px < w + 4) { g.beginPath(); g.arc(px, mid, 2.5, 0, Math.PI * 2); g.fill(); }
+      }
+
+      g.strokeStyle = '#ff7cc3';
+      g.lineWidth = 2;
+      g.beginPath(); g.moveTo(w / 2, 3); g.lineTo(w / 2, h - 3); g.stroke();
+
+      const nx = Math.max(3, Math.min(w - 3, X(err)));
+      g.strokeStyle = '#ffffff';
+      g.lineWidth = 3;
+      g.lineCap = 'round';
+      g.beginPath(); g.moveTo(nx, 14); g.lineTo(nx, h - 14); g.stroke();
+
+      $('lensOut').textContent = 'window ' + fmtDeg(span);
+    }
+
+    // ---- Words and numbers ----
+    function setText(id, v) { const el = $(id); if (el.textContent !== v) el.textContent = v; }
+    function setHTML(id, v) { const el = $(id); if (el.dataset.h !== v) { el.dataset.h = v; el.innerHTML = v; } }
+
+    function results(s, done) {
+      const gain = done ? STRETCH[n] : STRETCH[Math.max(0, Math.min(n, turnIndexAt(Math.floor(k))))];
+      if (mode === 'rotate') {
+        const c = Math.cos(theta / DEG), si = Math.sin(theta / DEG);
+        const scale = short ? 1 : 1 / gain;
+        const mc = s.x / ONE * scale, ms = s.y / ONE * scale;
+        return {
+          rows: [['cos', fmtNum(mc), fmtNum(c), fmtErr(mc - c)], ['sin', fmtNum(ms), fmtNum(si), fmtErr(ms - si)]],
+          worst: Math.max(Math.abs(mc - c), Math.abs(ms - si)),
+          muls: short ? 0 : 2,
+        };
+      }
+      const a = wrap(s.z / ONE * DEG), len = s.x / ONE / gain;
+      const ta = wrap(theta), tl = Math.hypot(states[0].s.x, states[0].s.y) / ONE;
+      const ea = wrap(a - ta);
+      return {
+        rows: [['angle', a.toFixed(4) + '°', ta.toFixed(4) + '°', fmtErr(ea)], ['length', fmtNum(len), fmtNum(tl), fmtErr(len - tl)]],
+        worst: Math.max(Math.abs(ea) / DEG, Math.abs(len - tl)),
+        muls: 1,
+      };
+    }
+
+    function writeMachine(idx) {
+      const next = states[idx + 1];
+      const i = turnIndexAt(idx);
+      const lastDone = idx >= total();
+      const waiting = steering && !next && !lastDone;
+      if (lastDone) {
+        setText('codeCap', 'Finished');
+        setHTML('code', mode === 'rotate'
+          ? 'x and y hold the answer<br><span class="z">z is what never got turned</span>'
+          : 'x holds the length<br><span class="z">z holds the angle</span>');
+      } else if (idx < pre) {
+        setText('codeCap', 'A free quarter turn');
+        setHTML('code', 'swap x and y, flip one sign<br><span class="z">z ← z ∓ 90°</span>');
+      } else {
+        setText('codeCap', 'Turn ' + (i + 1) + ' of ' + n);
+        const d = waiting ? 0 : next ? next.d : 1;
+        const a = waiting ? '∓' : d > 0 ? '−' : '+', b = waiting ? '±' : d > 0 ? '+' : '−', zc = a;
+        setHTML('code',
+          'x ← x ' + a + ' (y &gt;&gt; ' + i + ')<br>y ← y ' + b + ' (x &gt;&gt; ' + i + ')<br>' +
+          '<span class="z">z ← z ' + zc + ' ' + fmtDeg(tableDeg[i]) + '</span>');
+      }
+      const s = states[Math.min(idx, states.length - 1)].s;
+      const sh = lastDone ? 0 : Math.min(i, n - 1);
+      setHTML('regs',
+        '<div><u>y</u>' + bitString(s.y) + '</div>' +
+        (lastDone || idx < pre ? '<div><u>x</u>' + bitString(s.x) + '</div>'
+          : '<div><u>y &gt;&gt; ' + sh + '</u>' + bitString(s.y >> sh) + '</div>'));
+    }
+
+    function writeStatus(idx, res) {
+      const done = finished();
+      const s = states[Math.min(idx, states.length - 1)].s;
+      const err = wrap(angleOf(s) - goalAngle());
+      const i = turnIndexAt(idx);
+      const left = reach(i) + tableDeg[n - 1];
+      const skipped = steering && choices.some((d) => d === 0);
+      const lost = steering && idx >= pre && Math.abs(err) > left * 1.01;
+      let cls = '', head, body;
+      const bits = Math.max(0, Math.floor(-Math.log2(Math.max(res.worst, 1e-12))));
+
+      if (lost) {
+        cls = 'bad';
+        head = 'Out of reach.';
+        body = 'The target is ' + fmtDeg(Math.abs(err)) + ' away and every turn still in the table adds up to ' + fmtDeg(left) +
+          '. Each turn is small enough for the rest to undo it, but only if you turn back right away. Undo and try again.';
+      } else if (done && skipped) {
+        const got = Math.hypot(s.x, s.y) / ONE / (mode === 'rotate' && short ? 1 : Math.hypot(states[0].s.x, states[0].s.y) / ONE);
+        const want = mode === 'rotate' && short ? 1 : STRETCH[n];
+        cls = 'bad';
+        head = 'Right direction, wrong length.';
+        body = 'You skipped a turn, so this needle ' + (mode === 'rotate' && short ? 'ended at ' : 'stretched by ') + got.toFixed(6) +
+          ' instead of ' + want.toFixed(6) + '. The correction was worked out in advance and assumes every turn happens, so it\'s now off by ' + Math.abs((got / want - 1) * 100).toPrecision(2) + '%.';
+      } else if (done && mode === 'rotate' && !short) {
+        cls = 'good';
+        head = bits + ' bits right, and the needle is ' + STRETCH[n].toFixed(3) + ' long.';
+        body = 'Every push was at right angles, so every turn made the needle longer. Two multiplies by ' + (1 / STRETCH[n]).toFixed(4) +
+          ' fix that. Or turn on Start short and they\'re gone.';
+      } else if (done && mode === 'rotate') {
+        cls = 'good';
+        head = 'Landed on the circle. ' + bits + ' bits, no multiplies.';
+        body = 'It began ' + (1 / STRETCH[n]).toFixed(4) + ' long because the stretch is the same for every angle. The trail has only shifts and adds in it.';
+      } else if (done) {
+        cls = 'good';
+        head = 'Angle and length, ' + bits + ' bits right.';
+        body = 'Same loop, one line changed: steer y to zero instead of z. The point lies flat, so x is its length and z counts how far it turned. One multiply removes the stretch.';
+      } else if (idx < pre) {
+        head = 'Too far for the table.';
+        body = 'All the turns together reach 99.9°, so the machine starts with a quarter turn. That\'s just a swap, so it\'s free.';
+      } else if (steering && !states[idx + 1]) {
+        head = 'Turn ' + (i + 1) + ': ' + fmtDeg(tableDeg[i]) + ', left or right?';
+        body = (Math.abs(err) < 1e-9 ? 'You\'re on target, and you still have to turn.' :
+          'The target is ' + fmtDeg(Math.abs(err)) + ' to your ' + (err > 0 ? 'right' : 'left') + '.') +
+          ' Everything left in the table adds up to ' + fmtDeg(reach(i)) + '.';
+      } else if (idx === 0) {
+        head = mode === 'rotate' ? 'Needle at 0°, target at ' + fmtDeg(theta) + '.' : 'Point at ' + fmtDeg(theta) + ', flatten it onto the axis.';
+        body = 'First turn: ' + fmtDeg(tableDeg[0]) + ', because the tangent of that is exactly 1.';
+      } else {
+        head = 'Turn ' + (i + 1) + ': ' + fmtDeg(tableDeg[Math.min(i, n - 1)]) + '.';
+        body = fmtDeg(Math.abs(err)) + ' to go, and the rest of the table adds up to ' + fmtDeg(reach(i)) + '. It always turns, even when it overshoots.';
+      }
+      $('status').className = 'panel status ' + cls;
+      setText('statusHead', head);
+      setText('statusBody', body);
+      return bits;
+    }
+
+    function drawChips(idx) {
+      const chips = $('rom').children;
+      for (let i = 0; i < chips.length; i++) {
+        const st = states[pre + i + 1];
+        const done = st && pre + i + 1 <= idx;
+        const c = chips[i];
+        c.classList.toggle('done', !!done && st.d !== 0);
+        c.classList.toggle('skip', !!done && st.d === 0);
+        c.classList.toggle('now', idx >= pre && i === idx - pre && idx < total());
+        const arrow = done ? (st.d > 0 ? '↺' : st.d < 0 ? '↻' : '×') : '';
+        const m = c.querySelector('em');
+        if (m.textContent !== arrow) m.textContent = arrow;
+        c.disabled = steering;
+      }
+    }
+    function buildChips() {
+      const rom = $('rom');
+      rom.textContent = '';
+      for (let i = 0; i < n; i++) {
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.dataset.i = i;
+        b.innerHTML = '<small><i style="font-style:normal">&gt;&gt; ' + i + '</i><em style="font-style:normal"></em></small><span>' + fmtDeg(tableDeg[i]) + '</span>';
+        b.setAttribute('aria-label', 'Jump to turn ' + (i + 1) + ', ' + fmtDeg(tableDeg[i]));
+        rom.appendChild(b);
+      }
+    }
+
+    function draw() {
+      const idx = Math.min(Math.floor(k + 1e-9), states.length - 1);
+      drawDial();
+      drawLens();
+      const s = states[idx].s;
+      const res = results(s, idx >= total());
+      const bits = writeStatus(idx, res);
+      writeMachine(idx);
+      drawChips(idx);
+
+      const rows = res.rows.map((r) => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>').join('');
+      setHTML('answers', rows);
+      let turned = 0;
+      for (let j = 1; j <= idx; j++) if (states[j].kind === 'turn' && states[j].d !== 0) turned++;
+      setText('bits', String(bits));
+      setText('shifts', String(turned * 2));
+      setText('adds', String(turned * 3));
+      const shownMuls = finished() ? res.muls : 0;
+      setText('muls', String(shownMuls));
+      $('muls').className = shownMuls ? '' : 'zero';
+
+      $('short').classList.toggle('nudge', finished() && mode === 'rotate' && !short && !shortTried && !steering);
+      $('ccw').disabled = $('cw').disabled = $('skip').disabled = states.length - 1 >= total() || k < goal;
+      $('undo').disabled = choices.length === 0;
+      $('run').textContent = raf && k < goal ? '▶ Running' : '▶ Run';
+    }
+
+    // ---- Controls ----
+    function syncAngle() {
+      $('angle').value = theta;
+      setText('angleOut', theta.toFixed(1) + '°');
+      dial.setAttribute('aria-valuenow', String(Math.round(theta)));
+    }
+    function setTheta(v) {
+      theta = Math.max(-180, Math.min(180, v));
+      syncAngle();
+      settle();
+    }
+
+    $('angle').addEventListener('input', (e) => setTheta(+e.target.value));
+    $('turns').addEventListener('input', (e) => {
+      n = +e.target.value;
+      setText('turnsOut', String(n));
+      buildChips();
+      settle();
+    });
+    $('mode').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b || b.getAttribute('aria-pressed') === 'true') return;
+      $('mode').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      mode = b.dataset.v;
+      $('short').hidden = mode !== 'rotate';
+      setText('angleName', mode === 'rotate' ? 'Target angle' : 'Point\'s direction');
+      replay();
+    });
+    $('short').addEventListener('click', () => {
+      short = !short;
+      shortTried = true;
+      $('short').setAttribute('aria-pressed', String(short));
+      replay();
+    });
+    $('steerOn').addEventListener('click', () => {
+      steering = !steering;
+      $('steerOn').setAttribute('aria-pressed', String(steering));
+      $('steerRow').hidden = !steering;
+      $('autoRow').hidden = steering;
+      choices = [];
+      replay();
+    });
+
+    function replay() {           // run from the top; while steering, wait at the first choice
+      stop();
+      choices = [];
+      rebuild();
+      k = 0;
+      goal = states.length - 1;
+      if (calm) k = goal;
+      draw();
+      animate();
+    }
+    $('run').addEventListener('click', replay);
+    $('step').addEventListener('click', () => {
+      stop();
+      const last = states.length - 1;
+      if (k >= last) { k = goal = 0; draw(); return; }
+      goal = Math.min(Math.floor(k + 1e-9) + 1, last);
+      draw();
+      animate();
+    });
+    $('rom').addEventListener('click', (e) => {
+      const b = e.target.closest('.chip');
+      if (!b || steering) return;
+      stop();
+      k = goal = Math.min(pre + (+b.dataset.i) + 1, states.length - 1);
+      draw();
+    });
+
+    function choose(d) {
+      if (!steering || states.length - 1 >= total()) return;
+      choices.push(d);
+      rebuild();
+      goal = states.length - 1;
+      draw();
+      animate();
+    }
+    $('ccw').addEventListener('click', () => choose(1));
+    $('cw').addEventListener('click', () => choose(-1));
+    $('skip').addEventListener('click', () => choose(0));
+    $('undo').addEventListener('click', () => {
+      if (!choices.length) return;
+      stop();
+      choices.pop();
+      rebuild();
+      k = goal = states.length - 1;
+      draw();
+    });
+
+    // ---- Dragging on the dial ----
+    let dragging = false;
+    function dragTo(e) {
+      const rect = dial.getBoundingClientRect();
+      const { c, U } = dialGeom();
+      const x = (e.clientX - rect.left - c) / U, y = (c - (e.clientY - rect.top)) / U;
+      if (Math.hypot(x, y) < 0.02) return;
+      if (mode === 'vector') radius = Math.max(0.15, Math.min(1, Math.hypot(x, y)));
+      setTheta(Math.round(Math.atan2(y, x) * DEG * 2) / 2);
+    }
+    dial.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      dial.setPointerCapture(e.pointerId);
+      dragTo(e);
+    });
+    dial.addEventListener('pointermove', (e) => { if (dragging) dragTo(e); });
+    dial.addEventListener('pointerup', () => { dragging = false; });
+    dial.addEventListener('pointercancel', () => { dragging = false; });
+    dial.addEventListener('keydown', (e) => {
+      const step = e.shiftKey ? 10 : 1;
+      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); setTheta(theta + step); }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); setTheta(theta - step); }
+    });
+
+    const redraw = () => { if (!raf) draw(); };
+    window.addEventListener('resize', redraw);
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(redraw);
+      ro.observe(dial);
+      ro.observe(lens);
+    }
+
+    setText('turnsOut', String(n));
+    syncAngle();
+    buildChips();
+    replay();
+  })();
+</script>
+</body>
+</html>
