@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-07",
+    "lastUpdated": "2026-11-08",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5390,7 +5390,7 @@
     {
       "id": "2026-11-07",
       "date": "2026-11-07",
-      "headline": true,
+      "headline": false,
       "topic": "Whether the UK will spend £330bn on benefits and £60bn on defence this year",
       "claim": "Just think about this: we as a country this year will spend £330 billion on benefits, but will only spend £60 billion on defence.",
       "speaker": "Nigel Farage",
@@ -5438,6 +5438,57 @@
         {
           "title": "Centre for Social Justice — £18bn welfare surge",
           "url": "https://www.centreforsocialjustice.org.uk/newsroom/18bn-welfare-surge"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-08",
+      "date": "2026-11-08",
+      "headline": true,
+      "topic": "Whether there has been a big rise in young people unfit for work, often due to mental health or neurodiversity",
+      "claim": "We've had a really big increase in young people saying that they are unfit for work, very often because of mental health or neurodiverse conditions.",
+      "speaker": "Pat McFadden",
+      "party": "Labour",
+      "role": "Secretary of State for Work and Pensions; MP for Wolverhampton South East",
+      "discussionScore": 40,
+      "discussionNote": "McFadden's Denmark trip interviews with ITV and the Mirror ran Friday into Saturday, topping NewsNow's politics stories via the Independent. Several write-ups recast his point as '45% of Neets' having mental health or neurodiverse conditions.",
+      "score": 80,
+      "verdict": "Mostly True",
+      "explanation": "McFadden's claim holds on DWP's own figures. The disabled share of 16-24 Neets more than doubled, from about 21% to 45.3%, between 2013-14 and 2025-26. Among disabled Neets, depression or anxiety and autism are the two leading main conditions, together about 46%. \"Very often\" is fair. Two caveats. These are survey self-reports, and disability is not the same as being unfit for work: overall, 28.4% of Neets give ill health or disability as their main reason. And the press framing that 45% of Neets have mental health or neurodiverse conditions is wrong. That 45% counts all disabled Neets. On our sum, those whose main condition is mental health or autism are about one in five.",
+      "evidence": [
+        "DWP, 4 November 2026: 45.3% of Neet 16-24-year-olds were disabled in FYE 2026, up 24.2 points since FYE 2014. Source: Annual Population Survey.",
+        "Same release: disabled young people were more than three times as likely to be Neet, 30.2% against 8.6%.",
+        "Same release: 28.4% of all Neets cite disability or ill health as their main reason; 59.3% of disabled Neets do.",
+        "Main condition among disabled Neets: depression, bad nerves or anxiety 23.8%, autism 22.7%. DWP warns some condition estimates rest on small samples.",
+        "Milburn interim report: the share Neet due to a work-limiting health condition is up 70% in a decade; mental health as primary condition has almost doubled.",
+        "ONS: 981,000 16-24-year-olds were Neet in April to June 2026, 13.0%, up 0.2 points on the year.",
+        "Our calculation: 45.3% x about 46% gives roughly 21% of all Neets with mental health or autism as their main condition, not 45%."
+      ],
+      "confidence": "High: DWP and ONS figures are published. Medium on the condition split, which uses small samples. No Full Fact check found.",
+      "sources": [
+        {
+          "title": "ITV News — Lessons from Denmark, McFadden tells ITV News",
+          "url": "https://www.itv.com/news/2026-11-06/what-the-uk-can-learn-from-denmarks-disability-employment-scheme"
+        },
+        {
+          "title": "DWP — The employment of disabled people 2026",
+          "url": "https://www.gov.uk/government/statistics/the-employment-of-disabled-people-2026/the-employment-of-disabled-people-2026"
+        },
+        {
+          "title": "ONS — Young people not in education, employment or training: August 2026",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/bulletins/youngpeoplenotineducationemploymentortrainingneet/august2026"
+        },
+        {
+          "title": "DWP — Young people and work: interim report (Milburn review)",
+          "url": "https://www.gov.uk/government/publications/young-people-and-work-interim-report/young-people-and-work-interim-report"
+        },
+        {
+          "title": "Independent via inkl — Employment 'part of the answer', McFadden says",
+          "url": "https://www.inkl.com/news/employment-part-of-the-answer-for-neets-with-mental-health-issues-mcfadden-says"
+        },
+        {
+          "title": "Mirror via AOL — Britain's welfare state needs a 'big reset'",
+          "url": "https://www.aol.co.uk/articles/britains-welfare-state-needs-big-170009000.html"
         }
       ]
     }
