@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Only the Top Is Sure — Experiment 114</title>
+<meta name="description" content="Williams and Floyd, 1964: the binary heap. Every parent outranks its children, so the largest is always on top. Build one, heapsort it, or push and pop it as a priority queue." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(255,124,195,0.08), transparent 70%), #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 3px; }
+  .seg button {
+    background: transparent; border: 0; color: #b4b4c6; border-radius: 8px; padding: 8px 6px;
+    font: inherit; font-size: 0.8rem; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
+  }
+  .seg button:hover:not(:disabled) { color: #fff; }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.28); color: #fff; }
+  .seg button:disabled { opacity: 0.5; cursor: default; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 0.84rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.38; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd9ee; }
+  .btn.pink:hover:not(:disabled) { background: rgba(255,124,195,0.24); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+  .queue { border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; display: grid; gap: 8px; }
+  .popped { display: flex; flex-wrap: wrap; gap: 4px; min-height: 24px; }
+  .popped span {
+    font-size: 0.74rem; font-variant-numeric: tabular-nums; padding: 3px 7px; border-radius: 7px;
+    background: rgba(255,124,195,0.12); border: 1px solid rgba(255,124,195,0.3); color: #ffd9ee;
+    animation: pop 0.4s ease;
+  }
+  .popped em { font-style: normal; font-size: 0.76rem; color: #6f6f86; }
+  @keyframes pop { from { transform: scale(0.6); opacity: 0; } }
+
+  /* ---- Status ---- */
+  .status { min-height: 86px; }
+  .status b { display: block; font-size: 1.12rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 4px; font-size: 0.88rem; line-height: 1.45; color: #b9b9ca; }
+  .status.good b { color: #a9a9ff; }
+  .status.bad b { color: #ff7cc3; }
+
+  .board { padding: 10px; }
+  #c { display: block; width: 100%; border-radius: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tally b.hot { color: #ff7cc3; }
+  .tally b.cool { color: #a9a9ff; }
+
+  button:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Only the Top Is Sure</h1>
+      <p class="sub">Experiment № 114 · November 8, 2026</p>
+      <p class="lede">Williams and Floyd, 1964: the binary heap. It promises one thing only, that every parent is at least as big as its children. That is enough to always know the largest, and to sort in place.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div class="field">
+          <span>How to build it</span>
+          <div class="seg" id="method" role="group" aria-label="How to build the heap">
+            <button data-v="floyd" aria-pressed="true">Sift down</button>
+            <button data-v="williams" aria-pressed="false">Insert one by one</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Items<b id="sizeOut"></b></span>
+          <input type="range" id="size" min="7" max="63" step="1" value="31" />
+        </label>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="120" step="1" value="60" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">▶ Build heap</button>
+          <button class="btn" id="step">Step</button>
+        </div>
+        <button class="btn" id="shuffle">Shuffle</button>
+        <div class="queue">
+          <div class="cap">Use it as a priority queue</div>
+          <div class="row">
+            <button class="btn pink" id="push">Push random</button>
+            <button class="btn pink" id="popBtn">Pop the top</button>
+          </div>
+          <div class="popped" id="popped"><em>Popped values appear here.</em></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="stage">
+      <div class="panel status" id="status" aria-live="polite"><b id="statusHead"></b><span id="statusBody"></span></div>
+      <div class="panel board">
+        <canvas id="c" aria-label="The heap drawn as a tree above, and the same array drawn as bars below"></canvas>
+        <div class="legend">
+          <span><i style="background:#7c7cff"></i>parent ≥ child</span>
+          <span><i style="background:#ff7cc3"></i>out of order</span>
+          <span><i style="background:#3a3a50"></i>outside the heap</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="tally">
+          <span>out-of-order edges <b id="bad"></b></span>
+          <span>build comparisons <b id="cBuild"></b></span>
+          <span>sort comparisons <b id="cSort"></b></span>
+          <span>swaps <b id="swaps"></b></span>
+          <span>n log₂ n <b id="nlogn"></b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 114 · The story</p>
+      <h2>Only the Top Is Sure</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I have used a heap a hundred times without drawing one. Every scheduler, every "next event" in a simulation, every Dijkstra I have written leans on a priority queue, and I always reach for the library and move on. This gallery already has quicksort, a sorting network and patience piles, and it felt odd that the structure doing the quiet work underneath so many of the others had never had its own page. J. W. J. Williams published it in 1964 as a sorting method; Robert Floyd improved the build the same year. Sixty years on it is still the default.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>How little it promises. A sorted list knows the order of everything. A heap refuses to care whether a node is bigger than its sibling, or its cousin, or anything that isn't directly above or below it. Look at a finished heap here and the bottom row is a mess. Yet that one local rule makes the top certain, and when you take the top away, only a single path from root to leaf has to be repaired. That is why a pop costs log n and not n.</p>
+      <p>I also like the pink edges going out. With "Sift down" Floyd starts at the middle and works backwards, so most of the work happens on tiny subtrees near the leaves where there is nowhere far to fall. Compare the build comparisons with "Insert one by one" on the same size: Floyd's grows in a straight line with n, the other a little faster. Same result, different order of the same repairs.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Before you sort something, ask whether you need the whole order or just the next thing. Very often you only need the best one, then the best of what's left, and keeping everything ranked is paying for answers to questions nobody will ask. A weaker promise is cheaper to keep, and cheaper to mend when something changes. Pop a few values and watch them come out largest first, with the rest of the tree still happily disordered.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- The heap ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const canvas = $('c');
+    const ctx = canvas.getContext('2d');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const MAX_N = 63;
+
+    // State
+    let items = [];          // array slots: each holds {v, id, x, y, bx, bh}
+    let heapSize = 0;        // slots [0, heapSize) are the heap
+    let phase = 'raw';       // raw | building | heap | sorting | sorted
+    let method = 'floyd';
+    let job = null;          // a generator of events
+    let jobKind = '';        // build | sort | push | pop
+    let running = false;
+    let acc = 0;
+    let hl = [];             // highlighted slot indices
+    let hlKind = '';
+    let counts = { build: 0, sort: 0, swaps: 0 };
+    let altBuild = 0, mainBuild = 0;
+    let nextId = 1;
+    let popped = [];
+    let W = 600, H = 420, dpr = 1;
+
+    const rnd = (n) => Math.floor(Math.random() * n);
+
+    function freshValues(n) {
+      const pool = [];
+      for (let v = 1; v <= 99; v++) pool.push(v);
+      for (let i = pool.length - 1; i > 0; i--) { const j = rnd(i + 1); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+      return pool.slice(0, n);
+    }
+    function unusedValue() {
+      const used = new Set(items.map((it) => it.v));
+      const free = [];
+      for (let v = 1; v <= 99; v++) if (!used.has(v)) free.push(v);
+      return free[rnd(free.length)];
+    }
+
+    // ---- Silent counters, to compare the two ways of building ----
+    function countFloyd(a) {
+      a = a.slice(); let c = 0; const n = a.length;
+      for (let s = (n >> 1) - 1; s >= 0; s--) {
+        let i = s;
+        for (;;) {
+          const l = 2 * i + 1, r = l + 1; let m = i;
+          if (l < n) { c++; if (a[l] > a[m]) m = l; }
+          if (r < n) { c++; if (a[r] > a[m]) m = r; }
+          if (m === i) break;
+          [a[i], a[m]] = [a[m], a[i]]; i = m;
+        }
+      }
+      return c;
+    }
+    function countWilliams(a) {
+      a = a.slice(); let c = 0;
+      for (let k = 1; k < a.length; k++) {
+        let i = k;
+        while (i > 0) {
+          const p = (i - 1) >> 1; c++;
+          if (a[i] > a[p]) { [a[i], a[p]] = [a[p], a[i]]; i = p; } else break;
+        }
+      }
+      return c;
+    }
+
+    // ---- Generators: each yield is one visible step ----
+    function swap(i, j) {
+      [items[i], items[j]] = [items[j], items[i]];
+      counts.swaps++;
+    }
+    function bump(n) { if (jobKind === 'sort' || jobKind === 'pop') counts.sort += n; else counts.build += n; }
+
+    function* siftDown(i, size, who) {
+      for (;;) {
+        const l = 2 * i + 1, r = l + 1;
+        if (l >= size) {
+          yield { hl: [i], kind: 'ok', head: `${items[i].v} reached the bottom.`, body: `No children left to beat it, so ${who || 'it'} rests here.` };
+          return;
+        }
+        let m = i;
+        bump(1); if (items[l].v > items[m].v) m = l;
+        if (r < size) { bump(1); if (items[r].v > items[m].v) m = r; }
+        const kids = r < size ? `${items[l].v} and ${items[r].v}` : `${items[l].v}`;
+        if (m === i) {
+          yield { hl: [i, l].concat(r < size ? [r] : []), kind: 'ok', head: `${items[i].v} beats ${r < size ? 'both children' : 'its child'}.`, body: `Its children are ${kids}. The rule holds here, so it stays and this repair is over.` };
+          return;
+        }
+        yield { hl: [i, m], kind: 'cmp', head: `${items[m].v} is bigger than ${items[i].v}.`, body: `Children: ${kids}. The larger child has to move up, or the rule breaks.` };
+        const sinker = items[i].v, riser = items[m].v;
+        swap(i, m);
+        yield { hl: [i, m], kind: 'swap', head: `Swap: ${riser} rises, ${sinker} sinks.`, body: `Only one path is disturbed, so ${sinker} keeps falling until both children are smaller.` };
+        i = m;
+      }
+    }
+    function* siftUp(i) {
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        bump(1);
+        if (items[i].v > items[p].v) {
+          yield { hl: [i, p], kind: 'cmp', head: `${items[i].v} is bigger than its parent ${items[p].v}.`, body: 'A new item can only break the rule on the path above it. Swap upward.' };
+          const a = items[i].v, b = items[p].v;
+          swap(i, p);
+          yield { hl: [i, p], kind: 'swap', head: `Swap: ${a} climbs over ${b}.`, body: 'Siblings never need checking: the old parent already beat them, and the new one is bigger still.' };
+          i = p;
+        } else {
+          yield { hl: [i, p], kind: 'ok', head: `${items[i].v} is no bigger than its parent ${items[p].v}.`, body: 'It has found its level. Everything above was already in order.' };
+          return;
+        }
+      }
+      yield { hl: [0], kind: 'ok', head: `${items[0].v} climbed all the way to the top.`, body: 'It is the new largest. It took log₂ n swaps at most.' };
+    }
+    function* buildFloyd() {
+      const n = items.length;
+      heapSize = n;
+      yield { hl: [], kind: 'info', head: 'Every leaf is already a heap.', body: `Half the slots have no children, so there's nothing to check. Start at slot ${(n >> 1)} and work backwards to the root.` };
+      for (let s = (n >> 1) - 1; s >= 0; s--) {
+        yield* siftDown(s, n);
+      }
+    }
+    function* buildWilliams() {
+      const n = items.length;
+      heapSize = 1;
+      yield { hl: [0], kind: 'info', head: `Start with ${items[0].v} alone.`, body: 'One item is a heap. Add the rest one at a time at the bottom and let each climb.' };
+      for (let k = 1; k < n; k++) {
+        heapSize = k + 1;
+        yield { hl: [k], kind: 'info', head: `Add ${items[k].v} at the next empty slot.`, body: 'The tree stays complete: always fill the bottom row left to right.' };
+        yield* siftUp(k);
+      }
+    }
+    function* heapsort() {
+      const n = items.length;
+      for (let end = n - 1; end >= 1; end--) {
+        const top = items[0].v;
+        yield { hl: [0, end], kind: 'cmp', head: `The top is ${top}, the largest left.`, body: `Swap it with the last item in the heap. Slot ${end + 1} is now its final place.` };
+        swap(0, end);
+        heapSize = end;
+        yield { hl: [0, end], kind: 'swap', head: `${top} is done. ${items[0].v} is on top, where it doesn't belong.`, body: 'Sift it down to repair the one broken path.' };
+        if (end > 1) yield* siftDown(0, end);
+      }
+      heapSize = 0;
+    }
+    function* pushJob(v) {
+      const it = makeItem(v, items.length);
+      items.push(it);
+      heapSize = items.length;
+      yield { hl: [items.length - 1], kind: 'info', head: `Push ${v} into the next empty slot.`, body: 'Then let it climb until its parent is bigger.' };
+      yield* siftUp(items.length - 1);
+    }
+    function* popJob() {
+      const last = items.length - 1;
+      const top = items[0].v;
+      yield { hl: [0, last], kind: 'cmp', head: `Pop ${top}: the top is always the largest.`, body: 'Move the last item into the hole at the top, so the tree stays complete.' };
+      swap(0, last);
+      const gone = items.pop();
+      heapSize = items.length;
+      popped.push(gone.v);
+      renderPopped();
+      if (items.length > 1) {
+        yield { hl: [0], kind: 'swap', head: `${items[0].v} is on top now, and probably too small.`, body: 'Sift it down. Only one path from root to leaf is touched.' };
+        yield* siftDown(0, items.length);
+      }
+    }
+
+    // ---- Items and layout ----
+    function makeItem(v, idx) {
+      const p = slotPos(idx, Math.max(items.length + 1, 1));
+      return { v, id: nextId++, x: p.x, y: p.y - 30, bx: barX(idx, items.length + 1), bh: 0 };
+    }
+    function levels(n) { return Math.floor(Math.log2(Math.max(n, 1))) + 1; }
+    function geom(n) {
+      const pad = 18;
+      const treeTop = 26, treeBottom = H * 0.68;
+      const L = levels(n);
+      const lh = L > 1 ? (treeBottom - treeTop) / (L - 1) : 0;
+      const leafGap = (W - pad * 2) / Math.pow(2, L - 1);
+      const r = Math.max(3.5, Math.min(17, leafGap * 0.36, lh * 0.32 || 17));
+      const barBase = H - 10, barTop = H * 0.77;
+      return { pad, treeTop, lh, r, barBase, barTop, L };
+    }
+    function slotPos(i, n) {
+      const g = geom(n);
+      const d = Math.floor(Math.log2(i + 1));
+      const k = i - (Math.pow(2, d) - 1);
+      const span = W - g.pad * 2;
+      return { x: g.pad + (k + 0.5) / Math.pow(2, d) * span, y: g.treeTop + d * g.lh };
+    }
+    function barX(i, n) {
+      const g = geom(n);
+      return g.pad + (i + 0.5) * (W - g.pad * 2) / n;
+    }
+
+    function colorFor(v, a) {
+      // violet (#7c7cff) for small values to pink (#ff7cc3) for large ones
+      const t = (v - 1) / 98;
+      const r = Math.round(124 + (255 - 124) * t);
+      const g = Math.round(124 + (124 - 124) * t);
+      const b = Math.round(255 + (195 - 255) * t);
+      const lift = 0.35 + 0.65 * t;
+      return `rgba(${Math.round(r * lift + 40 * (1 - lift))},${Math.round(g * lift + 40 * (1 - lift))},${Math.round(b * lift + 60 * (1 - lift))},${a})`;
+    }
+
+    // ---- Phase control ----
+    function reset(n) {
+      stop();
+      job = null; jobKind = '';
+      const vals = freshValues(n);
+      items = [];
+      vals.forEach((v, i) => {
+        const p = slotPos(i, n);
+        items.push({ v, id: nextId++, x: p.x, y: p.y, bx: barX(i, n), bh: 0 });
+      });
+      heapSize = method === 'floyd' ? n : 0;
+      phase = 'raw';
+      hl = []; hlKind = '';
+      counts = { build: 0, sort: 0, swaps: 0 };
+      popped = []; renderPopped();
+      mainBuild = 0; altBuild = 0;
+      setStatus('A shuffled array, drawn as a tree.', 'Slot i has children at 2i+1 and 2i+2, so no pointers are needed. Pink edges are where a child beats its parent. Press Build heap.', '');
+      sync();
+    }
+
+    function startJob(kind) {
+      jobKind = kind;
+      if (kind === 'build') {
+        const vals = items.map((it) => it.v);
+        mainBuild = method === 'floyd' ? countFloyd(vals) : countWilliams(vals);
+        altBuild = method === 'floyd' ? countWilliams(vals) : countFloyd(vals);
+        counts.build = 0;
+        job = method === 'floyd' ? buildFloyd() : buildWilliams();
+        phase = 'building';
+      } else if (kind === 'sort') {
+        counts.sort = 0;
+        job = heapsort();
+        phase = 'sorting';
+      } else if (kind === 'push') {
+        job = pushJob(unusedValue());
+      } else if (kind === 'pop') {
+        job = popJob();
+      }
+    }
+
+    function finishJob() {
+      const kind = jobKind;
+      job = null; jobKind = '';
+      hl = []; hlKind = '';
+      if (kind === 'build') {
+        phase = 'heap';
+        running = false;
+        const other = method === 'floyd' ? 'inserting one by one' : 'sifting down from the middle';
+        setStatus(`A heap. Only the top is sure: ${items[0].v} is the largest.`,
+          `Siblings are in no order at all. Built with ${counts.build} comparisons; ${other} would have taken ${altBuild} on the same array. Play to heapsort it, or push and pop.`, 'good');
+      } else if (kind === 'sort') {
+        phase = 'sorted';
+        running = false;
+        const n = items.length;
+        setStatus('Sorted, in place, with no extra memory.',
+          `${counts.sort} comparisons to sort ${n} items, against n log₂ n ≈ ${Math.round(n * Math.log2(n))}. Read the bars left to right. Shuffle to go again.`, 'good');
+      } else if (kind === 'push' || kind === 'pop') {
+        phase = items.length ? 'heap' : 'sorted';
+        running = false;
+        if (kind === 'pop') {
+          setStatus(`Popped ${popped[popped.length - 1]}. ${items.length ? items[0].v + ' is the new top.' : 'The heap is empty.'}`,
+            'Pop again and they keep coming out largest first, though the rest of the tree is never sorted.', 'good');
+        } else {
+          setStatus(`Pushed. ${items[0].v} is on top.`, 'One path checked, nothing else touched.', 'good');
+        }
+      }
+      sync();
+    }
+
+    function advance() {
+      if (!job) return false;
+      const r = job.next();
+      if (r.done) { finishJob(); return false; }
+      const e = r.value;
+      hl = e.hl; hlKind = e.kind;
+      setStatus(e.head, e.body, e.kind === 'swap' || e.kind === 'cmp' ? 'bad' : (e.kind === 'ok' ? 'good' : ''));
+      sync();
+      return true;
+    }
+
+    function play() {
+      if (running) { stop(); return; }
+      if (!job) {
+        if (phase === 'raw') startJob('build');
+        else if (phase === 'heap') startJob('sort');
+        else return;
+      }
+      running = true; acc = 1e9;
+      sync();
+    }
+    function stop() { running = false; sync(); }
+    function step() {
+      stop();
+      if (!job) {
+        if (phase === 'raw') startJob('build');
+        else if (phase === 'heap') startJob('sort');
+        else return;
+      }
+      advance();
+    }
+
+    // ---- UI ----
+    function setStatus(head, body, cls) {
+      $('statusHead').textContent = head;
+      $('statusBody').textContent = body;
+      $('status').className = 'panel status' + (cls ? ' ' + cls : '');
+    }
+    function renderPopped() {
+      const el = $('popped');
+      el.innerHTML = '';
+      if (!popped.length) { el.innerHTML = '<em>Popped values appear here.</em>'; return; }
+      popped.slice(-14).forEach((v) => { const s = document.createElement('span'); s.textContent = v; el.appendChild(s); });
+    }
+    function badEdges() {
+      let b = 0;
+      for (let i = 1; i < heapSize; i++) if (items[i].v > items[(i - 1) >> 1].v) b++;
+      return b;
+    }
+    function sync() {
+      const n = items.length;
+      $('sizeOut').textContent = n;
+      $('speedOut').textContent = stepsPerSec().toFixed(stepsPerSec() < 10 ? 1 : 0) + ' steps/s';
+      const bad = badEdges();
+      $('bad').textContent = bad; $('bad').className = bad ? 'hot' : 'cool';
+      $('cBuild').textContent = counts.build;
+      $('cSort').textContent = counts.sort;
+      $('swaps').textContent = counts.swaps;
+      $('nlogn').textContent = n > 1 ? Math.round(n * Math.log2(n)) : 0;
+
+      const busy = !!job;
+      const pb = $('play');
+      if (running) pb.textContent = '❚❚ Pause';
+      else if (busy) pb.textContent = '▶ Resume';
+      else if (phase === 'raw') pb.textContent = '▶ Build heap';
+      else if (phase === 'heap') pb.textContent = '▶ Heapsort';
+      else pb.textContent = '✓ Done';
+      pb.disabled = !running && !busy && phase !== 'raw' && phase !== 'heap';
+      $('step').disabled = pb.disabled || (busy && (jobKind === 'push' || jobKind === 'pop') && running);
+      const queueOk = phase === 'heap' && !busy;
+      $('push').disabled = !queueOk || n >= MAX_N;
+      $('popBtn').disabled = !queueOk || n < 1;
+      document.querySelectorAll('#method button').forEach((b) => { b.disabled = phase !== 'raw' || busy; });
+      $('size').disabled = busy && running;
+    }
+
+    function stepsPerSec() { return Math.pow(2, +$('speed').value / 20); }
+
+    $('play').addEventListener('click', play);
+    $('step').addEventListener('click', step);
+    $('shuffle').addEventListener('click', () => reset(+$('size').value));
+    $('size').addEventListener('input', () => reset(+$('size').value));
+    $('speed').addEventListener('input', sync);
+    $('push').addEventListener('click', () => { startJob('push'); running = true; acc = 1e9; sync(); });
+    $('popBtn').addEventListener('click', () => { startJob('pop'); running = true; acc = 1e9; sync(); });
+    document.querySelectorAll('#method button').forEach((b) => b.addEventListener('click', () => {
+      if (phase !== 'raw' || job) return;
+      method = b.dataset.v;
+      document.querySelectorAll('#method button').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+      heapSize = method === 'floyd' ? items.length : 0;
+      setStatus(method === 'floyd' ? 'Sift down: fix small subtrees first.' : 'Insert one by one: grow the heap from the top.',
+        method === 'floyd' ? 'Start halfway along the array and repair each subtree, working back to the root.' : 'Every item enters at the bottom and climbs. Dim nodes have not been added yet.', '');
+      sync();
+    }));
+    window.addEventListener('keydown', (e) => {
+      if (story.classList.contains('open')) return;
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === ' ') { e.preventDefault(); play(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); step(); }
+    });
+
+    // ---- Drawing ----
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(280, rect.width);
+      H = Math.round(Math.min(560, Math.max(320, W * 0.66)));
+      canvas.style.height = H + 'px';
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function draw(dt) {
+      const n = items.length;
+      const g = geom(Math.max(n, 1));
+      const k = reduced ? 1 : Math.min(1, dt * 11);
+      ctx.clearRect(0, 0, W, H);
+
+      // level guides
+      ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+      ctx.lineWidth = 1;
+      for (let d = 0; d < g.L; d++) {
+        const y = g.treeTop + d * g.lh;
+        ctx.beginPath(); ctx.moveTo(g.pad, y); ctx.lineTo(W - g.pad, y); ctx.stroke();
+      }
+
+      // edges between slots
+      for (let i = 1; i < n; i++) {
+        const p = (i - 1) >> 1;
+        const a = slotPos(p, n), b = slotPos(i, n);
+        const inHeap = i < heapSize;
+        let col, lw;
+        if (!inHeap) { col = 'rgba(70,70,95,0.55)'; lw = 1; }
+        else if (items[i].v > items[p].v) { col = 'rgba(255,124,195,0.9)'; lw = 2.4; }
+        else { col = 'rgba(124,124,255,0.55)'; lw = 1.5; }
+        ctx.strokeStyle = col; ctx.lineWidth = lw;
+        if (inHeap && items[i].v > items[p].v) { ctx.shadowColor = 'rgba(255,124,195,0.7)'; ctx.shadowBlur = 8; }
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // highlight rings at slots
+      const ringCol = hlKind === 'ok' ? '#a9a9ff' : hlKind === 'info' ? '#e9e9f0' : '#ff7cc3';
+      hl.forEach((i) => {
+        if (i >= n) return;
+        const s = slotPos(i, n);
+        ctx.strokeStyle = ringCol; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(s.x, s.y, g.r + 5, 0, Math.PI * 2); ctx.stroke();
+      });
+
+      // nodes
+      const fontPx = Math.max(8, Math.min(13, g.r * 0.85));
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `600 ${fontPx}px ui-sans-serif, system-ui, sans-serif`;
+      for (let i = 0; i < n; i++) {
+        const it = items[i];
+        const s = slotPos(i, n);
+        it.x += (s.x - it.x) * k; it.y += (s.y - it.y) * k;
+        const inHeap = i < heapSize;
+        const sorted = !inHeap && (phase === 'sorting' || phase === 'sorted');
+        const waiting = !inHeap && !sorted;
+        ctx.beginPath(); ctx.arc(it.x, it.y, g.r, 0, Math.PI * 2);
+        if (sorted) {
+          ctx.fillStyle = 'rgba(19,19,29,0.95)'; ctx.fill();
+          ctx.strokeStyle = 'rgba(255,124,195,0.55)'; ctx.lineWidth = 1.4; ctx.stroke();
+        } else {
+          ctx.fillStyle = colorFor(it.v, waiting ? 0.22 : 1); ctx.fill();
+          if (i === 0 && inHeap && phase !== 'raw') {
+            ctx.shadowColor = 'rgba(255,124,195,0.8)'; ctx.shadowBlur = 16;
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.shadowBlur = 0;
+          }
+        }
+        if (g.r >= 8) {
+          ctx.fillStyle = sorted ? '#ff9fd3' : waiting ? 'rgba(233,233,240,0.35)' : '#fff';
+          ctx.fillText(it.v, it.x, it.y + 0.5);
+        }
+      }
+
+      // bars: the same array, as it sits in memory
+      const span = W - g.pad * 2;
+      const bw = span / Math.max(n, 1);
+      const maxH = g.barBase - g.barTop;
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillRect(g.pad, g.barBase + 1, span, 1);
+      for (let i = 0; i < n; i++) {
+        const it = items[i];
+        const tx = barX(i, n);
+        it.bx += (tx - it.bx) * k;
+        const th = (it.v / 99) * maxH;
+        it.bh += (th - it.bh) * (reduced ? 1 : Math.min(1, dt * 6));
+        const inHeap = i < heapSize;
+        const sorted = !inHeap && (phase === 'sorting' || phase === 'sorted');
+        ctx.fillStyle = sorted ? 'rgba(255,124,195,0.75)' : colorFor(it.v, inHeap ? 0.9 : 0.22);
+        const w = Math.max(1.5, bw * 0.72);
+        ctx.fillRect(it.bx - w / 2, g.barBase - it.bh, w, it.bh);
+        if (hl.includes(i)) {
+          ctx.fillStyle = ringCol;
+          ctx.fillRect(it.bx - w / 2, g.barBase + 4, w, 3);
+        }
+      }
+      // boundary marker between heap and the rest
+      if (n && heapSize < n && heapSize > 0) {
+        const x = g.pad + heapSize * bw;
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, g.barTop - 14); ctx.lineTo(x, g.barBase + 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = '#9a9ab0';
+        ctx.textAlign = 'right'; ctx.fillText('heap', x - 5, g.barTop - 8);
+        ctx.textAlign = 'left'; ctx.fillText(phase === 'building' ? 'not yet added' : 'sorted', x + 5, g.barTop - 8);
+      }
+    }
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      if (running && job) {
+        acc += dt;
+        const interval = 1 / stepsPerSec();
+        let guard = 0;
+        while (acc >= interval && job && guard++ < 8) {
+          acc -= interval;
+          if (acc > interval * 4) acc = 0;
+          advance();
+        }
+      } else if (running && !job) {
+        running = false; sync();
+      }
+      draw(dt);
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', () => { resize(); });
+    resize();
+    if (W < 520) $('size').value = 15;
+    reset(+$('size').value);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
