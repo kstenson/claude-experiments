@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Who Can Reach You Back — Experiment 115</title>
+<meta name="description" content="Tarjan, 1972: find every strongly connected component of a directed graph in one depth-first walk, by tracking the oldest node each node can climb back to." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.09), transparent 70%), #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 0.84rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.38; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd9ee; }
+  .btn.pink:hover:not(:disabled) { background: rgba(255,124,195,0.24); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+
+  /* ---- Status ---- */
+  .status { min-height: 86px; }
+  .status b { display: block; font-size: 1.12rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 4px; font-size: 0.88rem; line-height: 1.45; color: #b9b9ca; }
+  .status.good b { color: #a9a9ff; }
+  .status.bad b { color: #ff7cc3; }
+
+  .board { padding: 10px; }
+  #c { display: block; width: 100%; border-radius: 10px; cursor: pointer; touch-action: manipulation; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+  .stackrow { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: center; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; align-items: center; }
+  .chips em { font-style: normal; font-size: 0.76rem; color: #6f6f86; }
+  .chip {
+    font-size: 0.76rem; font-variant-numeric: tabular-nums; padding: 3px 7px; border-radius: 7px;
+    background: rgba(124,124,255,0.12); border: 1px solid rgba(124,124,255,0.3); color: #dcdcff;
+    animation: pop 0.35s ease;
+  }
+  .chip.top { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.5); color: #fff; }
+  .chip.comp { color: #05050a; border: 0; font-weight: 600; }
+  .chip.solo { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: #9a9ab0; font-weight: 400; }
+  @keyframes pop { from { transform: scale(0.6); opacity: 0; } }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tally b.hot { color: #ff7cc3; }
+
+  button:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .stackrow { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Who Can Reach You Back</h1>
+      <p class="sub">Experiment № 115 · November 9, 2026</p>
+      <p class="lede">Tarjan, 1972: split a directed graph into its strongly connected components, the groups where everyone can reach everyone, in a single depth-first walk. Each node remembers one number: the oldest open node it can climb back to.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <label class="field">
+          <span>Nodes<b id="sizeOut"></b></span>
+          <input type="range" id="size" min="8" max="26" step="1" value="16" />
+        </label>
+        <label class="field">
+          <span>Arrows<b id="densOut"></b></span>
+          <input type="range" id="dens" min="1" max="10" step="1" value="5" />
+        </label>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="120" step="1" value="40" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">▶ Run Tarjan</button>
+          <button class="btn" id="step">Step</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="fresh">New graph</button>
+          <button class="btn pink" id="condense" disabled>Condense</button>
+        </div>
+        <p class="note"><b>Edit it:</b> tap one node, then another, to add an arrow between them, or remove it if it's already there. Then run again.</p>
+      </div>
+    </section>
+
+    <div class="stage">
+      <div class="panel status" id="status" aria-live="polite"><b id="statusHead"></b><span id="statusBody"></span></div>
+      <div class="panel board">
+        <canvas id="c" aria-label="A directed graph. Nodes show their visit number and low-link; finished components are coloured."></canvas>
+        <div class="legend">
+          <span><i style="background:#7c7cff"></i>walked (tree arrow)</span>
+          <span><i style="background:#ff7cc3"></i>points back into the stack</span>
+          <span><i style="background:#4a4a62"></i>into a closed component</span>
+          <span><i style="background:#2a2a3a"></i>not looked at yet</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="stackrow">
+          <span class="cap">Stack</span>
+          <div class="chips" id="stack"><em>Empty. Nodes are pushed as they are visited.</em></div>
+          <span class="cap">Found</span>
+          <div class="chips" id="found"><em>Components appear here, in the order Tarjan closes them.</em></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="tally">
+          <span>nodes <b id="tN"></b></span>
+          <span>arrows <b id="tE"></b></span>
+          <span>arrows checked <b id="tChk"></b></span>
+          <span>components <b id="tC"></b></span>
+          <span>largest <b id="tL" class="hot"></b></span>
+          <span>alone <b id="tS"></b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 115 · The story</p>
+      <h2>Who Can Reach You Back</h2>
+
+      <h3>Why I picked it</h3>
+      <p>This gallery already has a lot of graphs: Kahn ordering tasks that depend on each other, Kruskal joining strangers, Hierholzer crossing every bridge, Floyd catching a single loop. Kahn's sort has a quiet escape hatch: if there is a cycle, it just stops and gives up. I wanted the algorithm that answers what that cycle actually is, and every other one in the graph too. Robert Tarjan published it in 1972, when he was in his mid-twenties, and it is still what compilers, package managers and spreadsheet engines use to find knots of things that all depend on each other.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The economy of it. A depth-first walk numbers every node as it arrives, and each node carries one extra number, its "low": the oldest node still on the stack that it has found a way back to. A pink arrow pointing back into the stack pulls that number down, and when the walk returns, the parent takes the child's low as well. When a node finishes and its low still equals its own number, nothing below it got out, so it and everything pushed above it on the stack form one component. Pop them, colour them, carry on. Every arrow is looked at exactly once.</p>
+      <p>I also like a fact that falls out for free. The first component Tarjan closes is always one that nothing leaves; the next can only lead into that one, and so on. Press Condense at the end: every arrow between components points from a higher number to a lower one. The tangle was a tidy one-way flow all along, made of knots.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Any mess of one-way relationships, whether imports, people who owe each other, or pages linking pages, is a simple ordered chain once you shrink each mutual knot to a single point. When something looks hopelessly circular, look for the groups where everyone really can reach everyone else. Usually there are only a few, and between them the arrows all run the same way.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Tarjan's strongly connected components ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const canvas = $('c');
+    const ctx = canvas.getContext('2d');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const PALETTE = ['#7c7cff', '#ff7cc3', '#5fd4c4', '#ffb86b', '#b388ff', '#6ec1ff', '#ff8f8f', '#c3e88d', '#f78fe0', '#8fa8ff', '#ffd76e', '#7fe0a8'];
+    const SOLO = '#6f6f90';
+    const NAMES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    // Graph
+    let nodes = [];        // {nx, ny} normalised positions
+    let adj = [];          // adj[v] = array of w
+    // Algorithm state (reset on every run)
+    let idx, low, onStack, comp, stack, edgeKind, compList, checked;
+    let cur = -1, curEdge = null, hlKind = '';
+    let job = null, running = false, done = false, acc = 0;
+    let selected = -1;
+    let condT = 0, condTarget = 0;
+    let W = 600, H = 400, dpr = 1, R = 15;
+    let lastT = 0;
+
+    const nm = (v) => NAMES[v];
+    const key = (u, v) => u + '>' + v;
+    const hasEdge = (u, v) => adj[u].includes(v);
+    const edgeCount = () => adj.reduce((s, a) => s + a.length, 0);
+
+    // ---- Generate a graph: scattered points, arrows mostly between neighbours ----
+    function generate() {
+      const n = +$('size').value;
+      const dens = +$('dens').value;
+      const aspect = W / H;
+      nodes = [];
+      for (let i = 0; i < n; i++) {
+        let best = null, bestD = -1;
+        for (let k = 0; k < 30; k++) {
+          const c = { nx: 0.07 + Math.random() * 0.86, ny: 0.09 + Math.random() * 0.82 };
+          let d = Infinity;
+          for (const p of nodes) {
+            const dx = (p.nx - c.nx) * aspect, dy = p.ny - c.ny;
+            d = Math.min(d, dx * dx + dy * dy);
+          }
+          if (d > bestD) { bestD = d; best = c; }
+        }
+        nodes.push(best);
+      }
+      adj = nodes.map(() => []);
+      const dist = (i, j) => Math.hypot((nodes[i].nx - nodes[j].nx) * aspect, nodes[i].ny - nodes[j].ny);
+      const p = 0.32 + dens * 0.065;
+      const seen = new Set();
+      for (let i = 0; i < n; i++) {
+        const near = [...Array(n).keys()].filter((j) => j !== i).sort((a, b) => dist(i, a) - dist(i, b)).slice(0, 3);
+        for (const j of near) {
+          const pk = Math.min(i, j) + ',' + Math.max(i, j);
+          if (seen.has(pk)) continue;
+          seen.add(pk);
+          if (Math.random() < p) {
+            if (Math.random() < 0.5) adj[i].push(j); else adj[j].push(i);
+            if (Math.random() < 0.08 * dens / 5) { if (!hasEdge(i, j)) adj[i].push(j); else adj[j].push(i); }
+          }
+        }
+      }
+      const extra = Math.round(n * 0.12 * dens / 5);
+      for (let k = 0; k < extra; k++) {
+        const a = Math.floor(Math.random() * n), b = Math.floor(Math.random() * n);
+        if (a !== b && !hasEdge(a, b)) adj[a].push(b);
+      }
+      reset();
+    }
+
+    // ---- The algorithm, one visible step per yield ----
+    function* tarjan() {
+      const n = nodes.length;
+      let counter = 0;
+      function* strong(v) {
+        idx[v] = low[v] = counter++;
+        stack.push(v); onStack[v] = true;
+        yield { cur: v, kind: 'info', head: `Visit ${nm(v)}: it gets number ${idx[v]}.`, body: `Its low starts at ${low[v]}, its own number. Push it on the stack; it stays there until its component is known.` };
+        for (const w of adj[v]) {
+          checked++;
+          const e = [v, w];
+          if (idx[w] === undefined) {
+            edgeKind.set(key(v, w), 'tree');
+            yield { cur: v, edge: e, kind: 'info', head: `${nm(v)} → ${nm(w)} leads somewhere new.`, body: `${nm(w)} has no number yet, so walk down into it.` };
+            yield* strong(w);
+            const old = low[v];
+            low[v] = Math.min(low[v], low[w]);
+            yield {
+              cur: v, edge: e, kind: low[v] < old ? 'bad' : 'info',
+              head: `Back at ${nm(v)} from ${nm(w)}.`,
+              body: low[v] < old
+                ? `${nm(w)} found a way back to number ${low[w]}, and ${nm(v)} can follow it there. ${nm(v)}'s low drops from ${old} to ${low[v]}.`
+                : `${nm(w)}'s low is ${low[w]}, no older than ${nm(v)}'s own ${old}. Nothing changes.`
+            };
+          } else if (onStack[w]) {
+            edgeKind.set(key(v, w), 'back');
+            const old = low[v];
+            low[v] = Math.min(low[v], idx[w]);
+            yield {
+              cur: v, edge: e, kind: 'bad',
+              head: `${nm(v)} → ${nm(w)} points back into the stack.`,
+              body: low[v] < old
+                ? `${nm(w)} is still open, so ${nm(v)} can reach number ${idx[w]}. Low drops from ${old} to ${low[v]}: these two are in a loop.`
+                : `${nm(w)} is still open, but ${nm(v)} already reaches ${old}, which is older. Low stays ${low[v]}.`
+            };
+          } else {
+            edgeKind.set(key(v, w), 'cross');
+            yield { cur: v, edge: e, kind: 'info', head: `${nm(v)} → ${nm(w)} leads into a closed component.`, body: `${nm(w)}'s group is finished, and nothing in it can reach back here. Ignore the arrow.` };
+          }
+        }
+        if (low[v] === idx[v]) {
+          const members = [];
+          let w;
+          do { w = stack.pop(); onStack[w] = false; comp[w] = compList.length; members.push(w); } while (w !== v);
+          compList.push(members);
+          const list = members.slice().reverse().map(nm).join(' ');
+          yield {
+            cur: v, kind: 'good',
+            head: members.length > 1 ? `${nm(v)} roots component #${compList.length}: ${list}.` : `${nm(v)} stands alone: component #${compList.length}.`,
+            body: members.length > 1
+              ? `Its low equals its own number ${idx[v]}, so nothing above it on the stack escaped to anything older. Pop all ${members.length}: each can reach every other.`
+              : `Its low is still its own number, and nothing above it is on the stack. It sits in no loop.`
+          };
+        } else {
+          yield { cur: v, kind: 'info', head: `Done with ${nm(v)}, but its low is ${low[v]}.`, body: `It can climb back to number ${low[v]}, which is still open. It stays on the stack for an older node to collect.` };
+        }
+      }
+      for (let s = 0; s < n; s++) {
+        if (idx[s] === undefined) {
+          yield { cur: s, kind: 'info', head: s === 0 ? `Start the walk at ${nm(s)}.` : `${nm(s)} hasn't been reached. Start a new walk there.`, body: s === 0 ? 'Number nodes in the order they are first visited. That number is how old a node is.' : 'Every node gets visited once. Unreached ones begin a fresh depth-first walk.' };
+          yield* strong(s);
+        }
+      }
+    }
+
+    function reset() {
+      const n = nodes.length;
+      idx = new Array(n).fill(undefined);
+      low = new Array(n).fill(undefined);
+      onStack = new Array(n).fill(false);
+      comp = new Array(n).fill(-1);
+      stack = []; edgeKind = new Map(); compList = []; checked = 0;
+      cur = -1; curEdge = null; hlKind = '';
+      job = null; running = false; done = false; acc = 0;
+      condTarget = 0;
+      setStatus('info', 'A directed graph, no colours yet.', 'Press Run to walk it depth-first. Watch the stack below: nodes stay on it until Tarjan knows their component.');
+      syncUI();
+    }
+
+    function stepOnce() {
+      if (done) return;
+      if (!job) job = tarjan();
+      const r = job.next();
+      if (r.done) { finish(); return; }
+      const ev = r.value;
+      cur = ev.cur; curEdge = ev.edge || null; hlKind = ev.kind;
+      setStatus(ev.kind, ev.head, ev.body);
+      syncUI();
+    }
+
+    function finish() {
+      done = true; running = false; cur = -1; curEdge = null;
+      const k = compList.length;
+      const big = compList.filter((c) => c.length > 1).length;
+      setStatus('good', `${k} component${k === 1 ? '' : 's'}, ${big} with a loop in ${big === 1 ? 'it' : 'them'}.`,
+        k > 1 ? 'Tarjan closed them sink-first: component #1 has no arrow out to another. Press Condense: every arrow between components runs from a higher number to a lower one.'
+              : 'Every node can reach every other. The whole graph is one knot.');
+      syncUI();
+    }
+
+    function setStatus(kind, head, body) {
+      const el = $('status');
+      el.className = 'panel status' + (kind === 'good' ? ' good' : kind === 'bad' ? ' bad' : '');
+      $('statusHead').textContent = head;
+      $('statusBody').textContent = body;
+    }
+
+    const compColor = (c) => compList[c].length === 1 ? SOLO : PALETTE[(compList.slice(0, c + 1).filter((m) => m.length > 1).length - 1) % PALETTE.length];
+
+    function syncUI() {
+      $('sizeOut').textContent = $('size').value;
+      $('densOut').textContent = ['sparse', 'sparse', 'light', 'light', 'medium', 'medium', 'busy', 'busy', 'dense', 'dense'][+$('dens').value - 1];
+      const sps = stepsPerSec();
+      $('speedOut').textContent = sps.toFixed(sps < 10 ? 1 : 0) + ' steps/s';
+      $('play').textContent = running ? '❚❚ Pause' : done ? '↺ Run again' : (job ? '▶ Resume' : '▶ Run Tarjan');
+      $('step').disabled = done;
+      $('condense').disabled = !done || compList.length < 2;
+      $('condense').textContent = condTarget ? 'Expand' : 'Condense';
+
+      const st = $('stack');
+      if (!stack.length) st.innerHTML = '<em>Empty. Nodes are pushed as they are visited.</em>';
+      else st.innerHTML = stack.map((v, i) => `<span class="chip${i === stack.length - 1 ? ' top' : ''}">${nm(v)}·${idx[v]}<small style="opacity:.6"> low ${low[v]}</small></span>`).join('');
+      const fd = $('found');
+      if (!compList.length) fd.innerHTML = '<em>Components appear here, in the order Tarjan closes them.</em>';
+      else fd.innerHTML = compList.map((m, c) => {
+        const solo = m.length === 1;
+        return `<span class="chip comp${solo ? ' solo' : ''}" style="${solo ? '' : 'background:' + compColor(c)}">#${c + 1} ${m.slice().reverse().map(nm).join('')}</span>`;
+      }).join('');
+
+      $('tN').textContent = nodes.length;
+      $('tE').textContent = edgeCount();
+      $('tChk').textContent = checked;
+      $('tC').textContent = compList.length;
+      $('tL').textContent = compList.length ? Math.max(...compList.map((m) => m.length)) : '–';
+      $('tS').textContent = compList.filter((m) => m.length === 1).length;
+    }
+
+    function stepsPerSec() { return Math.pow(2, +$('speed').value / 20) * 0.7; }
+
+    // ---- Controls ----
+    $('play').addEventListener('click', () => {
+      if (done) { reset(); }
+      running = !running;
+      if (running && !job) stepOnce();
+      syncUI();
+    });
+    $('step').addEventListener('click', () => { running = false; stepOnce(); syncUI(); });
+    $('fresh').addEventListener('click', () => { selected = -1; generate(); });
+    $('size').addEventListener('input', () => { selected = -1; generate(); });
+    $('dens').addEventListener('input', () => { selected = -1; generate(); });
+    $('speed').addEventListener('input', syncUI);
+    $('condense').addEventListener('click', () => { condTarget = condTarget ? 0 : 1; if (reduced) condT = condTarget; syncUI(); });
+
+    // ---- Click to edit arrows ----
+    function nodeAt(x, y) {
+      let best = -1, bd = (R + 8) * (R + 8);
+      nodes.forEach((p, i) => {
+        const q = pos(i);
+        const d = (q.x - x) ** 2 + (q.y - y) ** 2;
+        if (d < bd) { bd = d; best = i; }
+      });
+      return best;
+    }
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (W / rect.width), y = (e.clientY - rect.top) * (H / rect.height);
+      if (condTarget) { condTarget = 0; syncUI(); return; }
+      const v = nodeAt(x, y);
+      if (v < 0) { selected = -1; return; }
+      if (selected < 0) { selected = v; setStatus('info', `${nm(v)} selected.`, 'Tap another node to add an arrow from this one to it, or remove it if it exists. Tap empty space to cancel.'); return; }
+      if (selected === v) { selected = -1; return; }
+      const a = selected; selected = -1;
+      const had = hasEdge(a, v);
+      if (had) adj[a] = adj[a].filter((w) => w !== v); else adj[a].push(v);
+      reset();
+      setStatus('info', had ? `Removed ${nm(a)} → ${nm(v)}.` : `Added ${nm(a)} → ${nm(v)}.`, 'The graph changed, so the run starts over. Press Run to see which components it makes now.');
+    });
+
+    // ---- Drawing ----
+    function resize() {
+      const box = canvas.parentElement.getBoundingClientRect();
+      const w = Math.max(260, box.width - (window.innerWidth <= 800 ? 12 : 20));
+      W = w;
+      H = Math.round(Math.min(620, Math.max(320, window.innerWidth <= 800 ? w * 0.95 : w * 0.6)));
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.height = H + 'px';
+      R = Math.max(12, Math.min(18, W / 42));
+    }
+
+    let centroids = [];
+    function computeCentroids() {
+      centroids = compList.map((m) => {
+        let x = 0, y = 0;
+        for (const v of m) { x += nodes[v].nx; y += nodes[v].ny; }
+        return { nx: x / m.length, ny: y / m.length };
+      });
+    }
+    function pos(i) {
+      const p = nodes[i];
+      let nx = p.nx, ny = p.ny;
+      if (condT > 0 && comp[i] >= 0 && centroids[comp[i]]) {
+        const c = centroids[comp[i]];
+        const k = condT * 0.82;
+        nx += (c.nx - nx) * k; ny += (c.ny - ny) * k;
+      }
+      return { x: nx * W, y: ny * H };
+    }
+
+    function arrow(ax, ay, bx, by, bend, color, width, alpha, rA, rB, dash) {
+      const dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy) || 1;
+      const ux = dx / L, uy = dy / L;
+      const mx = (ax + bx) / 2 - uy * bend, my = (ay + by) / 2 + ux * bend;
+      // Trim the ends to the node rims, measured toward the control point
+      const s = trimToward(ax, ay, mx, my, rA);
+      const t = trimToward(bx, by, mx, my, rB + 3);
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+      ctx.setLineDash(dash || []);
+      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.quadraticCurveTo(mx, my, t.x, t.y); ctx.stroke();
+      ctx.setLineDash([]);
+      const tx = t.x - mx, ty = t.y - my, tl = Math.hypot(tx, ty) || 1;
+      const hx = tx / tl, hy = ty / tl, hs = 5 + width * 1.6;
+      ctx.beginPath();
+      ctx.moveTo(t.x + hx * 2, t.y + hy * 2);
+      ctx.lineTo(t.x - hx * hs - hy * hs * 0.6, t.y - hy * hs + hx * hs * 0.6);
+      ctx.lineTo(t.x - hx * hs + hy * hs * 0.6, t.y - hy * hs - hx * hs * 0.6);
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    function trimToward(x, y, tx, ty, r) {
+      const dx = tx - x, dy = ty - y, L = Math.hypot(dx, dy) || 1;
+      return { x: x + dx / L * r, y: y + dy / L * r };
+    }
+
+    function draw(time) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#08080f'; ctx.fillRect(0, 0, W, H);
+      const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(time / 260);
+      const n = nodes.length;
+      const P = nodes.map((_, i) => pos(i));
+
+      // Component halos
+      compList.forEach((m, c) => {
+        if (m.length < 2) return;
+        const col = compColor(c);
+        ctx.globalAlpha = 0.16 + 0.1 * condT;
+        ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.lineWidth = R * 2.4;
+        for (const u of m) for (const w of adj[u]) if (comp[w] === c) {
+          ctx.beginPath(); ctx.moveTo(P[u].x, P[u].y); ctx.lineTo(P[w].x, P[w].y); ctx.stroke();
+        }
+        for (const u of m) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P[u].x, P[u].y, R * 1.2, 0, Math.PI * 2); ctx.fill(); }
+        ctx.globalAlpha = 1; ctx.lineCap = 'butt';
+      });
+
+      // Arrows between nodes
+      const fade = 1 - condT;
+      for (let u = 0; u < n; u++) for (const w of adj[u]) {
+        const k = edgeKind.get(key(u, w));
+        const isCur = curEdge && curEdge[0] === u && curEdge[1] === w;
+        const bend = hasEdge(w, u) ? 14 : 0;
+        const intra = done && comp[u] === comp[w];
+        if (condT > 0 && done && !intra) continue; // drawn as component arrows below
+        let col = '#2a2a3a', wd = 1.4, a = 1, dash = null;
+        if (k === 'tree') { col = '#7c7cff'; wd = 2.2; }
+        else if (k === 'back') { col = '#ff7cc3'; wd = 2.2; }
+        else if (k === 'cross') { col = '#4a4a62'; wd = 1.4; dash = [4, 4]; }
+        if (intra && k !== 'tree' && k !== 'back') { col = compColor(comp[u]); }
+        if (isCur) { col = hlKind === 'bad' ? '#ffb3dc' : '#ffffff'; wd = 3; }
+        if (intra) a = 1 - condT * 0.85;
+        arrow(P[u].x, P[u].y, P[w].x, P[w].y, bend, col, wd, a, R, R, dash);
+      }
+
+      // Condensed arrows between components
+      if (condT > 0) {
+        const seen = new Set();
+        for (let u = 0; u < n; u++) for (const w of adj[u]) {
+          const a = comp[u], b = comp[w];
+          if (a === b || a < 0 || b < 0 || seen.has(a + '>' + b)) continue;
+          seen.add(a + '>' + b);
+          const ca = centroids[a], cb = centroids[b];
+          const ra = compRadius(a), rb = compRadius(b);
+          const sx = ca.nx * W, sy = ca.ny * H, ex = cb.nx * W, ey = cb.ny * H;
+          const lerp = (p, q) => p + (q - p) * condT;
+          arrow(lerp(P[u].x, sx), lerp(P[u].y, sy), lerp(P[w].x, ex), lerp(P[w].y, ey), 0,
+            '#c7c7d6', 1.6 + condT * 0.6, 0.55 + 0.35 * condT, lerp(R, ra), lerp(R, rb));
+        }
+      }
+
+      // Nodes
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (let i = 0; i < n; i++) {
+        const { x, y } = P[i];
+        const visited = idx[i] !== undefined;
+        let fill = '#12121c', ring = '#3a3a50';
+        if (comp[i] >= 0) { fill = compColor(comp[i]); ring = fill; }
+        else if (onStack[i]) { fill = '#24244a'; ring = '#7c7cff'; }
+        const r = R * (1 - condT * 0.35);
+        if (i === cur) {
+          ctx.globalAlpha = 0.25 + 0.25 * pulse;
+          ctx.fillStyle = hlKind === 'good' ? '#a9a9ff' : hlKind === 'bad' ? '#ff7cc3' : '#ffffff';
+          ctx.beginPath(); ctx.arc(x, y, r + 7 + 3 * pulse, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        if (i === selected) {
+          ctx.strokeStyle = '#ffd76e'; ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        }
+        ctx.fillStyle = fill;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = i === cur ? '#ffffff' : ring; ctx.lineWidth = i === cur ? 2.4 : 1.6;
+        ctx.stroke();
+        ctx.globalAlpha = 1 - condT * 0.6;
+        ctx.fillStyle = comp[i] >= 0 && comp[i] !== -1 && compList[comp[i]].length > 1 ? '#05050a' : '#e9e9f0';
+        ctx.font = `600 ${Math.round(r * 0.9)}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.fillText(nm(i), x, y + 0.5);
+        if (visited && condT < 0.5) {
+          ctx.font = `${Math.max(9, Math.round(R * 0.62))}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillStyle = low[i] < idx[i] ? '#ff9fd2' : '#9a9ab0';
+          ctx.fillText(`${idx[i]} · low ${low[i]}`, x, y + r + 10);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // Component numbers when condensed
+      if (condT > 0) {
+        ctx.globalAlpha = condT;
+        compList.forEach((m, c) => {
+          const x = centroids[c].nx * W, y = centroids[c].ny * H, rr = compRadius(c);
+          ctx.strokeStyle = compColor(c); ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = '#e9e9f0';
+          ctx.font = `600 ${Math.max(11, Math.round(R * 0.8))}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillText('#' + (c + 1), x, y - rr - 10);
+        });
+        ctx.globalAlpha = 1;
+      }
+    }
+    function compRadius(c) { return R * (0.9 + Math.sqrt(compList[c].length) * 0.55); }
+
+    function frame(t) {
+      const dt = Math.min(0.1, (t - (lastT || t)) / 1000);
+      lastT = t;
+      if (running && !done) {
+        acc += dt * stepsPerSec();
+        let guard = 0;
+        while (acc >= 1 && running && !done && guard++ < 40) { acc -= 1; stepOnce(); }
+      }
+      if (done && condTarget && !centroids.length) computeCentroids();
+      if (condT !== condTarget) {
+        if (condTarget && centroids.length !== compList.length) computeCentroids();
+        const sp = dt * 1.6;
+        condT = condTarget > condT ? Math.min(condTarget, condT + sp) : Math.max(condTarget, condT - sp);
+      }
+      if (!done) centroids = [];
+      draw(t);
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener('resize', () => { resize(); });
+    window.addEventListener('keydown', (e) => {
+      if (story.classList.contains('open')) return;
+      if (e.key === ' ' && e.target === document.body) { e.preventDefault(); $('play').click(); }
+      else if (e.key.toLowerCase() === 'n') $('fresh').click();
+      else if (e.key === 'ArrowRight') $('step').click();
+    });
+    resize();
+    generate();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
