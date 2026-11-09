@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-09",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "A Wire to Romania",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.1,
+    "summary": "Uneasy calm: the US blockade of Iran took hold and a drone shut Iraq's Khor Mor gasfield, COP31 opened without the US, and a Cairo train crash killed seven. Markets rebounded, Moldova wired itself to Romania, and a flu shot study brought good news.",
+    "palette": {
+      "bg": "#16191d",
+      "bg2": "#272c33",
+      "accent": "#9fb6c8",
+      "accent2": "#d6a866",
+      "text": "#e9ecef"
+    }
+  },
+  "style": {
+    "genre": "trip-hop — harmonica, strumstick, chamber organ, MPC60",
+    "key": "F#",
+    "scale": "dorian",
+    "bpm": 86,
+    "swing": 0.1
+  },
+  "sampleSources": [
+    "Strudel default library (VCSL soft harmonica, strumstick, Renaissance organ, vibraslap; Akai MPC60 drum machine), triangle-oscillator sub bass"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ bd ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ [~ sd]\").bank(\"AkaiMPC60\").gain(0.55).lpf(5000).room(0.15), s(\"~ hh ~ hh ~ hh ~ hh ~ hh ~ hh ~ hh ~ [hh hh]\").bank(\"AkaiMPC60\").gain(perlin.range(0.1,0.22)).hpf(5000).pan(sine.range(0.4,0.6).slow(8)), s(\"~ ~ rim ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ rim ~ ~\").bank(\"AkaiMPC60\").gain(0.18).delay(0.3).delaytime(0.523).delayfeedback(0.3).pan(0.7), note(\"<[fs1 ~ ~ fs1 ~ ~ cs2 ~] [b1 ~ ~ b1 ~ ~ a1 ~] [e1 ~ ~ e1 ~ ~ b1 ~] [cs2 ~ ~ cs2 ~ gs1 ~ ~]>\").s(\"triangle\").decay(0.4).sustain(0.5).release(0.2).lpf(500).gain(0.5), note(\"<[fs3 a3 cs4 e4 cs4 a3 fs3 a3] [b2 ds3 fs3 a3 fs3 ds3 b2 ds3] [e3 gs3 b3 ds4 b3 gs3 e3 gs3] [cs3 e3 gs3 b3 gs3 e3 cs3 e3]>\").s(\"strumstick\").gain(0.32).lpf(sine.range(1400,3200).slow(16)).room(0.3).pan(0.38).off(0.125, x => x.gain(0.12).pan(0.7)), note(\"<[fs3,a3,cs4,e4] [b2,ds3,fs3,a3] [e3,gs3,b3,ds4] [cs3,e3,gs3,b3]>\").s(\"organ_8inch\").clip(1).attack(0.8).release(1.2).gain(0.14).lpf(1800).room(0.5).rsize(4).jux(rev), note(\"<[cs5 ~ ~ b4 a4 ~ fs4 ~] [~ ~ ds5 ~ cs5 b4 ~ ~] [b4 ~ gs4 ~ e4 ~ ~ ~] [gs4 ~ b4 ~ cs5 ~ ~ ~]>\").s(\"harmonica_soft\").mask(\"<0 1>/4\").clip(1).gain(0.3).release(0.5).room(0.45).rsize(3).delay(0.25).delaytime(0.523).delayfeedback(0.3).pan(0.58), s(\"<~ ~ ~ vibraslap ~ ~ ~ ~>\").gain(0.15).room(0.5).pan(0.8))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "The blockade's on, the talking's on,",
+        "he'll take it to Xi at the summit.",
+        "A drone put out the Khor Mor flame;",
+        "the markets climbed back up from it."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Antalya opened half its doors,",
+        "one chair left empty in the room.",
+        "Two trains met south of Cairo,",
+        "and seven won't be coming home."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "But Moldova ran a wire west,",
+        "a little light from Romania,",
+        "and a dog can smell what doesn't belong.",
+        "Hold steady, it's only Monday."
+      ]
+    }
+  ]
+}
