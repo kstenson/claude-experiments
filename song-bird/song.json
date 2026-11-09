@@ -1,57 +1,57 @@
 {
-  "date": "2026-11-08",
+  "date": "2026-11-09",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Bridge Builders, He Said",
+  "title": "A Wire to Romania",
   "mood": {
-    "label": "Braced and waiting",
-    "score": -0.18,
-    "summary": "Braced and waiting: pressure on Iran tightened as tankers hit mines near Hormuz, a gunman killed six in Krakow, Kyiv's power was hit and Gaza's tents flooded. Pope Leo urged Uruguay to build bridges, and COP31 opens tomorrow.",
+    "label": "Uneasy calm",
+    "score": -0.1,
+    "summary": "Uneasy calm: the US blockade of Iran took hold and a drone shut Iraq's Khor Mor gasfield, COP31 opened without the US, and a Cairo train crash killed seven. Markets rebounded, Moldova wired itself to Romania, and a flu shot study brought good news.",
     "palette": {
-      "bg": "#141519",
-      "bg2": "#25262e",
-      "accent": "#b9a2c9",
-      "accent2": "#d8b25e",
-      "text": "#ebe9ef"
+      "bg": "#16191d",
+      "bg2": "#272c33",
+      "accent": "#9fb6c8",
+      "accent2": "#d6a866",
+      "text": "#e9ecef"
     }
   },
   "style": {
-    "genre": "dark electronic — TX81Z clavisynth, wine glasses, slit drum, RX5",
-    "key": "B",
-    "scale": "harmonic minor",
-    "bpm": 98,
-    "swing": 0
+    "genre": "trip-hop — harmonica, strumstick, chamber organ, MPC60",
+    "key": "F#",
+    "scale": "dorian",
+    "bpm": 86,
+    "swing": 0.1
   },
   "sampleSources": [
-    "Strudel default library (VCSL clavisynth, FM piano, wine glasses, slit drum, timpani, finger cymbal; Yamaha RX5 drum machine), sawtooth-oscillator bass"
+    "Strudel default library (VCSL soft harmonica, strumstick, Renaissance organ, vibraslap; Akai MPC60 drum machine), triangle-oscillator sub bass"
   ],
-  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~\").bank(\"YamahaRX5\").gain(0.5).room(0.2).rsize(2), s(\"hh*16\").bank(\"YamahaRX5\").gain(perlin.range(0.07,0.18)).hpf(6000).pan(sine.range(0.35,0.65).slow(6)), s(\"rim(5,16,3)\").bank(\"YamahaRX5\").gain(0.2).delay(0.25).delaytime(0.459).delayfeedback(0.3).pan(0.7), s(\"slitdrum(3,8)\").n(\"<0 3 1 4>\").gain(0.34).room(0.35).pan(0.3), note(\"<[b1 ~ b1 b1 ~ b1 d2 ~] [g1 ~ g1 g1 ~ g1 b1 ~] [e1 ~ e1 e1 ~ e1 g1 ~] [fs1 ~ fs1 fs1 ~ as1 cs2 ~] [b1 ~ b1 b1 ~ b1 d2 ~] [g1 ~ g1 g1 ~ g1 b1 ~] [cs2 ~ cs2 cs2 ~ e2 g1 ~] [fs1 ~ fs1 ~ as1 ~ fs1 ~]>\").s(\"sawtooth\").decay(0.2).sustain(0.4).release(0.1).lpf(sine.range(320,900).slow(16)).gain(0.3), note(\"<[b3 d4 fs4 b4 fs4 d4 b3 d4] [g3 b3 d4 g4 d4 b3 g3 b3] [e3 g3 b3 e4 b3 g3 e3 g3] [fs3 as3 cs4 fs4 cs4 as3 fs3 as3] [b3 d4 fs4 b4 fs4 d4 b3 d4] [g3 b3 d4 g4 d4 b3 g3 b3] [cs4 e4 g4 cs5 g4 e4 cs4 e4] [fs3 as3 cs4 fs4 cs4 as3 fs3 as3]>\").s(\"clavisynth\").gain(0.26).decay(0.18).sustain(0.2).release(0.15).lpf(sine.range(1200,3600).slow(12)).delay(0.2).delaytime(0.459).delayfeedback(0.25).pan(0.42), note(\"<[b3,d4,fs4] [g3,b3,d4] [e3,g3,b3] [fs3,as3,cs4] [b3,d4,fs4] [g3,b3,d4] [cs4,e4,g4] [fs3,as3,cs4]>\").s(\"wineglass\").clip(1).attack(0.6).release(1.5).gain(0.22).lpf(3000).room(0.55).rsize(5).jux(rev), note(\"<[fs5 ~ ~ e5 d5 ~ ~ ~] [d5 ~ ~ b4 ~ ~ ~ ~] [g5 ~ fs5 e5 ~ ~ ~ ~] [as4 ~ ~ ~ cs5 ~ ~ ~] [b4 ~ d5 ~ fs5 ~ ~ ~] [g5 ~ fs5 ~ d5 ~ ~ ~] [e5 ~ ~ g5 ~ ~ cs5 ~] [as4 ~ ~ ~ ~ ~ ~ ~]>\").s(\"fmpiano\").mask(\"<0 1>/8\").gain(0.3).release(0.6).room(0.4).rsize(3).delay(0.3).delaytime(0.6888).delayfeedback(0.3).pan(0.6), s(\"<timpani ~ ~ timpani ~ ~ ~ ~>\").gain(0.18).lpf(800).room(0.5).rsize(4), s(\"<~ ~ ~ ~ ~ ~ ~ [~ ~ ~ fingercymbal]>\").gain(0.12).room(0.6).rsize(5).pan(0.75))",
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ bd ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ [~ sd]\").bank(\"AkaiMPC60\").gain(0.55).lpf(5000).room(0.15), s(\"~ hh ~ hh ~ hh ~ hh ~ hh ~ hh ~ hh ~ [hh hh]\").bank(\"AkaiMPC60\").gain(perlin.range(0.1,0.22)).hpf(5000).pan(sine.range(0.4,0.6).slow(8)), s(\"~ ~ rim ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ rim ~ ~\").bank(\"AkaiMPC60\").gain(0.18).delay(0.3).delaytime(0.523).delayfeedback(0.3).pan(0.7), note(\"<[fs1 ~ ~ fs1 ~ ~ cs2 ~] [b1 ~ ~ b1 ~ ~ a1 ~] [e1 ~ ~ e1 ~ ~ b1 ~] [cs2 ~ ~ cs2 ~ gs1 ~ ~]>\").s(\"triangle\").decay(0.4).sustain(0.5).release(0.2).lpf(500).gain(0.5), note(\"<[fs3 a3 cs4 e4 cs4 a3 fs3 a3] [b2 ds3 fs3 a3 fs3 ds3 b2 ds3] [e3 gs3 b3 ds4 b3 gs3 e3 gs3] [cs3 e3 gs3 b3 gs3 e3 cs3 e3]>\").s(\"strumstick\").gain(0.32).lpf(sine.range(1400,3200).slow(16)).room(0.3).pan(0.38).off(0.125, x => x.gain(0.12).pan(0.7)), note(\"<[fs3,a3,cs4,e4] [b2,ds3,fs3,a3] [e3,gs3,b3,ds4] [cs3,e3,gs3,b3]>\").s(\"organ_8inch\").clip(1).attack(0.8).release(1.2).gain(0.14).lpf(1800).room(0.5).rsize(4).jux(rev), note(\"<[cs5 ~ ~ b4 a4 ~ fs4 ~] [~ ~ ds5 ~ cs5 b4 ~ ~] [b4 ~ gs4 ~ e4 ~ ~ ~] [gs4 ~ b4 ~ cs5 ~ ~ ~]>\").s(\"harmonica_soft\").mask(\"<0 1>/4\").clip(1).gain(0.3).release(0.5).room(0.45).rsize(3).delay(0.25).delaytime(0.523).delayfeedback(0.3).pan(0.58), s(\"<~ ~ ~ vibraslap ~ ~ ~ ~>\").gain(0.15).room(0.5).pan(0.8))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "They're closing roads to starve a war,",
-        "two tankers met the mines.",
-        "A market square in Krakow,",
-        "and six more names in lines."
+        "The blockade's on, the talking's on,",
+        "he'll take it to Xi at the summit.",
+        "A drone put out the Khor Mor flame;",
+        "the markets climbed back up from it."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "The rain got into Gaza's tents,",
-        "Kyiv went without light,",
-        "a hundred forty thousand marched",
-        "for rent in France tonight."
+        "Antalya opened half its doors,",
+        "one chair left empty in the room.",
+        "Two trains met south of Cairo,",
+        "and seven won't be coming home."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "Be bridge builders, an old man said",
-        "to a crowd in Uruguay.",
-        "The talks in Antalya start tomorrow;",
-        "we hold our breath today."
+        "But Moldova ran a wire west,",
+        "a little light from Romania,",
+        "and a dog can smell what doesn't belong.",
+        "Hold steady, it's only Monday."
       ]
     }
   ]
