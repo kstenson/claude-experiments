@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>No More Than Seven — Experiment 116</title>
+<meta name="description" content="Shamos and Hoey, 1975: find the closest pair among many points by splitting them in half, solving each half, and checking only a thin strip across the cut, where every point has at most seven neighbours worth measuring." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(255,124,195,0.07), transparent 70%), #05050a;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 4px; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 0.84rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.38; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .btn.pink { background: rgba(255,124,195,0.12); border-color: rgba(255,124,195,0.4); color: #ffd9ee; }
+  .btn.pink:hover:not(:disabled) { background: rgba(255,124,195,0.24); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+
+  /* ---- Status ---- */
+  .status { min-height: 86px; }
+  .status b { display: block; font-size: 1.12rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 4px; font-size: 0.88rem; line-height: 1.45; color: #b9b9ca; }
+  .status.good b { color: #a9a9ff; }
+  .status.bad b { color: #ff7cc3; }
+
+  .board { padding: 10px; }
+  #c { display: block; width: 100%; border-radius: 10px; cursor: crosshair; touch-action: manipulation; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .legend i.sq { height: 10px; width: 14px; border-radius: 3px; }
+
+  .stackrow { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: center; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; align-items: center; }
+  .chips em { font-style: normal; font-size: 0.76rem; color: #6f6f86; }
+  .chip {
+    font-size: 0.76rem; font-variant-numeric: tabular-nums; padding: 3px 7px; border-radius: 7px;
+    background: rgba(124,124,255,0.12); border: 1px solid rgba(124,124,255,0.3); color: #dcdcff;
+  }
+  .chip.top { background: rgba(255,124,195,0.16); border-color: rgba(255,124,195,0.5); color: #fff; }
+  .bars { display: flex; align-items: flex-end; gap: 3px; height: 34px; }
+  .bars div { flex: 1; min-width: 6px; height: 100%; background: rgba(124,124,255,0.16); border-radius: 3px 3px 0 0; position: relative; }
+  .bars div i { position: absolute; left: 0; right: 0; bottom: 0; background: #7c7cff; border-radius: 3px 3px 0 0; transition: height 0.2s ease; }
+  .bars div.over i { background: #ff7cc3; }
+  .barlbl { display: flex; gap: 3px; font-size: 0.64rem; color: #6f6f86; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .barlbl span { flex: 1; min-width: 6px; text-align: center; }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tally b.hot { color: #ff7cc3; }
+
+  button:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .stackrow { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>No More Than Seven</h1>
+      <p class="sub">Experiment № 116 · November 10, 2026</p>
+      <p class="lede">Shamos and Hoey, 1975: to find the two closest points in a crowd, split the crowd down the middle, solve each half, then look only at a thin strip across the cut. Inside that strip, no point ever has more than seven neighbours worth measuring.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <label class="field">
+          <span>Points<b id="sizeOut"></b></span>
+          <input type="range" id="size" min="6" max="600" step="1" value="90" />
+        </label>
+        <div>
+          <span class="cap">Layout</span>
+          <div class="seg" id="layout">
+            <button data-l="scatter" aria-pressed="true">Scattered</button>
+            <button data-l="clusters" aria-pressed="false">Clusters</button>
+            <button data-l="grid" aria-pressed="false">Near-grid</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="38" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">▶ Run</button>
+          <button class="btn" id="step">Step</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="fresh">New points</button>
+          <button class="btn" id="finish">Finish</button>
+        </div>
+        <button class="btn pink" id="discs" disabled>Show d/2 discs</button>
+        <p class="note"><b>Edit it:</b> tap empty space to drop a point, or tap a point to remove it. Try Near-grid: almost every distance is a tie, the worst case for guessing, and still each strip point checks only a handful of neighbours.</p>
+        <p class="note"><b>Why it's worth knowing:</b> it is the cleanest case of divide and conquer where the hard part is the merge. The answer from the two halves tells you exactly how little of the boundary you need to check, which turns n² into n log n.</p>
+      </div>
+    </section>
+
+    <div class="stage">
+      <div class="panel status" id="status" aria-live="polite"><b id="statusHead"></b><span id="statusBody"></span></div>
+      <div class="panel board">
+        <canvas id="c" aria-label="Points on a plane. Shaded slabs show the recursion, a pink strip straddles the current cut, and boxes show which neighbours each strip point must check."></canvas>
+        <div class="legend">
+          <span><i style="background:#ff7cc3"></i>the cut being merged</span>
+          <span><i class="sq" style="background:rgba(255,124,195,0.18)"></i>strip: within d of the cut</span>
+          <span><i class="sq" style="border:1.5px solid #ffd76e;background:transparent"></i>d × 2d box below a point</span>
+          <span><i style="background:#7c7cff"></i>best pair found in a slab</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="stackrow">
+          <span class="cap">Calls</span>
+          <div class="chips" id="calls"><em>The open recursive calls appear here, outermost first.</em></div>
+          <span class="cap">Checks per<br />strip point</span>
+          <div>
+            <div class="bars" id="bars"></div>
+            <div class="barlbl" id="barlbl"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="tally">
+          <span>points <b id="tN"></b></span>
+          <span>all pairs <b id="tP"></b></span>
+          <span>distances measured <b id="tM"></b></span>
+          <span>share <b id="tR"></b></span>
+          <span>most from one strip point <b id="tK" class="hot"></b></span>
+          <span>closest <b id="tD"></b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 116 · The story</p>
+      <h2>No More Than Seven</h2>
+
+      <h3>Why I picked it</h3>
+      <p>This gallery has plenty of geometry already: Graham wrapping a hull, Welzl pinning a circle, Bentley's k-d tree, Bowyer and Watson triangulating. What it didn't have was the problem those fields grew out of. Michael Shamos and Dan Hoey's 1975 paper "Closest-point problems" is one of the founding papers of computational geometry, and its first question is the simplest one you could ask about a pile of points: which two are nearest? The obvious answer measures every pair, which is n(n−1)/2 distances. For six hundred points that's almost 180,000. I wanted to show the trick that gets it down to a few thousand.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Splitting in half is the easy part. The worry is the merge: the closest pair might straddle the cut, and checking every left point against every right point would put you back where you started. The rescue comes from the halves themselves. Each one hands back its best distance, d, so a pair across the cut only counts if both ends sit within d of it. That's the pink strip. Then, going down the strip in order of height, each point only needs to look at points less than d below it, inside a d × 2d box. Cut that box into eight squares of side d/2. No two points on the same side can share a square, since they'd be closer than d, so the box holds at most eight points, the point itself and seven others. Watch the bar chart: however you arrange things, no bar ever goes past seven.</p>
+      <p>The ending is my favourite part. Press "Show d/2 discs" and every point gets a disc of radius half the closest distance. None of them overlap, and only the winning pair touch. It's the same packing argument that bounds the strip, drawn as a picture.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When you combine two solved pieces, what you learned from the pieces tells you where you still need to look. You don't have to check the whole seam, only the narrow band the halves couldn't rule out, and that band is small for a reason you can prove. A lot of slow, exhaustive work goes away once you use what you already know to set a limit on what's left.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Closest pair of points, divide and conquer ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const canvas = $('c');
+    const ctx = canvas.getContext('2d');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const WW = 1000, WH = 600;          // world size; the canvas keeps this aspect
+    const MAXK = 10;                    // bars shown in the histogram (0..MAXK)
+
+    let pts = [];                       // {x, y}
+    let px = [];                        // points sorted by x
+    let layout = 'scatter';
+    // run state
+    let gen = null, running = false, finished = false, acc = 0;
+    let calls = [];                     // open frames {lo, hi, split, depth}
+    let results = [];                   // frontier of finished slabs {lo, hi, a, b, d}
+    let view = {};                      // what the current step highlights
+    let measured = 0, maxPer = 0, hist = [];
+    let best = null;                    // {a, b, d}
+    let discs = false, discT = 0;
+    let W = 600, H = 360, dpr = 1, S = 0.6;
+    let lastT = 0;
+
+    const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
+    const fmt = (d) => (isFinite(d) ? d.toFixed(1) : '∞');
+
+    // ---- Point layouts ----
+    function generate() {
+      const n = +$('size').value;
+      pts = [];
+      const m = 26;
+      if (layout === 'scatter') {
+        for (let i = 0; i < n; i++) pts.push({ x: m + Math.random() * (WW - 2 * m), y: m + Math.random() * (WH - 2 * m) });
+      } else if (layout === 'clusters') {
+        const k = 3 + Math.floor(Math.random() * 4);
+        const cs = [];
+        for (let i = 0; i < k; i++) cs.push({ x: 120 + Math.random() * (WW - 240), y: 100 + Math.random() * (WH - 200), s: 30 + Math.random() * 70 });
+        for (let i = 0; i < n; i++) {
+          const c = cs[i % k];
+          const r = Math.sqrt(-2 * Math.log(Math.random() + 1e-9)) * c.s * 0.6, t = Math.random() * Math.PI * 2;
+          pts.push({ x: Math.min(WW - m, Math.max(m, c.x + r * Math.cos(t))), y: Math.min(WH - m, Math.max(m, c.y + r * Math.sin(t))) });
+        }
+      } else {
+        const cols = Math.max(2, Math.round(Math.sqrt(n * (WW - 2 * m) / (WH - 2 * m))));
+        const rows = Math.max(2, Math.ceil(n / cols));
+        const gx = (WW - 2 * m) / (cols - 1 || 1), gy = (WH - 2 * m) / (rows - 1 || 1);
+        const g = Math.min(gx, gy);
+        const ox = (WW - g * (cols - 1)) / 2, oy = (WH - g * (rows - 1)) / 2;
+        let c = 0;
+        for (let r = 0; r < rows && c < n; r++) for (let q = 0; q < cols && c < n; q++, c++) {
+          pts.push({ x: ox + q * g + (Math.random() - 0.5) * g * 0.06, y: oy + r * g + (Math.random() - 0.5) * g * 0.06 });
+        }
+      }
+      reset();
+    }
+
+    function reset() {
+      px = pts.slice().sort((a, b) => a.x - b.x || a.y - b.y);
+      gen = null; running = false; finished = false; acc = 0;
+      calls = []; results = []; view = {};
+      measured = 0; maxPer = 0; hist = new Array(MAXK + 1).fill(0);
+      best = null; discs = false; discT = 0;
+      $('play').textContent = '▶ Run';
+      $('discs').disabled = true; $('discs').textContent = 'Show d/2 discs';
+      const n = pts.length;
+      setStatus('info', `${n} points. Which two are closest?`,
+        `Measuring every pair would take ${(n * (n - 1) / 2).toLocaleString()} distances. Press Run to split and conquer instead.`);
+      updatePanels();
+    }
+
+    // Slab boundaries in x for px[lo..hi)
+    function slabX(lo, hi) {
+      const n = px.length;
+      const L = lo === 0 ? 0 : (px[lo - 1].x + px[lo].x) / 2;
+      const R = hi === n ? WW : (px[hi - 1].x + px[hi].x) / 2;
+      return [L, R];
+    }
+
+    function finishSlab(lo, hi, a, b, d) {
+      results = results.filter((r) => r.lo < lo || r.hi > hi);
+      if (a) results.push({ lo, hi, a, b, d });
+    }
+
+    // ---- The algorithm: one visible step per yield ----
+    function* solve(lo, hi, depth) {
+      const frame = { lo, hi, split: null, depth };
+      calls.push(frame);
+      const n = hi - lo;
+      if (n <= 3) {
+        let d = Infinity, a = null, b = null;
+        view = { lo, hi };
+        yield ['info', `Only ${n} points here: measure them all.`,
+          `A slab this small isn't worth splitting. ${n === 2 ? 'One distance' : 'Three distances'} and done.`];
+        for (let i = lo; i < hi; i++) for (let j = i + 1; j < hi; j++) {
+          measured++;
+          const e = dist(px[i], px[j]);
+          const better = e < d;
+          if (better) { d = e; a = px[i]; b = px[j]; }
+          view = { lo, hi, cmp: [px[i], px[j]], better };
+          yield [better ? 'good' : 'info', `Measure: ${fmt(e)}.`, better ? `Best in this little slab so far.` : `Not closer than ${fmt(d)}.`];
+        }
+        const sorted = px.slice(lo, hi).sort((p, q) => p.y - q.y);
+        finishSlab(lo, hi, a, b, d);
+        calls.pop();
+        view = { lo, hi, done: true };
+        yield ['good', `Slab of ${n} solved: d = ${fmt(d)}.`, `Hand that distance back up to the call that split it.`];
+        return { sorted, d, a, b };
+      }
+
+      const mid = (lo + hi) >> 1;
+      const cut = (px[mid - 1].x + px[mid].x) / 2;
+      frame.split = cut;
+      view = { lo, hi, cut };
+      yield ['info', `Split ${n} points down the middle.`,
+        `${mid - lo} on the left, ${hi - mid} on the right. Solve each half on its own first; the cut comes back later.`];
+
+      const Lr = yield* solve(lo, mid, depth + 1);
+      const Rr = yield* solve(mid, hi, depth + 1);
+      let d, a, b;
+      if (Lr.d <= Rr.d) { d = Lr.d; a = Lr.a; b = Lr.b; } else { d = Rr.d; a = Rr.a; b = Rr.b; }
+
+      // Merge the two halves by y (merge sort comes along for free)
+      const L = Lr.sorted, R = Rr.sorted, merged = [];
+      let i = 0, j = 0;
+      while (i < L.length || j < R.length) {
+        if (j >= R.length || (i < L.length && L[i].y <= R[j].y)) merged.push(L[i++]); else merged.push(R[j++]);
+      }
+      const d0 = d;
+      const strip = merged.filter((p) => Math.abs(p.x - cut) < d);
+      view = { lo, hi, cut, d, strip, merging: true };
+      yield [strip.length ? 'bad' : 'info', `Back at the cut. Left says ${fmt(Lr.d)}, right says ${fmt(Rr.d)}.`,
+        `So d = ${fmt(d)}. A closer pair across the cut would need both ends within d of it: ${strip.length} of ${n} points qualify.`];
+
+      for (let s = 0; s < strip.length; s++) {
+        const p = strip[s];
+        let k = 0;
+        for (let t = s + 1; t < strip.length && strip[t].y - p.y < d; t++) {
+          k++; measured++;
+          const e = dist(p, strip[t]);
+          const better = e < d;
+          view = { lo, hi, cut, d, strip, merging: true, p, cmp: [p, strip[t]], better, k };
+          if (better) { d = e; a = p; b = strip[t]; }
+          yield [better ? 'good' : 'info',
+            better ? `Across the cut: ${fmt(e)}, closer than anything inside either half.` : `Strip check ${k}: ${fmt(e)}.`,
+            better ? `d shrinks to ${fmt(d)}, and every box after this gets smaller too.` : `Only points less than d below this one can matter. That's at most seven of them.`];
+        }
+        hist[Math.min(MAXK, k)]++;
+        if (k > maxPer) maxPer = k;
+      }
+
+      finishSlab(lo, hi, a, b, d);
+      calls.pop();
+      view = { lo, hi, done: true };
+      yield ['good', `Slab of ${n} solved: d = ${fmt(d)}.`,
+        d < d0 ? `The strip beat both halves, from ${fmt(d0)} down to ${fmt(d)}.` : `The strip found nothing closer than ${fmt(d0)}. The halves already had it.`];
+      return { sorted: merged, d, a, b };
+    }
+
+    function* run() {
+      if (px.length < 2) {
+        yield ['bad', 'Need at least two points.', 'Tap the board to add some.'];
+        return;
+      }
+      const r = yield* solve(0, px.length, 0);
+      best = r;
+    }
+
+    function stepOnce() {
+      if (finished) return;
+      if (!gen) gen = run();
+      const res = gen.next();
+      if (res.done) {
+        finished = true; running = false;
+        view = {};
+        $('play').textContent = '↺ Run again';
+        if (best) {
+          const n = px.length, all = n * (n - 1) / 2;
+          $('discs').disabled = false;
+          setStatus('good', `Closest pair: ${fmt(best.d)} apart.`,
+            `Found with ${measured.toLocaleString()} measurements instead of ${all.toLocaleString()} (${pct(measured, all)}). No strip point ever checked more than ${maxPer}.`);
+        }
+      } else {
+        const [kind, head, body] = res.value;
+        setStatus(kind, head, body);
+      }
+      updatePanels();
+    }
+
+    function pct(a, b) { return b ? (a / b * 100 < 1 ? (a / b * 100).toFixed(2) : (a / b * 100).toFixed(1)) + '%' : '—'; }
+
+    function finishAll() {
+      if (finished) reset();
+      if (!gen) gen = run();
+      let guard = 0;
+      while (!finished && guard++ < 2e6) {
+        const res = gen.next();
+        if (res.done) { stepOnce(); break; }
+      }
+      updatePanels();
+    }
+
+    // ---- Panels ----
+    function setStatus(kind, head, body) {
+      const el = $('status');
+      el.className = 'panel status ' + (kind === 'good' ? 'good' : kind === 'bad' ? 'bad' : '');
+      $('statusHead').textContent = head;
+      $('statusBody').textContent = body;
+    }
+
+    let lastCallsKey = '';
+    function updatePanels() {
+      const n = pts.length, all = n * (n - 1) / 2;
+      $('tN').textContent = n;
+      $('tP').textContent = all.toLocaleString();
+      $('tM').textContent = measured.toLocaleString();
+      $('tR').textContent = measured ? pct(measured, all) : '—';
+      $('tK').textContent = measured ? maxPer + ' of 7' : '—';
+      $('tD').textContent = best ? fmt(best.d) : (results.length ? fmt(Math.min(...results.map((r) => r.d))) + '…' : '—');
+
+      const key = calls.map((c) => c.lo + '-' + c.hi).join(',');
+      if (key !== lastCallsKey) {
+        lastCallsKey = key;
+        const box = $('calls');
+        box.innerHTML = '';
+        if (!calls.length) box.innerHTML = finished ? '<em>All calls returned.</em>' : '<em>The open recursive calls appear here, outermost first.</em>';
+        const shown = calls.length > 9 ? [calls[0], null, ...calls.slice(-7)] : calls;
+        shown.forEach((c, i) => {
+          const s = document.createElement('span');
+          if (!c) { s.className = 'chip'; s.textContent = '…'; box.appendChild(s); return; }
+          s.className = 'chip' + (c === calls[calls.length - 1] ? ' top' : '');
+          s.textContent = `${c.hi - c.lo} pts`;
+          box.appendChild(s);
+        });
+      }
+
+      const bars = $('bars'), lbl = $('barlbl');
+      if (!bars.children.length) {
+        for (let k = 0; k <= MAXK; k++) {
+          const d = document.createElement('div'); d.appendChild(document.createElement('i'));
+          if (k > 7) d.className = 'over';
+          d.title = `${k} check${k === 1 ? '' : 's'}`;
+          bars.appendChild(d);
+          const l = document.createElement('span'); l.textContent = k === MAXK ? k + '+' : k; lbl.appendChild(l);
+        }
+      }
+      const mx = Math.max(1, ...hist);
+      for (let k = 0; k <= MAXK; k++) bars.children[k].firstChild.style.height = (hist[k] / mx * 100) + '%';
+    }
+
+    // ---- Drawing ----
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = Math.max(280, rect.width);
+      H = W * WH / WW;
+      const maxH = window.innerHeight * 0.72;
+      if (H > maxH && window.innerWidth > 800) { H = maxH; }
+      canvas.style.height = H + 'px';
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      S = Math.min(W / WW, H / WH);
+    }
+    const ox = () => (W - WW * S) / 2, oy = () => (H - WH * S) / 2;
+    const X = (x) => ox() + x * S, Y = (y) => oy() + y * S;
+
+    function draw(time) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#08080f'; ctx.fillRect(0, 0, W, H);
+      const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(time / 240);
+      const top = Y(0), bot = Y(WH);
+
+      // Nested slabs of the open calls
+      calls.forEach((c, i) => {
+        const [l, r] = slabX(c.lo, c.hi);
+        ctx.fillStyle = `rgba(124,124,255,${0.035 + 0.012 * Math.min(i, 6)})`;
+        ctx.fillRect(X(l), top, (r - l) * S, bot - top);
+        if (c.split !== null && i < calls.length - 1) {
+          ctx.strokeStyle = 'rgba(124,124,255,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([4, 5]);
+          ctx.beginPath(); ctx.moveTo(X(c.split), top); ctx.lineTo(X(c.split), bot); ctx.stroke(); ctx.setLineDash([]);
+        }
+      });
+
+      // Current slab outline
+      if (view.lo !== undefined) {
+        const [l, r] = slabX(view.lo, view.hi);
+        ctx.strokeStyle = view.done ? 'rgba(169,169,255,0.8)' : 'rgba(169,169,255,0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(X(l) + 0.5, top + 0.5, (r - l) * S - 1, bot - top - 1);
+      }
+
+      // Strip around the cut
+      if (view.merging && isFinite(view.d)) {
+        const l = Math.max(view.cut - view.d, slabX(view.lo, view.hi)[0]);
+        const r = Math.min(view.cut + view.d, slabX(view.lo, view.hi)[1]);
+        ctx.fillStyle = 'rgba(255,124,195,0.12)';
+        ctx.fillRect(X(l), top, (r - l) * S, bot - top);
+        ctx.strokeStyle = 'rgba(255,124,195,0.35)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(X(l), top); ctx.lineTo(X(l), bot); ctx.moveTo(X(r), top); ctx.lineTo(X(r), bot); ctx.stroke();
+      }
+      if (view.cut !== undefined) {
+        ctx.strokeStyle = '#ff7cc3'; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(X(view.cut), top); ctx.lineTo(X(view.cut), bot); ctx.stroke();
+      }
+
+      // d x 2d box below the current strip point, with its eight d/2 squares
+      if (view.p && isFinite(view.d)) {
+        const d = view.d, bx = X(view.cut - d), by = Y(view.p.y), bw = 2 * d * S, bh = d * S;
+        ctx.strokeStyle = 'rgba(255,215,110,0.22)'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let q = 1; q < 4; q++) { ctx.moveTo(bx + bw * q / 4, by); ctx.lineTo(bx + bw * q / 4, by + bh); }
+        ctx.moveTo(bx, by + bh / 2); ctx.lineTo(bx + bw, by + bh / 2);
+        ctx.stroke();
+        ctx.strokeStyle = '#ffd76e'; ctx.lineWidth = 1.6;
+        ctx.strokeRect(bx, by, bw, bh);
+      }
+
+      // Discs of radius d/2 at the end
+      if (discT > 0 && best) {
+        const r = best.d / 2 * S;
+        ctx.globalAlpha = discT;
+        for (const p of pts) {
+          const win = p === best.a || p === best.b;
+          ctx.fillStyle = win ? 'rgba(255,124,195,0.28)' : 'rgba(124,124,255,0.14)';
+          ctx.strokeStyle = win ? '#ff7cc3' : 'rgba(124,124,255,0.55)';
+          ctx.lineWidth = win ? 1.6 : 1;
+          ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // Frontier of solved slabs: their best pairs
+      for (const res of results) {
+        ctx.strokeStyle = '#7c7cff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(X(res.a.x), Y(res.a.y)); ctx.lineTo(X(res.b.x), Y(res.b.y)); ctx.stroke();
+      }
+
+      // Current comparison
+      if (view.cmp) {
+        const [p, q] = view.cmp;
+        ctx.strokeStyle = view.better ? '#ff7cc3' : 'rgba(255,255,255,0.8)';
+        ctx.lineWidth = view.better ? 2.6 : 1.4;
+        ctx.beginPath(); ctx.moveTo(X(p.x), Y(p.y)); ctx.lineTo(X(q.x), Y(q.y)); ctx.stroke();
+      }
+
+      // Points
+      const inStrip = view.strip ? new Set(view.strip) : null;
+      const pr = Math.max(2.2, Math.min(4, 3.4 * S * 1.4));
+      const inRange = (p) => {
+        if (view.lo === undefined) return true;
+        const [l, r] = slabX(view.lo, view.hi);
+        return p.x >= l && p.x <= r;
+      };
+      for (const p of pts) {
+        let col = '#c7c7d6', a = 1;
+        if (view.lo !== undefined && !inRange(p)) a = 0.35;
+        if (inStrip && inStrip.has(p)) col = '#ff9fd2';
+        ctx.globalAlpha = a; ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), pr, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (view.p) {
+        ctx.fillStyle = '#ffd76e';
+        ctx.beginPath(); ctx.arc(X(view.p.x), Y(view.p.y), pr + 1.5, 0, Math.PI * 2); ctx.fill();
+      }
+      if (view.cmp) for (const q of view.cmp) {
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(X(q.x), Y(q.y), pr + 3, 0, Math.PI * 2); ctx.stroke();
+      }
+
+      // Winner
+      if (finished && best) {
+        const mx = X((best.a.x + best.b.x) / 2), my = Y((best.a.y + best.b.y) / 2);
+        ctx.strokeStyle = '#ff7cc3'; ctx.lineWidth = 2.6;
+        ctx.beginPath(); ctx.moveTo(X(best.a.x), Y(best.a.y)); ctx.lineTo(X(best.b.x), Y(best.b.y)); ctx.stroke();
+        ctx.globalAlpha = 0.25 + 0.35 * pulse;
+        ctx.beginPath(); ctx.arc(mx, my, Math.max(12, best.d * S / 2 + 10) + 3 * pulse, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+        for (const q of [best.a, best.b]) {
+          ctx.fillStyle = '#ff7cc3';
+          ctx.beginPath(); ctx.arc(X(q.x), Y(q.y), pr + 1.5, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    }
+
+    function stepsPerSec() {
+      const v = +$('speed').value;
+      return 0.8 * Math.pow(1.085, v);
+    }
+
+    function frame(t) {
+      const dt = Math.min(0.1, (t - (lastT || t)) / 1000);
+      lastT = t;
+      if (running && !finished) {
+        acc += dt * stepsPerSec();
+        let guard = 0;
+        while (acc >= 1 && running && !finished && guard++ < 400) { acc -= 1; stepOnce(); }
+      }
+      const target = discs ? 1 : 0;
+      if (discT !== target) discT = target > discT ? Math.min(1, discT + dt * 2.5) : Math.max(0, discT - dt * 2.5);
+      draw(t);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- Wiring ----
+    function syncOut() {
+      $('sizeOut').textContent = $('size').value;
+      const s = stepsPerSec();
+      $('speedOut').textContent = s < 10 ? s.toFixed(1) + ' steps/s' : Math.round(s) + ' steps/s';
+    }
+    $('size').addEventListener('input', () => { syncOut(); generate(); });
+    $('speed').addEventListener('input', syncOut);
+    $('layout').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      layout = b.dataset.l;
+      for (const x of $('layout').children) x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+      generate();
+    });
+    $('play').addEventListener('click', () => {
+      if (finished) { reset(); running = true; }
+      else running = !running;
+      $('play').textContent = running ? '❚❚ Pause' : '▶ Run';
+    });
+    $('step').addEventListener('click', () => {
+      if (finished) reset();
+      running = false; $('play').textContent = '▶ Run';
+      stepOnce();
+      if (finished) $('play').textContent = '↺ Run again';
+    });
+    $('fresh').addEventListener('click', generate);
+    $('finish').addEventListener('click', () => { running = false; finishAll(); });
+    $('discs').addEventListener('click', () => {
+      discs = !discs;
+      $('discs').textContent = discs ? 'Hide d/2 discs' : 'Show d/2 discs';
+      if (discs && best) setStatus('good', 'Not one disc overlaps another.',
+        `Each disc has radius ${fmt(best.d / 2)}, half the closest distance. Only the winning pair touch. The same packing fact caps every strip box at eight points.`);
+    });
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left - ox()) / S, y = (e.clientY - rect.top - oy()) / S;
+      if (x < 0 || x > WW || y < 0 || y > WH) return;
+      let hit = -1, hd = 12 / S;
+      pts.forEach((p, i) => { const d = Math.hypot(p.x - x, p.y - y); if (d < hd) { hd = d; hit = i; } });
+      if (hit >= 0) pts.splice(hit, 1);
+      else if (pts.length < 800) pts.push({ x, y });
+      $('size').value = Math.min(+$('size').max, Math.max(+$('size').min, pts.length));
+      $('sizeOut').textContent = pts.length;
+      reset();
+    });
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('keydown', (e) => {
+      if (story.classList.contains('open')) return;
+      if (e.key === ' ' && e.target === document.body) { e.preventDefault(); $('play').click(); }
+      else if (e.key.toLowerCase() === 'n') $('fresh').click();
+      else if (e.key === 'ArrowRight') $('step').click();
+    });
+
+    resize();
+    syncOut();
+    generate();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
