@@ -9,6 +9,15 @@
  * play/pause and the day picker.
  */
 
+// Silent verification mode: `?silent=1` mutes all Strudel output and skips the
+// spoken-word layer, while still exercising the full playback pipeline (sample
+// loading, pattern eval, scheduling). Used by the automated daily check so the
+// page can be verified without playing audio on the host machine's speakers.
+// It never touches voicePrefs/localStorage, so normal listeners are unaffected.
+const SILENT = /^(1|true|yes)$/i.test(
+  new URLSearchParams(window.location.search).get("silent") || ""
+);
+
 let SONG = null;
 let playing = false;
 let starting = false; // true while playback is spinning up (samples/Strudel loading)
@@ -172,7 +181,7 @@ if (synth) {
 // near-silent utterance synchronously inside the click unlocks the channel so
 // the real, delayed lines play.
 function primeSpeech() {
-  if (!synth) return;
+  if (!synth || SILENT) return;
   try {
     synth.resume();
     const warm = new SpeechSynthesisUtterance(" ");
@@ -276,7 +285,7 @@ function speakNext() {
 
 function startSpeech(song) {
   stopSpeech();
-  if (!voicePrefs.enabled) return;
+  if (!voicePrefs.enabled || SILENT) return;
   speechQueue = buildSpeechQueue(song);
   // Let the instrumental establish for a few seconds before voice enters
   speechTimer = setTimeout(speakNext, 4000);
@@ -460,9 +469,13 @@ async function buildAndPlay(song) {
   // and returns a Pattern. We eval it in the global scope where initStrudel() has
   // already registered all functions.
   try {
-    const pat = (0, eval)(song.pattern);
+    let pat = (0, eval)(song.pattern);
+    // In silent mode an outer .gain(0) overrides every layer's own gain
+    // (control set semantics), muting all synth/sample output while the
+    // pattern still schedules and plays.
+    if (SILENT) pat = pat.gain(0);
     pat.cpm(bpm / 4).play();
-    console.log("Pattern playing at", bpm, "bpm (cpm=" + (bpm/4) + ")");
+    console.log("Pattern playing at", bpm, "bpm (cpm=" + (bpm/4) + ")" + (SILENT ? " [SILENT mode — output muted, speech disabled]" : ""));
   } catch (e) {
     console.error("Pattern evaluation failed:", e);
     const info = $("sample-info");

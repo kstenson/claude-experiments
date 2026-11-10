@@ -53,6 +53,22 @@ GitHub Pages redeploys automatically. Every past day stays browsable from the
    the new day's file (plus the regenerated `songs/index.json` and `song.json`)
    straight to `main` and push — no feature branch, no PR. Keep the commit
    message short, e.g. `song: 2026-06-01 — <title>`.
+9. **Verify SILENTLY — always use `?silent=1`.** If you check the deployed page
+   in a browser, open it with the silent flag and only the silent flag:
+
+   <https://kstenson.github.io/claude-experiments/song-bird/?silent=1>
+
+   **Never press play on this page without `?silent=1`.** This routine runs
+   early in the morning on a home server wired to speakers; without the flag,
+   pressing play performs the song *and reads the lyrics aloud* through those
+   speakers and wakes the household. `?silent=1` mutes all Strudel output and
+   skips the spoken-word layer while still running the full pipeline (sample
+   loading, pattern eval, scheduling), so it remains a real verification:
+   after clicking play, confirm the browser console logs
+   `Pattern playing at … [SILENT mode — output muted, speech disabled]` and
+   shows no `Pattern evaluation failed` or sample-pack errors, and that no
+   error text appears under the player. The flag changes nothing for normal
+   listeners and is not persisted.
 
 ## Tone → style: mode & tempo from the day, tonic from rotation, never repeat the week
 
