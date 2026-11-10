@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-10",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "One in Ten Billion",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.1,
+    "summary": "Uneasy calm: Trump called the Iran war 'effectively over' as the blockade stayed, missiles flew at Riyadh, and a boat sank off Senegal. Talks resume in Abu Dhabi, and CERN finally caught a one-in-ten-billion decay.",
+    "palette": {
+      "bg": "#171622",
+      "bg2": "#2a2838",
+      "accent": "#c9a6e0",
+      "accent2": "#e6c27a",
+      "text": "#ecebf2"
+    }
+  },
+  "style": {
+    "genre": "neo-soul — FM electric piano, soft vibes, tenor sax, LinnDrum",
+    "key": "C#",
+    "scale": "melodic minor",
+    "bpm": 94,
+    "swing": 0.15
+  },
+  "sampleSources": [
+    "Strudel default library (VCSL TX81Z FM piano, soft-mallet vibraphone, vibrato tenor sax, suspended cymbal; LinnDrum drum machine), sine-oscillator sub bass"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~, ~ ~ sd ~ ~ ~ sd ~\").bank(\"LinnDrum\").gain(0.5).lpf(4200).room(0.12), s(\"hh*8\").bank(\"LinnDrum\").gain(\"0.16 0.08 0.13 0.08\").hpf(6000).pan(sine.range(0.42,0.58).slow(6)), s(\"~ ~ ~ rim ~ rim ~ ~\").bank(\"LinnDrum\").gain(0.14).pan(0.68).delay(0.25).delaytime(0.479).delayfeedback(0.25), note(\"<[cs2 ~ ~ cs2 ~ gs1 ~ ~] [fs1 ~ ~ fs1 ~ cs2 ~ ~] [ds2 ~ ~ ds2 ~ as1 ~ ~] [gs1 ~ ~ gs1 ~ c2 ~ ds2]>\").s(\"sine\").decay(0.5).sustain(0.6).release(0.25).lpf(420).gain(0.55), note(\"<[cs3,e3,gs3,ds4] [e3,as3,cs4,gs4] [ds3,fs3,as3,cs4] [fs3,c4,ds4,gs4]>\").struct(\"~ x ~ ~ x ~ ~ x\").s(\"fmpiano\").clip(1.2).gain(0.3).lpf(sine.range(1200,2800).slow(12)).room(0.35).rsize(3).jux(rev), note(\"<[gs4 ds5 cs5 ~] [as4 e5 cs5 ~] [as4 fs5 cs5 ~] [c5 ds5 gs4 ~]>\").fast(2).s(\"vibraphone_soft\").gain(0.2).room(0.5).pan(0.3).off(0.1875, x => x.gain(0.08).pan(0.75)), note(\"<[gs4 ~ ~ e4 ds4 ~ cs4 ~] [~ as4 ~ gs4 fs4 ~ e4 ~] [fs4 ~ ds4 ~ cs4 ~ ~ ~] [ds4 ~ c4 ~ ds4 gs4 ~ ~]>\").s(\"sax_vib\").mask(\"<0 1>/4\").clip(1).attack(0.05).release(0.4).gain(0.26).lpf(3000).room(0.4).rsize(3).delay(0.2).delaytime(0.479).delayfeedback(0.3).pan(0.55), s(\"<~ ~ ~ ~ ~ ~ ~ sus_cymbal:4>\").gain(0.12).room(0.6).pan(0.8))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "He says the war is over now,",
+        "the blockade doesn't move.",
+        "Tehran says that's his story,",
+        "Riyadh's sky says it's not true."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "A boat went down off Senegal,",
+        "a furnace burst in Turkey,",
+        "the sand gave way on Gaza's tents,",
+        "and Abu Dhabi tries round three."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "But somewhere under Geneva",
+        "they waited forty years",
+        "for one in ten billion —",
+        "and this morning it appeared."
+      ]
+    }
+  ]
+}
