@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-10",
+    "lastUpdated": "2026-11-18",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5549,7 +5549,7 @@
     {
       "id": "2026-11-10",
       "date": "2026-11-10",
-      "headline": true,
+      "headline": false,
       "topic": "Whether the rape conviction rate has improved",
       "claim": "We need to get the conviction rate up. It has improved, but not enough.",
       "speaker": "Andy Burnham",
@@ -5597,6 +5597,56 @@
         {
           "title": "Rape Crisis — Rape convictions fall to record low",
           "url": "https://rapecrisis.org.uk/news/rape-convictions-fall-to-record-low-in-england-and-wales/"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-18",
+      "date": "2026-11-18",
+      "headline": true,
+      "topic": "Whether 93% of fit note applications are signed off automatically",
+      "claim": "About 93% of applications for fit notes are signed off automatically.",
+      "speaker": "Alan Milburn",
+      "party": "Labour",
+      "role": "Former health secretary; lead of the government's young people and work review",
+      "discussionScore": 74,
+      "discussionNote": "Milburn's Sunday with Laura Kuenssberg interview trailed his final report on young people and work, which led weekend and Monday coverage; Full Fact checked the fit-note line on 17 November.",
+      "score": 40,
+      "verdict": "Mostly False",
+      "explanation": "The 93% is real but measures something else. It is the share of electronic fit notes issued by GPs in England that say someone is 'not fit for work', rather than 'may be fit' with adjustments. It says nothing about how many requests are granted, or whether they are granted without assessment: every fit note follows a clinician's judgement, and there is no data on requests refused. Milburn's own report uses the figure correctly. His underlying point, that notes overwhelmingly sign people off rather than steer them back to work, stands; 'applications signed off automatically' does not.",
+      "evidence": [
+        "DWP: of 11 million electronic fit notes issued in English primary care, 93% declared people 'not fit for work'.",
+        "OSR: 'no data available' on patients who request a fit note and are not issued one.",
+        "NHS statistics cover only issued electronic notes; handwritten and private certificates are excluded.",
+        "GOV.UK guidance: a fit note is issued after assessment by a healthcare professional.",
+        "Full Fact: DWP confirmed the 93% refers to issued notes marked not fit for work.",
+        "Milburn's final report describes the figure correctly, as notes issued, not applications."
+      ],
+      "confidence": "High — DWP, OSR and NHS data agree; Full Fact corroborates; 'automatically' is undefined.",
+      "sources": [
+        {
+          "title": "Full Fact — Alan Milburn on fit notes",
+          "url": "https://fullfact.org/health/alan-milburn-fit-notes/"
+        },
+        {
+          "title": "BBC iPlayer — Sunday with Laura Kuenssberg: Alan Milburn interview",
+          "url": "https://www.bbc.co.uk/iplayer/episode/m0034dl4/sunday-with-laura-kuenssberg-an-exclusive-interview-with-alan-milburn"
+        },
+        {
+          "title": "GOV.UK — Boost for GP practices to help people back to work",
+          "url": "https://www.gov.uk/government/news/boost-for-gp-practices-to-help-people-back-to-work"
+        },
+        {
+          "title": "GOV.UK — From a Welfare State to a Working State",
+          "url": "https://www.gov.uk/government/publications/from-a-welfare-state-to-a-working-state-a-new-settlement-for-the-next-generation/from-a-welfare-state-to-a-working-state-a-new-settlement-for-the-next-generation"
+        },
+        {
+          "title": "OSR — Statements on disability benefits and out-of-work statistics",
+          "url": "https://osr.statisticsauthority.gov.uk/recent-statements-on-disability-benefits-and-out-of-work-statistics/"
+        },
+        {
+          "title": "GOV.UK — The fit note: guidance for patients and employees",
+          "url": "https://www.gov.uk/government/publications/the-fit-note-a-guide-for-patients-and-employees/the-fit-note-guidance-for-patients-and-employees"
         }
       ]
     }
