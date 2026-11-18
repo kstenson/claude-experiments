@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Every State at Once — Experiment 117</title>
+<meta name="description" content="Ken Thompson, 1968: compile a regular expression into a small machine of states and arrows, then read the text once while keeping every state you could be in, so matching never guesses and never goes back." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  input[type=text] {
+    width: 100%; display: block;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14); color: #f2f2ff;
+    border-radius: 9px; padding: 8px 10px;
+    font: 0.95rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.03em;
+  }
+  input[type=text]:focus { outline: none; border-color: rgba(124,124,255,0.65); background: rgba(124,124,255,0.08); }
+  input[type=text].err { border-color: rgba(255,124,195,0.7); }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 6px; }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 4px; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 0.84rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.38; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+  .note code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #dcdcff; }
+
+  /* ---- Status ---- */
+  .status { min-height: 86px; }
+  .status b { display: block; font-size: 1.12rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 4px; font-size: 0.88rem; line-height: 1.45; color: #b9b9ca; }
+  .status.good b { color: #a9a9ff; }
+  .status.bad b { color: #ff7cc3; }
+
+  .board { padding: 10px; }
+  canvas { display: block; width: 100%; border-radius: 10px; }
+  .scroller { overflow-x: auto; overflow-y: hidden; border-radius: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .legend i.dot { width: 10px; height: 10px; border-radius: 50%; }
+  .tlhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 0 4px 8px; }
+  .tlhead small { font-size: 0.76rem; color: #8d8da3; }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tally b.hot { color: #ff7cc3; }
+
+  button:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Every State at Once</h1>
+      <p class="sub">Experiment № 117 · November 18, 2026</p>
+      <p class="lede">Ken Thompson, 1968: to match a regular expression, compile it into a little machine of states and arrows, then read the text once, keeping track of every state you could be in at the same time. It never guesses, so it never has to go back.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <label class="field">
+          <span>Pattern</span>
+          <input type="text" id="pat" maxlength="64" spellcheck="false" autocomplete="off" autocapitalize="off" />
+        </label>
+        <label class="field">
+          <span>Text</span>
+          <input type="text" id="txt" maxlength="40" spellcheck="false" autocomplete="off" autocapitalize="off" />
+        </label>
+        <div>
+          <span class="cap">Match</span>
+          <div class="seg" id="mode">
+            <button data-m="whole" aria-pressed="true">Whole text</button>
+            <button data-m="any" aria-pressed="false">Anywhere</button>
+          </div>
+        </div>
+        <div>
+          <span class="cap">Try</span>
+          <div class="seg" id="presets">
+            <button data-p="0">Ends in abb</button>
+            <button data-p="1">Cats and cots</button>
+            <button data-p="2">Binary number</button>
+            <button data-p="3">The trap</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Trap size n<b id="trapOut"></b></span>
+          <input type="range" id="trap" min="1" max="16" step="1" value="9" />
+        </label>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="40" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">▶ Run</button>
+          <button class="btn" id="step">Step</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="back">Back</button>
+          <button class="btn" id="restart">↺ Restart</button>
+        </div>
+        <p class="note"><b>Syntax:</b> letters match themselves, <code>.</code> matches any character, <code>|</code> means or, <code>*</code> <code>+</code> <code>?</code> repeat what's before them, <code>( )</code> groups, and <code>\</code> makes the next character literal.</p>
+        <p class="note"><b>Why it's worth knowing:</b> Thompson's method costs at most pattern size × text length, whatever you feed it. Most languages' regex engines backtrack instead, and on patterns like the trap that can take exponential time. That's the ReDoS family of bugs, and a regex like that took down Cloudflare's network in 2019. RE2, Go and Rust use the automaton.</p>
+      </div>
+    </section>
+
+    <div class="stage">
+      <div class="panel status" id="status" aria-live="polite"><b id="statusHead"></b><span id="statusBody"></span></div>
+      <div class="panel board">
+        <div class="scroller" id="nfaWrap"><canvas id="nfa" aria-label="The pattern compiled into a machine: circles are states, labelled arrows read one character, faint dashed arrows are free ε moves. Lit circles are the states the machine is in right now."></canvas></div>
+        <div class="legend">
+          <span><i class="dot" style="background:#7c7cff;box-shadow:0 0 8px #7c7cff"></i>a state it's in right now</span>
+          <span><i style="background:#ffd76e"></i>reads the next character</span>
+          <span><i style="background:repeating-linear-gradient(90deg,rgba(255,255,255,0.4) 0 3px,transparent 3px 6px)"></i>ε: a free move</span>
+          <span><i class="dot" style="border:2px solid #ff7cc3;background:transparent"></i>accept</span>
+        </div>
+      </div>
+      <div class="panel board">
+        <div class="tlhead"><span class="cap">The run so far</span><small>one column per character read, one row per state</small></div>
+        <canvas id="tl" aria-label="A grid with one column per character of text and one row per state; a dot means the machine was in that state after reading that far."></canvas>
+      </div>
+      <div class="panel">
+        <div class="tally">
+          <span>states <b id="tS"></b></span>
+          <span>text <b id="tN"></b></span>
+          <span>Thompson's work <b id="tT"></b></span>
+          <span>backtracking work <b id="tB" class="hot"></b></span>
+          <span>result <b id="tR"></b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 117 · The story</p>
+      <h2>Every State at Once</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I use regular expressions all the time, and for years I assumed they worked by trial and error: try one way of matching, and if it fails, back up and try another. That's how most of the engines I use really do it. Then I read Ken Thompson's four-page paper from 1968, "Regular expression search algorithm", where he does something different. He turns the pattern into a small machine and runs every possible path through it at once. He wrote it for the IBM 7094, and it went on to sit inside the editors and tools that grep came from. This gallery already has string search with Knuth, Morris and Pratt, and parsing with Dijkstra's railway siding, but nothing about the tool I reach for most.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The construction is lovely because every piece of a pattern is a tiny machine with one way in and one way out. A letter is one arrow. Two pieces in a row are joined end to end. An "or" splits into two lanes that meet again. A star adds a loop back over the top and a bypass underneath. You can watch the drawing grow exactly the way the pattern reads.</p>
+      <p>The run is what I like most. A state the machine might be in is just a lit circle, and reading a character moves every light at once: lights that can't follow the character go out, and lights that can jump forward, then spread along the free ε arrows. The grid underneath keeps a record of it. Then try the trap. A backtracking engine checks the pattern a?a?a?…aaa against a run of a's and has to try almost every combination of taking or skipping each optional a, doubling its work every time n goes up by one. Thompson's machine just lights a few more circles.</p>
+
+      <h3>Something you might take away</h3>
+      <p>When you have to choose and you don't know which choice is right, you don't always have to pick one and hope. Sometimes you can keep every option alive together, as long as you merge the ones that end up in the same place. Here there are only so many states, so the set of possibilities can never grow larger than the machine, and you only ever need to move forward.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Thompson's NFA construction and simulation ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const nfaC = $('nfa'), nctx = nfaC.getContext('2d');
+    const tlC = $('tl'), tctx = tlC.getContext('2d');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const PRESETS = [
+      { p: '(a|b)*abb', t: 'babaabb', m: 'whole' },
+      { p: 'c(a|o)+t', t: 'a cat, a coat, a cut, a cooot', m: 'any' },
+      { p: '-?(0|1)+(\\.(0|1)+)?', t: '-101.011', m: 'whole' },
+      null, // the trap, built from n
+    ];
+    const trapPattern = (n) => 'a?'.repeat(n) + 'a'.repeat(n);
+
+    let mode = 'whole';
+    let nodes = [], edges = [], start = null, accept = null, dims = { w: 1, h: 1 };
+    let text = '';
+    let steps = [];           // per position: {set, moves, eps, depth, maxd, dead, ch}
+    let rows = [];            // node ids ordered for the timeline
+    let tWork = 0, bt = null;
+    let pos = 0, t = 1, playing = false;
+    let W = 600, H = 300, TW = 600, TH = 120, dpr = 1;
+    let U = 40, OX = 0, OY = 0, R = 8;
+    let lastT = 0;
+
+    // ---- Parser: alt := cat ('|' cat)* ; cat := rep* ; rep := atom [*+?]* ----
+    function parse(src) {
+      let i = 0;
+      function alt() {
+        let left = cat();
+        while (src[i] === '|') { i++; left = { t: 'alt', a: left, b: cat() }; }
+        return left;
+      }
+      function cat() {
+        let node = null;
+        while (i < src.length && src[i] !== '|' && src[i] !== ')') {
+          const r = rep();
+          node = node ? { t: 'cat', a: node, b: r } : r;
+        }
+        return node || { t: 'eps' };
+      }
+      function rep() {
+        let a = atom();
+        while (i < src.length && (src[i] === '*' || src[i] === '+' || src[i] === '?')) { a = { t: src[i], a }; i++; }
+        return a;
+      }
+      function atom() {
+        const c = src[i];
+        if (c === '(') {
+          i++;
+          const e = alt();
+          if (src[i] !== ')') throw new Error('A “(” is never closed.');
+          i++;
+          return e;
+        }
+        if (c === '*' || c === '+' || c === '?') throw new Error(`“${c}” at position ${i + 1} has nothing before it to repeat.`);
+        if (c === '.') { i++; return { t: 'any' }; }
+        if (c === '\\') {
+          i++;
+          if (i >= src.length) throw new Error('A “\\” at the end has nothing to escape.');
+          return { t: 'lit', c: src[i++] };
+        }
+        i++;
+        return { t: 'lit', c };
+      }
+      const tree = alt();
+      if (i < src.length) throw new Error(`The “)” at position ${i + 1} has no matching “(”.`);
+      return tree;
+    }
+
+    // ---- Layout sizes (in grid units) ----
+    function sz(n) {
+      if (n._s) return n._s;
+      let s;
+      switch (n.t) {
+        case 'lit': case 'any': case 'eps': s = { w: 1, h: 1 }; break;
+        case 'cat': { const a = sz(n.a), b = sz(n.b); s = { w: a.w + b.w, h: Math.max(a.h, b.h) }; break; }
+        case 'alt': { const a = sz(n.a), b = sz(n.b); s = { w: Math.max(a.w, b.w) + 2, h: a.h + b.h }; break; }
+        default: { const a = sz(n.a); s = { w: a.w + 2, h: a.h + 1.2 }; }
+      }
+      n._s = s;
+      return s;
+    }
+
+    // ---- Thompson's construction: each fragment has one way in, one way out ----
+    function mkNode(x, y) { const s = { id: nodes.length, x, y, out: [] }; nodes.push(s); return s; }
+    function mkEdge(from, to, lab, bend) {
+      const e = { id: edges.length, from, to, lab, bend: bend === undefined ? null : bend };
+      edges.push(e); from.out.push(e); return e;
+    }
+    function place(n, x, y, st) {
+      const s = sz(n);
+      switch (n.t) {
+        case 'lit': { const e = mkNode(x + 1, y); mkEdge(st, e, { c: n.c }); return e; }
+        case 'any': { const e = mkNode(x + 1, y); mkEdge(st, e, { any: true }); return e; }
+        case 'eps': { const e = mkNode(x + 1, y); mkEdge(st, e, null); return e; }
+        case 'cat': { const m = place(n.a, x, y, st); return place(n.b, x + sz(n.a).w, y, m); }
+        case 'alt': {
+          const A = sz(n.a), B = sz(n.b);
+          const ya = y - s.h / 2 + A.h / 2, yb = y + s.h / 2 - B.h / 2;
+          const sa = mkNode(x + 1, ya); mkEdge(st, sa, null);
+          const ea = place(n.a, x + 1, ya, sa);
+          const sb = mkNode(x + 1, yb); mkEdge(st, sb, null);
+          const eb = place(n.b, x + 1, yb, sb);
+          const end = mkNode(x + s.w, y);
+          mkEdge(ea, end, null); mkEdge(eb, end, null);
+          return end;
+        }
+        default: { // * + ?
+          const A = sz(n.a);
+          const s1 = mkNode(x + 1, y);
+          mkEdge(st, s1, null);                                       // enter (tried first: greedy)
+          const e1 = place(n.a, x + 1, y, s1);
+          const end = mkNode(x + s.w, y);
+          if (n.t !== '?') mkEdge(e1, s1, null, y - A.h / 2 - 0.45);  // loop back over the top
+          mkEdge(e1, end, null);
+          if (n.t !== '+') mkEdge(st, end, null, y + A.h / 2 + 0.45); // bypass underneath
+          return end;
+        }
+      }
+    }
+
+    function compile(src) {
+      const tree = parse(src);
+      nodes = []; edges = [];
+      dims = sz(tree);
+      start = mkNode(0, 0);
+      accept = place(tree, 0, 0, start);
+      rows = nodes.slice().sort((a, b) => a.x - b.x || a.y - b.y).map((n) => n.id);
+    }
+
+    // ---- Simulation: the set of live states, one character at a time ----
+    const fits = (lab, ch) => lab.any || lab.c === ch;
+
+    function closure(seeds) {
+      const set = new Set(), depth = new Map(), eps = [];
+      let q = [];
+      for (const id of seeds) if (!set.has(id)) { set.add(id); depth.set(id, 0); q.push(id); }
+      let work = q.length, maxd = 0;
+      while (q.length) {
+        const nq = [];
+        for (const id of q) for (const e of nodes[id].out) {
+          if (e.lab || set.has(e.to.id)) continue;
+          const d = depth.get(id) + 1;
+          set.add(e.to.id); depth.set(e.to.id, d); eps.push({ e, d }); nq.push(e.to.id);
+          work++; if (d > maxd) maxd = d;
+        }
+        q = nq;
+      }
+      return { set, depth, eps, work, maxd };
+    }
+
+    function simulate() {
+      steps = []; tWork = 0;
+      let c = closure([start.id]);
+      tWork += c.work;
+      steps.push({ ...c, moves: [], dead: 0, ch: null });
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i], prev = steps[steps.length - 1].set;
+        const moves = [], seeds = [];
+        let dead = 0;
+        for (const id of prev) {
+          tWork++;
+          let reads = false, moved = false;
+          for (const e of nodes[id].out) {
+            if (!e.lab) continue;
+            reads = true;
+            if (fits(e.lab, ch)) { moves.push(e); seeds.push(e.to.id); moved = true; }
+          }
+          if (reads && !moved) dead++;
+        }
+        if (mode === 'any') seeds.push(start.id);
+        c = closure(seeds);
+        tWork += c.work;
+        steps.push({ ...c, moves, dead, ch });
+      }
+    }
+
+    // ---- A backtracking matcher on the same machine, for comparison ----
+    const CAP = 4e6;
+    function backtrack() {
+      const n = text.length, onPath = new Set();
+      let count = 0;
+      const STOP = {};
+      function go(s, i) {
+        if (++count > CAP) throw STOP;
+        if (s === accept) return mode === 'any' || i === n;
+        for (const e of s.out) {
+          if (e.lab) {
+            if (i < n && fits(e.lab, text[i]) && go(e.to, i + 1)) return true;
+          } else {
+            const k = e.to.id * (n + 1) + i;
+            if (onPath.has(k)) continue;      // don't spin round an empty loop
+            onPath.add(k);
+            const r = go(e.to, i);
+            onPath.delete(k);
+            if (r) return true;
+          }
+        }
+        return false;
+      }
+      try {
+        if (mode === 'whole') return { found: go(start, 0), capped: false, c: () => count };
+        for (let s = 0; s <= n; s++) if (go(start, s)) return { found: true, capped: false, c: () => count };
+        return { found: false, capped: false, c: () => count };
+      } catch (err) {
+        if (err !== STOP) throw err;
+        return { found: null, capped: true, c: () => count };
+      }
+    }
+
+    // ---- Build everything from the inputs ----
+    let buildTimer = 0;
+    function rebuild() {
+      const src = $('pat').value;
+      text = $('txt').value;
+      try {
+        compile(src);
+        $('pat').classList.remove('err');
+      } catch (err) {
+        $('pat').classList.add('err');
+        playing = false; $('play').textContent = '▶ Run';
+        setStatus('bad', 'That pattern doesn’t parse.', err.message);
+        return;
+      }
+      simulate();
+      const b = backtrack();
+      bt = { found: b.found, capped: b.capped, count: b.c() };
+      pos = 0; t = reduced ? 1 : 0;
+      layout();
+      updateTally();
+      describe();
+    }
+    function scheduleBuild() { clearTimeout(buildTimer); buildTimer = setTimeout(rebuild, 140); }
+
+    function finalVerdict() {
+      if (mode === 'whole') return steps[steps.length - 1].set.has(accept.id);
+      return steps.some((s) => s.set.has(accept.id));
+    }
+
+    function updateTally() {
+      $('tS').textContent = nodes.length;
+      $('tN').textContent = text.length + (text.length === 1 ? ' char' : ' chars');
+      $('tT').textContent = tWork.toLocaleString() + ' visits';
+      $('tB').textContent = bt.capped ? `> ${CAP.toLocaleString()} (gave up)` : bt.count.toLocaleString() + ' calls';
+      const m = finalVerdict();
+      $('tR').textContent = m ? 'match' : 'no match';
+      $('tR').className = m ? '' : 'hot';
+    }
+
+    function setStatus(kind, head, body) {
+      $('status').className = 'panel status ' + (kind || '');
+      $('statusHead').textContent = head;
+      $('statusBody').textContent = body;
+    }
+
+    const show = (ch) => (ch === ' ' ? '␣' : ch);
+    const plural = (k, a, b) => `${k} ${k === 1 ? a : b}`;
+
+    function describe() {
+      const st = steps[pos];
+      const last = pos === steps.length - 1;
+      const lit = st.set.has(accept.id);
+      if (pos === 0) {
+        setStatus('info', `Before reading anything: ${plural(st.set.size, 'state', 'states')} live.`,
+          `Start in the leftmost state, then follow every free ε arrow you can. All of those count as where the machine is. ${text.length ? 'Press Run or Step to read the text.' : 'The text is empty.'}`);
+        if (!last) return;
+      }
+      if (pos > 0) {
+        const head = `Read “${show(st.ch)}” (${pos} of ${text.length}): ${plural(st.moves.length, 'arrow fires', 'arrows fire')}${st.dead ? `, ${st.dead} ${st.dead === 1 ? 'thread dies' : 'threads die'}` : ''}.`;
+        let body;
+        if (st.set.size === 0) body = 'No state survives. Nothing from here on can match, and the machine never has to look back to be sure.';
+        else body = `Then the ε arrows fan out again: ${plural(st.set.size, 'state is', 'states are')} live${lit ? ', including accept' : ''}. ${mode === 'any' && lit ? 'A match ends at this character.' : ''}`;
+        if (!last) { setStatus(st.set.size ? 'info' : 'bad', head, body); return; }
+        if (mode === 'whole') {
+          setStatus(lit ? 'good' : 'bad', lit ? `${head} Match.` : `${head} No match.`,
+            lit ? 'The text is used up and the accept state is lit, so the whole text fits the pattern.' : 'The text is used up and accept isn’t lit, so the whole text doesn’t fit the pattern.');
+          return;
+        }
+      }
+      const ends = [];
+      steps.forEach((s, k) => { if (s.set.has(accept.id)) ends.push(k); });
+      if (mode === 'any') {
+        setStatus(ends.length ? 'good' : 'bad', ends.length ? `Done: ${plural(ends.length, 'match ends', 'matches end')} in the text.` : 'Done: no match anywhere.',
+          ends.length ? 'The pink marks under the grid show where. In this mode the start state is lit again at every step, so a new match can begin anywhere.' : 'In this mode the start state is lit again at every step, so a match could have begun anywhere. None reached accept.');
+      } else {
+        setStatus(lit ? 'good' : 'bad', lit ? 'Empty text: match.' : 'Empty text: no match.', 'There was nothing to read, so the answer is whether accept was reachable by ε arrows alone.');
+      }
+    }
+
+    // ---- Canvas sizing ----
+    function layout() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      const avail = $('nfaWrap').clientWidth || 600;
+      const pad = Math.max(16, Math.min(30, avail * 0.04));
+      U = Math.min(68, (avail - 2 * pad) / dims.w);
+      if (U < 14) U = 14;
+      W = Math.max(avail, Math.ceil(dims.w * U + 2 * pad));
+      nfaC.style.width = W + 'px';
+      const maxH = Math.max(220, Math.min(480, window.innerHeight * 0.55));
+      if (dims.h * U + 2 * pad > maxH) U = (maxH - 2 * pad) / dims.h;
+      H = Math.max(150, Math.round(dims.h * U + 2 * pad));
+      OX = (W - dims.w * U) / 2;
+      OY = H / 2;
+      R = Math.max(3.5, Math.min(11, U * 0.2));
+      nfaC.style.height = H + 'px';
+      nfaC.width = Math.round(W * dpr); nfaC.height = Math.round(H * dpr);
+
+      TW = tlC.clientWidth || 600;
+      TH = Math.round(Math.max(70, Math.min(170, nodes.length * 4.2)) + 26);
+      tlC.style.height = TH + 'px';
+      tlC.width = Math.round(TW * dpr); tlC.height = Math.round(TH * dpr);
+    }
+
+    // ---- Drawing helpers ----
+    const px = (n) => [OX + n.x * U, OY + n.y * U];
+    function geom(e) {
+      const [x0, y0] = px(e.from), [x1, y1] = px(e.to);
+      if (e.bend === null) return { x0, y0, x1, y1, cx: null, cy: null };
+      const by = OY + e.bend * U;
+      return { x0, y0, x1, y1, cx: (x0 + x1) / 2, cy: 2 * by - (y0 + y1) / 2 };
+    }
+    function at(g, s) {
+      if (g.cx === null) return [g.x0 + (g.x1 - g.x0) * s, g.y0 + (g.y1 - g.y0) * s];
+      const a = (1 - s) * (1 - s), b = 2 * (1 - s) * s, c = s * s;
+      return [a * g.x0 + b * g.cx + c * g.x1, a * g.y0 + b * g.cy + c * g.y1];
+    }
+    function strokeEdge(g) {
+      nctx.beginPath();
+      nctx.moveTo(g.x0, g.y0);
+      if (g.cx === null) nctx.lineTo(g.x1, g.y1);
+      else nctx.quadraticCurveTo(g.cx, g.cy, g.x1, g.y1);
+      nctx.stroke();
+    }
+    function arrowHead(g, color, size) {
+      const fx = g.cx === null ? g.x0 : g.cx, fy = g.cx === null ? g.y0 : g.cy;
+      let dx = g.x1 - fx, dy = g.y1 - fy;
+      const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+      const tx = g.x1 - dx * (R + 1.5), ty = g.y1 - dy * (R + 1.5);
+      nctx.fillStyle = color;
+      nctx.beginPath();
+      nctx.moveTo(tx, ty);
+      nctx.lineTo(tx - dx * size - dy * size * 0.55, ty - dy * size + dx * size * 0.55);
+      nctx.lineTo(tx - dx * size + dy * size * 0.55, ty - dy * size - dx * size * 0.55);
+      nctx.closePath();
+      nctx.fill();
+    }
+    const ease = (x) => (x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x));
+    const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+
+    function glow(x, y, r, color, alpha) {
+      if (alpha <= 0.01) return;
+      const g = nctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, color.replace('A', (0.55 * alpha).toFixed(3)));
+      g.addColorStop(1, color.replace('A', '0'));
+      nctx.fillStyle = g;
+      nctx.beginPath(); nctx.arc(x, y, r, 0, Math.PI * 2); nctx.fill();
+    }
+
+    function drawNFA() {
+      nctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      nctx.clearRect(0, 0, W, H);
+      if (!nodes.length) return;
+      const st = steps[pos], prev = pos > 0 ? steps[pos - 1] : null;
+      const tt = Math.min(1, t);
+      const p1 = prev ? ease(tt * 2) : 1;                    // characters fire
+      const p2 = prev ? clamp01(tt * 2 - 1) : tt;            // ε arrows spread
+      const spread = p2 * (st.maxd + 1);
+      const nextCh = pos < text.length ? text[pos] : null;
+      const firing = new Set(st.moves.map((e) => e.id));
+
+      // Activation of each node (0..1)
+      const act = new Float32Array(nodes.length), old = new Float32Array(nodes.length);
+      for (const id of st.set) {
+        const d = st.depth.get(id);
+        act[id] = prev && d === 0 ? ease(p1 * 1.3 - 0.3) : ease((spread - d) * 3 + 1);
+      }
+      if (prev && tt < 1) for (const id of prev.set) old[id] = 1 - p1;
+
+      // Edges
+      nctx.lineCap = 'round';
+      const fs = Math.max(9, Math.min(15, U * 0.34));
+      for (const e of edges) {
+        const g = geom(e);
+        const live = e.lab && st.set.has(e.from.id) && act[e.from.id] > 0.5 && nextCh !== null && fits(e.lab, nextCh);
+        if (!e.lab) {
+          nctx.setLineDash([3, 4]);
+          nctx.strokeStyle = 'rgba(255,255,255,0.2)';
+          nctx.lineWidth = 1;
+          strokeEdge(g);
+          nctx.setLineDash([]);
+          arrowHead(g, 'rgba(255,255,255,0.28)', Math.max(4, R * 0.6));
+        } else {
+          nctx.strokeStyle = live ? 'rgba(255,215,110,0.85)' : firing.has(e.id) && tt < 1 ? 'rgba(255,215,110,0.6)' : 'rgba(170,170,255,0.5)';
+          nctx.lineWidth = live ? 2.4 : 1.6;
+          strokeEdge(g);
+          arrowHead(g, live ? '#ffd76e' : 'rgba(170,170,255,0.75)', Math.max(5, R * 0.75));
+        }
+      }
+      // Edge labels
+      nctx.font = `600 ${fs}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+      nctx.textAlign = 'center'; nctx.textBaseline = 'middle';
+      for (const e of edges) {
+        if (!e.lab) continue;
+        const g = geom(e);
+        const [mx, my] = at(g, 0.5);
+        const label = e.lab.any ? '·any' : show(e.lab.c);
+        const live = st.set.has(e.from.id) && act[e.from.id] > 0.5 && nextCh !== null && fits(e.lab, nextCh);
+        const w = nctx.measureText(label).width + fs * 0.6, h = fs * 1.35;
+        nctx.fillStyle = '#0b0b14';
+        roundRect(mx - w / 2, my - h / 2, w, h, h / 2);
+        nctx.fill();
+        nctx.strokeStyle = live ? 'rgba(255,215,110,0.8)' : 'rgba(170,170,255,0.35)';
+        nctx.lineWidth = 1;
+        nctx.stroke();
+        nctx.fillStyle = live ? '#ffe7a8' : '#dcdcff';
+        nctx.fillText(e.lab.any ? '·' : label, mx, my + 0.5);
+      }
+
+      // Particles: characters firing, then ε spreading
+      if (prev && tt < 1) {
+        for (const e of st.moves) {
+          if (p1 >= 1) continue;
+          const [x, y] = at(geom(e), p1);
+          glow(x, y, R * 2.6, 'rgba(255,215,110,A)', 1);
+          nctx.fillStyle = '#ffe7a8';
+          nctx.beginPath(); nctx.arc(x, y, Math.max(2, R * 0.4), 0, Math.PI * 2); nctx.fill();
+        }
+      }
+      if (p2 < 1) {
+        for (const { e, d } of st.eps) {
+          const s = spread - (d - 1);
+          if (s <= 0 || s >= 1) continue;
+          const [x, y] = at(geom(e), ease(s));
+          glow(x, y, R * 2, 'rgba(124,124,255,A)', 1);
+          nctx.fillStyle = '#c9c9ff';
+          nctx.beginPath(); nctx.arc(x, y, Math.max(1.6, R * 0.3), 0, Math.PI * 2); nctx.fill();
+        }
+      }
+
+      // Nodes
+      for (const n of nodes) {
+        const [x, y] = px(n);
+        const a = Math.max(act[n.id], old[n.id] * 0.9);
+        const isAcc = n === accept;
+        const col = isAcc ? 'rgba(255,124,195,A)' : 'rgba(124,124,255,A)';
+        glow(x, y, R * 3.4, col, a);
+        nctx.fillStyle = '#0b0b14';
+        nctx.beginPath(); nctx.arc(x, y, R, 0, Math.PI * 2); nctx.fill();
+        if (a > 0.01) {
+          nctx.fillStyle = (isAcc ? 'rgba(255,124,195,' : 'rgba(124,124,255,') + (0.9 * a).toFixed(3) + ')';
+          nctx.beginPath(); nctx.arc(x, y, R, 0, Math.PI * 2); nctx.fill();
+        }
+        nctx.lineWidth = isAcc ? 2 : 1.3;
+        nctx.strokeStyle = isAcc ? '#ff7cc3' : a > 0.5 ? '#c9c9ff' : 'rgba(200,200,230,0.45)';
+        nctx.beginPath(); nctx.arc(x, y, R, 0, Math.PI * 2); nctx.stroke();
+        if (isAcc) {
+          nctx.beginPath(); nctx.arc(x, y, R + 3.2, 0, Math.PI * 2); nctx.stroke();
+        }
+      }
+      // Start marker
+      const [sx, sy] = px(start);
+      nctx.strokeStyle = 'rgba(200,200,230,0.6)'; nctx.lineWidth = 1.4;
+      nctx.beginPath(); nctx.moveTo(sx - R - 14, sy); nctx.lineTo(sx - R - 3, sy); nctx.stroke();
+      nctx.fillStyle = 'rgba(200,200,230,0.8)';
+      nctx.beginPath(); nctx.moveTo(sx - R - 2, sy); nctx.lineTo(sx - R - 8, sy - 4); nctx.lineTo(sx - R - 8, sy + 4); nctx.closePath(); nctx.fill();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      nctx.beginPath();
+      nctx.moveTo(x + r, y);
+      nctx.arcTo(x + w, y, x + w, y + h, r);
+      nctx.arcTo(x + w, y + h, x, y + h, r);
+      nctx.arcTo(x, y + h, x, y, r);
+      nctx.arcTo(x, y, x + w, y, r);
+      nctx.closePath();
+    }
+
+    // ---- The timeline: states × characters read ----
+    function drawTimeline() {
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      tctx.clearRect(0, 0, TW, TH);
+      if (!nodes.length || !steps.length) return;
+      const cols = text.length + 1;
+      const labH = 22;
+      const gridH = TH - labH - 4;
+      const cw = Math.min(30, (TW - 8) / cols);
+      const x0 = (TW - cw * cols) / 2;
+      const rh = gridH / rows.length;
+      const dot = Math.max(1.2, Math.min(cw, rh) * 0.36);
+      const accRow = rows.indexOf(accept.id);
+      const tt = Math.min(1, t);
+
+      // Current column band
+      tctx.fillStyle = 'rgba(124,124,255,0.08)';
+      tctx.fillRect(x0 + pos * cw, 0, cw, gridH + 2);
+      // Accept row guide
+      tctx.fillStyle = 'rgba(255,124,195,0.07)';
+      tctx.fillRect(x0, 2 + accRow * rh, cw * cols, rh);
+
+      for (let k = 0; k <= pos; k++) {
+        const s = steps[k];
+        const fade = k === pos ? (steps.length > 1 && k > 0 ? clamp01(tt * 2 - 0.6) : tt) : 1;
+        const cx = x0 + (k + 0.5) * cw;
+        for (let r = 0; r < rows.length; r++) {
+          const id = rows[r];
+          if (!s.set.has(id)) continue;
+          const cy = 2 + (r + 0.5) * rh;
+          const isAcc = id === accept.id;
+          tctx.fillStyle = isAcc ? `rgba(255,124,195,${(0.95 * fade).toFixed(3)})` : `rgba(140,140,255,${((k === pos ? 0.95 : 0.7) * fade).toFixed(3)})`;
+          tctx.beginPath(); tctx.arc(cx, cy, isAcc ? dot * 1.25 : dot, 0, Math.PI * 2); tctx.fill();
+        }
+      }
+      // Characters along the bottom
+      const fsz = Math.max(8, Math.min(14, cw * 0.62));
+      tctx.font = `600 ${fsz}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+      tctx.textAlign = 'center'; tctx.textBaseline = 'middle';
+      const ly = gridH + 4 + labH / 2;
+      for (let k = 0; k < cols; k++) {
+        const cx = x0 + (k + 0.5) * cw;
+        const label = k === 0 ? '·' : show(text[k - 1]);
+        tctx.fillStyle = k === pos ? '#ffffff' : k < pos ? '#b9b9ca' : '#5d5d73';
+        tctx.fillText(label, cx, ly);
+        if (k <= pos && steps[k].set.has(accept.id) && (mode === 'any' || k === text.length)) {
+          tctx.fillStyle = '#ff7cc3';
+          tctx.fillRect(cx - cw * 0.32, ly + fsz * 0.62, cw * 0.64, 2);
+        }
+      }
+    }
+
+    // ---- Animation loop ----
+    const stepMs = () => 1700 - 15 * +$('speed').value;
+    function frame(now) {
+      const dt = Math.min(80, now - (lastT || now));
+      lastT = now;
+      if (steps.length) {
+        if (t < 1.25) {
+          t = reduced ? 1.25 : t + dt / stepMs();
+          if (t > 1.25) t = 1.25;
+        }
+        if (playing && t >= 1.25) {
+          if (pos < steps.length - 1) { pos++; t = reduced ? 1 : 0; describe(); }
+          else { playing = false; $('play').textContent = '▶ Run'; }
+        }
+      }
+      drawNFA();
+      drawTimeline();
+      requestAnimationFrame(frame);
+    }
+
+    // ---- Controls ----
+    function setMode(m) {
+      mode = m;
+      for (const b of $('mode').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.m === m));
+    }
+    function loadPreset(i) {
+      playing = false; $('play').textContent = '▶ Run';
+      if (i === 3) {
+        const n = +$('trap').value;
+        $('pat').value = trapPattern(n);
+        $('txt').value = 'a'.repeat(n);
+        setMode('whole');
+      } else {
+        const p = PRESETS[i];
+        $('pat').value = p.p; $('txt').value = p.t;
+        setMode(p.m);
+      }
+      clearTimeout(buildTimer);
+      rebuild();
+    }
+
+    $('presets').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) loadPreset(+b.dataset.p); });
+    $('mode').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b || b.dataset.m === mode) return;
+      setMode(b.dataset.m);
+      playing = false; $('play').textContent = '▶ Run';
+      rebuild();
+    });
+    $('pat').addEventListener('input', scheduleBuild);
+    $('txt').addEventListener('input', scheduleBuild);
+    $('trap').addEventListener('input', () => { $('trapOut').textContent = $('trap').value; loadPreset(3); });
+    $('speed').addEventListener('input', () => { $('speedOut').textContent = $('speed').value + '%'; });
+
+    $('play').addEventListener('click', () => {
+      if (!steps.length) return;
+      if (playing) { playing = false; $('play').textContent = '▶ Run'; return; }
+      if (pos === steps.length - 1 && t >= 1) { pos = 0; t = reduced ? 1 : 0; describe(); }
+      playing = true; $('play').textContent = '❚❚ Pause';
+    });
+    $('step').addEventListener('click', () => {
+      if (!steps.length) return;
+      playing = false; $('play').textContent = '▶ Run';
+      if (t < 1) { t = 1.25; return; }
+      if (pos < steps.length - 1) { pos++; t = reduced ? 1.25 : 0; describe(); }
+    });
+    $('back').addEventListener('click', () => {
+      if (!steps.length) return;
+      playing = false; $('play').textContent = '▶ Run';
+      if (pos > 0) { pos--; t = 1.25; describe(); }
+    });
+    $('restart').addEventListener('click', () => {
+      if (!steps.length) return;
+      playing = false; $('play').textContent = '▶ Run';
+      pos = 0; t = reduced ? 1.25 : 0; describe();
+    });
+
+    window.addEventListener('resize', () => { if (nodes.length) layout(); });
+
+    $('trapOut').textContent = $('trap').value;
+    $('speedOut').textContent = $('speed').value + '%';
+    loadPreset(0);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
