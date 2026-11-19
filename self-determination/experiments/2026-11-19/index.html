@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flip the Worst Corner — Experiment 118</title>
+<meta name="description" content="John Nelder and Roger Mead, 1965: find the bottom of a landscape without ever measuring a slope. A triangle flips its worst corner across the other two, stretching when that works and shrinking when it doesn't." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 6px; }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 4px; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 0.84rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.38; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+
+  /* ---- Status ---- */
+  .status { min-height: 86px; }
+  .status b { display: block; font-size: 1.12rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 4px; font-size: 0.88rem; line-height: 1.45; color: #b9b9ca; }
+  .status.reflect b { color: #a9a9ff; }
+  .status.expand b { color: #6ee7c8; }
+  .status.contract b { color: #ffd76e; }
+  .status.shrink b { color: #ff7cc3; }
+
+  .board { padding: 10px; }
+  .mapwrap { display: flex; justify-content: center; }
+  canvas { display: block; border-radius: 10px; }
+  #map { cursor: crosshair; touch-action: manipulation; }
+  #conv { width: 100%; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
+  .tlhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 0 4px 8px; }
+  .tlhead small { font-size: 0.76rem; color: #8d8da3; }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  button:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Flip the Worst Corner</h1>
+      <p class="sub">Experiment № 118 · November 19, 2026</p>
+      <p class="lede">John Nelder and Roger Mead, 1965: to find the lowest point of a landscape you can only sample, stand a triangle on it and keep flipping its worst corner across the other two. Stretch when the flip pays off, pull back when it doesn't, and shrink when nothing works.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div>
+          <span class="cap">Landscape</span>
+          <div class="seg" id="lands">
+            <button data-l="0" aria-pressed="true">Banana valley</button>
+            <button data-l="1" aria-pressed="false">Four wells</button>
+            <button data-l="2" aria-pressed="false">Tilted bowl</button>
+            <button data-l="3" aria-pressed="false">Egg box</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Starting triangle<b id="sizeOut"></b></span>
+          <input type="range" id="size" min="2" max="30" step="1" value="10" />
+        </label>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="45" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">▶ Run</button>
+          <button class="btn" id="step">Step</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="back">Back</button>
+          <button class="btn" id="restart">↺ Restart</button>
+        </div>
+        <p class="note"><b>Click or tap the map</b> to drop the triangle somewhere new. Darker means lower. The rules each step: reflect the worst corner through the midpoint of the other two; if that's a new best, try going twice as far; if it's still the worst, try halfway instead; if even that fails, shrink everything toward the best corner.</p>
+        <p class="note"><b>Why it's worth knowing:</b> it needs nothing but the ability to score a guess, no slopes and no formula. That makes it the default when the thing you're tuning is a simulation, a lab run or a noisy measurement. It's MATLAB's <i>fminsearch</i> and one of SciPy's standard minimizers, sixty years on. It has no guarantee, though, and can stall, so people restart it.</p>
+      </div>
+    </section>
+
+    <div class="stage">
+      <div class="panel status" id="status" aria-live="polite"><b id="statusHead"></b><span id="statusBody"></span></div>
+      <div class="panel board">
+        <div class="mapwrap" id="mapWrap"><canvas id="map" aria-label="A contour map of the landscape, darker where lower, with the searching triangle drawn on top. Faint outlines show where the triangle has been; the yellow line traces its best corner."></canvas></div>
+        <div class="legend">
+          <span><i style="background:#6ee7c8"></i>best corner</span>
+          <span><i style="background:#ff7cc3"></i>worst corner</span>
+          <span><i style="background:#a9a9ff"></i>reflect</span>
+          <span><i style="background:#6ee7c8;opacity:.7"></i>expand</span>
+          <span><i style="background:#ffd76e"></i>contract</span>
+          <span><i style="background:transparent;border:2px solid #ff7cc3"></i>shrink</span>
+        </div>
+      </div>
+      <div class="panel board">
+        <div class="tlhead"><span class="cap">Best height so far</span><small>log scale, one point per step</small></div>
+        <canvas id="conv" aria-label="A line chart of the best value found so far against the step number, on a log scale."></canvas>
+      </div>
+      <div class="panel">
+        <div class="tally">
+          <span>step <b id="tStep"></b></span>
+          <span>evaluations <b id="tEval"></b></span>
+          <span>best <b id="tBest"></b></span>
+          <span>at <b id="tAt"></b></span>
+          <span>moves <b id="tMoves"></b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 118 · The story</p>
+      <h2>Flip the Worst Corner</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Most of the optimisation I've seen starts with a gradient: work out which way is downhill, take a step. But a lot of things worth tuning don't come with a slope. A simulation, a recipe, the settings on a machine. You can try a setting and score it, and that's all. John Nelder and Roger Mead were statisticians at the National Vegetable Research Station in Wellesbourne when they published "A simplex method for function minimization" in 1965, and their method needs only that: try a point, get a number. It improved an idea from Spendley, Hext and Himsworth a few years earlier, whose simplex could only flip, never stretch or shrink. This gallery has gradient-free tricks like annealing, but nothing about the one I'd actually reach for first.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>It looks alive. On the banana valley the triangle tumbles down the steep side, flipping end over end, then hits the curved floor and changes character completely: it stretches out along the valley, creeps, and folds itself thin to squeeze round the bend. Nobody told it the valley was there. Its shape is a memory of the land it's crossed, and stretching and shrinking is how it learns how big a step the ground can take.</p>
+      <p>I also like how small the rule set is. Reflect, expand, contract, shrink, chosen by comparing at most four numbers. And I like that it can fail in plain sight. On the egg box it often settles happily into the wrong dip, because three points can't see past the nearest bump. Drop it again somewhere else and it finds a different one.</p>
+
+      <h3>Something you might take away</h3>
+      <p>You don't need to know which way is downhill to get there. Keep a few guesses, throw away the worst one, and look on the far side of the others. When that works, get bolder; when it doesn't, get more careful. The size of your steps can be something you learn as you go rather than something you choose up front.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Nelder–Mead downhill simplex ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const map = $('map'), mctx = map.getContext('2d');
+    const conv = $('conv'), cctx = conv.getContext('2d');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const MAX_STEPS = 400;
+
+    const COL = { reflect: '#a9a9ff', expand: '#6ee7c8', contract: '#ffd76e', shrink: '#ff7cc3' };
+    const ct = Math.cos(0.52), st = Math.sin(0.52);
+
+    const LANDS = [
+      {
+        f: (x, y) => (1 - x) ** 2 + 100 * (y - x * x) ** 2,
+        x0: -2.2, x1: 2.2, y0: -1.2, y1: 3.2, start: [-1.55, 2.55],
+        intro: "Rosenbrock's banana, 1960: a steep-sided valley that curves round to the bottom at (1, 1), with a floor so flat that finding the valley is easy and following it is hard.",
+      },
+      {
+        f: (x, y) => (x * x + y - 11) ** 2 + (x + y * y - 7) ** 2,
+        x0: -5.5, x1: 5.5, y0: -5.5, y1: 5.5, start: [0.2, -0.6],
+        intro: "Himmelblau's function: four separate bottoms, all exactly zero deep. Which one the triangle reaches depends only on where you drop it.",
+      },
+      {
+        f: (x, y) => { const dx = x - 0.8, dy = y + 0.5; const u = dx * ct + dy * st, v = -dx * st + dy * ct; return 0.6 * u * u + 6 * v * v; },
+        x0: -3, x1: 3, y0: -3, y1: 3, start: [-2.2, 2.1],
+        intro: "A stretched, tilted bowl with one bottom. The easy case: watch the triangle grow while the ground keeps falling away, then shrink as it arrives.",
+      },
+      {
+        f: (x, y) => 0.06 * (x * x + y * y) + 2 - Math.cos(2.4 * x) - Math.cos(2.4 * y),
+        x0: -6, x1: 6, y0: -6, y1: 6, start: [4.3, -3.9],
+        intro: "A gentle bowl covered in bumps. The true bottom is in the middle, but every dimple is a dip a triangle can settle into and never leave.",
+      },
+    ];
+
+    let land = 0, L = LANDS[0];
+    let startPt = L.start.slice();
+    let sizePct = 10, speed = 45;
+    let states = [], steps = [], evalsAt = [], reason = '';
+    let idx = 0, t = 0, playing = false, stepping = false;
+    let side = 400, dpr = 1;
+    const heat = document.createElement('canvas');
+
+    // ---------- the algorithm ----------
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const pt = (x, y) => ({ x, y, f: L.f(x, y) });
+
+    function solve() {
+      const span = L.x1 - L.x0;
+      const r = (sizePct / 100) * span;
+      const s0 = [0, 1, 2].map((k) => {
+        const a = -Math.PI / 2 + 0.35 + (k * 2 * Math.PI) / 3;
+        return pt(startPt[0] + r * Math.cos(a), startPt[1] + r * Math.sin(a));
+      });
+      states = [s0]; steps = []; evalsAt = [3]; reason = 'cap';
+      let evals = 3;
+      for (let it = 0; it < MAX_STEPS; it++) {
+        const o = states[states.length - 1].slice().sort((a, b) => a.f - b.f);
+        const [b, m, w] = o;
+        const diam = Math.max(dist(b, m), dist(b, w), dist(m, w));
+        if (diam < span * 2e-6 || (Math.abs(w.f - b.f) < 1e-13 && diam < span * 1e-3)) { reason = 'done'; break; }
+        const c = { x: (b.x + m.x) / 2, y: (b.y + m.y) / 2 };
+        const at = (k) => pt(c.x + k * (w.x - c.x), c.y + k * (w.y - c.y));
+        const trials = [];
+        let kind, nw = null, note = '';
+        const rf = at(-1); trials.push({ ...rf, kind: 'reflect' });
+        if (rf.f < b.f) {
+          const e = at(-2); trials.push({ ...e, kind: 'expand' });
+          if (e.f < rf.f) { kind = 'expand'; nw = e; } else { kind = 'reflect'; nw = rf; note = 'noexpand'; }
+        } else if (rf.f < m.f) {
+          kind = 'reflect'; nw = rf;
+        } else if (rf.f < w.f) {
+          const co = at(-0.5); trials.push({ ...co, kind: 'contract' });
+          if (co.f <= rf.f) { kind = 'contract'; nw = co; note = 'outside'; } else { kind = 'shrink'; note = 'outside'; }
+        } else {
+          const ci = at(0.5); trials.push({ ...ci, kind: 'contract' });
+          if (ci.f < w.f) { kind = 'contract'; nw = ci; note = 'inside'; } else { kind = 'shrink'; note = 'inside'; }
+        }
+        let after;
+        if (kind === 'shrink') {
+          const sh = (v) => pt(b.x + 0.5 * (v.x - b.x), b.y + 0.5 * (v.y - b.y));
+          after = [b, sh(m), sh(w)];
+          evals += trials.length + 2;
+        } else {
+          after = [b, m, nw];
+          evals += trials.length;
+        }
+        steps.push({ before: o, after, kind, note, trials, c, accepted: nw });
+        states.push(after);
+        evalsAt.push(evals);
+      }
+    }
+
+    // ---------- drawing ----------
+    const toS = (x, y) => [((x - L.x0) / (L.x1 - L.x0)) * side, ((L.y1 - y) / (L.y1 - L.y0)) * side];
+    const toW = (sx, sy) => [L.x0 + (sx / side) * (L.x1 - L.x0), L.y1 - (sy / side) * (L.y1 - L.y0)];
+
+    const RAMP = [[8, 8, 22], [28, 22, 70], [62, 46, 132], [108, 76, 168], [168, 98, 172], [222, 132, 178], [246, 196, 214]];
+    function ramp(v) {
+      const s = (v > 0 ? Math.min(0.9999, v) : 0) * (RAMP.length - 1);
+      const i = Math.floor(s), u = s - i, a = RAMP[i], b = RAMP[i + 1];
+      return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
+    }
+
+    function buildHeat() {
+      const n = Math.max(120, Math.min(460, Math.round(side)));
+      heat.width = n; heat.height = n;
+      const hctx = heat.getContext('2d');
+      const vals = new Float32Array(n * n);
+      let lo = Infinity, hi = -Infinity;
+      for (let j = 0; j < n; j++) {
+        const y = L.y1 - ((j + 0.5) / n) * (L.y1 - L.y0);
+        for (let i = 0; i < n; i++) {
+          const x = L.x0 + ((i + 0.5) / n) * (L.x1 - L.x0);
+          const v = Math.log(1 + L.f(x, y));
+          vals[j * n + i] = v;
+          if (v < lo) lo = v; if (v > hi) hi = v;
+        }
+      }
+      const LEV = 18;
+      const lev = new Int16Array(n * n);
+      for (let k = 0; k < n * n; k++) {
+        vals[k] = Math.pow(Math.max(0, Math.min(1, (vals[k] - lo) / (hi - lo || 1))), 0.8);
+        lev[k] = Math.floor(vals[k] * LEV);
+      }
+      const img = hctx.createImageData(n, n);
+      for (let j = 0; j < n; j++) {
+        for (let i = 0; i < n; i++) {
+          const k = j * n + i;
+          const c = ramp(vals[k] * 0.82);
+          const edge = (i < n - 1 && lev[k + 1] !== lev[k]) || (j < n - 1 && lev[k + n] !== lev[k]);
+          const boost = edge ? 34 : 0;
+          const p = k * 4;
+          img.data[p] = Math.min(255, c[0] + boost);
+          img.data[p + 1] = Math.min(255, c[1] + boost);
+          img.data[p + 2] = Math.min(255, c[2] + boost * 1.2);
+          img.data[p + 3] = 255;
+        }
+      }
+      hctx.putImageData(img, 0, 0);
+    }
+
+    const lerp = (a, b, u) => a + (b - a) * u;
+    const ease = (u) => u * u * (3 - 2 * u);
+
+    function bestOf(s) { return s.reduce((a, b) => (b.f < a.f ? b : a)); }
+
+    function drawTri(s, fill, stroke, lw) {
+      mctx.beginPath();
+      s.forEach((v, k) => { const [x, y] = toS(v.x, v.y); if (k) mctx.lineTo(x, y); else mctx.moveTo(x, y); });
+      mctx.closePath();
+      if (fill) { mctx.fillStyle = fill; mctx.fill(); }
+      if (stroke) { mctx.strokeStyle = stroke; mctx.lineWidth = lw; mctx.stroke(); }
+    }
+    function dot(v, r, color, ring) {
+      const [x, y] = toS(v.x, v.y);
+      mctx.beginPath(); mctx.arc(x, y, r, 0, Math.PI * 2);
+      if (ring) { mctx.strokeStyle = color; mctx.lineWidth = 2; mctx.stroke(); }
+      else { mctx.fillStyle = color; mctx.fill(); }
+    }
+
+    function drawMap() {
+      mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      mctx.imageSmoothingEnabled = true;
+      mctx.drawImage(heat, 0, 0, side, side);
+
+      // ghosts of past triangles
+      const from = Math.max(0, idx - 80);
+      for (let i = from; i < idx; i++) {
+        const a = 0.05 + 0.3 * ((i - from + 1) / (idx - from + 1));
+        drawTri(states[i], null, `rgba(233,233,240,${a.toFixed(3)})`, 1);
+      }
+      // best-corner path
+      mctx.beginPath();
+      for (let i = 0; i <= idx; i++) {
+        const [x, y] = toS(...(() => { const b = bestOf(states[i]); return [b.x, b.y]; })());
+        if (i) mctx.lineTo(x, y); else mctx.moveTo(x, y);
+      }
+      mctx.strokeStyle = 'rgba(255,215,110,0.85)'; mctx.lineWidth = 1.6; mctx.stroke();
+
+      // current triangle (possibly mid-step)
+      const anim = (playing || stepping) && idx < steps.length;
+      let cur = states[idx];
+      if (anim) {
+        const S = steps[idx];
+        const p1 = 0.5;
+        const [wx, wy] = toS(S.before[2].x, S.before[2].y);
+        // probes along the line through the centroid
+        const shown = t < p1 ? Math.ceil((t / p1) * S.trials.length + 0.001) : S.trials.length;
+        const far = S.trials.reduce((a, b) => (dist(b, S.before[2]) > dist(a, S.before[2]) ? b : a));
+        const [fx, fy] = toS(far.x, far.y);
+        const fade = t < p1 ? 1 : 1 - (t - p1) / (1 - p1);
+        mctx.save();
+        mctx.globalAlpha = Math.max(0, fade);
+        mctx.setLineDash([4, 4]);
+        mctx.strokeStyle = 'rgba(255,255,255,0.6)'; mctx.lineWidth = 1.2;
+        mctx.beginPath(); mctx.moveTo(wx, wy); mctx.lineTo(fx, fy); mctx.stroke();
+        mctx.setLineDash([]);
+        const [cx, cy] = toS(S.c.x, S.c.y);
+        mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.4;
+        mctx.beginPath(); mctx.moveTo(cx - 4, cy - 4); mctx.lineTo(cx + 4, cy + 4); mctx.moveTo(cx + 4, cy - 4); mctx.lineTo(cx - 4, cy + 4); mctx.stroke();
+        for (let k = 0; k < shown; k++) {
+          const tr = S.trials[k];
+          dot(tr, 4.5, COL[tr.kind]);
+          if (S.accepted && tr.x === S.accepted.x && tr.y === S.accepted.y) dot(tr, 8, COL[tr.kind], true);
+        }
+        if (S.kind === 'shrink' && t >= p1 * 0.8) {
+          const [bx, by] = toS(S.before[0].x, S.before[0].y);
+          dot(S.before[0], 11, COL.shrink, true);
+          mctx.setLineDash([3, 4]); mctx.strokeStyle = 'rgba(255,124,195,0.7)';
+          for (const v of [S.before[1], S.before[2]]) { const [x, y] = toS(v.x, v.y); mctx.beginPath(); mctx.moveTo(x, y); mctx.lineTo(bx, by); mctx.stroke(); }
+          mctx.setLineDash([]);
+        }
+        mctx.restore();
+        const u = t < p1 ? 0 : ease((t - p1) / (1 - p1));
+        cur = S.before.map((v, k) => ({ x: lerp(v.x, S.after[k].x, u), y: lerp(v.y, S.after[k].y, u), f: u < 1 ? v.f : S.after[k].f }));
+        drawTri(cur, 'rgba(124,124,255,0.2)', '#ffffff', 2);
+        dot(cur[0], 4.5, '#6ee7c8'); dot(cur[1], 4, '#d8d8e8'); dot(cur[2], 4.5, '#ff7cc3');
+      } else {
+        const o = cur.slice().sort((a, b) => a.f - b.f);
+        drawTri(cur, 'rgba(124,124,255,0.2)', '#ffffff', 2);
+        dot(o[0], 4.5, '#6ee7c8'); dot(o[1], 4, '#d8d8e8'); dot(o[2], 4.5, '#ff7cc3');
+      }
+    }
+
+    function drawConv() {
+      const w = conv.clientWidth, h = 90;
+      if (conv.width !== Math.round(w * dpr)) { conv.width = Math.round(w * dpr); conv.height = Math.round(h * dpr); conv.style.height = h + 'px'; }
+      cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cctx.clearRect(0, 0, w, h);
+      const lg = states.map((s) => Math.log10(Math.max(bestOf(s).f, 1e-16)));
+      let lo = Math.min(...lg), hi = Math.max(...lg);
+      lo = Math.floor(lo); hi = Math.ceil(hi); if (hi - lo < 2) hi = lo + 2;
+      const n = Math.max(states.length - 1, 1);
+      const X = (i) => 34 + (i / n) * (w - 44);
+      const Y = (v) => 8 + (1 - (v - lo) / (hi - lo)) * (h - 22);
+      cctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      cctx.fillStyle = '#6d6d82'; cctx.strokeStyle = 'rgba(255,255,255,0.07)'; cctx.lineWidth = 1;
+      const stepE = Math.max(1, Math.ceil((hi - lo) / 4));
+      for (let e = lo; e <= hi; e += stepE) {
+        const y = Y(e);
+        cctx.beginPath(); cctx.moveTo(34, y); cctx.lineTo(w - 10, y); cctx.stroke();
+        cctx.fillText('1e' + e, 2, y + 3);
+      }
+      cctx.beginPath();
+      for (let i = 0; i < lg.length; i++) { const x = X(i), y = Y(lg[i]); if (i) cctx.lineTo(x, y); else cctx.moveTo(x, y); }
+      cctx.strokeStyle = 'rgba(169,169,255,0.25)'; cctx.lineWidth = 1.2; cctx.stroke();
+      cctx.beginPath();
+      for (let i = 0; i <= idx; i++) { const x = X(i), y = Y(lg[i]); if (i) cctx.lineTo(x, y); else cctx.moveTo(x, y); }
+      cctx.strokeStyle = '#ffd76e'; cctx.lineWidth = 1.8; cctx.stroke();
+      cctx.beginPath(); cctx.arc(X(idx), Y(lg[idx]), 3.5, 0, Math.PI * 2); cctx.fillStyle = '#ffd76e'; cctx.fill();
+    }
+
+    // ---------- text ----------
+    const fmt = (f) => (f === 0 ? '0' : Math.abs(f) < 1e-3 || Math.abs(f) >= 1e5 ? f.toExponential(1).replace('e', '×10^') : f.toPrecision(3));
+    const fxy = (v) => `(${v.x.toFixed(3)}, ${v.y.toFixed(3)})`;
+
+    function setStatus(cls, head, body) {
+      const el = $('status');
+      el.className = 'panel status ' + cls;
+      $('statusHead').textContent = head;
+      $('statusBody').textContent = body;
+    }
+
+    function describe() {
+      if (idx === 0) {
+        setStatus('', 'Three guesses on the map', `${L.intro} Press Run, or click the map to drop the triangle somewhere else.`);
+        return;
+      }
+      if (idx >= steps.length) {
+        const b = bestOf(states[idx]);
+        const found = b.f < 1e-6;
+        let body;
+        if (reason === 'cap') body = `Stopped after ${MAX_STEPS} steps without the triangle collapsing. Best so far: f = ${fmt(b.f)} at ${fxy(b)}.`;
+        else if (found) body = `The triangle has shrunk to a point at ${fxy(b)}, where f = ${fmt(b.f)}: the bottom, found in ${steps.length} steps and ${evalsAt[idx]} evaluations without a single slope.`;
+        else body = `The triangle has shrunk to a point at ${fxy(b)} with f = ${fmt(b.f)}. That's the bottom of a dip, not the lowest point on the map. Three corners can't see past the nearest rise, so it can't know. Click somewhere else to drop it again.`;
+        setStatus(found ? 'expand' : 'contract', found ? 'Settled at the bottom' : 'Settled in a dip', body);
+        return;
+      }
+      const S = steps[idx - 1 < 0 ? 0 : idx - 1];
+      const w = S.before[2], m = S.before[1], b = S.before[0];
+      const r = S.trials[0];
+      let head, body;
+      switch (S.kind) {
+        case 'expand':
+          head = 'Expand';
+          body = `Flipping the worst corner (f = ${fmt(w.f)}) landed on a new best, f = ${fmt(r.f)}, so it tried going twice as far and found f = ${fmt(S.trials[1].f)}. Keep the longer stride; the triangle grows.`;
+          break;
+        case 'reflect':
+          head = 'Reflect';
+          body = S.note === 'noexpand'
+            ? `The flip found a new best, f = ${fmt(r.f)}. Going twice as far gave ${fmt(S.trials[1].f)}, which is worse, so keep the plain flip.`
+            : `The worst corner (f = ${fmt(w.f)}) flipped through the middle of the other two and landed at f = ${fmt(r.f)}: better than the middle corner (${fmt(m.f)}), not a new best. Keep it.`;
+          break;
+        case 'contract':
+          head = S.note === 'outside' ? 'Contract (outside)' : 'Contract (inside)';
+          body = S.note === 'outside'
+            ? `The flip landed at f = ${fmt(r.f)}, still worse than the other two corners. Pull it halfway back toward the middle: f = ${fmt(S.trials[1].f)}. Keep that; the triangle narrows.`
+            : `The flip landed at f = ${fmt(r.f)}, worse than where it started (${fmt(w.f)}). So try halfway between the worst corner and the middle instead: f = ${fmt(S.trials[1].f)}. Keep that.`;
+          break;
+        default:
+          head = 'Shrink';
+          body = `Neither the flip (f = ${fmt(r.f)}) nor the halfway point (f = ${fmt(S.trials[1].f)}) helped. Pull both other corners halfway toward the best one (f = ${fmt(b.f)}) and look again from closer up.`;
+      }
+      setStatus(S.kind, head, body);
+    }
+
+    function updateTally() {
+      $('tStep').textContent = `${idx} / ${steps.length}`;
+      $('tEval').textContent = evalsAt[idx];
+      const b = bestOf(states[idx]);
+      $('tBest').textContent = fmt(b.f);
+      $('tAt').textContent = `(${b.x.toFixed(2)}, ${b.y.toFixed(2)})`;
+      const cnt = { reflect: 0, expand: 0, contract: 0, shrink: 0 };
+      for (let i = 0; i < idx; i++) cnt[steps[i].kind]++;
+      $('tMoves').textContent = `${cnt.reflect} R · ${cnt.expand} E · ${cnt.contract} C · ${cnt.shrink} S`;
+    }
+
+    function updateButtons() {
+      const atEnd = idx >= steps.length;
+      $('play').textContent = playing ? '❚❚ Pause' : atEnd ? '▶ Again' : '▶ Run';
+      $('step').disabled = atEnd || playing || stepping;
+      $('back').disabled = idx === 0 || playing || stepping;
+    }
+
+    function refresh() { describe(); updateTally(); updateButtons(); drawConv(); drawMap(); }
+
+    // ---------- loop ----------
+    const stepMs = () => Math.round(1500 * Math.pow(0.04, speed / 100));
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(100, now - last); last = now;
+      if ((playing || stepping) && idx < steps.length) {
+        t += reduced ? 1 : dt / stepMs();
+        if (t >= 1) {
+          t = 0; idx++;
+          if (stepping) stepping = false;
+          if (idx >= steps.length) playing = false;
+          refresh();
+        } else drawMap();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function reset(autoplay) {
+      solve(); idx = 0; t = 0; stepping = false; playing = !!autoplay;
+      refresh();
+    }
+
+    // ---------- sizing ----------
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const wrapW = $('mapWrap').clientWidth;
+      const maxH = Math.max(300, window.innerHeight - 290);
+      const s = Math.floor(Math.max(220, Math.min(wrapW, maxH, 760)));
+      const changed = s !== side || map.width !== Math.round(s * dpr);
+      side = s;
+      map.style.width = side + 'px'; map.style.height = side + 'px';
+      map.width = Math.round(side * dpr); map.height = Math.round(side * dpr);
+      if (changed || !heat.width) buildHeat();
+      conv.width = 0;
+      refresh();
+    }
+    let rt = 0;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 120); });
+
+    // ---------- controls ----------
+    document.querySelectorAll('#lands button').forEach((btn) => btn.addEventListener('click', () => {
+      land = +btn.dataset.l; L = LANDS[land]; startPt = L.start.slice();
+      document.querySelectorAll('#lands button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      buildHeat(); reset(false);
+    }));
+    $('size').addEventListener('input', (e) => {
+      sizePct = +e.target.value; $('sizeOut').textContent = sizePct + '% of the map';
+      reset(false);
+    });
+    $('speed').addEventListener('input', (e) => {
+      speed = +e.target.value;
+      const ms = stepMs();
+      $('speedOut').textContent = ms >= 1000 ? (ms / 1000).toFixed(1) + ' s / step' : ms + ' ms / step';
+    });
+    $('play').addEventListener('click', () => {
+      if (idx >= steps.length) { idx = 0; t = 0; playing = true; refresh(); return; }
+      playing = !playing; stepping = false;
+      if (!playing) t = 0;
+      refresh();
+    });
+    $('step').addEventListener('click', () => { if (idx < steps.length) { stepping = true; t = 0; updateButtons(); } });
+    $('back').addEventListener('click', () => { if (idx > 0) { idx--; t = 0; refresh(); } });
+    $('restart').addEventListener('click', () => { idx = 0; t = 0; playing = false; stepping = false; refresh(); });
+    map.addEventListener('pointerdown', (e) => {
+      const rect = map.getBoundingClientRect();
+      const [x, y] = toW(((e.clientX - rect.left) / rect.width) * side, ((e.clientY - rect.top) / rect.height) * side);
+      startPt = [x, y];
+      reset(true);
+    });
+
+    $('sizeOut').textContent = sizePct + '% of the map';
+    $('speed').dispatchEvent(new Event('input'));
+    solve();
+    resize();
+    requestAnimationFrame((n) => { last = n; requestAnimationFrame(frame); });
+  })();
+</script>
+</body>
+</html>
