@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-18",
+    "lastUpdated": "2026-11-19",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5603,7 +5603,7 @@
     {
       "id": "2026-11-18",
       "date": "2026-11-18",
-      "headline": true,
+      "headline": false,
       "topic": "Whether 93% of fit note applications are signed off automatically",
       "claim": "About 93% of applications for fit notes are signed off automatically.",
       "speaker": "Alan Milburn",
@@ -5647,6 +5647,61 @@
         {
           "title": "GOV.UK — The fit note: guidance for patients and employees",
           "url": "https://www.gov.uk/government/publications/the-fit-note-a-guide-for-patients-and-employees/the-fit-note-guidance-for-patients-and-employees"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-19",
+      "date": "2026-11-19",
+      "headline": true,
+      "topic": "Whether Tory failure to fund post-pandemic support made 250,000 young people NEET",
+      "claim": "250,000 people became NEET because they failed to provide that support.",
+      "speaker": "Andy Burnham",
+      "party": "Labour",
+      "role": "Prime Minister",
+      "discussionScore": 66,
+      "discussionNote": "Burnham's main counter-attack at PMQs on 18 November, when Badenoch spent all six questions on welfare the day after the Milburn review. The exchange led Westminster sketches and write-ups.",
+      "score": 50,
+      "verdict": "Half True / Needs Context",
+      "explanation": "The arithmetic holds; the cause doesn't. ONS figures show 16-24 NEETs rising from about 675,000 in April-June 2021 to 920,000 by the July 2024 election, roughly 245,000. Most of that rise came from late 2022 to 2024, as Burnham said. But 'because' goes beyond the evidence. The support he means was Sir Kevan Collins's £15bn schools catch-up plan, which ministers cut to £1.4bn in 2021. No study links that decision to NEET numbers. The IFS finds no single cause, pointing to falling youth employment and worsening mental health. The 2021 starting point is a post-lockdown low: measured from 2019 the rise is nearer 110,000. And NEETs have kept rising under Labour.",
+      "evidence": [
+        "ONS (seasonally adjusted, reweighted): 16-24 NEETs 675,000 in Apr-Jun 2021, 920,000 in Apr-Jun 2024.",
+        "ONS: 734,000 in Jul-Sep 2022, so most of the rise came between 2022 and 2024.",
+        "ONS: 808,000 NEET in Apr-Jun 2019, so the rise since before the pandemic is about 110,000.",
+        "ONS: 981,000 in Apr-Jun 2026 (13.0%), up about 60,000 since the election.",
+        "Collins asked for £15bn for school catch-up in 2021; he quit after being offered £1.4bn.",
+        "IFS: the rise 'cannot be explained away by any single factor'; payrolled youth employment fell 4.3 points from 2022 to 2025.",
+        "Milburn review: the NEET rate has 'barely been below 10% in 25 years'; mental distress grew before the pandemic."
+      ],
+      "confidence": "Medium-high — ONS series is clear but LFS-based and volatile; the wording comes from press reports, not Hansard.",
+      "sources": [
+        {
+          "title": "ONS — NEET table 1 (August 2026)",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/datasets/youngpeoplenotineducationemploymentortrainingneettable1"
+        },
+        {
+          "title": "ONS — Young people not in education, employment or training: latest",
+          "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/bulletins/youngpeoplenotineducationemploymentortrainingneet/latest"
+        },
+        {
+          "title": "IFS — Why has the NEET rate risen?",
+          "url": "https://ifs.org.uk/publications/why-has-neet-rate-risen-understanding-trends-and-drivers-using-administrative-data"
+        },
+        {
+          "title": "GOV.UK — From a Welfare State to a Working State",
+          "url": "https://www.gov.uk/government/publications/from-a-welfare-state-to-a-working-state-a-new-settlement-for-the-next-generation/from-a-welfare-state-to-a-working-state-a-new-settlement-for-the-next-generation"
+        },
+        {
+          "title": "ITV News — Education tsar resigns over catch-up funding",
+          "url": "https://itv.com/news/2021-06-02/government-education-tsar-resigns-over-funding-for-schools-coronavirus-catch-up-plan"
+        },
+        {
+          "title": "Brit Brief — Burnham and Badenoch clash over welfare cuts",
+          "url": "https://britbrief.co.uk/politics/westminster/burnham-and-badenoch-clash-over-welfare-cuts-at-pmqs.html"
+        },
+        {
+          "title": "The Spectator — Badenoch and Burnham clash over welfare at PMQs",
+          "url": "https://spectator.com/article/badenoch-and-burnham-clash-over-welfare-at-pmqs/"
         }
       ]
     }
