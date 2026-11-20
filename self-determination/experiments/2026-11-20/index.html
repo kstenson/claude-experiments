@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>As Far as It's Safe — Experiment 119</title>
+<meta name="description" content="John C. Hart, 1996: sphere tracing. March a ray through a scene by asking how far away the nearest surface is, then leaping exactly that far. Every leap is a circle that cannot touch anything." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 6px; }
+  .seg.three { grid-template-columns: repeat(3, 1fr); }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 4px; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 10px; font: inherit; font-size: 0.84rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+
+  /* ---- Status ---- */
+  .status { min-height: 78px; }
+  .status b { display: block; font-size: 1.08rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 4px; font-size: 0.88rem; line-height: 1.45; color: #b9b9ca; }
+  .status.hit b { color: #6ee7c8; }
+  .status.miss b { color: #a9a9ff; }
+  .status.stall b { color: #ff7cc3; }
+  .status.inside b { color: #ffd76e; }
+
+  .board { padding: 10px; }
+  canvas { display: block; border-radius: 10px; width: 100%; }
+  #scene { cursor: crosshair; touch-action: none; }
+  #view { cursor: pointer; touch-action: none; }
+  .tlhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 0 4px 8px; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+  .tlhead small { font-size: 0.74rem; color: #8d8da3; letter-spacing: 0; text-transform: none; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 22px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  button:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>As Far as It's Safe</h1>
+      <p class="sub">Experiment № 119 · November 20, 2026</p>
+      <p class="lede">John C. Hart, 1996: sphere tracing. To find where a ray first touches a scene, ask one question at every stop — how far is the nearest surface, in any direction? — and leap exactly that far. Each leap is a circle that can't contain anything, so the ray can never jump through a wall.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div>
+          <span class="cap">Scene</span>
+          <div class="seg" id="scenes">
+            <button data-s="pebbles" aria-pressed="true">Pebbles</button>
+            <button data-s="melted" aria-pressed="false">Melted</button>
+            <button data-s="corridor" aria-pressed="false">Corridor</button>
+            <button data-s="room" aria-pressed="false">Walled room</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Rays<b id="raysOut"></b></span>
+          <input type="range" id="rays" min="1" max="160" step="1" value="36" />
+        </label>
+        <label class="field">
+          <span>Field of view<b id="fovOut"></b></span>
+          <input type="range" id="fov" min="4" max="170" step="1" value="64" />
+        </label>
+        <label class="field">
+          <span>Step budget per ray<b id="maxOut"></b></span>
+          <input type="range" id="maxSteps" min="1" max="120" step="1" value="48" />
+        </label>
+        <label class="field">
+          <span>Melt (smooth union)<b id="meltOut"></b></span>
+          <input type="range" id="melt" min="0" max="120" step="1" value="0" />
+        </label>
+        <div>
+          <span class="cap">Show</span>
+          <div class="seg three" id="toggles">
+            <button data-t="field" aria-pressed="true">Field</button>
+            <button data-t="circles" aria-pressed="true">Circles</button>
+            <button data-t="drift" aria-pressed="false">Drift</button>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn main" id="replay">▶ Replay march</button>
+          <button class="btn" id="resetEye">↺ Reset eye</button>
+        </div>
+        <p class="note"><b>Drag the eye</b> to move it; <b>drag anywhere else</b> to aim it. <b>Hover or tap the strip</b> under the scene to spotlight one ray. The rule at every stop: measure the distance <i>d</i> to the nearest surface; if <i>d</i> is tiny you've hit it, otherwise step forward by <i>d</i>. Nothing can be closer than <i>d</i>, so the step is always safe.</p>
+        <p class="note"><b>Why it's worth knowing:</b> it renders shapes you can only describe as a distance formula — fractals, blobs that melt into each other, infinite repeats — with no triangles at all. It's the engine behind most of Shadertoy and the demoscene, and the same distance fields sharpen game text, soften shadows and drive collision checks.</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel board">
+        <canvas id="scene" aria-label="A 2D scene of shapes with an eye casting rays; each ray advances in circles sized by the distance to the nearest surface"></canvas>
+        <div class="legend">
+          <span><i style="background:linear-gradient(90deg,#3a3a8a,#7c7cff,#ff7cc3,#ffe6f0)"></i>ray colour = steps taken (few → many)</span>
+          <span><i style="background:rgba(255,255,255,0.18)"></i>rings = distance contours, 24 units apart</span>
+        </div>
+      </div>
+
+      <div class="panel board">
+        <div class="tlhead">What the eye sees<small id="viewNote">one column per ray, shaded by surface angle and distance</small></div>
+        <canvas id="view" aria-label="A one-dimensional image: one column per ray, then a strip showing how many steps each ray needed"></canvas>
+      </div>
+
+      <div class="panel status" id="status"><b>—</b><span>—</span></div>
+
+      <div class="panel">
+        <div class="tally">
+          <span>Distance lookups <b id="tLook">0</b></span>
+          <span>Fixed 2-unit steps would need <b id="tFixed">0</b></span>
+          <span>Avg steps per ray <b id="tAvg">0</b></span>
+          <span>Worst ray <b id="tWorst">0</b></span>
+          <span>Hits <b id="tHits">0</b></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 119 · The story</p>
+      <h2>As Far as It's Safe</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I've drawn a lot of rays in this collection — a light finding its visibility polygon, a probe counting edge crossings — but every one of them already knew where the walls were. Sphere tracing is for scenes you can't list. All you have is a function that answers "how far to the nearest thing?", and from that one number you have to find the surface. When I first saw Hart's paper I assumed that couldn't be enough. It is, and the circles are the proof drawn right on the screen.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The rhythm. A ray crossing open space takes two or three huge strides, then slows like someone feeling for a light switch as it approaches a surface — and never overshoots. I also like that the failure is honest: point a ray so it skims along the flat side of the corridor and the circles shrink to slivers, the step count explodes, and the ray goes pink. Sphere tracing is fast <i>almost</i> everywhere, and it shows you exactly where it isn't. Then turn up Melt and watch two pebbles fuse with a single <i>min</i> swapped for a soft one. No mesh could do that so cheaply.</p>
+
+      <h3>Something you might take away</h3>
+      <p>You don't have to inch forward when you know how much room you have. A guaranteed bound — "nothing is closer than this" — turns timid fixed steps into big confident leaps, and the tally shows it: often ten or twenty times fewer lookups than a careful fixed stride. The catch is in the word guaranteed. Overestimate the distance even a little and you'll walk straight through the wall. Be bold exactly as far as your evidence allows, and no further.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Sphere tracing ----
+  (() => {
+    const W = 1000, H = 620;          // world units
+    const EPS = 0.6;                  // "close enough" — a hit
+    const MAXD = 1500;                // give up past this
+    const FIXED = 2;                  // the cautious alternative's stride
+
+    const PAL = [
+      [124, 124, 255], // indigo
+      [255, 124, 195], // pink
+      [110, 231, 200], // mint
+      [255, 215, 110], // gold
+      [124, 200, 255], // sky
+      [195, 156, 255], // lilac
+    ];
+    const NAMES = ['indigo', 'pink', 'mint', 'gold', 'sky-blue', 'lilac'];
+
+    // Shapes: c circle, b rounded box (rotated), s capsule, o ring, room = inside of a box.
+    const SCENES = {
+      pebbles: { melt: 0, eye: [110, 330, 0], shapes: [
+        { t: 'c', x: 520, y: 170, r: 66, c: 0 },
+        { t: 'c', x: 700, y: 360, r: 92, c: 1 },
+        { t: 'b', x: 430, y: 440, w: 70, h: 38, rad: 14, a: 0.5, c: 2 },
+        { t: 'c', x: 860, y: 150, r: 46, c: 3 },
+        { t: 'o', x: 880, y: 520, r: 60, th: 12, c: 4 },
+        { t: 's', x1: 300, y1: 120, x2: 360, y2: 240, r: 20, c: 5 },
+        { t: 'c', x: 330, y: 560, r: 30, c: 3 },
+      ]},
+      melted: { melt: 70, eye: [110, 310, 0], shapes: [
+        { t: 'c', x: 560, y: 250, r: 80, c: 1 },
+        { t: 'c', x: 680, y: 340, r: 70, c: 0 },
+        { t: 'c', x: 590, y: 420, r: 54, c: 5 },
+        { t: 'b', x: 820, y: 230, w: 50, h: 50, rad: 10, a: 0.8, c: 2 },
+        { t: 's', x1: 420, y1: 110, x2: 520, y2: 150, r: 26, c: 4 },
+        { t: 'c', x: 470, y: 520, r: 40, c: 3 },
+      ]},
+      corridor: { melt: 0, eye: [80, 310, 0], shapes: [
+        { t: 'b', x: 560, y: 248, w: 420, h: 22, rad: 4, a: 0, c: 0 },
+        { t: 'b', x: 560, y: 372, w: 420, h: 22, rad: 4, a: 0, c: 1 },
+        { t: 'c', x: 940, y: 310, r: 30, c: 3 },
+        { t: 'c', x: 320, y: 110, r: 44, c: 2 },
+        { t: 'c', x: 700, y: 520, r: 52, c: 5 },
+      ]},
+      room: { melt: 0, eye: [500, 310, -0.6], shapes: [
+        { t: 'room', x: 500, y: 310, w: 470, h: 285, c: 5 },
+        { t: 'c', x: 300, y: 170, r: 50, c: 1 },
+        { t: 'b', x: 730, y: 180, w: 60, h: 26, rad: 8, a: -0.3, c: 2 },
+        { t: 'c', x: 760, y: 450, r: 64, c: 0 },
+        { t: 's', x1: 230, y1: 420, x2: 360, y2: 500, r: 18, c: 3 },
+        { t: 'o', x: 520, y: 120, r: 36, th: 9, c: 4 },
+      ]},
+    };
+
+    // ---- DOM ----
+    const $ = (id) => document.getElementById(id);
+    const cv = $('scene'), ctx = cv.getContext('2d');
+    const vv = $('view'), vctx = vv.getContext('2d');
+    const statusEl = $('status');
+    const ui = {
+      rays: $('rays'), fov: $('fov'), maxSteps: $('maxSteps'), melt: $('melt'),
+    };
+
+    // offscreen distance-field image
+    const FS = 3; // world units per field pixel
+    const fw = Math.ceil(W / FS), fh = Math.ceil(H / FS);
+    const fcv = document.createElement('canvas'); fcv.width = fw; fcv.height = fh;
+    const fctx = fcv.getContext('2d');
+    const fimg = fctx.createImageData(fw, fh);
+
+    // ---- State ----
+    let sceneKey = 'pebbles';
+    let shapes = [];       // live (possibly drifting) copies
+    let base = [];
+    let eye = { x: 0, y: 0, a: 0 };
+    let melt = 0;
+    let show = { field: true, circles: true, drift: false };
+    let spot = -1;          // spotlighted ray index (-1 = auto: middle)
+    let reveal = Infinity;  // steps revealed during replay
+    let results = [];
+    let fieldDirty = true;
+    let time = 0;
+
+    function loadScene(key) {
+      sceneKey = key;
+      const s = SCENES[key];
+      base = s.shapes.map((o) => ({ ...o }));
+      shapes = base.map((o) => ({ ...o }));
+      eye = { x: s.eye[0], y: s.eye[1], a: s.eye[2] };
+      melt = s.melt;
+      ui.melt.value = melt;
+      spot = -1;
+      document.querySelectorAll('#scenes button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === key)));
+      fieldDirty = true;
+      startReplay();
+    }
+
+    // ---- Distance functions ----
+    function sdBox(px, py, o) {
+      const dx = px - o.x, dy = py - o.y;
+      const ca = Math.cos(-o.a), sa = Math.sin(-o.a);
+      const lx = Math.abs(dx * ca - dy * sa), ly = Math.abs(dx * sa + dy * ca);
+      const qx = lx - o.w + o.rad, qy = ly - o.h + o.rad;
+      const ox = Math.max(qx, 0), oy = Math.max(qy, 0);
+      return Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - o.rad;
+    }
+    function sdShape(px, py, o) {
+      switch (o.t) {
+        case 'c': return Math.hypot(px - o.x, py - o.y) - o.r;
+        case 'b': return sdBox(px, py, o);
+        case 'o': return Math.abs(Math.hypot(px - o.x, py - o.y) - o.r) - o.th;
+        case 's': {
+          const bax = o.x2 - o.x1, bay = o.y2 - o.y1, pax = px - o.x1, pay = py - o.y1;
+          const h = Math.max(0, Math.min(1, (pax * bax + pay * bay) / (bax * bax + bay * bay)));
+          return Math.hypot(pax - bax * h, pay - bay * h) - o.r;
+        }
+        case 'room': {
+          const qx = Math.abs(px - o.x) - o.w, qy = Math.abs(py - o.y) - o.h;
+          return -(Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0));
+        }
+      }
+      return 1e9;
+    }
+    // polynomial smooth minimum (Quilez); k = 0 → plain min
+    function smin(a, b, k) {
+      if (k <= 0.5) return Math.min(a, b);
+      const h = Math.max(k - Math.abs(a - b), 0) / k;
+      return Math.min(a, b) - h * h * k * 0.25;
+    }
+    let mapId = -1;
+    function map(px, py) {
+      let d = 1e9, best = 1e9; mapId = -1;
+      for (let i = 0; i < shapes.length; i++) {
+        const o = shapes[i];
+        const di = sdShape(px, py, o);
+        if (di < best) { best = di; mapId = i; }
+        d = o.t === 'room' ? Math.min(d, di) : smin(d, di, melt);
+      }
+      return d;
+    }
+    function normal(px, py) {
+      const e = 0.8;
+      const nx = map(px + e, py) - map(px - e, py);
+      const ny = map(px, py + e) - map(px, py - e);
+      const l = Math.hypot(nx, ny) || 1;
+      return [nx / l, ny / l];
+    }
+
+    // ---- March ----
+    function march(ox, oy, dx, dy, maxSteps) {
+      const steps = []; // flat: x, y, d
+      let t = 0;
+      for (let i = 0; i < maxSteps; i++) {
+        const px = ox + dx * t, py = oy + dy * t;
+        const d = map(px, py);
+        const id = mapId;
+        steps.push(px, py, d);
+        if (d < EPS) return { kind: i === 0 && d < 0 ? 'inside' : 'hit', t, id, steps, n: i + 1, d };
+        t += d;
+        if (t > MAXD) return { kind: 'miss', t: MAXD, id: -1, steps, n: i + 1, d };
+      }
+      const px = ox + dx * t, py = oy + dy * t;
+      return { kind: 'stall', t, id: -1, steps, n: maxSteps, d: map(px, py), ex: px, ey: py };
+    }
+
+    function rayDirs() {
+      const n = +ui.rays.value;
+      const fov = (+ui.fov.value) * Math.PI / 180;
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const f = n === 1 ? 0 : i / (n - 1) - 0.5;
+        const a = eye.a + f * fov;
+        out.push([Math.cos(a), Math.sin(a)]);
+      }
+      return out;
+    }
+
+    function traceAll() {
+      const maxSteps = +ui.maxSteps.value;
+      results = rayDirs().map(([dx, dy]) => {
+        const r = march(eye.x, eye.y, dx, dy, maxSteps);
+        r.dx = dx; r.dy = dy;
+        if (r.kind === 'hit') r.nrm = normal(eye.x + dx * r.t, eye.y + dy * r.t);
+        return r;
+      });
+    }
+
+    // ---- Colour helpers ----
+    const HEAT = [[58, 58, 138], [124, 124, 255], [255, 124, 195], [255, 230, 240]];
+    function heat(s) {
+      s = Math.max(0, Math.min(1, s)) * (HEAT.length - 1);
+      const i = Math.min(HEAT.length - 2, Math.floor(s)), f = s - i;
+      const a = HEAT[i], b = HEAT[i + 1];
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+    }
+    const rgb = (c, al = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${al})`;
+    const heatOf = (n) => heat(Math.log(n) / Math.log(Math.max(8, +ui.maxSteps.value)));
+
+    // ---- Distance field image ----
+    function renderField() {
+      const data = fimg.data;
+      let k = 0;
+      for (let j = 0; j < fh; j++) {
+        const py = (j + 0.5) * FS;
+        for (let i = 0; i < fw; i++) {
+          const px = (i + 0.5) * FS;
+          const d = map(px, py);
+          let r, g, b;
+          if (d < 0) {
+            const c = PAL[shapes[mapId].c];
+            const inner = Math.min(1, -d / 40);
+            const m = 0.38 - 0.16 * inner;
+            r = c[0] * m; g = c[1] * m; b = c[2] * m;
+          } else if (!show.field) {
+            r = 9; g = 9; b = 18;
+          } else {
+            const band = 0.5 + 0.5 * Math.cos(d * (2 * Math.PI / 24));
+            const fade = Math.exp(-d / 260);
+            const ring = Math.pow(band, 18) * 0.55 * fade;
+            const glow = Math.exp(-d / 26) * 0.5;
+            r = 8 + 30 * fade + 180 * ring + 120 * glow;
+            g = 8 + 26 * fade + 170 * ring + 110 * glow;
+            b = 18 + 60 * fade + 230 * ring + 200 * glow;
+          }
+          data[k++] = r; data[k++] = g; data[k++] = b; data[k++] = 255;
+        }
+      }
+      fctx.putImageData(fimg, 0, 0);
+    }
+
+    // ---- Canvas sizing ----
+    let S = 1, dpr = 1, cssW = 0;
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      cssW = cv.clientWidth || cv.parentElement.clientWidth;
+      const maxH = Math.max(260, window.innerHeight * 0.62);
+      S = Math.min(cssW / W, maxH / H);
+      const cssH = H * S;
+      cv.style.height = cssH + 'px';
+      cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+      const vw = vv.clientWidth || cssW;
+      vv.style.height = '78px';
+      vv.width = Math.round(vw * dpr); vv.height = Math.round(78 * dpr);
+    }
+    // world → css px (centred horizontally if aspect-limited)
+    let offX = 0;
+    function setupTransform() {
+      offX = (cssW - W * S) / 2;
+      ctx.setTransform(dpr * S, 0, 0, dpr * S, dpr * offX, 0);
+    }
+
+    // ---- Draw ----
+    function spotIndex() {
+      if (!results.length) return -1;
+      return spot >= 0 && spot < results.length ? spot : Math.floor((results.length - 1) / 2);
+    }
+
+    function draw() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#07070e';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      setupTransform();
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(fcv, 0, 0, fw * FS, fh * FS);
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1 / S;
+      ctx.strokeRect(0, 0, W, H);
+
+      const si = spotIndex();
+      const lw = 1 / S;
+
+      // faint safety circles for every ray
+      if (show.circles) {
+        ctx.lineWidth = lw;
+        for (let r = 0; r < results.length; r++) {
+          if (r === si) continue;
+          const st = results[r].steps;
+          const n = Math.min(st.length / 3, reveal);
+          const c = heatOf(results[r].n);
+          ctx.strokeStyle = rgb(c, results.length > 60 ? 0.07 : 0.13);
+          ctx.beginPath();
+          for (let i = 0; i < n; i++) {
+            const d = st[i * 3 + 2];
+            if (d <= 0) continue;
+            ctx.moveTo(st[i * 3] + d, st[i * 3 + 1]);
+            ctx.arc(st[i * 3], st[i * 3 + 1], d, 0, Math.PI * 2);
+          }
+          ctx.stroke();
+        }
+      }
+
+      // the rays themselves
+      for (let r = 0; r < results.length; r++) {
+        const R = results[r];
+        const n = Math.min(R.steps.length / 3, reveal);
+        const done = n >= R.steps.length / 3;
+        let ex, ey;
+        if (done) { ex = eye.x + R.dx * Math.min(R.t, MAXD); ey = eye.y + R.dy * Math.min(R.t, MAXD); }
+        else { const k = Math.floor(n) - 1; ex = R.steps[k * 3]; ey = R.steps[k * 3 + 1]; if (k < 0) { ex = eye.x; ey = eye.y; } }
+        const c = heatOf(R.n);
+        ctx.strokeStyle = rgb(c, r === si ? 0.95 : (results.length > 60 ? 0.35 : 0.55));
+        ctx.lineWidth = (r === si ? 2 : 1.1) * lw;
+        ctx.beginPath(); ctx.moveTo(eye.x, eye.y); ctx.lineTo(ex, ey); ctx.stroke();
+        if (done && R.kind === 'hit') {
+          ctx.fillStyle = rgb(PAL[shapes[R.id].c], 0.95);
+          ctx.beginPath(); ctx.arc(ex, ey, 3.2 * lw, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      // spotlight ray: every circle, every stop
+      if (si >= 0) {
+        const R = results[si];
+        const n = Math.min(R.steps.length / 3, reveal);
+        const st = R.steps;
+        for (let i = 0; i < n; i++) {
+          const x = st[i * 3], y = st[i * 3 + 1], d = st[i * 3 + 2];
+          if (d > 0) {
+            ctx.fillStyle = 'rgba(124,124,255,0.07)';
+            ctx.strokeStyle = i === Math.floor(n) - 1 && !isFinite(reveal) ? 'rgba(255,124,195,0.9)' : 'rgba(200,200,255,0.55)';
+            ctx.lineWidth = 1.2 * lw;
+            ctx.beginPath(); ctx.arc(x, y, d, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          }
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(x, y, 2.6 * lw, 0, Math.PI * 2); ctx.fill();
+          if (n <= 24 && d > 14 / S) {
+            ctx.fillStyle = 'rgba(233,233,240,0.8)';
+            ctx.font = `${11 / S}px ui-sans-serif, system-ui, sans-serif`;
+            ctx.fillText(String(i + 1), x + 4 * lw, y - 4 * lw);
+          }
+        }
+      }
+
+      // eye
+      const fov = (+ui.fov.value) * Math.PI / 180;
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      ctx.beginPath(); ctx.moveTo(eye.x, eye.y);
+      ctx.arc(eye.x, eye.y, 46 * lw, eye.a - fov / 2, eye.a + fov / 2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(eye.x, eye.y, 8 * lw, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#05050a';
+      ctx.beginPath(); ctx.arc(eye.x + Math.cos(eye.a) * 3 * lw, eye.y + Math.sin(eye.a) * 3 * lw, 3.6 * lw, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,124,195,0.8)'; ctx.lineWidth = 1.5 * lw;
+      ctx.beginPath(); ctx.arc(eye.x, eye.y, 13 * lw, 0, Math.PI * 2); ctx.stroke();
+
+      drawView(si);
+    }
+
+    function drawView(si) {
+      const w = vv.width, h = vv.height;
+      vctx.setTransform(1, 0, 0, 1, 0, 0);
+      vctx.fillStyle = '#07070e'; vctx.fillRect(0, 0, w, h);
+      const n = results.length;
+      if (!n) return;
+      const cw = w / n;
+      const imgH = Math.round(h * 0.62), gap = Math.round(4 * dpr), hh = h - imgH - gap;
+      const L = [-0.55, -0.83];
+      for (let i = 0; i < n; i++) {
+        const R = results[i];
+        const x0 = Math.floor(i * cw), x1 = Math.floor((i + 1) * cw);
+        const done = reveal >= R.steps.length / 3;
+        let col = [14, 14, 26];
+        if (done && (R.kind === 'hit' || R.kind === 'inside')) {
+          const c = PAL[shapes[R.id].c];
+          let lam = 0.7;
+          if (R.nrm) lam = 0.38 + 0.72 * Math.max(0, -(R.nrm[0] * L[0] + R.nrm[1] * L[1]));
+          const fog = Math.exp(-R.t / 1600);
+          col = [c[0] * lam * fog + 14 * (1 - fog), c[1] * lam * fog + 14 * (1 - fog), c[2] * lam * fog + 26 * (1 - fog)];
+        } else if (done && R.kind === 'stall') {
+          col = [60, 20, 44];
+        }
+        vctx.fillStyle = rgb(col);
+        vctx.fillRect(x0, 0, Math.max(1, x1 - x0 - (cw > 6 ? 1 : 0)), imgH);
+        const shown = Math.min(R.n, Math.floor(Math.min(reveal, 1e6)));
+        const frac = Math.min(1, Math.log(1 + shown) / Math.log(1 + Math.max(2, +ui.maxSteps.value)));
+        vctx.fillStyle = rgb(heatOf(Math.max(1, shown)), 0.9);
+        const bh = Math.max(1, frac * hh);
+        vctx.fillRect(x0, h - bh, Math.max(1, x1 - x0 - (cw > 6 ? 1 : 0)), bh);
+      }
+      if (si >= 0) {
+        const x0 = Math.floor(si * cw), x1 = Math.floor((si + 1) * cw);
+        vctx.strokeStyle = '#fff'; vctx.lineWidth = Math.max(1, dpr);
+        vctx.strokeRect(x0 + 0.5, 0.5, Math.max(2, x1 - x0) - 1, h - 1);
+      }
+    }
+
+    // ---- Status & tally ----
+    function updateText() {
+      const si = spotIndex();
+      let look = 0, fixed = 0, worst = 0, hits = 0;
+      for (const R of results) {
+        look += R.n; worst = Math.max(worst, R.n);
+        fixed += Math.ceil(Math.min(R.t, MAXD) / FIXED) || 1;
+        if (R.kind === 'hit') hits++;
+      }
+      $('tLook').textContent = look.toLocaleString();
+      $('tFixed').textContent = fixed.toLocaleString() + (look ? `  (${(fixed / look).toFixed(0)}×)` : '');
+      $('tAvg').textContent = results.length ? (look / results.length).toFixed(1) : '0';
+      $('tWorst').textContent = worst + ' steps';
+      $('tHits').textContent = `${hits} / ${results.length}`;
+
+      if (si < 0) return;
+      const R = results[si];
+      const label = `Ray ${si + 1} of ${results.length}`;
+      let cls, head, body;
+      if (R.kind === 'inside') {
+        cls = 'inside'; head = 'The eye is inside a shape';
+        body = 'The distance is negative before the ray has moved, so every ray "hits" at once. Drag the eye out into open space.';
+      } else if (R.kind === 'hit') {
+        const nm = NAMES[shapes[R.id].c];
+        cls = 'hit'; head = `${label} · hit in ${R.n} step${R.n === 1 ? '' : 's'}`;
+        body = `It reached the ${nm} ${shapes[R.id].t === 'room' ? 'wall' : 'shape'} ${Math.round(R.t)} units away. A fixed 2-unit stride would have needed about ${Math.ceil(R.t / FIXED)} lookups to get there${R.n > 16 ? ' — though this one skimmed a surface on the way, which is where sphere tracing slows down' : ''}.`;
+      } else if (R.kind === 'miss') {
+        cls = 'miss'; head = `${label} · escaped after ${R.n} step${R.n === 1 ? '' : 's'}`;
+        body = 'The safe distance kept growing until the ray was past anything it could ever touch, so it stopped. Big empty space costs almost nothing.';
+      } else {
+        cls = 'stall'; head = `${label} · out of budget after ${R.n} steps`;
+        body = `It's still ${R.d.toFixed(1)} units from the nearest surface. Rays that run parallel and close to an edge only ever see a thin margin, so they creep. Raise the step budget, or aim it away from the wall.`;
+      }
+      statusEl.className = 'panel status ' + cls;
+      statusEl.innerHTML = `<b>${head}</b><span>${body}</span>`;
+    }
+
+    function syncLabels() {
+      $('raysOut').textContent = ui.rays.value;
+      $('fovOut').textContent = ui.fov.value + '°';
+      $('maxOut').textContent = ui.maxSteps.value;
+      $('meltOut').textContent = +ui.melt.value === 0 ? 'off' : ui.melt.value;
+    }
+
+    // ---- Replay ----
+    function startReplay() { reveal = 0; }
+
+    // ---- Loop ----
+    let last = performance.now();
+    let needs = true;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (show.drift) {
+        time += dt;
+        shapes.forEach((o, i) => {
+          const b = base[i];
+          if (o.t === 'room') return;
+          const ax = 26 * Math.sin(time * (0.3 + i * 0.07) + i * 1.7);
+          const ay = 20 * Math.cos(time * (0.25 + i * 0.05) + i * 2.3);
+          if (o.t === 's') { o.x1 = b.x1 + ax; o.y1 = b.y1 + ay; o.x2 = b.x2 + ax; o.y2 = b.y2 + ay; }
+          else { o.x = b.x + ax; o.y = b.y + ay; }
+          if (o.t === 'b') o.a = b.a + 0.25 * Math.sin(time * 0.4 + i);
+        });
+        fieldDirty = true; needs = true;
+      }
+      if (isFinite(reveal)) needs = true;
+      if (needs) {
+        if (fieldDirty) { renderField(); fieldDirty = false; }
+        traceAll();
+        if (isFinite(reveal)) {
+          reveal += dt * 10;
+          let most = 0; for (const R of results) most = Math.max(most, R.n);
+          if (reveal >= most) reveal = Infinity;
+        }
+        draw();
+        updateText();
+        needs = false;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function invalidate(field) { if (field) fieldDirty = true; needs = true; }
+
+    // ---- Input: scene canvas ----
+    function toWorld(e) {
+      const r = cv.getBoundingClientRect();
+      return [(e.clientX - r.left - offX) / S, (e.clientY - r.top) / S];
+    }
+    let drag = null;
+    cv.addEventListener('pointerdown', (e) => {
+      const [x, y] = toWorld(e);
+      cv.setPointerCapture(e.pointerId);
+      if (Math.hypot(x - eye.x, y - eye.y) < 26 / S) drag = 'eye';
+      else { drag = 'aim'; eye.a = Math.atan2(y - eye.y, x - eye.x); }
+      reveal = Infinity;
+      invalidate(false);
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const [x, y] = toWorld(e);
+      if (drag === 'eye') { eye.x = Math.max(4, Math.min(W - 4, x)); eye.y = Math.max(4, Math.min(H - 4, y)); }
+      else eye.a = Math.atan2(y - eye.y, x - eye.x);
+      invalidate(false);
+    });
+    const endDrag = () => { drag = null; };
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', endDrag);
+
+    // ---- Input: view strip ----
+    function pickRay(e) {
+      const r = vv.getBoundingClientRect();
+      const f = (e.clientX - r.left) / r.width;
+      spot = Math.max(0, Math.min(results.length - 1, Math.floor(f * results.length)));
+      invalidate(false);
+    }
+    vv.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse' || e.buttons) pickRay(e); });
+    vv.addEventListener('pointerdown', (e) => { vv.setPointerCapture(e.pointerId); pickRay(e); });
+
+    // ---- Controls ----
+    document.querySelectorAll('#scenes button').forEach((b) => b.addEventListener('click', () => loadScene(b.dataset.s)));
+    document.querySelectorAll('#toggles button').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.t;
+      show[k] = !show[k];
+      b.setAttribute('aria-pressed', String(show[k]));
+      if (k === 'drift' && !show.drift) { shapes = base.map((o) => ({ ...o })); }
+      invalidate(true);
+    }));
+    ui.rays.addEventListener('input', () => { spot = -1; syncLabels(); invalidate(false); });
+    ui.fov.addEventListener('input', () => { syncLabels(); invalidate(false); });
+    ui.maxSteps.addEventListener('input', () => { syncLabels(); invalidate(false); });
+    ui.melt.addEventListener('input', () => { melt = +ui.melt.value; syncLabels(); invalidate(true); });
+    $('replay').addEventListener('click', () => { startReplay(); invalidate(false); });
+    $('resetEye').addEventListener('click', () => {
+      const s = SCENES[sceneKey];
+      eye = { x: s.eye[0], y: s.eye[1], a: s.eye[2] };
+      invalidate(false);
+    });
+
+    window.addEventListener('resize', () => { resize(); invalidate(false); });
+
+    resize();
+    loadScene('pebbles');
+    syncLabels();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
