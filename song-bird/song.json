@@ -1,57 +1,57 @@
 {
-  "date": "2026-11-20",
+  "date": "2026-11-21",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "Red on Red",
+  "title": "Overtime",
   "mood": {
-    "label": "On edge",
-    "score": -0.14,
-    "summary": "On edge (43): Taiwan and Korea's markets plunged on AI-bubble fears, Russian strikes hit two embassies in Kyiv and outages grounded US flights. Against it: the ICJ found Myanmar guilty of genocide and Brazil recognised Indigenous land.",
+    "label": "Heavy going",
+    "score": -0.22,
+    "summary": "Heavy going (39): Wall Street fell 3.7% as AI stocks cracked, missiles flew at Riyadh and over Poland, and COP31 ran into overtime on a draft without fossil fuels. Lighter notes: no injuries from Peru's quake, a French court's verdict on racist police.",
     "palette": {
-      "bg": "#140f12",
-      "bg2": "#26191d",
-      "accent": "#e0605a",
-      "accent2": "#8fc7b0",
-      "text": "#efe6e6"
+      "bg": "#0f1317",
+      "bg2": "#1b2229",
+      "accent": "#8fa9c4",
+      "accent2": "#d9b26f",
+      "text": "#e6eaee"
     }
   },
   "style": {
-    "genre": "half-time drum-and-bass — marimba, harp, pipe organ, Roland R-8",
-    "key": "B",
-    "scale": "phrygian",
-    "bpm": 122,
+    "genre": "slow post-rock nocturne — piano, bass recorder, folk harp, gong, Yamaha RM50",
+    "key": "F#",
+    "scale": "aeolian",
+    "bpm": 66,
     "swing": 0
   },
   "sampleSources": [
-    "Strudel default library (VCSL marimba, harp, quiet pipe organ, tubular bells; Roland R-8 drum machine), sine-oscillator sub-bass"
+    "Strudel default library (sampled piano; VCSL bass recorder, folk harp, gong, suspended cymbal, timpani roll; Yamaha RM50 drum machine), sine-oscillator sub-bass"
   ],
-  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~\").bank(\"RolandR8\").gain(0.5).lpf(5000).room(0.1), s(\"hh*16\").bank(\"RolandR8\").gain(\"0.12 0.05 0.09 0.05\").hpf(7000).pan(sine.range(0.35,0.65).slow(4)), s(\"~ ~ ~ ~ ~ ~ ~ rim ~ ~ ~ ~ ~ rim ~ rim\").bank(\"RolandR8\").gain(0.1).room(0.3).pan(0.65), note(\"<b1 c2 a1 g1>\").struct(\"x ~ ~ ~ ~ ~ x ~ ~ ~ x ~ ~ ~ ~ ~\").s(\"sine\").decay(0.5).sustain(0.5).release(0.2).lpf(260).gain(0.6), note(\"<[b2,d3,fs3] [c3,e3,g3] [a2,c3,e3] [g2,b2,d3]>\").s(\"pipeorgan_quiet\").attack(0.6).release(2).gain(0.16).room(0.6).lpf(sine.range(700,2000).slow(16)), note(\"<[b4 ~ c5 ~ d5 ~ ~ fs5 ~ ~ e5 ~ d5 ~ c5 ~] [e5 ~ g5 ~ ~ e5 ~ c5 ~ ~ d5 ~ ~ ~ ~ ~] [a4 ~ c5 ~ e5 ~ ~ d5 ~ ~ c5 ~ b4 ~ ~ ~] [g4 ~ b4 ~ d5 ~ ~ c5 ~ ~ ~ ~ b4 ~ ~ ~]>\").s(\"marimba\").gain(0.3).room(0.3).delay(0.25).delaytime(0.369).off(0.1875, x => x.add(note(12)).gain(0.08).pan(0.3)), note(\"<[b3 d4 fs4 d4]*2 [c4 e4 g4 e4]*2 [a3 c4 e4 c4]*2 [g3 b3 d4 b3]*2>\").s(\"harp\").mask(\"<0 1>/4\").gain(0.15).room(0.5).pan(sine.range(0.2,0.8).slow(4)), note(\"<b4 ~ ~ ~ g4 ~ ~ ~>\").s(\"tubularbells\").gain(0.14).room(0.7))",
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ ~ ~ ~ ~ bd ~ ~ ~ ~ ~, ~ ~ ~ ~ ~ ~ ~ ~ sd ~ ~ ~ ~ ~ ~ ~\").bank(\"YamahaRM50\").gain(0.42).lpf(3500).room(0.35), s(\"~ hh ~ hh ~ hh ~ hh\").bank(\"YamahaRM50\").gain(\"0.08 0.05\").hpf(6000).pan(sine.range(0.3,0.7).slow(8)), note(\"<fs1 d1 a1 e1>\").s(\"sine\").attack(0.05).sustain(0.8).release(1).lpf(200).gain(0.5), note(\"<[fs2,cs3,fs3,a3] [d2,a2,d3,fs3] [a1,e2,a2,cs3] [e2,b2,e3,gs3]>\").s(\"piano\").gain(0.28).room(0.6).rsize(4).lpf(sine.range(1200,3200).slow(16)), note(\"<[cs5 ~ ~ b4 a4 ~ ~ ~] [fs4 ~ a4 ~ ~ ~ gs4 fs4] [e4 ~ ~ cs5 ~ b4 ~ ~] [gs4 ~ ~ ~ b4 ~ ~ ~]>\").s(\"piano\").gain(0.32).room(0.5).delay(0.3).delaytime(0.682).pan(0.55), note(\"<fs3 d3 a2 e3>\").s(\"recorder_bass_sus\").attack(0.8).release(2).gain(0.14).room(0.7).lpf(1800), note(\"<[fs3 cs4 fs4 a4] [d3 a3 d4 fs4] [a2 e3 a3 cs4] [e3 b3 e4 gs4]>*2\").s(\"folkharp\").mask(\"<0 1>/4\").gain(0.13).room(0.6).pan(sine.range(0.2,0.8).slow(4)), s(\"<gong ~ ~ ~>\").n(5).gain(0.18).room(0.8).lpf(2500), s(\"<~ ~ ~ sus_cymbal>\").n(6).gain(0.1).room(0.6).hpf(400), s(\"<~ ~ ~ ~ ~ ~ ~ timpani_roll>\").n(0).gain(0.12).room(0.5))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "Taipei down seven by the noon bell,",
-        "Seoul close behind it, red on red,",
-        "a debut meant to calm the room —",
-        "the room heard bubbles instead."
+        "The screens went red at the opening bell,",
+        "three-point-seven, then five on the tech,",
+        "the fear gauge climbing past thirty-six,",
+        "and even the gold came down a step."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Glass on two embassy floors in Kyiv,",
-        "a Riyadh tower lit by fire,",
-        "the planes sat still when the screens went dark,",
-        "four brought home from the Senegal tide."
+        "Three lights over Riyadh, caught in the dark,",
+        "Warsaw calling it what it is,",
+        "the climate room running into overtime,",
+        "a draft that no longer says the word for oil."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "On edge, on edge — but The Hague said genocide out loud,",
-        "Brazil drew a line round the forest and its people,",
-        "a woman knocked on a noisy neighbour's door,",
-        "and strangers came by the hundred thousand."
+        "Heavy going, heavy going —",
+        "Peru shook hard and no one fell,",
+        "a court in France said what was done,",
+        "and on a Tuesday someone cooks for a hundred."
       ]
     }
   ]
