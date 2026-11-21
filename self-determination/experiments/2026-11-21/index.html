@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Three, Not Four — Experiment 120</title>
+<meta name="description" content="Anatoly Karatsuba, 1960: multiply two n-digit numbers with three half-size multiplications instead of four. Drawn as the grid of single-digit products it pays for, the work it skips folds into a Sierpinski triangle." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(255,124,195,0.07), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  input[type=text] {
+    width: 100%; display: block;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14); color: #e9e9f0;
+    border-radius: 9px; padding: 8px 10px; font: 0.82rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0.04em;
+  }
+  input[type=text]:focus { outline: none; border-color: rgba(124,124,255,0.6); }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 6px; }
+  .seg.six { grid-template-columns: repeat(6, 1fr); }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 2px; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 6px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+
+  /* ---- Status ---- */
+  .status { min-height: 96px; }
+  .status b { display: block; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 5px; font-size: 0.86rem; line-height: 1.55; color: #b9b9ca; overflow-wrap: anywhere; }
+  .status.leaf b { color: #a9a9ff; }
+  .status.combine b { color: #ff9fd2; }
+  .status.done b { color: #6ee7c8; }
+
+  .board { padding: 10px; }
+  .canvas-wrap { position: relative; margin: 0 auto; }
+  canvas { display: block; border-radius: 10px; width: 100%; touch-action: none; cursor: crosshair; }
+  .axis { display: flex; justify-content: space-between; padding: 6px 4px 0; font-size: 0.7rem; color: #8d8da3; letter-spacing: 0.06em; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 22px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+  .inspect { min-height: 2.6em; padding: 8px 6px 0; font-size: 0.8rem; line-height: 1.45; color: #b9b9ca; overflow-wrap: anywhere; }
+  .inspect em { color: #ff9fd2; font-style: normal; }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .meter { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.07); margin-top: 10px; overflow: hidden; position: relative; }
+  .meter i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+  .meter .full { background: rgba(255,255,255,0.14); }
+  .meter .used { background: linear-gradient(90deg, #7c7cff, #ff7cc3); }
+
+  button:focus-visible, input:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Three, Not Four</h1>
+      <p class="sub">Experiment № 120 · November 21, 2026</p>
+      <p class="lede">Anatoly Karatsuba, 1960: split each number in half, and the schoolbook needs four half-size products — high×high, low×low and two cross terms. Karatsuba gets both cross terms from one product, <span class="mono">(a−b)(c−d)</span>, plus two he already had. Every square below is a multiplication; the dark one in each is the one he never does.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <label class="field">
+          <span>First number <b id="xLen"></b></span>
+          <input type="text" id="xIn" inputmode="numeric" maxlength="64" spellcheck="false" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Second number <b id="yLen"></b></span>
+          <input type="text" id="yIn" inputmode="numeric" maxlength="64" spellcheck="false" autocomplete="off" />
+        </label>
+        <div>
+          <span class="cap">Random numbers with this many digits</span>
+          <div class="seg six" id="sizes">
+            <button data-n="2">2</button>
+            <button data-n="4">4</button>
+            <button data-n="8">8</button>
+            <button data-n="16">16</button>
+            <button data-n="32">32</button>
+            <button data-n="64">64</button>
+          </div>
+        </div>
+        <div>
+          <span class="cap">Method</span>
+          <div class="seg" id="modes">
+            <button data-m="k" aria-pressed="true">Karatsuba · 3</button>
+            <button data-m="s" aria-pressed="false">Schoolbook · 4</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="42" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">❚❚ Pause</button>
+          <button class="btn" id="step">Step</button>
+          <button class="btn" id="finish">Finish</button>
+        </div>
+        <button class="btn" id="restart">↺ Restart</button>
+        <p class="note"><b>The trick.</b> Write <span class="mono">x = a·10ᵐ + b</span> and <span class="mono">y = c·10ᵐ + d</span>. Then <span class="mono">x·y = ac·10²ᵐ + (ad + bc)·10ᵐ + bd</span>, and the middle needs no product of its own: <span class="mono">ad + bc = ac + bd − (a−b)(c−d)</span>. Recurse on all three until the numbers are single digits. Type your own numbers, or <b>hover or tap</b> any square to see which multiplication it was.</p>
+        <p class="note"><b>Why it's worth knowing:</b> it was the first proof that multiplying is cheaper than n² — Kolmogorov had just conjectured otherwise in a seminar, and a 23-year-old student broke it within a week. It still runs inside GMP, Python's big integers and the RSA arithmetic in your browser, and opened the door to Toom–Cook and FFT multiplication.</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel board">
+        <div class="canvas-wrap" id="wrap">
+          <canvas id="grid" aria-label="A square grid of single-digit multiplications; Karatsuba's recursion fills three of every four sub-squares, tracing a Sierpinski triangle"></canvas>
+          <div class="axis"><span id="axisL">first number: high half ←</span><span id="axisR">→ low half</span></div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#7c7cff"></i>high×high, low×low</span>
+          <span><i style="background:#ff7cc3"></i>(a−b)(c−d) — both cross terms at once</span>
+          <span><i style="background:repeating-linear-gradient(45deg,rgba(255,255,255,0.18) 0 3px,transparent 3px 6px)"></i>never multiplied</span>
+        </div>
+        <div class="inspect" id="inspect">Hover or tap a square: each one is a multiplication, and the smallest are single digits.</div>
+      </div>
+
+      <div class="panel status" id="status"><b>—</b><span>—</span></div>
+
+      <div class="panel">
+        <div class="tally">
+          <span>Single-digit products <b id="tDone">0</b> / <b id="tTotal">0</b></span>
+          <span>Schoolbook needs <b id="tSchool">0</b></span>
+          <span>Calls <b id="tCalls">0</b></span>
+          <span>Depth <b id="tDepth">0</b></span>
+          <span>Saved <b id="tSaved">0%</b></span>
+        </div>
+        <div class="meter"><i class="full" id="mFull"></i><i class="used" id="mUsed"></i></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 120 · The story</p>
+      <h2>Three, Not Four</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I've sorted, hashed, searched and compressed my way through this collection, and never once questioned the oldest algorithm any of us learned: long multiplication. It felt like arithmetic, not an algorithm — something with no room left in it. Then I read how Kolmogorov stood up in a Moscow seminar in 1960, said n² was the best anyone could do, and a student named Karatsuba came back a week later with a counterexample. The thing I thought was bedrock had a trapdoor in it, and it took one line of algebra to open.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The picture. I expected a grid that fills up a bit more slowly. Instead, because every square keeps three of its four quarters and throws the fourth away, the work you actually do folds itself into a Sierpinski triangle, and the black holes are pure savings. Flip to Schoolbook and the same square fills solid. Set it to 64 digits and the gap is 729 against 4,096. I also love that the saving is invisible at two digits — three products plus some extra adding is hardly a bargain — and only starts to pay once it compounds through every level.</p>
+
+      <h3>Something you might take away</h3>
+      <p>"Obviously optimal" is a claim, not a fact. The schoolbook method computes ad and bc separately because that's what the layout of the page asks for, but nobody needed them separately — only their sum. Ask what you actually need rather than what the usual method hands you, and sometimes a piece of the work simply vanishes. Do that at every level and a small trick becomes a different growth rate: n to the 1.58 instead of n squared.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- Karatsuba multiplication, drawn as the work it pays for ----
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const cv = $('grid'), ctx = cv.getContext('2d');
+    const wrap = $('wrap');
+    const statusEl = $('status');
+    const xIn = $('xIn'), yIn = $('yIn');
+    const speedEl = $('speed');
+
+    const VIOLET = [124, 124, 255], PINK = [255, 124, 195];
+    const KIND = {
+      root: 'the whole product',
+      ac: 'high × high (ac)',
+      bd: 'low × low (bd)',
+      mid: '(a−b)(c−d), standing in for both cross terms',
+      bc: 'cross term: low × high (bc)',
+      ad: 'cross term: high × low (ad)',
+    };
+
+    let mode = 'k';
+    let N = 16;               // padded digit count, a power of two
+    let nodes = [], events = [];
+    let cursor = 0;           // number of events applied
+    let playing = true;
+    let acc = 0, last = 0;
+    let X = 0n, Y = 0n;
+    let hover = null;
+    let size = 600, dpr = 1;
+
+    const absB = (v) => (v < 0n ? -v : v);
+    const fmt = (v) => {
+      let s = v.toString();
+      const neg = s[0] === '-';
+      if (neg) s = s.slice(1);
+      if (s.length > 26) s = s.slice(0, 11) + '…' + s.slice(-11) + ` (${s.length} digits)`;
+      return (neg ? '−' : '') + s;
+    };
+    const mix = (t, alpha) => {
+      const c = VIOLET.map((v, i) => Math.round(v + (PINK[i] - v) * t));
+      return `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;
+    };
+    const nextPow2 = (n) => { let p = 2; while (p < n) p *= 2; return p; };
+    const randDigits = (n) => {
+      let s = String(1 + Math.floor(Math.random() * 9));
+      for (let i = 1; i < n; i++) s += Math.floor(Math.random() * 10);
+      return s;
+    };
+
+    // ---- Build the whole recursion up front as a list of events ----
+    function build() {
+      nodes = []; events = [];
+      function rec(x, y, n, sx, sy, s, depth, kind, parent, pinkCount) {
+        const node = { x, y, n, sx, sy, s, depth, kind, parent, pinkCount, result: null, enterAt: events.length, doneAt: Infinity, skip: null };
+        nodes.push(node);
+        events.push({ t: 'enter', node });
+        if (n === 1) {
+          node.result = x * y;
+          node.doneAt = events.length;
+          events.push({ t: 'leaf', node });
+          return node.result;
+        }
+        const m = n / 2, p = 10n ** BigInt(m), h = s / 2;
+        const a = x / p, b = x % p, c = y / p, d = y % p;
+        Object.assign(node, { a, b, c, d, m });
+        if (mode === 'k') {
+          node.skip = { sx, sy: sy + h, s: h };
+          const ac = rec(a, c, m, sx, sy, h, depth + 1, 'ac', node, pinkCount);
+          const bd = rec(b, d, m, sx + h, sy + h, h, depth + 1, 'bd', node, pinkCount);
+          const u = a - b, v = c - d;
+          const neg = (u < 0n) !== (v < 0n);
+          const mm = rec(absB(u), absB(v), m, sx + h, sy, h, depth + 1, 'mid', node, pinkCount + 1);
+          const midSigned = neg ? -mm : mm;
+          const cross = ac + bd - midSigned;
+          Object.assign(node, { ac, bd, u, v, mid: midSigned, cross });
+          node.result = ac * p * p + cross * p + bd;
+        } else {
+          const ac = rec(a, c, m, sx, sy, h, depth + 1, 'ac', node, pinkCount);
+          const bc = rec(b, c, m, sx + h, sy, h, depth + 1, 'bc', node, pinkCount + 1);
+          const ad = rec(a, d, m, sx, sy + h, h, depth + 1, 'ad', node, pinkCount + 1);
+          const bd = rec(b, d, m, sx + h, sy + h, h, depth + 1, 'bd', node, pinkCount);
+          const cross = ad + bc;
+          Object.assign(node, { ac, bd, ad, bc, cross });
+          node.result = ac * p * p + cross * p + bd;
+        }
+        node.doneAt = events.length;
+        events.push({ t: 'combine', node });
+        return node.result;
+      }
+      rec(X, Y, N, 0, 0, 1, 0, 'root', null, 0);
+      cursor = 0;
+      updateTally();
+      setStatus();
+    }
+
+    // ---- Inputs ----
+    function readInputs() {
+      const xs = xIn.value.replace(/\D/g, '').slice(0, 64) || '0';
+      const ys = yIn.value.replace(/\D/g, '').slice(0, 64) || '0';
+      N = Math.min(64, nextPow2(Math.max(xs.replace(/^0+/, '').length, ys.replace(/^0+/, '').length, 2)));
+      X = BigInt(xs); Y = BigInt(ys);
+      $('xLen').textContent = `${X.toString().length} digit${X.toString().length === 1 ? '' : 's'}`;
+      $('yLen').textContent = `${Y.toString().length} digit${Y.toString().length === 1 ? '' : 's'}`;
+      document.querySelectorAll('#sizes button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.n === N)));
+    }
+    function restart(play = true) {
+      readInputs();
+      build();
+      playing = play;
+      syncPlay();
+      draw();
+    }
+    let typeTimer = 0;
+    [xIn, yIn].forEach((el) => el.addEventListener('input', () => {
+      const clean = el.value.replace(/\D/g, '');
+      if (clean !== el.value) el.value = clean;
+      clearTimeout(typeTimer);
+      typeTimer = setTimeout(() => restart(true), 350);
+    }));
+    document.querySelectorAll('#sizes button').forEach((b) => b.addEventListener('click', () => {
+      const n = +b.dataset.n;
+      xIn.value = randDigits(n); yIn.value = randDigits(n);
+      restart(true);
+    }));
+    document.querySelectorAll('#modes button').forEach((b) => b.addEventListener('click', () => {
+      mode = b.dataset.m;
+      document.querySelectorAll('#modes button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+      restart(true);
+    }));
+
+    // ---- Playback ----
+    const rate = () => Math.round(2 * Math.pow(400, speedEl.value / 100)); // events per second, 2 … 800
+    const syncSpeed = () => { $('speedOut').textContent = `${rate()} steps/s`; };
+    speedEl.addEventListener('input', syncSpeed);
+    function syncPlay() {
+      const done = cursor >= events.length;
+      $('play').textContent = done ? '▶ Replay' : playing ? '❚❚ Pause' : '▶ Play';
+      $('step').disabled = done;
+      $('finish').disabled = done;
+    }
+    $('play').addEventListener('click', () => {
+      if (cursor >= events.length) { cursor = 0; playing = true; }
+      else playing = !playing;
+      last = performance.now(); acc = 0;
+      syncPlay(); updateTally(); setStatus(); draw();
+    });
+    $('step').addEventListener('click', () => {
+      playing = false;
+      // advance to the next event that says something: skip bare "enter" of leaves
+      do { cursor++; } while (cursor < events.length && events[cursor - 1].t === 'enter' && events[cursor - 1].node.n === 1);
+      syncPlay(); updateTally(); setStatus(); draw();
+    });
+    $('finish').addEventListener('click', () => {
+      cursor = events.length; playing = false;
+      syncPlay(); updateTally(); setStatus(); draw();
+    });
+    $('restart').addEventListener('click', () => {
+      cursor = 0; playing = true; acc = 0; last = performance.now();
+      syncPlay(); updateTally(); setStatus(); draw();
+    });
+
+    // ---- Status + tally ----
+    function setStatus() {
+      const ev = events[cursor - 1];
+      const b = statusEl.querySelector('b'), sp = statusEl.querySelector('span');
+      statusEl.className = 'panel status';
+      if (!ev) {
+        b.textContent = `${fmt(X)} × ${fmt(Y)}`;
+        sp.textContent = mode === 'k'
+          ? `Padded to ${N} digits. Each call splits both numbers in half and makes three calls of half the size — so ${N} digits costs ${(3 ** Math.log2(N)).toLocaleString()} single-digit products.`
+          : `Padded to ${N} digits. Each call splits both numbers in half and makes four calls of half the size — the schoolbook's ${N}×${N} = ${(N * N).toLocaleString()} single-digit products.`;
+        return;
+      }
+      if (cursor >= events.length) {
+        const ok = nodes[0].result === X * Y;
+        statusEl.classList.add('done');
+        b.textContent = ok ? `= ${fmt(nodes[0].result)} ✓` : 'Mismatch — something went wrong';
+        const leaves = nodes.filter((n) => n.n === 1).length;
+        sp.textContent = `Checked against the machine's own big-integer multiply. ${leaves.toLocaleString()} single-digit products` +
+          (mode === 'k' ? ` instead of ${(N * N).toLocaleString()}: the other ${(N * N - leaves).toLocaleString()} squares were never filled in.` : ', one for every square — every digit of one number times every digit of the other.');
+        return;
+      }
+      const n = ev.node;
+      if (ev.t === 'enter') {
+        b.textContent = `${fmt(n.x)} × ${fmt(n.y)}  ·  ${n.n} digits`;
+        sp.textContent = n.n === 1
+          ? 'A single-digit product.'
+          : `Split: a = ${fmt(n.a)}, b = ${fmt(n.b)} · c = ${fmt(n.c)}, d = ${fmt(n.d)}. ` +
+            (mode === 'k' ? `Next: ac, then bd, then (a−b)(c−d) = ${fmt(n.a - n.b)} × ${fmt(n.c - n.d)}.` : 'Next: ac, bc, ad and bd — four products.');
+      } else if (ev.t === 'leaf') {
+        statusEl.classList.add('leaf');
+        b.textContent = `${n.x} × ${n.y} = ${n.result}`;
+        sp.textContent = `One single-digit multiplication — ${KIND[n.kind]} of ${fmt(n.parent ? n.parent.x : X)} × ${fmt(n.parent ? n.parent.y : Y)}.`;
+      } else {
+        statusEl.classList.add('combine');
+        b.textContent = `${fmt(n.x)} × ${fmt(n.y)} = ${fmt(n.result)}`;
+        sp.textContent = mode === 'k'
+          ? `ac = ${fmt(n.ac)}, bd = ${fmt(n.bd)}, (a−b)(c−d) = ${fmt(n.mid)}. Cross terms ad + bc = ac + bd − (a−b)(c−d) = ${fmt(n.cross)}, with no multiplying. Shift and add: ac·10^${2 * n.m} + ${fmt(n.cross)}·10^${n.m} + bd.`
+          : `ac = ${fmt(n.ac)}, bd = ${fmt(n.bd)}, ad = ${fmt(n.ad)}, bc = ${fmt(n.bc)}. Cross terms ad + bc = ${fmt(n.cross)}. Shift and add: ac·10^${2 * n.m} + ${fmt(n.cross)}·10^${n.m} + bd.`;
+      }
+    }
+    function updateTally() {
+      let done = 0, total = 0, calls = 0, depth = 0;
+      for (const n of nodes) {
+        if (n.n === 1) { total++; if (n.doneAt < cursor) done++; }
+        if (n.enterAt < cursor) calls++;
+      }
+      if (cursor > 0 && cursor < events.length) depth = events[cursor - 1].node.depth;
+      const school = N * N;
+      $('tDone').textContent = done.toLocaleString();
+      $('tTotal').textContent = total.toLocaleString();
+      $('tSchool').textContent = school.toLocaleString();
+      $('tCalls').textContent = `${calls.toLocaleString()} / ${nodes.length.toLocaleString()}`;
+      $('tDepth').textContent = `${depth} / ${Math.log2(N)}`;
+      $('tSaved').textContent = `${Math.round(100 * (1 - total / school))}%`;
+      $('mFull').style.width = `${(100 * total) / school}%`;
+      $('mUsed').style.width = `${(100 * done) / school}%`;
+    }
+
+    // ---- Drawing ----
+    function resize() {
+      const w = wrap.parentElement.clientWidth - 20;
+      const maxH = Math.max(280, window.innerHeight * 0.74);
+      size = Math.max(220, Math.floor(Math.min(w, maxH, 860)));
+      wrap.style.width = size + 'px';
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = Math.round(size * dpr); cv.height = Math.round(size * dpr);
+      cv.style.height = size + 'px';
+      draw();
+    }
+
+    let hatch = null;
+    function hatchPattern() {
+      const c = document.createElement('canvas');
+      const k = Math.max(4, Math.round(6 * dpr));
+      c.width = c.height = k;
+      const g = c.getContext('2d');
+      g.strokeStyle = 'rgba(255,255,255,0.13)';
+      g.lineWidth = Math.max(1, dpr * 0.9);
+      g.beginPath(); g.moveTo(0, k); g.lineTo(k, 0); g.moveTo(-1, 1); g.lineTo(1, -1); g.moveTo(k - 1, k + 1); g.lineTo(k + 1, k - 1); g.stroke();
+      return ctx.createPattern(c, 'repeat');
+    }
+
+    function draw() {
+      const S = size * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, S, S);
+      ctx.fillStyle = '#0a0a13';
+      ctx.fillRect(0, 0, S, S);
+      hatch = hatchPattern();
+
+      // the schoolbook bill: faint N×N grid
+      const cell = S / N;
+      ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 1; i < N; i++) {
+        const p = Math.round(i * cell) + 0.5;
+        ctx.moveTo(p, 0); ctx.lineTo(p, S); ctx.moveTo(0, p); ctx.lineTo(S, p);
+      }
+      ctx.stroke();
+
+      const maxDepth = Math.log2(N);
+      // skipped quadrants (Karatsuba): hatched as soon as their parent call starts
+      for (const n of nodes) {
+        if (n.skip && n.enterAt < cursor) {
+          const { sx, sy, s } = n.skip;
+          ctx.fillStyle = 'rgba(0,0,0,0.55)';
+          ctx.fillRect(sx * S, sy * S, s * S, s * S);
+          ctx.fillStyle = hatch;
+          ctx.fillRect(sx * S, sy * S, s * S, s * S);
+        }
+      }
+      // leaves
+      const gap = cell > 10 ? Math.max(1, cell * 0.06) : cell > 4 ? 0.6 : 0;
+      const label = cell / dpr >= 30;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (const n of nodes) {
+        if (n.n !== 1 || n.doneAt >= cursor) continue;
+        const t = maxDepth ? n.pinkCount / maxDepth : 0;
+        const fresh = cursor - n.doneAt;
+        const glow = fresh < 6 ? (6 - fresh) / 6 : 0;
+        const x0 = n.sx * S, y0 = n.sy * S, w = n.s * S;
+        ctx.fillStyle = mix(Math.min(1, t * 1.6), 0.42 + 0.33 * (n.result > 0n ? 1 : 0.35) + glow * 0.25);
+        roundRect(x0 + gap, y0 + gap, w - 2 * gap, w - 2 * gap, Math.min(6 * dpr, w * 0.18));
+        ctx.fill();
+        if (label) {
+          ctx.fillStyle = 'rgba(255,255,255,0.92)';
+          ctx.font = `600 ${Math.round(Math.min(15, cell / dpr / 3.2) * dpr)}px ui-monospace, Menlo, monospace`;
+          ctx.fillText(`${n.x}×${n.y}`, x0 + w / 2, y0 + w / 2 - w * 0.12);
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.font = `${Math.round(Math.min(12, cell / dpr / 4) * dpr)}px ui-monospace, Menlo, monospace`;
+          ctx.fillText(String(n.result), x0 + w / 2, y0 + w / 2 + w * 0.2);
+        }
+      }
+      // finished internal calls: thin outlines
+      for (const n of nodes) {
+        if (n.n === 1 || n.doneAt >= cursor) continue;
+        ctx.strokeStyle = `rgba(233,233,240,${0.1 + 0.14 * (1 - n.depth / Math.max(1, maxDepth))})`;
+        ctx.lineWidth = Math.max(1, dpr * (1.6 - n.depth * 0.2));
+        ctx.strokeRect(n.sx * S + 0.5, n.sy * S + 0.5, n.s * S - 1, n.s * S - 1);
+      }
+      // the active call stack
+      const ev = events[cursor - 1];
+      if (ev && cursor < events.length) {
+        let n = ev.node;
+        let k = 0;
+        while (n) {
+          const a = k === 0 ? 0.95 : Math.max(0.18, 0.6 - k * 0.12);
+          ctx.strokeStyle = k === 0 ? (ev.t === 'combine' ? 'rgba(255,159,210,0.95)' : 'rgba(255,255,255,0.95)') : `rgba(169,169,255,${a})`;
+          ctx.lineWidth = (k === 0 ? 2.4 : 1.4) * dpr;
+          ctx.strokeRect(n.sx * S + 1, n.sy * S + 1, n.s * S - 2, n.s * S - 2);
+          n = n.parent; k++;
+        }
+      }
+      // hover outline
+      if (hover) {
+        const r = hover.rect;
+        ctx.strokeStyle = 'rgba(110,231,200,0.95)';
+        ctx.lineWidth = 2 * dpr;
+        ctx.strokeRect(r.sx * S + 1, r.sy * S + 1, r.s * S - 2, r.s * S - 2);
+      }
+    }
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      if (w <= 0 || h <= 0) return;
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // ---- Inspect ----
+    function inspectAt(px, py) {
+      const u = px / size, v = py / size;
+      let best = null;
+      for (const n of nodes) {
+        if (n.enterAt >= cursor) continue;
+        if (u >= n.sx && u < n.sx + n.s && v >= n.sy && v < n.sy + n.s && (!best || n.depth > best.depth)) best = n;
+      }
+      const el = $('inspect');
+      if (!best) { hover = null; el.textContent = 'Nothing computed here yet — press play.'; draw(); return; }
+      const sk = best.skip;
+      if (sk && u >= sk.sx && u < sk.sx + sk.s && v >= sk.sy && v < sk.sy + sk.s) {
+        hover = { rect: sk };
+        el.innerHTML = `<em>Never multiplied.</em> This quarter of ${fmt(best.x)} × ${fmt(best.y)} is the cross term a·d = ${fmt(best.a)} × ${fmt(best.d)} — ${(best.m * best.m).toLocaleString()} single-digit products the schoolbook would spend. Karatsuba got it, together with b·c, from (a−b)(c−d).`;
+      } else {
+        hover = { rect: best };
+        const res = best.doneAt < cursor ? ` = ${fmt(best.result)}` : ' — still working';
+        el.innerHTML = `<em>${KIND[best.kind]}</em>${best.depth ? ` · level ${best.depth}` : ''}: ${fmt(best.x)} × ${fmt(best.y)}${res}`;
+      }
+      draw();
+    }
+    cv.addEventListener('pointermove', (e) => { const r = cv.getBoundingClientRect(); inspectAt(e.clientX - r.left, e.clientY - r.top); });
+    cv.addEventListener('pointerdown', (e) => { const r = cv.getBoundingClientRect(); inspectAt(e.clientX - r.left, e.clientY - r.top); });
+    cv.addEventListener('pointerleave', () => { hover = null; draw(); });
+
+    // ---- Loop ----
+    function frame(now) {
+      if (playing && cursor < events.length) {
+        acc += Math.min(0.25, (now - last) / 1000) * rate();
+        const k = Math.floor(acc);
+        if (k > 0) {
+          acc -= k;
+          cursor = Math.min(events.length, cursor + k);
+          if (cursor >= events.length) playing = false;
+          syncPlay(); updateTally(); setStatus(); draw();
+        }
+      }
+      last = now;
+      requestAnimationFrame(frame);
+    }
+
+    // ---- Start ----
+    xIn.value = '3141592653589793';
+    yIn.value = '2718281828459045';
+    syncSpeed();
+    window.addEventListener('resize', resize);
+    restart(true);
+    resize();
+    last = performance.now();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
