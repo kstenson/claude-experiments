@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-22",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Rationed Light",
+  "mood": {
+    "label": "Uneasy calm",
+    "score": -0.18,
+    "summary": "Uneasy calm (41): tankers hit in Hormuz and Iran rationing power, strikes on Kryvyi Rih and Gaza, COP31 in a second overtime. Science carried the relief: a one-shot CRISPR cholesterol cut, a Riemann proof under scrutiny.",
+    "palette": {
+      "bg": "#12141a",
+      "bg2": "#1f2330",
+      "accent": "#c9a45c",
+      "accent2": "#6fa8a0",
+      "text": "#e8e6e0"
+    }
+  },
+  "style": {
+    "genre": "motorik krautrock — dan tranh, balafon, chamber organ, Korg KR-55",
+    "key": "C#",
+    "scale": "mixolydian",
+    "bpm": 106,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (VCSL dan tranh, soft balafon, 4-inch organ, hand chimes; Korg KR-55 drum machine), sine-oscillator bass"
+  ],
+  "pattern": "stack(s(\"bd ~ bd ~ bd ~ bd ~\").bank(\"KorgKR55\").gain(0.5).lpf(4000), s(\"~ ~ sd ~ ~ ~ sd ~\").bank(\"KorgKR55\").gain(0.32).room(0.2), s(\"hh*8\").bank(\"KorgKR55\").gain(\"0.12 0.07\").hpf(5000), s(\"~ ~ ~ ~ ~ ~ ~ rim\").bank(\"KorgKR55\").gain(0.15).mask(\"<0 1>\").pan(0.7), note(\"<cs2 b1 fs1 gs1>*8\").s(\"sine\").attack(0.01).decay(0.15).sustain(0.5).release(0.1).lpf(300).gain(0.42), note(\"<[cs3,f3,gs3] [b2,ds3,fs3] [fs2,as2,cs3] [gs2,b2,ds3]>\").s(\"organ_4inch\").attack(0.4).release(1.5).gain(0.13).room(0.5).lpf(sine.range(900,2400).slow(16)), note(\"<[cs4 gs4 f4 gs4]*2 [b3 fs4 ds4 fs4]*2 [fs3 cs4 as3 cs4]*2 [gs3 ds4 b3 ds4]*2>\").s(\"balafon_soft\").gain(0.2).pan(sine.range(0.25,0.75).slow(8)).room(0.3), note(\"<[gs4 ~ ~ f4 ~ ds4 cs4 ~] [ds4 ~ fs4 ~ ~ ~ b3 ~] [as4 ~ ~ gs4 fs4 ~ ~ ~] [b4 ~ ~ ~ as4 ~ gs4 ~]>\").s(\"dantranh\").mask(\"<0 0 1 1>/4\").gain(0.26).room(0.45).delay(0.25).delaytime(0.566).pan(0.4), note(\"<~ ~ ~ [cs5,gs5]>\").s(\"handchimes\").gain(0.12).room(0.7).hpf(800))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Tankers burning in the narrow strait,",
+        "Tehran counting out its hours of light,",
+        "Kryvyi Rih sweeping up the glass,",
+        "Gaza under one more night."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "The climate room still will not close,",
+        "the peso slipping past a thousand,",
+        "thirty-six names in the factory smoke,",
+        "a cartel boss taken, eleven gone."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Keep the motor running, keep it low —",
+        "one shot halves what the heart can't hold,",
+        "someone checks a proof by the window,",
+        "uneasy, calm, and on we go."
+      ]
+    }
+  ]
+}
