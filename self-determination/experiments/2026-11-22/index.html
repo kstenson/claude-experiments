@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Long Way Round — Experiment 121</title>
+<meta name="description" content="A linear-feedback shift register: shift the bits one place, XOR a few of them back into the front. Pick the right wires and it walks through every non-zero state before repeating; pick the wrong ones and the state space shatters into little loops." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 6px; }
+  .seg.two { grid-template-columns: repeat(2, 1fr); }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 0; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+  .seg button:hover { border-color: rgba(124,124,255,0.45); }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 6px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+
+  /* ---- Register ---- */
+  .reg-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .reg-head .wiring { font-size: 0.8rem; color: #b9b9ca; }
+  .reg-head .wiring b { color: #ff9fd2; font-weight: 600; }
+  .register { display: flex; align-items: stretch; gap: 6px; }
+  .reg-end { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: #8d8da3; min-width: 34px; padding-top: 9px; text-align: center; line-height: 1.3; }
+  .reg-end .fb { font-size: 1.05rem; color: #ff7cc3; letter-spacing: 0; transition: transform 0.15s ease; }
+  .reg-end .fb.flash { transform: scale(1.35); }
+  .bits { flex: 1; display: grid; gap: 4px; min-width: 0; }
+  .bit {
+    height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font: 600 1rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #6f6f86;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .bit.one { background: rgba(124,124,255,0.3); border-color: rgba(124,124,255,0.6); color: #fff; }
+  .tap {
+    margin-top: 4px; height: 26px; border-radius: 7px; cursor: pointer;
+    background: transparent; border: 1px dashed rgba(255,255,255,0.16); color: #6f6f86;
+    font: 0.74rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .tap:hover:not(:disabled) { border-color: rgba(255,124,195,0.6); color: #ff9fd2; }
+  .tap[aria-pressed="true"] { background: rgba(255,124,195,0.2); border: 1px solid rgba(255,124,195,0.6); color: #ffd0ea; }
+  .tap:disabled { cursor: default; opacity: 0.85; }
+  .bitcol { display: flex; flex-direction: column; min-width: 0; }
+  .stream { margin-top: 12px; }
+  .stream canvas { display: block; width: 100%; height: 22px; border-radius: 6px; }
+  .stream .cap { display: block; margin-bottom: 5px; }
+
+  /* ---- Status ---- */
+  .status { min-height: 88px; }
+  .status b { display: block; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 5px; font-size: 0.86rem; line-height: 1.55; color: #b9b9ca; overflow-wrap: anywhere; }
+  .status.walk b { color: #a9a9ff; }
+  .status.closed b { color: #ff9fd2; }
+  .status.done b { color: #6ee7c8; }
+
+  .board { padding: 10px; }
+  .canvas-wrap { position: relative; margin: 0 auto; }
+  #grid { display: block; border-radius: 10px; width: 100%; touch-action: manipulation; cursor: crosshair; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 22px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+  .inspect { min-height: 2.6em; padding: 8px 6px 0; font-size: 0.8rem; line-height: 1.45; color: #b9b9ca; overflow-wrap: anywhere; }
+  .inspect em { color: #ff9fd2; font-style: normal; }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .meter { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.07); margin-top: 10px; overflow: hidden; display: flex; }
+  .meter i { display: block; height: 100%; }
+  .loops { margin-top: 10px; font-size: 0.78rem; color: #8d8da3; min-height: 1.2em; overflow-wrap: anywhere; }
+  .loops b { color: #c7c7d6; font-weight: 600; }
+
+  button:focus-visible, input:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .panel { padding: 14px 14px; }
+    .bit { height: 32px; font-size: 0.86rem; }
+    .reg-end { min-width: 26px; font-size: 0.58rem; }
+    .register { gap: 4px; }
+    .bits { gap: 3px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>The Long Way Round</h1>
+      <p class="sub">Experiment № 121 · November 22, 2026</p>
+      <p class="lede">A linear-feedback shift register, the machine Solomon Golomb mapped out in <em>Shift Register Sequences</em> (1967): every tick, the bits slide one place right, the last one falls out as output, and the XOR of a few <b>tapped</b> bits enters on the left. Every cell in the grid is one possible state. Wire the taps right and it visits them all.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div>
+          <span class="cap">Register length (bits)</span>
+          <div class="seg" id="sizes"></div>
+        </div>
+        <div>
+          <span class="cap">Wiring</span>
+          <div class="seg two">
+            <button id="maximal">A maximal one</button>
+            <button id="random">Random taps</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="40" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">❚❚ Pause</button>
+          <button class="btn" id="step">Step</button>
+          <button class="btn" id="finish">Finish</button>
+        </div>
+        <button class="btn" id="restart">↺ Restart</button>
+        <p class="note"><b>How to play.</b> Toggle the pink <b>taps</b> under the register to rewire it; the last one is always on, because it's the bit that falls out — without it two states would share a successor and the machine could never run backwards. <b>Click any cell</b> to start from that state, or hover it to see where it goes next.</p>
+        <p class="note" id="odds"></p>
+        <p class="note"><b>Why it's worth knowing:</b> a handful of flip-flops and one XOR gate make a long, flat, almost-random bit stream with no arithmetic at all. It's the root of CRC checksums, GPS ranging codes, the scramblers in USB, PCIe and Wi-Fi, and the hiss of the NES noise channel.</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel">
+        <div class="reg-head">
+          <span class="cap">The register</span>
+          <span class="wiring" id="wiring"></span>
+        </div>
+        <div class="register">
+          <div class="reg-end"><span class="fb" id="fb">⊕</span>in</div>
+          <div class="bits" id="bits"></div>
+          <div class="reg-end"><span class="fb" style="color:#7c7cff">→</span>out</div>
+        </div>
+        <div class="stream">
+          <span class="cap">Output stream — newest on the right</span>
+          <canvas id="stream" aria-label="The most recent output bits"></canvas>
+        </div>
+      </div>
+
+      <div class="panel board">
+        <div class="canvas-wrap" id="wrap">
+          <canvas id="grid" aria-label="A grid with one cell per register state; the walk lights each state it visits and draws a line to the next"></canvas>
+        </div>
+        <div class="legend">
+          <span><i style="background:linear-gradient(90deg,#7c7cff,#ff7cc3)"></i>first loop, coloured by step</span>
+          <span><i style="background:linear-gradient(90deg,#5ad7ff,#6ee7c8,#ffc46b)"></i>other loops it never reaches</span>
+          <span><i style="background:rgba(255,255,255,0.12)"></i>the all-zero state, stuck forever</span>
+        </div>
+        <div class="inspect" id="inspect">Hover or tap a cell: each one is a state of the register, read as a binary number left to right.</div>
+      </div>
+
+      <div class="panel status walk" id="status"><b>—</b><span>—</span></div>
+
+      <div class="panel">
+        <div class="tally">
+          <span>States visited <b id="tVisited">0</b> / <b id="tTotal">0</b></span>
+          <span>This loop <b id="tLoop">0</b></span>
+          <span>Loops <b id="tLoops">0</b></span>
+          <span>Output 1s : 0s <b id="tOnes">0 : 0</b></span>
+        </div>
+        <div class="meter" id="meter"></div>
+        <div class="loops" id="loops"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 121 · The story</p>
+      <h2>The Long Way Round</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Almost every experiment here that needed randomness quietly called <span class="mono">Math.random()</span> and moved on. I've shuffled cards, thrown darts and sampled streams without ever asking where the coin flips came from. The shift register is the answer hardware engineers reached for first, and it's almost insultingly small: a row of bits, a slide to the right, and one XOR. I wanted to see how something that dumb could produce a stream nobody can tell apart from coin tosses at a glance.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The moment the grid fills. With a maximal wiring the walk wanders the board with no pattern I can predict, never landing on the same cell twice, and then, on the very last non-zero state, it steps back onto the cell where it started. 255 states, one loop, nothing missed. Then I switch off a single tap and the same board shatters. Drop tap 4 and it falls into two loops of 93, two of 31, a pair of threes and one state that maps to itself. Drop tap 5 instead and you get seventeen identical loops of fourteen. Same machine, same number of gates. The difference is which wires you picked, and you can't see it from the wiring at all — only by walking.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Looking random and being random are different things. This stream passes for noise, has almost exactly as many ones as zeros, and is completely determined by eight bits you could write on your hand — which is why it's perfect for scrambling a signal and useless for keeping a secret. And there's a quieter lesson in the taps: most wirings get stuck in small loops. The long way round, the one that reaches everything, is rare, and you only find it by knowing where to look.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- The Long Way Round: a Fibonacci LFSR walking its own state space ----
+  (() => {
+    // Known maximal-length tap sets (positions 1..n, left to right; n is the bit that falls out).
+    const MAXIMAL = {
+      4: [4, 3], 5: [5, 3], 6: [6, 5], 7: [7, 6], 8: [8, 6, 5, 4],
+      9: [9, 5], 10: [10, 7], 11: [11, 9], 12: [12, 6, 4, 1],
+    };
+    const $ = (id) => document.getElementById(id);
+    const sizesEl = $('sizes'), bitsEl = $('bits'), fbEl = $('fb');
+    const canvas = $('grid'), ctx = canvas.getContext('2d');
+    const streamCv = $('stream'), sctx = streamCv.getContext('2d');
+    const wrap = $('wrap'), statusEl = $('status'), inspectEl = $('inspect');
+    const playBtn = $('play'), speedEl = $('speed');
+
+    let n = 8, N = 256, taps = new Set(MAXIMAL[8]);
+    let gw = 16, gh = 16;          // grid columns / rows
+    let seed = 1;
+    // walk state
+    let visited, cycleOf, posOf;   // per-state arrays
+    let cur, cycleStart, cycleLen, stepInCycle, cycles, visitedCount, done, outBits, ones, zeros;
+    let cells = [], segs = [];     // drawing history, so the trail can be redrawn on resize
+    let playing = true, acc = 0, lastT = 0;
+
+    const phi = (m) => { let r = m; for (let p = 2; p * p <= m; p++) if (m % p === 0) { while (m % p === 0) m /= p; r -= r / p; } if (m > 1) r -= r / m; return r; };
+    const bin = (s) => s.toString(2).padStart(n, '0');
+
+    function feedback(s) {
+      let fb = 0;
+      for (const t of taps) fb ^= (s >> (n - t)) & 1;
+      return fb;
+    }
+    const next = (s) => (s >> 1) | (feedback(s) << (n - 1));
+    function loopLength(s) {
+      let x = next(s), L = 1;
+      while (x !== s && L <= N) { x = next(x); L++; }
+      return L;
+    }
+
+    // colour: cycle k, position p of len
+    function color(k, p, len, a = 1) {
+      const t = len > 1 ? p / (len - 1) : 0;
+      if (k === 0) {
+        // violet #7c7cff -> pink #ff7cc3
+        const r = 124 + (255 - 124) * t, g = 124, b = 255 + (195 - 255) * t;
+        return `rgba(${r | 0},${g},${b | 0},${a})`;
+      }
+      const hues = [195, 160, 38, 270, 120, 15, 300, 220, 80];
+      const h = hues[(k - 1) % hues.length] + 24 * t;
+      return `hsla(${h},85%,${66 + 6 * t}%,${a})`;
+    }
+
+    // ---------- layout ----------
+    let cw = 0, ch = 0, cell = 0, ox = 0, oy = 0, dpr = 1;
+    const trail = document.createElement('canvas');
+    const tctx = trail.getContext('2d');
+
+    function layout() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const board = wrap.parentElement, cs = getComputedStyle(board);
+      const W = board.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const maxH = Math.max(260, window.innerHeight * 0.62);
+      cell = Math.max(3, Math.floor(Math.min(W / gw, maxH / gh)));
+      cw = cell * gw; ch = cell * gh;
+      wrap.style.width = cw + 'px';
+      canvas.style.height = ch + 'px';
+      for (const c of [canvas, trail]) { c.width = cw * dpr; c.height = ch * dpr; }
+      ox = 0; oy = 0;
+      redrawTrail();
+      sizeStream();
+    }
+    function sizeStream() {
+      const w = streamCv.clientWidth || 300;
+      streamCv.width = w * dpr; streamCv.height = 22 * dpr;
+      drawStream();
+    }
+
+    const cx = (s) => ((s % gw) + 0.5) * cell;
+    const cy = (s) => (Math.floor(s / gw) + 0.5) * cell;
+
+    function paintCell(c, s, k, p, len) {
+      const pad = cell > 8 ? Math.max(1, cell * 0.12) : cell > 4 ? 0.6 : 0.3;
+      const x = (s % gw) * cell, y = Math.floor(s / gw) * cell;
+      c.fillStyle = color(k, p, len, 0.82);
+      const r = Math.min(4, cell * 0.22);
+      if (c.roundRect && cell > 6) { c.beginPath(); c.roundRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad, r); c.fill(); }
+      else c.fillRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad);
+    }
+    function lineAlpha() { return n <= 6 ? 0.55 : n <= 8 ? 0.32 : n <= 10 ? 0.16 : 0.08; }
+    function paintSeg(c, a, b, k, p, len) {
+      c.strokeStyle = color(k, p, len, lineAlpha());
+      c.lineWidth = n <= 6 ? 2 : n <= 9 ? 1.2 : 0.8;
+      c.beginPath(); c.moveTo(cx(a), cy(a)); c.lineTo(cx(b), cy(b)); c.stroke();
+    }
+    function paintZero(c) {
+      const x = 0, y = 0, pad = cell > 6 ? cell * 0.18 : 0.5;
+      c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 1;
+      c.fillStyle = 'rgba(255,255,255,0.08)';
+      c.fillRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad);
+      if (cell > 6) c.strokeRect(x + pad + 0.5, y + pad + 0.5, cell - 2 * pad - 1, cell - 2 * pad - 1);
+    }
+    function redrawTrail() {
+      tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      tctx.clearRect(0, 0, cw, ch);
+      // faint empty cells
+      tctx.fillStyle = 'rgba(255,255,255,0.035)';
+      const pad = cell > 8 ? cell * 0.12 : cell > 4 ? 0.6 : 0.3;
+      for (let s = 0; s < N; s++) tctx.fillRect((s % gw) * cell + pad, Math.floor(s / gw) * cell + pad, cell - 2 * pad, cell - 2 * pad);
+      paintZero(tctx);
+      tctx.lineCap = 'round';
+      for (const g of segs) paintSeg(tctx, g[0], g[1], g[2], g[3], g[4]);
+      for (const c of cells) paintCell(tctx, c[0], c[1], c[2], c[3]);
+    }
+
+    // ---------- walk ----------
+    function addCell(s, k, p, len) { cells.push([s, k, p, len]); paintCell(tctx, s, k, p, len); }
+    function addSeg(a, b, k, p, len) { segs.push([a, b, k, p, len]); paintSeg(tctx, a, b, k, p, len); }
+
+    function startLoop(s) {
+      cycleStart = s; cur = s; stepInCycle = 0;
+      cycleLen = loopLength(s);
+      visited[s] = 1; visitedCount++;
+      cycleOf[s] = cycles.length; posOf[s] = 0;
+      addCell(s, cycles.length, 0, cycleLen);
+    }
+
+    function reset() {
+      N = 1 << n;
+      gh = 1 << Math.floor(n / 2); gw = N / gh;
+      visited = new Uint8Array(N); cycleOf = new Int16Array(N).fill(-1); posOf = new Int32Array(N);
+      cycles = []; visitedCount = 0; done = false; outBits = []; ones = 0; zeros = 0;
+      cells = []; segs = [];
+      if (seed <= 0 || seed >= N) seed = 1;
+      layout();
+      startLoop(seed);
+      setStatus('walk', `Starting at ${bin(seed)}`, `Each tick the bits slide right, the rightmost falls out, and the XOR of the tapped bits enters on the left.`);
+      renderRegister(); updateTally(); draw();
+    }
+
+    function step() {
+      if (done) return false;
+      const s = cur, fb = feedback(s), nx = (s >> 1) | (fb << (n - 1));
+      const out = s & 1;
+      outBits.push(out); if (outBits.length > 400) outBits.splice(0, outBits.length - 400);
+      out ? ones++ : zeros++;
+      const k = cycles.length;
+      addSeg(s, nx, k, stepInCycle, cycleLen);
+      stepInCycle++;
+      lastFb = fb;
+      if (nx === cycleStart) {
+        cycles.push(cycleLen);
+        const all = N - 1;
+        if (visitedCount >= all) {
+          done = true; cur = nx;
+          if (cycles.length === 1) {
+            setStatus('done', `Maximal: one loop through all ${all.toLocaleString()} non-zero states`, `It came back to ${bin(cycleStart)} only after visiting every other state once. The only state it never touches is all zeros, where XOR of nothing but zeros is zero forever.`);
+          } else {
+            setStatus('done', `Shattered into ${cycles.length} loops`, `Lengths ${describeLoops()}. From any one starting state the register sees only its own loop — a stream with period ${cycles[0].toLocaleString()} instead of ${all.toLocaleString()}.`);
+          }
+        } else {
+          setStatus('closed', `Back at ${bin(cycleStart)} after ${cycleLen.toLocaleString()} steps`, `${(all - visitedCount).toLocaleString()} non-zero states were never reached from there. Jumping to the lowest one and walking its loop.`);
+          let t = 1; while (visited[t]) t++;
+          startLoop(t);
+        }
+      } else {
+        visited[nx] = 1; visitedCount++;
+        cycleOf[nx] = k; posOf[nx] = stepInCycle;
+        addCell(nx, k, stepInCycle, cycleLen);
+        cur = nx;
+        if (!statusEl.classList.contains('closed') || stepInCycle > 3) {
+          setStatus('walk', `Step ${stepInCycle.toLocaleString()}: ${bin(s)} → ${bin(nx)}`, `Output ${out}. Tapped bits XOR to ${fb}, which enters on the left.`);
+        }
+      }
+      return true;
+    }
+    let lastFb = 0;
+
+    function describeLoops() {
+      const sorted = cycles.slice().sort((a, b) => b - a);
+      const groups = [];
+      for (const L of sorted) { const g = groups[groups.length - 1]; if (g && g[0] === L) g[1]++; else groups.push([L, 1]); }
+      return groups.map(([L, c]) => c > 1 ? `${L.toLocaleString()} ×${c}` : L.toLocaleString()).join(', ');
+    }
+
+    function setStatus(cls, title, text) {
+      statusEl.className = 'panel status ' + cls;
+      statusEl.firstElementChild.textContent = title;
+      statusEl.lastElementChild.textContent = text;
+    }
+
+    // ---------- register DOM ----------
+    let bitDivs = [], tapBtns = [];
+    function buildRegister() {
+      bitsEl.innerHTML = '';
+      bitsEl.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
+      bitDivs = []; tapBtns = [];
+      for (let p = 1; p <= n; p++) {
+        const col = document.createElement('div'); col.className = 'bitcol';
+        const b = document.createElement('div'); b.className = 'bit'; b.textContent = '0';
+        const t = document.createElement('button'); t.className = 'tap'; t.textContent = p;
+        t.setAttribute('aria-label', `Tap on bit ${p}`);
+        if (p === n) { t.disabled = true; t.title = 'Always tapped: this is the bit that falls out'; }
+        t.addEventListener('click', () => {
+          if (taps.has(p)) taps.delete(p); else taps.add(p);
+          syncTaps(); reset();
+        });
+        col.append(b, t); bitsEl.append(col);
+        bitDivs.push(b); tapBtns.push(t);
+      }
+      syncTaps();
+    }
+    function syncTaps() {
+      taps.add(n);
+      tapBtns.forEach((t, i) => t.setAttribute('aria-pressed', taps.has(i + 1) ? 'true' : 'false'));
+      const list = [...taps].sort((a, b) => b - a);
+      $('wiring').innerHTML = `taps <b>${list.join(' · ')}</b>`;
+    }
+    function renderRegister() {
+      for (let p = 1; p <= n; p++) {
+        const v = (cur >> (n - p)) & 1;
+        const d = bitDivs[p - 1];
+        d.textContent = v; d.classList.toggle('one', !!v);
+      }
+    }
+
+    function drawStream() {
+      const w = streamCv.width / dpr, h = 22;
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sctx.clearRect(0, 0, w, h);
+      sctx.fillStyle = 'rgba(255,255,255,0.03)'; sctx.fillRect(0, 0, w, h);
+      const sz = 7, gap = 2, cols = Math.floor(w / (sz + gap));
+      const show = outBits ? outBits.slice(-cols) : [];
+      const off = w - show.length * (sz + gap);
+      for (let i = 0; i < show.length; i++) {
+        sctx.fillStyle = show[i] ? '#ff7cc3' : 'rgba(124,124,255,0.28)';
+        sctx.fillRect(off + i * (sz + gap), show[i] ? 3 : 10, sz, show[i] ? 16 : 9);
+      }
+    }
+
+    function updateTally() {
+      $('tVisited').textContent = visitedCount.toLocaleString();
+      $('tTotal').textContent = (N - 1).toLocaleString();
+      $('tLoop').textContent = done ? '—' : stepInCycle.toLocaleString();
+      $('tLoops').textContent = cycles.length + (done ? '' : ' + 1');
+      $('tOnes').textContent = `${ones.toLocaleString()} : ${zeros.toLocaleString()}`;
+      // meter: one segment per finished loop + current progress
+      const meter = $('meter'); meter.innerHTML = '';
+      const all = N - 1;
+      cycles.forEach((L, k) => {
+        const i = document.createElement('i');
+        i.style.width = (100 * L / all) + '%';
+        i.style.background = `linear-gradient(90deg, ${color(k, 0, 2)}, ${color(k, 1, 2)})`;
+        i.style.borderRight = '1px solid #05050a';
+        meter.append(i);
+      });
+      if (!done) {
+        const i = document.createElement('i');
+        i.style.width = (100 * (stepInCycle + 1) / all) + '%';
+        i.style.background = color(cycles.length, stepInCycle, Math.max(2, cycleLen));
+        meter.append(i);
+      }
+      $('loops').innerHTML = cycles.length ? `<b>Loops so far:</b> ${describeLoops()}` : '';
+      playBtn.disabled = done;
+      $('step').disabled = done; $('finish').disabled = done;
+      playBtn.textContent = done ? '✓ Done' : playing ? '❚❚ Pause' : '▶ Play';
+    }
+
+    // ---------- main canvas ----------
+    let hover = -1;
+    function draw() {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.fillStyle = '#08080f'; ctx.fillRect(0, 0, cw, ch);
+      ctx.drawImage(trail, 0, 0, cw, ch);
+      // recent segments glow
+      const tail = Math.min(segs.length, 6);
+      ctx.lineCap = 'round';
+      for (let i = segs.length - tail; i < segs.length; i++) {
+        const g = segs[i], a = (i - (segs.length - tail) + 1) / tail;
+        ctx.strokeStyle = `rgba(255,255,255,${0.55 * a})`;
+        ctx.lineWidth = n <= 8 ? 2 : 1.3;
+        ctx.beginPath(); ctx.moveTo(cx(g[0]), cy(g[0])); ctx.lineTo(cx(g[1]), cy(g[1])); ctx.stroke();
+      }
+      // current state ring
+      if (!done || cur !== undefined) ring(cur, '#ffffff', 2);
+      if (hover >= 0) {
+        ring(hover, '#ff9fd2', 1.5);
+        if (hover !== 0) {
+          const h2 = next(hover);
+          ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(255,159,210,0.8)'; ctx.lineWidth = 1.3;
+          ctx.beginPath(); ctx.moveTo(cx(hover), cy(hover)); ctx.lineTo(cx(h2), cy(h2)); ctx.stroke();
+          ctx.setLineDash([]);
+          ring(h2, 'rgba(255,159,210,0.6)', 1);
+        }
+      }
+    }
+    function ring(s, col, w) {
+      const x = (s % gw) * cell, y = Math.floor(s / gw) * cell;
+      ctx.strokeStyle = col; ctx.lineWidth = w;
+      const r = Math.max(cell * 0.5, 4);
+      ctx.beginPath(); ctx.arc(x + cell / 2, y + cell / 2, r, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    function cellAt(e) {
+      const r = canvas.getBoundingClientRect();
+      const x = Math.floor((e.clientX - r.left) / (r.width / gw));
+      const y = Math.floor((e.clientY - r.top) / (r.height / gh));
+      if (x < 0 || y < 0 || x >= gw || y >= gh) return -1;
+      return y * gw + x;
+    }
+    function describe(s) {
+      if (s === 0) return `<em>${bin(0)}</em> — all zeros. Every tap reads 0, the XOR is 0, and it shifts into itself forever. No wiring can rescue it, which is why the best period is 2<sup>${n}</sup> − 1.`;
+      const nx = next(s);
+      let txt = `<em>${bin(s)}</em> (${s}) → next <em>${bin(nx)}</em> (${nx}).`;
+      if (visited[s]) {
+        const k = cycleOf[s];
+        const L = k < cycles.length ? cycles[k] : cycleLen;
+        txt += ` Visited as step ${posOf[s].toLocaleString()} of loop ${k + 1} (length ${L.toLocaleString()}).`;
+      } else txt += ' Not reached yet. Click to start the walk here.';
+      return txt;
+    }
+    canvas.addEventListener('pointermove', (e) => {
+      const s = cellAt(e);
+      if (s !== hover) { hover = s; inspectEl.innerHTML = s >= 0 ? describe(s) : inspectEl.innerHTML; draw(); }
+    });
+    canvas.addEventListener('pointerleave', () => { hover = -1; draw(); });
+    canvas.addEventListener('click', (e) => {
+      const s = cellAt(e);
+      if (s < 0) return;
+      if (s === 0) { inspectEl.innerHTML = describe(0); return; }
+      seed = s; reset();
+      inspectEl.innerHTML = describe(s);
+      playing = true; updateTally();
+    });
+
+    // ---------- controls ----------
+    for (let k = 4; k <= 12; k++) {
+      const b = document.createElement('button');
+      b.textContent = k; b.dataset.n = k;
+      b.addEventListener('click', () => setN(k));
+      sizesEl.append(b);
+    }
+    function setN(k) {
+      n = k; taps = new Set(MAXIMAL[k]); seed = 1;
+      [...sizesEl.children].forEach((b) => b.setAttribute('aria-pressed', +b.dataset.n === n ? 'true' : 'false'));
+      const total = 1 << (n - 1), good = phi((1 << n) - 1) / n;
+      $('odds').innerHTML = `<b>The odds.</b> With the last tap fixed there are <b>${total.toLocaleString()}</b> ways to wire ${n} bits. Only <b>${good.toLocaleString()}</b> of them — ${(100 * good / total).toFixed(1)}% — take the long way round.`;
+      buildRegister(); reset(); playing = true; updateTally();
+    }
+    $('maximal').addEventListener('click', () => { taps = new Set(MAXIMAL[n]); syncTaps(); reset(); playing = true; updateTally(); });
+    $('random').addEventListener('click', () => {
+      taps = new Set([n]);
+      for (let p = 1; p < n; p++) if (Math.random() < 0.35) taps.add(p);
+      syncTaps(); reset(); playing = true; updateTally();
+    });
+    $('restart').addEventListener('click', () => { reset(); playing = true; updateTally(); });
+    playBtn.addEventListener('click', () => { playing = !playing; updateTally(); });
+    $('step').addEventListener('click', () => { playing = false; if (step()) flash(); refresh(); });
+    $('finish').addEventListener('click', () => {
+      let guard = 0;
+      while (step() && guard++ < 1e6) {}
+      refresh();
+    });
+    const rate = () => 1.5 * Math.pow(10, speedEl.value / 100 * 3.4);
+    function showSpeed() { const r = rate(); $('speedOut').textContent = r < 10 ? r.toFixed(1) + ' steps/s' : Math.round(r).toLocaleString() + ' steps/s'; }
+    speedEl.addEventListener('input', showSpeed);
+
+    function flash() { fbEl.classList.add('flash'); setTimeout(() => fbEl.classList.remove('flash'), 140); }
+    function refresh() { renderRegister(); drawStream(); updateTally(); draw(); }
+
+    function frame(t) {
+      const dt = Math.min(0.1, (t - lastT) / 1000 || 0); lastT = t;
+      if (playing && !done) {
+        acc += dt * rate();
+        let k = 0, stepped = false;
+        while (acc >= 1 && k < 5000) { acc -= 1; k++; if (!step()) break; stepped = true; }
+        if (stepped) { if (rate() < 20) flash(); refresh(); }
+      } else acc = 0;
+      requestAnimationFrame(frame);
+    }
+
+    let rz = 0;
+    window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layout(); draw(); }, 120); });
+
+    showSpeed();
+    setN(8);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
