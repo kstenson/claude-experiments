@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-23",
+  "score": 36,
+  "label": "Heavy going",
+  "emoji": "🌧️",
+  "summary": "Climate diplomacy and markets both stumbled. COP31 in Antalya collapsed after two days of overtime, with the EU and others rejecting a text that omitted fossil fuels. Asian stocks opened sharply lower after Friday's 3.7% S&P 500 fall, though losses narrowed, US futures rose and oil eased. Russian strikes killed at least 15 in Ukraine, which is short of Patriot interceptors. Iranian media reported two tankers ablaze in the Strait of Hormuz, and drones killed four in Khartoum. Fighting trapped Ebola workers in DR Congo, where the outbreak's toll has passed 5,600. Indonesia confirmed 24 dead in a factory fire, and a storm in southern Brazil killed five. Medicine and science offered modest relief: early results for a blood-pressure drug and whale genomes sequenced from breath. The weighted formula gave 36; no editorial adjustment.",
+  "dimensions": { "conflict": 29, "economy": 32, "climate": 32, "humanInterest": 36, "techProgress": 58 },
+  "regions": { "northAmerica": 40, "southAmerica": 40, "europe": 34, "africa": 30, "middleEast": 25, "asia": 37, "oceania": 50 },
+  "drivers": [
+    { "direction": "down", "headline": "COP31 climate talks collapse as EU and others reject deal", "source": "RNZ", "url": "https://www.rnz.co.nz/news/world/2737626/cop31-climate-talks-collapse-as-eu-and-others-reject-deal", "dimension": "climate" },
+    { "direction": "down", "headline": "Asian stock markets tumble as AI bubble fears mount", "source": "Al Jazeera", "url": "https://www.aljazeera.com/news/2026/11/23/south-koreas-stock-market-tumbles-as-ai-bubble-fears-mount", "dimension": "economy", "region": "asia" },
+    { "direction": "down", "headline": "US Stocks Drop 3.7% as Fed Rate-Hike Bets Grow", "source": "The Rio Times", "url": "https://www.riotimesonline.com/global-economy-briefing-november-23-2026/", "dimension": "economy", "region": "northAmerica" },
+    { "direction": "down", "headline": "Ukraine urges US to release Patriot missiles as Russian strikes kill 15", "source": "Al Jazeera", "url": "https://www.aljazeera.com/news/2026/11/22/zelenskyy-urges-us-to-release-patriot-missiles", "dimension": "conflict", "region": "europe" },
+    { "direction": "down", "headline": "Tankers set ablaze in Hormuz as IRGC warns of unrest threat", "source": "Al Jazeera", "url": "https://www.aljazeera.com/news/liveblog/2026/11/22/iran-war-live-tankers-set-ablaze-in-hormuz-as-irgc-warns-of-unrest-threat", "dimension": "conflict", "region": "middleEast" },
+    { "direction": "down", "headline": "Drone strikes kill four in Khartoum and damage UN building", "source": "ABC News (Australia)", "url": "https://www.abc.net.au/news/2026-11-23/deadly-drone-strikes-in-khartoum-sudan-war/107415908", "dimension": "conflict", "region": "africa" },
+    { "direction": "down", "headline": "WHO chief calls for peace amid heavy fighting in Ebola-hit DR Congo region", "source": "Al Jazeera", "url": "https://www.aljazeera.com/news/2026/11/23/who-chief-calls-for-peace-amid-heavy-fighting-in-ebola-hit-dr-congo-region", "dimension": "humanInterest", "region": "africa" },
+    { "direction": "down", "headline": "Indonesia confirms 24 killed in candy factory fire as search continues", "source": "Al Jazeera", "url": "https://www.aljazeera.com/news/2026/11/23/indonesian-police-remove-24-body-bags-from-factory-fire-site", "dimension": "humanInterest", "region": "asia" },
+    { "direction": "down", "headline": "Tupanciretã Storm Kills 5, Wrecks Homes", "source": "The Rio Times", "url": "https://www.riotimesonline.com/tupancireta-brazil-declares-calamity-after-storm/", "dimension": "climate", "region": "southAmerica" },
+    { "direction": "up", "headline": "'Extraordinary' Drug May Actually Cure High Blood Pressure Caused by Hormones, And it's FDA-Approved", "source": "Good News Network", "url": "https://www.goodnewsnetwork.org/drug-may-actually-cure-high-blood-pressure-caused-by-hormones/", "dimension": "techProgress" },
+    { "direction": "up", "headline": "Breath of a Whale Captured by Drone Allows Full Genome Sequencing Without Intrusion", "source": "Good News Network", "url": "https://www.goodnewsnetwork.org/breath-of-whale-captured-via-drone-to-complete-genome-sequence/", "dimension": "techProgress", "region": "northAmerica" },
+    { "direction": "up", "headline": "Bougainville landowners 'overwhelmed' at Rio Tinto's $370m pledge", "source": "ABC News (Australia)", "url": "https://www.abc.net.au/news/2026-11-20/png-rio-tinto-pays-370m-to-fix-panguna-mine-legacy/107403470", "dimension": "humanInterest", "region": "oceania" }
+  ],
+  "sources_consulted": ["Al Jazeera", "RNZ", "ABC News (Australia)", "Africanews", "The Rio Times", "Good News Network", "Phys.org"]
+}
