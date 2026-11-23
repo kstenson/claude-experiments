@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Circle Nobody Drew — Experiment 122</title>
+<meta name="description" content="Domino shuffling: grow a perfectly random domino tiling of the Aztec diamond by cutting colliding pairs, sliding everything one step, and flipping a coin for every hole. The corners freeze, and the frozen edge becomes a circle." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 6px; }
+  .seg.two { grid-template-columns: repeat(2, 1fr); }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 0; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+  .seg button:hover { border-color: rgba(124,124,255,0.45); }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 6px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+
+  /* ---- Status ---- */
+  .status { min-height: 88px; }
+  .status b { display: block; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 5px; font-size: 0.86rem; line-height: 1.55; color: #b9b9ca; overflow-wrap: anywhere; }
+  .status.walk b { color: #a9a9ff; }
+  .status.closed b { color: #ff9fd2; }
+  .status.done b { color: #6ee7c8; }
+
+  .board { padding: 10px; }
+  .canvas-wrap { position: relative; margin: 0 auto; }
+  #board { display: block; border-radius: 10px; width: 100%; touch-action: manipulation; cursor: crosshair; }
+  .canvas-wrap { max-width: min(100%, calc(100vh - 250px)); min-width: min(100%, 420px); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 14px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+  .inspect { min-height: 2.6em; padding: 8px 6px 0; font-size: 0.8rem; line-height: 1.45; color: #b9b9ca; overflow-wrap: anywhere; }
+  .inspect em { color: #ff9fd2; font-style: normal; }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  button:focus-visible, input:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .panel { padding: 14px 14px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>The Circle Nobody Drew</h1>
+      <p class="sub">Experiment № 122 · November 23, 2026</p>
+      <p class="lede">Domino shuffling, from Elkies, Kuperberg, Larsen and Propp (1992): grow a random domino tiling of the <b>Aztec diamond</b> by three moves. Cut the pairs about to collide, slide every other domino one square its own way, then flip a coin for each hole. Every possible tiling comes out equally likely.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <label class="field">
+          <span>Grow to order<b id="targetOut"></b></span>
+          <input type="range" id="target" min="4" max="200" step="1" value="80" />
+        </label>
+        <label class="field">
+          <span>Coin: chance of horizontal<b id="biasOut"></b></span>
+          <input type="range" id="bias" min="10" max="90" step="5" value="50" />
+        </label>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="45" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">❚❚ Pause</button>
+          <button class="btn" id="step">Step</button>
+          <button class="btn" id="finish">Finish</button>
+        </div>
+        <button class="btn" id="restart">↺ New tiling</button>
+        <div>
+          <span class="cap">Show</span>
+          <div class="seg two">
+            <button id="showCurve" aria-pressed="true">Predicted circle</button>
+            <button id="showFrozen" aria-pressed="false">Frozen only</button>
+          </div>
+        </div>
+        <p class="note"><b>How to play.</b> Press <b>Step</b>, and it becomes the next move each time: cut, slide, fill. When the holes are open, <b>click a hole</b> to choose its pair yourself instead of flipping. Hover any domino to see when it was laid.</p>
+        <p class="note"><b>Bend the coin</b> and the circle becomes an ellipse, still touching all four sides.</p>
+        <p class="note"><b>Why it's worth knowing:</b> an order-80 diamond has 2<sup>3240</sup> tilings, far too many to list, yet this picks one exactly fairly, with no burn-in and nothing thrown away. Sampling big structures fairly is usually the hard part of simulating matter.</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel board">
+        <div class="canvas-wrap" id="wrap">
+          <canvas id="board" aria-label="An Aztec diamond tiled by dominoes coloured by the direction each one slides"></canvas>
+        </div>
+        <div class="legend">
+          <span><i style="background:#7c7cff"></i>slides up</span>
+          <span><i style="background:#ff7cc3"></i>slides down</span>
+          <span><i style="background:#6ee7c8"></i>slides left</span>
+          <span><i style="background:#ffc46b"></i>slides right</span>
+        </div>
+        <div class="inspect" id="inspect">Hover or tap a domino to see its history.</div>
+      </div>
+
+      <div class="panel status walk" id="status" aria-live="off"><b>—</b><span>—</span></div>
+
+      <div class="panel">
+        <div class="tally">
+          <span>Order <b id="tOrder">0</b></span>
+          <span>Dominoes <b id="tDom">0</b></span>
+          <span>Coins flipped <b id="tCoins">0</b></span>
+          <span>Pairs cut <b id="tCut">0</b></span>
+          <span>Frozen <b id="tFrozen">—</b></span>
+          <span>π, read off the frozen corners <b id="tPi">—</b></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 122 · The story</p>
+      <h2>The Circle Nobody Drew</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I like results that sound like a mistake. Take a stepped diamond, tile it with dominoes at random, every tiling equally likely, and you'd expect noise from edge to edge. Instead the four corners lock into perfect brickwork, the middle stays a mess, and the border between them settles on a circle. It's called the Arctic Circle theorem, and Jockusch, Propp and Shor proved it in the 1990s. What made me build it is that the way to <em>sample</em> a tiling is only three moves long, and you can watch the circle form as it goes.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Stepping through by hand. Two dominoes face each other, each about to slide into the other's place, and instead of crashing they both vanish. Everyone else moves over by one. What's left uncovered is always, without fail, a set of clean two-by-two holes, and each gets one coin flip. No hole is ever an awkward shape. I also love the small readout at the bottom: the share of the board that isn't frozen tends towards a quarter of π, so if you count dominoes you can read off π, roughly, from coin flips that never heard of it. It runs low: about 2.8 at order 80 and just under 3 at order 200, because the edge is ragged and the circle is a promise about the limit.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The corners aren't frozen because anyone told them to be. A domino near the top edge that slides up simply never meets anything coming down, so nothing ever cuts it. Order can come from there being no room for anything else. When you see a sharp boundary between calm and chaos, it may not be a rule someone wrote down. It may just be counting: nearly all the ways things could have gone look like this.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- CORE: domino shuffling on the Aztec diamond ----
+  // Cells are integer (x, y), y growing downward; the order-n diamond holds the
+  // cells with |x+½| + |y+½| <= n. A domino is anchored at its top/left cell.
+  const UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3;
+  const DX = [0, 0, -1, 1], DY = [-1, 1, 0, 0];
+  class Shuffle {
+    constructor(p, rnd) {
+      this.p = p; this.rnd = rnd || Math.random;
+      this.n = 0; this.phase = 'full';      // full -> cut -> slid -> full
+      this.doms = []; this.dead = []; this.holes = [];
+      this.coins = 0; this.cutPairs = 0; this.chosen = 0;
+    }
+    inside(x, y, n) { return Math.abs(x + 0.5) + Math.abs(y + 0.5) <= n; }
+    // grid of domino index + 1, covering the order-m diamond with a 1-cell margin
+    index(m) {
+      const w = 2 * m + 2, g = new Int32Array(w * w), off = m + 1;
+      this.doms.forEach((d, i) => {
+        const k = (d.y + off) * w + d.x + off;
+        g[k] = i + 1;
+        g[d.t < 2 ? k + 1 : k + w] = i + 1;
+      });
+      return { g, w, off };
+    }
+    at(x, y) {
+      for (const d of this.doms) {
+        if ((d.x === x && d.y === y) || (d.t < 2 ? d.x + 1 === x && d.y === y : d.x === x && d.y + 1 === y)) return d;
+      }
+      return null;
+    }
+    cut() {
+      const { g, w, off } = this.index(this.n + 1), doms = this.doms;
+      const gone = new Uint8Array(doms.length);
+      this.dead = [];
+      doms.forEach((d, i) => {
+        if (d.t !== UP && d.t !== LEFT) return;
+        const j = g[(d.y + DY[d.t] + off) * w + d.x + DX[d.t] + off] - 1;
+        if (j < 0) return;
+        const o = doms[j];
+        const facing = d.t === UP ? o.t === DOWN && o.x === d.x : o.t === RIGHT && o.y === d.y;
+        if (facing) { gone[i] = gone[j] = 1; this.dead.push(d, o); this.cutPairs++; }
+      });
+      this.doms = doms.filter((_, i) => !gone[i]);
+      this.phase = 'cut';
+    }
+    slide() {
+      for (const d of this.doms) { d.x += DX[d.t]; d.y += DY[d.t]; }
+      this.n++;
+      const n = this.n, { g, w, off } = this.index(n);
+      this.holes = [];
+      for (let y = -n; y < n; y++) {
+        const half = y < 0 ? n + y + 1 : n - y;
+        for (let x = -half; x < half; x++) {
+          const k = (y + off) * w + x + off;
+          if (g[k]) continue;
+          if (g[k + 1] || g[k + w] || g[k + w + 1] || !this.inside(x + 1, y, n) || !this.inside(x, y + 1, n) || !this.inside(x + 1, y + 1, n)) throw new Error('hole is not a 2x2 block');
+          g[k] = g[k + 1] = g[k + w] = g[k + w + 1] = -1;
+          this.holes.push({ x, y, pick: null });
+        }
+      }
+      this.phase = 'slid';
+    }
+    fill() {
+      for (const h of this.holes) {
+        let horiz;
+        if (h.pick) { horiz = h.pick === 'h'; this.chosen++; }
+        else { horiz = this.rnd() < this.p; this.coins++; }
+        const b = this.n;
+        if (horiz) this.doms.push({ t: UP, x: h.x, y: h.y, b, f: false }, { t: DOWN, x: h.x, y: h.y + 1, b, f: false });
+        else this.doms.push({ t: LEFT, x: h.x, y: h.y, b, f: false }, { t: RIGHT, x: h.x + 1, y: h.y, b, f: false });
+      }
+      this.holes = []; this.dead = [];
+      this.phase = 'full';
+    }
+    advance() {
+      if (this.phase === 'full') this.cut();
+      else if (this.phase === 'cut') this.slide();
+      else this.fill();
+    }
+    grow() { do this.advance(); while (this.phase !== 'full'); }
+    // A domino is frozen if a chain of same-direction neighbours joins it to the
+    // corner that direction points at. Returns the frozen count.
+    freeze() {
+      const n = this.n;
+      for (const d of this.doms) d.f = false;
+      if (!n) return 0;
+      const { g, w, off } = this.index(n), stack = [];
+      let count = 0;
+      const push = (k, t) => {
+        const i = g[k] - 1;
+        if (i < 0) return;
+        const d = this.doms[i];
+        if (d.t !== t || d.f) return;
+        d.f = true; count++; stack.push(d);
+      };
+      const at = (x, y) => (y + off) * w + x + off;
+      push(at(0, -n), UP); push(at(0, n - 1), DOWN);
+      push(at(-n, 0), LEFT); push(at(n - 1, 0), RIGHT);
+      while (stack.length) {
+        const d = stack.pop(), k = at(d.x, d.y), k2 = d.t < 2 ? k + 1 : k + w;
+        for (const c of [k, k2]) { push(c - 1, d.t); push(c + 1, d.t); push(c - w, d.t); push(c + w, d.t); }
+      }
+      return count;
+    }
+  }
+  // ---- END CORE ----
+
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const canvas = $('board'), ctx = canvas.getContext('2d');
+    const statusEl = $('status'), inspectEl = $('inspect');
+    const playBtn = $('play'), stepBtn = $('step'), finishBtn = $('finish');
+    const targetEl = $('target'), biasEl = $('bias'), speedEl = $('speed');
+    const COLORS = ['#7c7cff', '#ff7cc3', '#6ee7c8', '#ffc46b'];
+    const WAY = ['up', 'down', 'left', 'right'];
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let sim, target = +targetEl.value, playing = true, rushing = false;
+    let phaseT = 0, phaseDur = 350, last = 0, dirty = true;
+    let curve = true, frozenOnly = false, frozenCount = 0;
+    let size = 600, dpr = 1, viewR = 4, hover = null;
+
+    const orderMs = () => 2600 * Math.pow(6 / 2600, speedEl.value / 100);   // ms per order
+    const atEnd = () => sim.phase === 'full' && sim.n >= target;
+
+    function restart() {
+      sim = new Shuffle(biasEl.value / 100);
+      phaseT = 0; rushing = false; playing = true; viewR = 4; hover = null; frozenCount = 0;
+      inspectEl.textContent = 'Hover or tap a domino to see its history.';
+      if (reduce) { while (!atEnd()) sim.grow(); settle(); viewR = sim.n + 0.5; playing = false; }
+      labels(); dirty = true;
+    }
+    function settle() { if (sim.phase === 'full') frozenCount = sim.freeze(); }
+
+    function next(dur) {
+      sim.advance(); phaseT = 0; phaseDur = dur; hover = null;
+      settle(); labels(); dirty = true;
+    }
+
+    function labels() {
+      $('targetOut').textContent = target;
+      $('biasOut').textContent = biasEl.value + '%';
+      const ms = orderMs();
+      $('speedOut').textContent = ms >= 1000 ? (ms / 1000).toFixed(1) + ' s / order' : Math.round(1000 / ms) + ' orders / s';
+      playBtn.textContent = playing && !atEnd() ? '❚❚ Pause' : (atEnd() ? '▶ Again' : '▶ Play');
+      stepBtn.textContent = atEnd() || playing ? 'Step' : { full: 'Cut', cut: 'Slide', slid: 'Fill' }[sim.phase];
+      stepBtn.disabled = finishBtn.disabled = atEnd();
+      const full = sim.phase === 'full', n = sim.n, total = n * (n + 1);
+      $('tOrder').textContent = n + ' / ' + target;
+      $('tDom').textContent = sim.doms.length.toLocaleString('en');
+      $('tCoins').textContent = sim.coins.toLocaleString('en') + (sim.chosen ? ' + ' + sim.chosen + ' by you' : '');
+      $('tCut').textContent = sim.cutPairs.toLocaleString('en');
+      if (full && n) {
+        const f = frozenCount / total, p = sim.p;
+        $('tFrozen').textContent = (f * 100).toFixed(1) + '%';
+        $('tPi').textContent = n >= 20 ? '≈ ' + (2 * (1 - f) / Math.sqrt(p * (1 - p))).toFixed(2) : 'from order 20';
+      } else if (!n) { $('tFrozen').textContent = '—'; $('tPi').textContent = '—'; }
+      let h, s, cls = 'walk';
+      if (atEnd()) {
+        cls = 'done';
+        const digits = Math.floor(n * (n + 1) / 2 * Math.log10(2)) + 1;
+        h = 'One tiling out of 2^' + (n * (n + 1) / 2).toLocaleString('en');
+        s = 'That count has ' + digits.toLocaleString('en') + ' digits' + (sim.chosen
+          ? ', and you steered ' + sim.chosen + ' of the pairs, so this one is partly yours rather than a fair draw.'
+          : sim.p === 0.5 ? ', and each was equally likely. The corners are brickwork; the disorder stays inside the circle.'
+          : '. With a bent coin they are not equally likely: tilings with more ' + (sim.p > 0.5 ? 'horizontal' : 'vertical') + ' dominoes are favoured, and the boundary becomes an ellipse.');
+      } else if (full) {
+        h = n ? 'Order ' + n + ', fully tiled' : 'An empty diamond of order 0';
+        s = n ? 'Next: find the facing pairs, each about to slide into the other’s place, and cut them.' : 'There is nothing to cut or slide yet. The first hole opens by itself.';
+      } else if (sim.phase === 'cut') {
+        cls = 'closed';
+        h = sim.dead.length ? 'Cut ' + plural(sim.dead.length / 2, 'facing pair') : 'Nothing to cut';
+        s = 'Next: every surviving domino slides one square its own way, and the diamond grows by one.';
+      } else {
+        h = plural(sim.holes.length, 'two-by-two hole');
+        s = playing ? 'Each gets one coin flip: a flat pair or an upright pair.' : 'Click a hole to choose its pair, or press Fill to flip a coin for the rest.';
+      }
+      statusEl.className = 'panel status ' + cls;
+      statusEl.firstElementChild.textContent = h;
+      statusEl.lastElementChild.textContent = s;
+    }
+    const plural = (k, w) => k.toLocaleString('en') + ' ' + w + (k === 1 ? '' : 's');
+
+    // ---- drawing ----
+    function resize() {
+      const w = $('wrap').clientWidth;
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      size = w;
+      canvas.style.height = w + 'px';
+      canvas.width = canvas.height = Math.max(1, Math.round(w * dpr));
+      dirty = true;
+    }
+    const cellPx = () => canvas.width / (2 * viewR);
+    function block(d, ox, oy, c, grow) {
+      const gap = c > 6 ? Math.max(1, c * 0.05) : c > 3 ? 0.5 : 0;
+      const w = (d.t < 2 ? 2 : 1) * c, h = (d.t < 2 ? 1 : 2) * c;
+      const g = gap + (1 - grow) * c * 0.35;
+      const x = canvas.width / 2 + (d.x + ox) * c + g, y = canvas.height / 2 + (d.y + oy) * c + g;
+      if (c > 12 && ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, w - 2 * g, h - 2 * g, c * 0.16); ctx.fill(); }
+      else ctx.fillRect(x, y, w - 2 * g, h - 2 * g);
+    }
+    function arrow(d, ox, oy, c) {
+      const x = canvas.width / 2 + (d.x + ox + (d.t < 2 ? 1 : 0.5)) * c, y = canvas.height / 2 + (d.y + oy + (d.t < 2 ? 0.5 : 1)) * c;
+      const a = c * 0.2, dx = DX[d.t], dy = DY[d.t];
+      ctx.beginPath();
+      ctx.moveTo(x - dx * a - dy * a, y - dy * a + dx * a);
+      ctx.lineTo(x + dx * a * 0.7, y + dy * a * 0.7);
+      ctx.lineTo(x - dx * a + dy * a, y - dy * a - dx * a);
+      ctx.stroke();
+    }
+    function draw() {
+      const W = canvas.width, c = cellPx(), t = Math.min(1, phaseT / phaseDur), e = t * t * (3 - 2 * t);
+      ctx.clearRect(0, 0, W, W);
+      const n = sim.n + (sim.phase === 'cut' ? 1 : 0);
+      // holes / empty board
+      ctx.fillStyle = 'rgba(255,255,255,0.035)';
+      for (let y = -n; y < n; y++) {
+        const half = y < 0 ? n + y + 1 : n - y;
+        ctx.fillRect(W / 2 - half * c, W / 2 + y * c, 2 * half * c, c);
+      }
+      // survivors still drawn at their old place while the slide eases in
+      const back = sim.phase === 'slid' ? 1 - e : 0;
+      const showArrows = c > 20 * dpr;
+      ctx.strokeStyle = 'rgba(8,8,16,0.6)'; ctx.lineWidth = Math.max(1, c * 0.07); ctx.lineCap = ctx.lineJoin = 'round';
+      for (let ty = 0; ty < 4; ty++) {
+        ctx.fillStyle = COLORS[ty];
+        for (const d of sim.doms) {
+          if (d.t !== ty) continue;
+          const isNew = sim.phase === 'full' && d.b === sim.n;
+          ctx.globalAlpha = (frozenOnly && !d.f ? 0.14 : 1) * (isNew ? 0.25 + 0.75 * e : 1);
+          block(d, -DX[ty] * back, -DY[ty] * back, c, isNew ? e : 1);
+          if (showArrows) arrow(d, -DX[ty] * back, -DY[ty] * back, c);
+        }
+      }
+      if (sim.phase === 'cut') {
+        for (const d of sim.dead) {
+          ctx.fillStyle = COLORS[d.t]; ctx.globalAlpha = 0.85 - 0.63 * e;
+          block(d, DX[d.t] * 0.12 * e, DY[d.t] * 0.12 * e, c, 1);
+        }
+      }
+      ctx.globalAlpha = 1;
+      if (sim.phase === 'slid' && t >= 1) {
+        for (const h of sim.holes) {
+          const x = W / 2 + h.x * c, y = W / 2 + h.y * c;
+          if (h.pick) {
+            ctx.globalAlpha = 0.6;
+            const pair = h.pick === 'h' ? [{ t: 0, x: h.x, y: h.y }, { t: 1, x: h.x, y: h.y + 1 }] : [{ t: 2, x: h.x, y: h.y }, { t: 3, x: h.x + 1, y: h.y }];
+            for (const d of pair) { ctx.fillStyle = COLORS[d.t]; block(d, 0, 0, c, 1); }
+            ctx.globalAlpha = 1;
+          }
+          if (c > 4) {
+            ctx.strokeStyle = h.pick ? '#fff' : 'rgba(255,255,255,0.35)'; ctx.lineWidth = Math.max(1, dpr);
+            const g = Math.max(1, c * 0.08);
+            ctx.strokeRect(x + g, y + g, 2 * c - 2 * g, 2 * c - 2 * g);
+          }
+        }
+      }
+      if (hover && sim.doms.includes(hover)) {
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * dpr;
+        ctx.strokeRect(W / 2 + hover.x * c, W / 2 + hover.y * c, (hover.t < 2 ? 2 : 1) * c, (hover.t < 2 ? 1 : 2) * c);
+      }
+      if (curve && n >= 3) {
+        ctx.beginPath();
+        ctx.ellipse(W / 2, W / 2, Math.sqrt(sim.p) * n * c, Math.sqrt(1 - sim.p) * n * c, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(5,5,10,0.75)'; ctx.lineWidth = 4 * dpr; ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,0.92)'; ctx.lineWidth = 1.6 * dpr; ctx.stroke();
+      }
+    }
+
+    // ---- loop ----
+    function frame(now) {
+      const dt = Math.min(60, now - last || 0); last = now;
+      const before = phaseT; phaseT += dt;
+      if (before < phaseDur) dirty = true;
+      if (playing && !atEnd()) {
+        const ms = orderMs();
+        if (rushing || ms < 140) {
+          const t0 = performance.now();
+          if (sim.phase !== 'full' && phaseT >= 0) { while (sim.phase !== 'full') sim.advance(); phaseT = 0; }
+          let left = rushing ? 1e9 : Math.floor(phaseT / ms);
+          if (left > 0) {
+            phaseT = rushing ? 0 : phaseT - left * ms;
+            while (left-- > 0 && !atEnd() && performance.now() - t0 < 14) sim.grow();
+            phaseDur = 1; hover = null;
+            settle(); dirty = true;
+            if (atEnd()) { playing = rushing = false; phaseT = phaseDur; }
+            labels();
+          }
+        } else if (phaseT >= phaseDur + ms * 0.08) {
+          next(ms * 0.25);
+          if (atEnd()) { playing = false; labels(); }
+        }
+      }
+      const goal = Math.max(3, sim.n + (sim.phase === 'cut' ? 1 : 0)) + 0.4;
+      if (Math.abs(goal - viewR) > 0.01) {
+        viewR += (goal - viewR) * Math.min(1, dt / 160); dirty = true;
+        viewR = Math.max(viewR, goal - 1);   // never let growth outrun the frame
+        if (Math.abs(goal - viewR) < 0.02) viewR = goal;
+      }
+      if (dirty) { dirty = false; draw(); }
+      requestAnimationFrame(frame);
+    }
+
+    // ---- input ----
+    playBtn.onclick = () => {
+      if (atEnd()) restart();
+      else { playing = !playing; rushing = false; }
+      labels(); dirty = true;
+    };
+    stepBtn.onclick = () => { playing = rushing = false; if (!atEnd()) next(380); };
+    finishBtn.onclick = () => { if (!atEnd()) { playing = rushing = true; labels(); } };
+    $('restart').onclick = restart;
+    targetEl.oninput = () => {
+      const was = atEnd();
+      target = +targetEl.value;
+      if (target < sim.n || (target === sim.n && sim.phase !== 'full')) restart();
+      else if (was && !atEnd()) playing = true;
+      labels(); dirty = true;
+    };
+    biasEl.oninput = restart;
+    speedEl.oninput = labels;
+    $('showCurve').onclick = (e) => { curve = !curve; e.currentTarget.setAttribute('aria-pressed', curve); dirty = true; };
+    $('showFrozen').onclick = (e) => { frozenOnly = !frozenOnly; e.currentTarget.setAttribute('aria-pressed', frozenOnly); dirty = true; };
+
+    function cellAt(ev) {
+      const r = canvas.getBoundingClientRect(), c = r.width / (2 * viewR);
+      return [Math.floor((ev.clientX - r.left - r.width / 2) / c), Math.floor((ev.clientY - r.top - r.height / 2) / c)];
+    }
+    function inspect(ev) {
+      if (playing) return;
+      const [x, y] = cellAt(ev), d = sim.at(x, y);
+      if (d === hover) return;
+      hover = d; dirty = true;
+      if (!d) return;
+      const age = sim.n - d.b;
+      inspectEl.textContent = 'Slides ' + WAY[d.t] + '. Laid at order ' + d.b + ', so it has moved ' + plural(age, 'square') + '.' +
+        (sim.phase !== 'full' ? '' : d.f ? ' Frozen: it joins its corner through an unbroken run of its own kind.' : ' Still in the disordered middle.');
+    }
+    canvas.addEventListener('pointermove', inspect);
+    canvas.addEventListener('pointerleave', () => { hover = null; dirty = true; });
+    canvas.addEventListener('click', (ev) => {
+      if (!playing && sim.phase === 'slid') {
+        const [x, y] = cellAt(ev);
+        const h = sim.holes.find((h) => x >= h.x && x <= h.x + 1 && y >= h.y && y <= h.y + 1);
+        if (h) {
+          h.pick = h.pick === null ? 'h' : h.pick === 'h' ? 'v' : null;
+          inspectEl.textContent = h.pick === 'h' ? 'You chose a flat pair for this hole. Click again for an upright one.' : h.pick === 'v' ? 'You chose an upright pair. Click again to leave it to the coin.' : 'Left to the coin.';
+          dirty = true; return;
+        }
+      }
+      inspect(ev);
+    });
+    window.addEventListener('resize', resize);
+    resize(); restart();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
