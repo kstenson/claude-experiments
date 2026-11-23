@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-23",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "What the Breath Carried",
+  "mood": {
+    "label": "Heavy going",
+    "score": -0.28,
+    "summary": "Heavy going (36): COP31 collapsed after two days of overtime, Asian markets fell, and strikes, fighting, fire and storm took lives on several continents. Modest relief came from a blood-pressure drug and whale genomes sequenced from breath.",
+    "palette": {
+      "bg": "#0c1418",
+      "bg2": "#17262c",
+      "accent": "#7fb2b8",
+      "accent2": "#c98f7a",
+      "text": "#e3ebec"
+    }
+  },
+  "style": {
+    "genre": "12/8 slow ballad — saxello, vibraphone, frame drum, RhythmAce",
+    "key": "Ab",
+    "scale": "dorian",
+    "bpm": 72,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (VCSL saxello, soft vibraphone, FM piano, frame drum, tubular bells, ocean drum; Ace Tone RhythmAce drum machine), sine-oscillator bass"
+  ],
+  "pattern": "stack(s(\"[bd ~ ~] ~ [~ ~ bd] ~\").bank(\"RhythmAce\").gain(0.42).lpf(3000), s(\"~ sd ~ sd\").bank(\"RhythmAce\").gain(0.2).room(0.35).mask(\"<0 0 1 1>/4\"), s(\"[hh ~ hh]*4\").bank(\"RhythmAce\").gain(\"0.1 0.06\").hpf(5000).pan(0.62), s(\"[framedrum:5 ~ framedrum:0] [~ ~ framedrum:0] [framedrum:5 ~ ~] [~ framedrum:0 framedrum:0]\").gain(0.2).room(0.4).pan(0.4), note(\"<[af1 ~ ~ ef2] [df2 ~ ~ af1] [gf1 ~ ~ df2] [ef2 ~ ~ bf1]>\").s(\"sine\").attack(0.04).sustain(0.7).release(0.6).lpf(220).gain(0.45), note(\"<[af2,ef3,gf3,b3] [df3,f3,af3,ef4] [gf2,df3,f3,bf3] [ef3,gf3,bf3,df4]>\").s(\"fmpiano\").attack(0.02).release(1.2).gain(0.2).room(0.5).lpf(sine.range(900,2600).slow(16)), note(\"<[af3 b3 ef4]*4 [af3 df4 f4]*4 [bf3 df4 gf4]*4 [bf3 ef4 gf4]*4>\").s(\"vibraphone_soft\").gain(\"0.15 0.1\").room(0.6).pan(sine.range(0.25,0.75).slow(8)), note(\"<[[ef4 ~ gf4] [af4@2 ~] [gf4 ~ f4] ef4] [[f4 ~ ef4] df4 ~ ~] [[~ ~ bf3] [df4 ~ f4] gf4 ~] [[bf4 ~ af4] gf4 [f4 ~ gf4] ef4]>\").s(\"saxello\").attack(0.06).release(0.4).mask(\"<0 1 1 1>/4\").gain(0.24).lpf(2800).room(0.5).delay(0.22).delaytime(0.556).pan(0.55), note(\"<~ ~ ~ ~ af3 ~ gf3 ~>\").s(\"tubularbells\").gain(0.1).room(0.8), s(\"<oceandrum ~ ~ ~ ~ ~ ~ ~>\").n(0).gain(0.14).lpf(3500).room(0.4))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "They carried the talks two days past the end,",
+        "then Antalya folded its chairs.",
+        "The word they had fought for was not on the page,",
+        "so Europe said no to it there."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Ukraine asks for shields while it buries its own,",
+        "smoke lies on the Hormuz tide,",
+        "Ebola workers take shelter from guns,",
+        "and the searchers go on where the fire has died."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "But out on the water a whale came to breathe,",
+        "and a small drone caught what it gave —",
+        "a whole life written in one breath of air,",
+        "lifted up off the wave."
+      ]
+    }
+  ]
+}
