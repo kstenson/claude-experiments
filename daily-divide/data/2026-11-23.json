@@ -1,0 +1,384 @@
+{
+  "date": "2026-11-23",
+  "topic": "'TrumpCare for All': Trump shares a Democrat's Medicare for All pitch his own White House calls 'Medicare for None'",
+  "question": "Do the claims on each side of the Medicare for All fight, on cost, popularity, lost employer plans and Medicare's finances, match the evidence?",
+  "summary": "On Saturday President Trump reposted, without comment, Michigan Sen.-elect Abdul El-Sayed's mock gold 'TrumpCare' card, a pitch for guaranteed public health insurance. Days earlier his own White House had called the idea a 'government takeover' that 'should really be called Medicare for None.' The repost is not an endorsement. But it put Medicare for All at the center of the Sunday shows, six weeks before Democrats take control of Congress, while their own leaders favor a smaller step: lowering Medicare's age and adding benefits.\n\nBoth sides have real numbers and both use them selectively. Two-thirds of Americans favor a single national plan in KFF's September poll, a record, but majorities oppose it when told of higher taxes or care delays. The White House's $47.4 trillion estimate is drawn from a real report, but counts no new taxes and is not a net cost to households, who would stop paying most premiums. Sen. John Kennedy is right that the Sanders bill would end employer plans for core benefits, though 200 million is high. El-Sayed says he doesn't want to 'take anything away' while backing that bill. On the smaller step, the latest official estimate, for age 60, is $155 billion over six years, and no score exists for the new plans.\n\nWhether government or private insurers should run coverage is a question of values the evidence does not settle.",
+  "needle": -3,
+  "verdict": "Leans slightly left, close to even. Democrats are right about public support, premiums and, roughly, medical debt, but El-Sayed blurs what the bill he supports does to private insurance, and leaders have put no price on their expansion. Republicans are right that the bill ends employer coverage and needs enormous federal revenue, and that widening Medicare adds to deficits. They mislead by presenting a federal shift as if it were all new cost, and by a 'Medicare for None' label their own report does not support. None of this says which system is better.",
+  "weights": {
+    "factualAccuracy": 0.6,
+    "reasoningHonesty": 0.4
+  },
+  "verificationNote": "The White House report (PDF) was read directly, and the Sanders bill was read on GovInfo via a fetch tool that returned excerpts rather than the full text. Meet the Press quotes come from NBC's transcript through the same kind of tool. KFF's poll, premium survey and debt analysis, and Census figures, were opened at source. CBO's site returned 403 errors, so its 2020 and 2022 estimates rest on a republished abstract, Mercatus, PNHP, CRFB and AP. The Trustees' report itself was also blocked; CRFB and KFF summaries were used. Axios, Health Affairs, Benzinga and the Senate Republican Policy Committee could not be read, and STAT was paywalled. No official score of any 2026 Medicare expansion plan was found.",
+  "sources_consulted": [
+    "Associated Press (via CBS News)",
+    "Associated Press (via PBS NewsHour)",
+    "Associated Press (via WJLA)",
+    "CBO working paper abstract (via MarketScreener)",
+    "CBS News",
+    "CNBC",
+    "Committee for a Responsible Federal Budget",
+    "FOX 2 Detroit",
+    "Fox News",
+    "House Budget Committee (Republican majority)",
+    "International Business Times UK",
+    "KFF",
+    "LiveNOW from FOX",
+    "Medical Daily",
+    "Mercatus Center",
+    "NBC News (Meet the Press transcript)",
+    "NewsNation",
+    "Newsmax (via Yahoo News)",
+    "Newsweek",
+    "Office of Rep. Nancy Pelosi",
+    "PNHP",
+    "Peterson-KFF Health System Tracker",
+    "S. 1506, Medicare for All Act (GovInfo)",
+    "Tampa Free Press",
+    "Tax Foundation",
+    "The Daily Beast",
+    "The Epoch Times",
+    "The Hill (via AOL)",
+    "The Hill (via Yahoo News)",
+    "U.S. Census Bureau",
+    "UPI",
+    "WKYT",
+    "White House Council of Economic Advisers"
+  ],
+  "sides": {
+    "left": {
+      "label": "Guarantee public coverage",
+      "framing": "Families pay soaring premiums and still face deductibles and debt. A public plan for everyone, or at least an expanded Medicare now, is popular and would free people from private insurers. If Trump wants his name on it, fine.",
+      "factualAccuracy": 66,
+      "reasoningHonesty": 52,
+      "score": 60,
+      "strongestPoint": "Support is at a record 66% in KFF's September poll, including 72% of independents, and average family premiums have reached $28,303 a year. CBO found most illustrative single-payer designs would lower total national health spending.",
+      "weakestPoint": "El-Sayed says 'I don't want to take anything away' while supporting a bill that makes it unlawful for insurers or employers to offer duplicate coverage. Jeffries' expansion has no age, timeline or score."
+    },
+    "right": {
+      "label": "No government takeover",
+      "framing": "Medicare for All would force Americans off employer plans, add tens of trillions to the deficit and ration care. Medicare is already heading for insolvency; piling on new enrollees would endanger seniors. Lower drug prices instead.",
+      "factualAccuracy": 63,
+      "reasoningHonesty": 47,
+      "score": 57,
+      "strongestPoint": "The Sanders bill does abolish employer coverage for core benefits. Even with the Sanders office's own financing options, the White House report finds less than half the shortfall covered, and Medicare's hospital fund is due to run dry in 2033.",
+      "weakestPoint": "The $47.4 trillion headline counts no revenue and no premiums saved; the report itself says households and employers 'would no longer pay many of the premiums.' Trump shared the plan his White House condemns, and his 2025 tax law slightly worsened the hospital fund's outlook."
+    }
+  },
+  "facts": [
+    {
+      "claim": "Two-thirds of Americans support Medicare for All.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "KFF, Sept. 16-21, 1,328 adults: 66% favor a national plan in which 'all Americans would get their insurance from a single government plan.' Democrats 84%, independents 72%. Opposition reaches 64% when told of higher taxes and 76% when told of possible delays in care.",
+      "explanation": "The topline is accurate and a record for KFF. It is soft: framing moves it by dozens of points, though positive framing lifts it to 76%. Even when told private insurers would be eliminated, 52% still favor it. The Republican House Budget Committee cites the same poll, emphasizing the drops.",
+      "source": "KFF",
+      "url": "https://www.kff.org/public-opinion/kff-health-tracking-poll-health-care-issues-in-the-lead-up-to-the-2026-midterm-election/",
+      "corroboration": [
+        {
+          "source": "LiveNOW from FOX",
+          "url": "https://www.livenowfox.com/news/americans-favor-medicare-all-poll"
+        },
+        {
+          "source": "House Budget Committee (Republican majority)",
+          "url": "https://budget.house.gov/press-release/exposing-the-true-cost-of-medicare-for-all"
+        },
+        {
+          "source": "The Epoch Times",
+          "url": "https://www.theepochtimes.com/us/what-the-midterm-results-mean-for-healthcare-6120108"
+        }
+      ]
+    },
+    {
+      "claim": "Medicare for All would add about $47 trillion to the deficit over a decade.",
+      "side": "right",
+      "verdict": "mixed",
+      "confidence": "high",
+      "evidence": "CEA report: 'in the absence of additional taxes and revenues, M4A would increase the federal budget deficit by approximately $47.4 trillion over 2027-2036.' With the Sanders office's financing options, the 2028-2036 shortfall is $27.7 trillion.",
+      "explanation": "The federal-cost figure sits within the report's inflation-adjusted range of outside estimates, $43-51 trillion. But no bill backer proposes zero revenue, and most of the money replaces premiums and other spending. The report calls its results 'scenario projections rather than point forecasts.' CEA is part of the White House, a party to the dispute.",
+      "source": "White House Council of Economic Advisers",
+      "url": "https://www.whitehouse.gov/wp-content/uploads/2026/10/The-Real-Cost-of-Socialism-In-America-Report.pdf",
+      "corroboration": [
+        {
+          "source": "Fox News",
+          "url": "https://www.foxnews.com/politics/white-house-blasts-trumpcare-all-pitch-far-left-el-sayed-called-president-unserious-fool"
+        },
+        {
+          "source": "WKYT",
+          "url": "https://www.wkyt.com/2026/10/27/wkyt-factcheckbooker-barr-claims-health-care-costs-medicare-all/"
+        },
+        {
+          "source": "House Budget Committee (Republican majority)",
+          "url": "https://budget.house.gov/press-release/exposing-the-true-cost-of-medicare-for-all"
+        }
+      ]
+    },
+    {
+      "claim": "Sanders' plan 'would mean that 200 million Americans would have to give up their health insurance through their employer.'",
+      "side": "right",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "S. 1506, Sec. 107: it 'shall be unlawful for' insurers to sell, or employers to provide, benefits that duplicate the program's. KFF: 'Almost 157 million Americans under age 65 rely on employer-sponsored coverage.' Census: 53.5% had employment-based coverage in 2025.",
+      "explanation": "The substance is right: core employer plans end, though supplemental coverage stays legal and the bill replaces rather than removes insurance. The number is high. KFF's count is 157 million under 65; Census's share implies about 181 million of all ages at some point in the year.",
+      "source": "S. 1506, Medicare for All Act (GovInfo)",
+      "url": "https://www.govinfo.gov/content/pkg/BILLS-119s1506is/html/BILLS-119s1506is.htm",
+      "corroboration": [
+        {
+          "source": "NBC News (Meet the Press transcript)",
+          "url": "https://www.nbcnews.com/meet-the-press/transcripts/meet-press-november-22-2026-rcna610681"
+        },
+        {
+          "source": "KFF",
+          "url": "https://www.kff.org/other-health/workers-now-pay-7471-on-average-annually-for-family-health-coverage-up-9-or-621-from-2025-benchmark-employer-health-benefits-survey-finds/"
+        },
+        {
+          "source": "U.S. Census Bureau",
+          "url": "https://www.census.gov/library/publications/2026/demo/p60-291.html"
+        }
+      ]
+    },
+    {
+      "claim": "Backing Medicare for All need not take away anyone's coverage.",
+      "side": "left",
+      "verdict": "mostly-false",
+      "confidence": "medium",
+      "evidence": "El-Sayed on the Sanders bill: 'I support his bill.' Then: 'I've been supportive of the idea that I don't want to take anything away' and 'the existence of private health insurance, that's a question.' S. 1506, Sec. 107, bars duplicate private coverage.",
+      "explanation": "El-Sayed presents private insurance as an open question, and his own version may preserve it. But the bill he says he supports answers the question. People would keep being insured; they could not keep their current plan for covered benefits. Transcript read through an excerpting tool.",
+      "source": "S. 1506, Medicare for All Act (GovInfo)",
+      "url": "https://www.govinfo.gov/content/pkg/BILLS-119s1506is/html/BILLS-119s1506is.htm",
+      "corroboration": [
+        {
+          "source": "NBC News (Meet the Press transcript)",
+          "url": "https://www.nbcnews.com/meet-the-press/transcripts/meet-press-november-22-2026-rcna610681"
+        },
+        {
+          "source": "White House Council of Economic Advisers",
+          "url": "https://www.whitehouse.gov/wp-content/uploads/2026/10/The-Real-Cost-of-Socialism-In-America-Report.pdf"
+        }
+      ]
+    },
+    {
+      "claim": "Families pay nearly $2,000 a month in premiums and then face deductibles.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "KFF 2026 survey: total family premiums average $28,303 (about $2,359 a month); workers pay $7,471 of it directly (about $623 a month). Average single deductible among those with one: $1,955.",
+      "explanation": "El-Sayed's figure is in line with, even below, the average total premium for employer family coverage. But employers pay roughly three-quarters directly. Economists generally treat that as forgone wages, yet most workers do not see a $2,000 monthly bill.",
+      "source": "KFF",
+      "url": "https://www.kff.org/other-health/workers-now-pay-7471-on-average-annually-for-family-health-coverage-up-9-or-621-from-2025-benchmark-employer-health-benefits-survey-finds/",
+      "corroboration": [
+        {
+          "source": "NewsNation",
+          "url": "https://www.newsnationnow.com/health/family-health-coverage-kff/amp/"
+        },
+        {
+          "source": "NBC News (Meet the Press transcript)",
+          "url": "https://www.nbcnews.com/meet-the-press/transcripts/meet-press-november-22-2026-rcna610681"
+        }
+      ]
+    },
+    {
+      "claim": "Americans hold $225 billion in medical debt.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Peterson-KFF: the federal SIPP survey 'suggests that total medical debt owed was at least $220 billion at the end of 2021.' About 14 million adults owe more than $1,000.",
+      "explanation": "Close to the best-known estimate, which is explicitly a floor but nearly five years old. No source for exactly $225 billion was found. The two KFF pages are one study, not independent confirmation, so confidence is limited.",
+      "source": "Peterson-KFF Health System Tracker",
+      "url": "https://www.healthsystemtracker.org/brief/the-burden-of-medical-debt-in-the-united-states/",
+      "corroboration": [
+        {
+          "source": "KFF",
+          "url": "https://www.kff.org/health-costs/the-burden-of-medical-debt-in-the-united-states/"
+        }
+      ]
+    },
+    {
+      "claim": "A single-payer system would cut total national health spending.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "medium",
+      "evidence": "CBO (2020): national health spending in 2030 would change from 'a decrease of $0.7 trillion' to an increase of $0.3 trillion, depending on design; federal subsidies would rise $1.5 trillion to $3.0 trillion.",
+      "explanation": "Most of CBO's five designs save money overall, mainly from lower provider payments and administration. Mercatus says the only design with comprehensive long-term care, the one resembling recent Sanders bills, costs more; PNHP prefers a cheaper design as the match. CBO has not scored the actual bill. A 2026 Yale study claiming $1 trillion in savings is not peer-reviewed.",
+      "source": "CBO working paper abstract (via MarketScreener)",
+      "url": "https://uk.marketscreener.com/news/latest/How-CBO-Analyzes-the-Costs-of-Proposals-for-Single-Payer-Health-Care-Systems-That-Are-Based-on-Medic-31986764/",
+      "corroboration": [
+        {
+          "source": "Mercatus Center",
+          "url": "https://www.mercatus.org/publications/healthcare/understanding-cbo%E2%80%99s-medicare-all-cost-estimates-0"
+        },
+        {
+          "source": "PNHP",
+          "url": "https://pnhp.org/news/cbo-medicare-for-all-reduces-health-spending/"
+        },
+        {
+          "source": "WKYT",
+          "url": "https://www.wkyt.com/2026/10/27/wkyt-factcheckbooker-barr-claims-health-care-costs-medicare-all/"
+        }
+      ]
+    },
+    {
+      "claim": "Lowering Medicare's age would add to deficits and cover few uninsured people.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "CRFB on CBO (2022): age 60 adds $155 billion to deficits over 2026-2031, nearly $150 billion of it on the Part A trust fund. Of 7.3 million more people in Parts A and B, only 400,000 would otherwise have been uninsured.",
+      "explanation": "This is the best official estimate, but it is four years old, predates the lapse of enhanced ACA subsidies, and covers age 60. Sanders proposes 55 first; Jeffries named no age. A premium-funded buy-in, such as Baldwin's bill, could cost less. No score exists for either.",
+      "source": "Committee for a Responsible Federal Budget",
+      "url": "https://www.crfb.org/blogs/medicare-60-costs-155-billion-according-cbo",
+      "corroboration": [
+        {
+          "source": "Associated Press (via PBS NewsHour)",
+          "url": "https://pbs.org/newshour/politics/ap-report-bernie-sanders-unveils-how-hell-push-for-medicare-for-all-when-democrats-take-power"
+        },
+        {
+          "source": "Newsmax (via Yahoo News)",
+          "url": "https://www.yahoo.com/news/politics/articles/jeffries-urges-lower-medicare-age-031148532.html"
+        },
+        {
+          "source": "Medical Daily",
+          "url": "https://www.medicaldaily.com/democrats-medicare-buy-ages-50-64-481266"
+        }
+      ]
+    },
+    {
+      "claim": "Medicare's hospital trust fund is projected to run out in 2033, so expansion is risky.",
+      "side": "right",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "CRFB on the 2026 Trustees report: insolvency in 2033, triggering an automatic 11% payment cut. Contributors include 'revenue loss from lower taxation of Social Security benefits resulting from OBBBA.' KFF: one quarter earlier than last year.",
+      "explanation": "The date is accurate and widely shared. Two omissions: the Republican 2025 tax law is a named cause of the worsening outlook, and only Part A faces this date, while dental, vision and hearing benefits were expected in 2021 to fall under the separate Part B.",
+      "source": "Committee for a Responsible Federal Budget",
+      "url": "https://www.crfb.org/papers/analysis-2026-medicare-trustees-report",
+      "corroboration": [
+        {
+          "source": "KFF",
+          "url": "https://www.kff.org/medicare/key-facts-about-medicare-spending-trends-and-projections-from-the-2026-medicare-trustees-report/"
+        },
+        {
+          "source": "CNBC",
+          "url": "https://www.cnbc.com/2021/10/27/medicare-expansion-hangs-in-the-balance-as-democrats-race-towards-deal.html"
+        }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Would each side keep its standards if the other were proposing to remake health insurance? In 2017 Republicans held Congress and the White House, the word 'Trumpcare' was a Democratic insult, and it was Democrats demanding to see the cost first. Now Democrats are about to hold Congress, use 'TrumpCare' as a lure, and it is Republicans who hold up the price tag.",
+    "precedent": {
+      "case": "The 2017 House vote on the American Health Care Act",
+      "what": "On May 4, 2017, House Republicans passed their Obamacare replacement 217-213 before CBO finished estimating its cost and effects. An earlier version was projected to leave about 24 million more people without coverage by 2026.",
+      "mirror": "Then Democrats said a bill with no score showed fear of the facts. Now Democratic leaders promote a Medicare expansion with no age, timeline or score, though no vote has been called.",
+      "source": "UPI",
+      "url": "https://www.upi.com/Top_News/US/2017/05/04/Obamacare-replacement-narrowly-passes-GOP-House/4821493913394/",
+      "corroboration": [
+        {
+          "source": "Office of Rep. Nancy Pelosi",
+          "url": "https://pelosi.house.gov/news/press-releases/pelosi-floor-speech-in-opposition-to-trumpcare"
+        }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Right (Trump and House Republicans)",
+        "then": "2009: Paul Ryan said 'I don't think we should pass bills that we haven't read, that we don't know what they cost.' 2015: Trump told 60 Minutes 'Everybody's got to be covered' and 'the government's gonna pay for it.'",
+        "now": "2017: Ryan's House passed its bill without a final score. 2026: Trump's White House leads with Medicare for All's cost and calls it a 'government takeover,' even as Trump shares the pitch.",
+        "source": "UPI",
+        "url": "https://www.upi.com/Top_News/US/2017/05/04/Obamacare-replacement-narrowly-passes-GOP-House/4821493913394/",
+        "corroboration": [
+          {
+            "source": "CBS News",
+            "url": "https://www.cbsnews.com/news/donald-trump-60-minutes-scott-pelley"
+          },
+          {
+            "source": "Fox News",
+            "url": "https://www.foxnews.com/politics/white-house-blasts-trumpcare-all-pitch-far-left-el-sayed-called-president-unserious-fool"
+          }
+        ]
+      },
+      {
+        "who": "Left (Democratic leaders)",
+        "then": "May 2017: Nancy Pelosi said 'Forcing a vote without a CBO Score shows that the Republicans are afraid of the facts.' Hakeem Jeffries cosponsored Medicare for All from 2013 through 2021, as Newsweek reports from NBC.",
+        "now": "Nov. 2026: Jeffries says 'We should lower the age of Medicare eligibility' without naming an age, and no longer supports Medicare for All as leader.",
+        "source": "Newsmax (via Yahoo News)",
+        "url": "https://www.yahoo.com/news/politics/articles/jeffries-urges-lower-medicare-age-031148532.html",
+        "corroboration": [
+          {
+            "source": "Office of Rep. Nancy Pelosi",
+            "url": "https://pelosi.house.gov/news/press-releases/pelosi-floor-speech-in-opposition-to-trumpcare"
+          },
+          {
+            "source": "Newsweek",
+            "url": "https://www.newsweek.com/hakeem-jeffries-rejects-medicare-for-all-dsa-agenda-12328842"
+          }
+        ]
+      }
+    ],
+    "longRun": "Parties demand scores for the other side's health plans and promise their own in slogans. Enthusiasm for sweeping change also tends to fall as a party nears the power to enact it. Whichever side governs next, expect the cost estimate to be the opposition's favorite document.",
+    "appliedToScore": "Both sides lose some reasoning credit for selective interest in price tags. The left's lapse is milder so far, since it has not forced a vote; the right's mixed signals from the same White House also count. The needle rests on present-tense facts."
+  },
+  "pattern": {
+    "thesis": "Plans to widen public insurance have repeatedly advanced on popularity and stalled when the financing was spelled out or the last votes were counted. Seen alone, the 'TrumpCare' moment looks like a breakthrough. In sequence, it is an early stage the issue has reached before.",
+    "campaigns": [
+      {
+        "where": "U.S. Senate, December 2009",
+        "what": "Democrats floated letting people as young as 55 buy into Medicare, then moved to drop it when Sen. Joe Lieberman threatened to join Republicans in opposing the bill.",
+        "authorization": "Dropped",
+        "source": "Associated Press (via CBS News)",
+        "url": "https://www.cbsnews.com/news/dems-poised-to-drop-medicare-expansion",
+        "corroboration": [
+          {
+            "source": "The Daily Beast",
+            "url": "https://www.thedailybeast.com/senate-to-drop-medicare-buy-in/"
+          }
+        ]
+      },
+      {
+        "where": "Vermont, December 2014",
+        "what": "Gov. Peter Shumlin, a Democrat, abandoned his single-payer plan, which needed an 11.5% payroll tax and premiums of up to 9.5% of income: 'These are simply not tax rates that I can responsibly support.' Read only in the right-leaning Tax Foundation's account.",
+        "authorization": "Abandoned",
+        "source": "Tax Foundation",
+        "url": "https://taxfoundation.org/blog/vermont-governor-abandons-his-own-single-payer-plan/",
+        "corroboration": []
+      },
+      {
+        "where": "U.S. Congress, 2021",
+        "what": "Democrats proposed adding dental, hearing and vision to Medicare, estimated at about $350 billion over a decade. Sen. Joe Manchin balked, citing the deficit and the trust fund.",
+        "authorization": "Stalled",
+        "source": "CNBC",
+        "url": "https://www.cnbc.com/2021/10/27/medicare-expansion-hangs-in-the-balance-as-democrats-race-towards-deal.html",
+        "corroboration": [
+          {
+            "source": "Associated Press (via WJLA)",
+            "url": "https://wjla.com/news/nation-world/democrats-push-to-retool-health-care-programs-for-millions"
+          }
+        ]
+      },
+      {
+        "where": "U.S. Congress, January 2027",
+        "what": "Sanders plans a four-year phase-in starting at age 55, possibly by budget reconciliation. Jeffries and Schumer do not back Medicare for All, and any law needs Trump's signature.",
+        "authorization": "Pending",
+        "source": "Associated Press (via PBS NewsHour)",
+        "url": "https://pbs.org/newshour/politics/ap-report-bernie-sanders-unveils-how-hell-push-for-medicare-for-all-when-democrats-take-power",
+        "corroboration": [
+          {
+            "source": "The Hill (via Yahoo News)",
+            "url": "https://www.yahoo.com/news/politics/articles/medicare-split-looms-over-dems-173636636.html"
+          },
+          {
+            "source": "Newsweek",
+            "url": "https://www.newsweek.com/trump-shares-el-sayeds-trumpcare-plan-says-he-may-work-with-democrats-12753203"
+          }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is who pays, and whether voters who like the benefit accept the financing. The 'one-off' tell is any account that treats a poll or a repost as proof the politics have changed without naming a tax."
+  },
+  "notAdjudicable": [
+    "Whether health care should be guaranteed by government as a right or bought mainly through private markets is a disagreement about the role of the state.",
+    "Whether people should be free to keep a private plan, even if a single pool is cheaper or fairer, weighs choice against solidarity.",
+    "Whether paying through taxes is better than paying through premiums depends on who one thinks should bear the cost.",
+    "Whether to pursue incremental expansion or a full overhaul is a judgment about risk and political strategy."
+  ],
+  "biasWatch": "The bias at work is one-sided accounting: counting what a plan adds and ignoring what it replaces. Critics count the new federal spending but not the premiums families would stop paying. Supporters count the premiums that vanish but not the taxes that arrive, or the plan people would lose. The tell: when you hear a big number, ask whether it is federal spending, total spending, or your family's budget. Those three can move in opposite directions in the same plan. Apply the same test to a poll: ask what happens to the number once the tradeoff is in the question."
+}
