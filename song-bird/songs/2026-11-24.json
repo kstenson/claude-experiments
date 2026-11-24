@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-24",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "Only Part of It Back",
+  "mood": {
+    "label": "Fragile relief",
+    "score": -0.22,
+    "summary": "Fragile relief (39): markets won back part of last week's loss while war widened around Hormuz and Ukraine, fighting trapped Ebola responders, and Florida flooded. A spacecraft reaching Mercury and a protected walrus refuge gave the day some air.",
+    "palette": {
+      "bg": "#10151b",
+      "bg2": "#1b242b",
+      "accent": "#d8a657",
+      "accent2": "#6f9fa8",
+      "text": "#eee8dc"
+    }
+  },
+  "style": {
+    "genre": "dub — harmonica, clavisynth skank, Roland CR-1000",
+    "key": "Eb",
+    "scale": "melodic minor",
+    "bpm": 90,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (VCSL Super 64 harmonica, TX81Z clavisynth and piano, cabasa, woodblock, flexatone; Roland CompuRhythm 1000 drum machine), triangle-oscillator bass"
+  ],
+  "pattern": "stack(s(\"~ ~ bd ~\").bank(\"RolandCompurhythm1000\").gain(0.55).lpf(3000), s(\"~ ~ rim ~\").bank(\"RolandCompurhythm1000\").gain(0.24).room(0.35).delay(0.3).delaytime(0.5).delayfeedback(0.35), s(\"[hh ~ hh hh]*4\").bank(\"RolandCompurhythm1000\").gain(\"0.11 0.06\").hpf(5500).pan(0.6), s(\"~ cabasa ~ cabasa\").n(\"<0 1>\").gain(0.13).pan(0.3), s(\"<~ ~ ~ [~ ~ ~ woodblock:3]>\").gain(0.16).room(0.5).delay(0.45).delaytime(0.5).delayfeedback(0.5).pan(0.72), note(\"<[ef2 ~ ~ gf1 bf1 ~ c2 ~] [af1 ~ ~ c2 ef2 ~ c2 ~] [f1 ~ ~ af1 c2 ~ ef2 ~] [bf1 ~ d2 ~ f2 ~ ~ ~]>\").s(\"triangle\").attack(0.01).decay(0.3).sustain(0.6).release(0.15).lpf(360).gain(0.55), note(\"<[ef3,gf3,bf3,c4] [ef3,gf3,af3,c4] [ef3,f3,af3,c4] [d3,f3,af3,bf3]>\").struct(\"~ x ~ x ~ x ~ [x x]\").s(\"clavisynth\").clip(0.5).gain(0.2).hpf(250).lpf(sine.range(1100,2600).slow(16)).room(0.3).delay(0.2).delaytime(0.5).delayfeedback(0.4).pan(0.38), note(\"<[ef4,gf4,bf4] ~ [f4,af4,c5] ~>\").s(\"piano1\").gain(0.14).lpf(1800).room(0.6).rsize(4).jux(rev), note(\"<[bf4 ~ ~ c5 ~ bf4 gf4 ~] [~ ~ af4 ~ gf4 ~ ef4 ~] [c5 ~ d5 ~ ef5 ~ c5 ~] [d5 ~ ~ bf4 ~ ~ ~ ~]>\").s(\"super64_vib\").mask(\"<0 1>/4\").clip(1).attack(0.04).release(0.3).gain(0.24).lpf(2800).room(0.45).delay(0.35).delaytime(0.5).delayfeedback(0.45).pan(0.56), s(\"<~ ~ ~ ~ ~ ~ ~ flexatone:4>\").gain(0.07).room(0.7).lpf(3000).pan(0.8))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "The man came back and the numbers rose,",
+        "green from Wall Street to Seoul.",
+        "They cheered the part of the fall they'd regained",
+        "and stepped around the hole."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Three tankers burn on the Hormuz mines,",
+        "near Kyiv they count fifteen.",
+        "The doctors wait for the guns to pass,",
+        "and the water stands where the road had been."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Only part of it back, only part,",
+        "but a shore is kept where the walrus lie,",
+        "and after eight years of falling toward the sun",
+        "a small machine has Mercury in its eye."
+      ]
+    }
+  ]
+}
