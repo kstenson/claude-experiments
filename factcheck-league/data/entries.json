@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-23",
+    "lastUpdated": "2026-11-24",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5874,7 +5874,7 @@
     {
       "id": "2026-11-23",
       "date": "2026-11-23",
-      "headline": true,
+      "headline": false,
       "topic": "What share of UK businesses trade with the EU",
       "claim": "Only around 8% of businesses in the UK trade with the EU",
       "speaker": "Kemi Badenoch",
@@ -5930,6 +5930,60 @@
         {
           "title": "Brit Brief — Badenoch and Farage to attack deal",
           "url": "https://britbrief.co.uk/politics/westminster/badenoch-and-farage-to-attack-burnhams-eu-deal-at-cbi.html"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-24",
+      "date": "2026-11-24",
+      "headline": true,
+      "topic": "Whether UK industry pays the highest energy prices among advanced economies",
+      "claim": "We have the highest industrial energy prices among advanced economies.",
+      "speaker": "Louise Haigh",
+      "party": "Labour",
+      "role": "First Secretary of State",
+      "discussionScore": 64,
+      "discussionNote": "From Haigh’s CBI keynote on 23 November, the government’s main case for more public control of energy and water. The speech was widely reported; coverage led on public control rather than this line.",
+      "score": 66,
+      "verdict": "Half True / Needs Context",
+      "explanation": "Right for electricity, wrong for gas. In 2024, UK industrial electricity was the dearest of the 25 International Energy Agency members with data. UK non-domestic electricity was also the most expensive compared with 14 EU countries in late 2025. But “energy” includes gas. Including taxes, UK industrial gas was eleventh cheapest of 24 IEA members in 2024. In late 2025 medium-sized business users paid 0.98p per kWh less than the EU14-plus-UK median. Excluding taxes, gas ranked third highest in 2024, so it was not cheap on every measure, but not top either. In fairness, Haigh’s next figures concerned electricity, and she later said “highest industrial electricity prices among advanced economies”, which is close to accurate. Some countries, including the US, Australia and Norway, gave no data for the electricity ranking. These averages also do not show discounts targeted at particular industries.",
+      "evidence": [
+        "GOV.UK transcript: “highest industrial energy prices among advanced economies”; later, “highest industrial electricity prices among advanced economies”.",
+        "Official 2024 IEA comparison, electricity: UK highest of 25 reporting members, including taxes. Australia, Norway and the US gave no data.",
+        "Same release, gas: UK eleventh lowest of 24 reporting members, including taxes; Switzerland was highest.",
+        "Full Fact: excluding taxes, UK industrial gas was third highest in 2024, behind Slovakia and Switzerland.",
+        "July–December 2025, medium non-domestic users: UK electricity highest against the EU14; UK gas 0.98p/kWh below the median.",
+        "The September 2026 release dropped IEA tables, citing the IEA’s terms of use, so 2025 is not published there."
+      ],
+      "confidence": "High on the electricity–gas split; medium on current rank, as the 2025 IEA comparison is no longer published by the government.",
+      "sources": [
+        {
+          "title": "GOV.UK — Haigh CBI speech: The Business Case for Public Control",
+          "url": "https://www.gov.uk/government/speeches/cbi-keynote-speech-the-business-case-for-public-control"
+        },
+        {
+          "title": "DESNZ — Quarterly Energy Prices, September 2025",
+          "url": "https://assets.publishing.service.gov.uk/media/68da5e91dadf7616351e4b5e/quarterly-energy-prices-september-2025.pdf"
+        },
+        {
+          "title": "DESNZ — Quarterly Energy Prices, June 2026",
+          "url": "https://assets.publishing.service.gov.uk/media/6a4243767ac6fd9c6a94aadc/quarterly-energy-prices-june-2026.pdf"
+        },
+        {
+          "title": "DESNZ — Quarterly Energy Prices, September 2026",
+          "url": "https://assets.publishing.service.gov.uk/media/6aba2810fe72ed1e2b02f0e7/Quarterly_Energy_Prices_September_2026.pdf"
+        },
+        {
+          "title": "Full Fact — Burnham and Farage on energy bills",
+          "url": "https://fullfact.org/environment/andy-burnham-nigel-farage-household-energy-bills/"
+        },
+        {
+          "title": "Full Fact — Does the UK have the ‘most expensive’ electricity?",
+          "url": "https://fullfact.org/economy/uk-world-electricity-prices/"
+        },
+        {
+          "title": "Gazette — Public control should not alarm businesses, Haigh tells CBI",
+          "url": "https://www.gazette-news.co.uk/news/national/26753092.public-control-not-alarm-businesses-haigh-tells-cbi/"
         }
       ]
     }
