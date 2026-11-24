@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Already in the Mirror — Experiment 123</title>
+<meta name="description" content="Manacher's algorithm: find every palindrome in a text in linear time by copying answers across the widest mirror found so far, and reading only past its edge." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 6px; }
+  .seg.two { grid-template-columns: repeat(2, 1fr); }
+  input[type=text] { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); color: #fff; border-radius: 9px; padding: 9px 10px; font: 16px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 0; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+  .seg button:hover { border-color: rgba(124,124,255,0.45); }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 6px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+
+  /* ---- Status ---- */
+  .status { min-height: 88px; }
+  .status b { display: block; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 5px; font-size: 0.86rem; line-height: 1.55; color: #b9b9ca; overflow-wrap: anywhere; }
+  .status.walk b { color: #a9a9ff; }
+  .status.closed b { color: #ff9fd2; }
+  .status.done b { color: #6ee7c8; }
+
+  .board { padding: 10px; }
+  .canvas-wrap { position: relative; }
+  #board { display: block; border-radius: 10px; width: 100%; touch-action: manipulation; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 14px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+  .inspect { min-height: 2.6em; padding: 8px 6px 0; font-size: 0.8rem; line-height: 1.45; color: #b9b9ca; overflow-wrap: anywhere; }
+  .inspect em { color: #ff9fd2; font-style: normal; }
+
+  .tally { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; font-size: 0.82rem; color: #9a9ab0; }
+  .tally b { color: #e9e9f0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  button:focus-visible, input:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .panel { padding: 14px 14px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Already in the Mirror</h1>
+      <p class="sub">Experiment № 123 · November 24, 2026</p>
+      <p class="lede">Manacher, 1975: find <b>every palindrome</b> in a text, at every centre, in a single pass from left to right. Inside a palindrome the right half repeats the left half backwards, so many answers on the right can be copied across the mirror.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <label class="field">
+          <span>Your text<b id="lenOut"></b></span>
+          <input type="text" id="text" maxlength="160" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        </label>
+        <div>
+          <span class="cap">Or try</span>
+          <div class="seg two" id="presets"></div>
+        </div>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="40" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">❚❚ Pause</button>
+          <button class="btn" id="step">Step</button>
+          <button class="btn" id="finish">Finish</button>
+        </div>
+        <button class="btn" id="restart">↺ From the start</button>
+        <p class="note"><b>How to play.</b> Type anything; spaces, case and punctuation are ignored. <b>Hover or tap a dome</b> to read its palindrome and how it was found. <b>Click a letter</b> to change it and see which mirrors break.</p>
+        <p class="note"><b>Reading it.</b> Each dome spans the longest palindrome around its centre, on a letter or between two. The bars hanging below are the bill: grey for checking that centre from scratch, pink for the letter pairs this method compared.</p>
+        <p class="note"><b>Why it's worth knowing:</b> every matching pair pushes the mirror's right edge one letter further, and each centre can fail only once. So <span class="mono">n</span> letters cost fewer than <span class="mono">3n</span> comparisons, where checking from scratch can cost about <span class="mono">n²/2</span>. The same trick of reusing a covered window drives the Z-algorithm for string search.</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel board">
+        <div class="canvas-wrap" id="wrap">
+          <canvas id="board" aria-label="A row of letters with a dome over each palindrome and bars below counting letter comparisons"></canvas>
+        </div>
+        <div class="legend">
+          <span><i style="background:#ff7cc3"></i>read letter by letter</span>
+          <span><i style="background:#7c7cff"></i>copied, nothing read</span>
+          <span><i style="background:#6ee7c8"></i>copied, trimmed at the edge</span>
+          <span><i style="background:#ffc46b"></i>copied, then read on</span>
+        </div>
+        <div class="inspect" id="inspect">Hover or tap a dome to read its palindrome.</div>
+      </div>
+
+      <div class="panel status walk" id="status" aria-live="off"><b>—</b><span>—</span></div>
+
+      <div class="panel">
+        <div class="tally">
+          <span>Centres settled <b id="tCentres">0</b></span>
+          <span>Settled without reading <b id="tFree">0</b></span>
+          <span>Pairs compared <b id="tLooks">0</b></span>
+          <span>From scratch <b id="tBrute">0</b></span>
+          <span>Palindromes <b id="tCount">0</b></span>
+          <span>Longest <b id="tLong">—</b></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 123 · The story</p>
+      <h2>Already in the Mirror</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Palindromes look like a toy subject, and the obvious way to find them is fine: stand at each centre and walk outwards while both sides agree. Then you feed it forty-eight copies of the letter a, and it takes 1,128 comparisons to learn almost nothing. Glenn Manacher's 1975 fix doesn't use a clever data structure. It just notices that once you've found a big palindrome, you've already read its right half. You read it backwards, on the left.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>Watching the dome swing across like a door on a hinge. My favourite case is the trimmed one. A dome on the left pokes out past the mirror's edge, and you might think its copy on the right could poke out too, or at least deserves a check. It can't. If it did, the big mirror itself would have been one letter wider. So the answer is cut exactly at the edge, with nothing read, because of a failure that happened earlier. I like that a mismatch found once keeps paying you back.</p>
+      <p>I should be honest that the saving depends on the text. With random letters there are hardly any mirrors to borrow from, and checking from scratch is nearly as cheap. The promise is about the worst day, not the average one.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Symmetry is a kind of knowledge you already hold. When you prove that two halves match, you also learn that everything inside one half is true of the other. It's worth asking, before starting to look closely at something, whether you've already seen its reflection, and exactly where the mirror ends. Inside the edge you can trust it completely. Past the edge you have to look.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- CORE: Manacher's algorithm, one decision at a time ----
+  // Centres run 0..2n: odd centres sit on letter (i-1)/2, even ones in the gaps.
+  // P[i] is the length in letters of the longest palindrome there, which is also
+  // its half-width in centre units, so it covers centres i-P[i] .. i+P[i].
+  class Manacher {
+    constructor(letters) {
+      this.s = letters; this.n = letters.length; this.m = 2 * this.n + 1;
+      this.P = new Array(this.m).fill(0);
+      this.how = new Array(this.m).fill(null);
+      this.looksAt = new Array(this.m).fill(0);
+      this.i = 0; this.C = 0; this.R = 0;       // the mirror: centre C, right edge R
+      this.settled = 0; this.looks = 0; this.open = null; this.done = this.n === 0;
+    }
+    settle(how) {
+      const i = this.i, reach = i + this.P[i];
+      this.how[i] = how;
+      const moved = reach > this.R;
+      if (moved) { this.C = i; this.R = reach; }
+      this.settled = ++this.i; this.open = null;
+      if (this.i >= this.m) this.done = true;
+      return moved;
+    }
+    next() {
+      if (this.done) return null;
+      const i = this.i, C = this.C, R = this.R, P = this.P;
+      if (this.open === null) {
+        if (i < R) {
+          const j = 2 * C - i, room = R - i;
+          if (P[j] < room) { P[i] = P[j]; this.settle('copy'); return { k: 'copy', i, j, C, R }; }
+          if (P[j] > room) { P[i] = room; this.settle('trim'); return { k: 'trim', i, j, C, R }; }
+          P[i] = room; this.open = 'edge';
+          if (this.wall()) { this.settle('copy'); return { k: 'end', i, j, C, R }; }
+          return { k: 'edge', i, j, C, R };
+        }
+        P[i] = i % 2; this.open = 'fresh';
+        if (this.wall()) { const moved = this.settle('read'); return { k: 'tip', i, moved }; }
+        return { k: 'fresh', i };
+      }
+      const a = (i - P[i]) / 2 - 1, b = (i + P[i]) / 2;   // the letters just outside
+      const match = this.s[a] === this.s[b], how = this.open === 'edge' ? 'both' : 'read';
+      this.looks++; this.looksAt[i]++;
+      let closed = false, moved = false, wall = false;
+      if (match) { P[i] += 2; wall = this.wall(); }
+      if (!match || wall) { closed = true; moved = this.settle(how); }
+      return { k: 'look', i, a, b, match, closed, moved, wall };
+    }
+    wall() { const i = this.i, p = this.P[i]; return i - p <= 0 || i + p >= 2 * this.n; }
+    // what checking centre i from scratch would cost, read off the answer
+    brute(i) { const p = this.P[i]; return (p >> 1) + (i - p > 0 && i + p < 2 * this.n ? 1 : 0); }
+  }
+  // ---- END CORE ----
+
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const MAX = 80;
+    const COL = { read: '#ff7cc3', copy: '#7c7cff', trim: '#6ee7c8', both: '#ffc46b' };
+    const HOW = {
+      read: 'read letter by letter', copy: 'copied across the mirror with nothing read',
+      trim: 'copied across the mirror and cut at its edge with nothing read', both: 'copied up to the mirror’s edge, then read on from there',
+    };
+    const fib = () => { let a = 'a', b = 'ab'; while (b.length < 55) [a, b] = [b, b + a]; return b; };
+    const thue = () => Array.from({ length: 64 }, (_, i) => { let c = 0; while (i) { c ^= i & 1; i >>= 1; } return 'ab'[c]; }).join('');
+    const rand = () => Array.from({ length: 60 }, () => 'ab'[Math.random() * 2 | 0]).join('');
+    const PRESETS = [
+      ['Panama', () => 'A man, a plan, a canal: Panama'],
+      ['Nested', () => 'abacabadabacabaeabacabadabacaba'],
+      ['All the same', () => 'a'.repeat(48)],
+      ['Fibonacci word', fib],
+      ['Thue–Morse', thue],
+      ['Random ab', rand],
+    ];
+    const canvas = $('board'), ctx = canvas.getContext('2d');
+    const textEl = $('text'), speedEl = $('speed'), inspectEl = $('inspect'), statusEl = $('status');
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let sim, playing = true, ev = null, evT = 0, evDur = 1, nextAt = 0, hover = -1, dirty = true;
+    let W = 600, H = 420, u = 8, rowY = 0, rowH = 24, topH = 200, billH = 100, yk = 1;
+
+    const clean = (t) => Array.from(t.toLowerCase().normalize('NFC')).filter((c) => /[\p{L}\p{N}]/u.test(c)).slice(0, MAX);
+    const hues = new Map();
+    function setText(t, keepDone) {
+      const letters = clean(t);
+      sim = new Manacher(letters);
+      hues.clear();
+      [...new Set(letters)].sort().forEach((c, k, all) => hues.set(c, 225 + k * (all.length < 3 ? 95 : 360 / all.length)));
+      ev = null; hover = -1;
+      inspectEl.textContent = 'Hover or tap a dome to read its palindrome.';
+      if (keepDone) { while (!sim.done) ev = sim.next(); ev = null; playing = false; }
+      else playing = true;
+      nextAt = performance.now() + 500;
+      layout(); say(); labels();
+    }
+    function labels() {
+      $('lenOut').textContent = sim.n + (sim.n === MAX ? ' (the limit)' : sim.n === 1 ? ' letter' : ' letters');
+      $('speedOut').textContent = +speedEl.value < 25 ? 'slow' : +speedEl.value < 65 ? 'steady' : 'fast';
+      $('play').textContent = sim.done ? '↺ Replay' : playing ? '❚❚ Pause' : '▶ Play';
+      $('step').disabled = $('finish').disabled = sim.done;
+      let free = 0, brute = 0, count = 0, best = 0;
+      for (let i = 0; i < sim.settled; i++) {
+        if (sim.how[i] === 'copy' || sim.how[i] === 'trim') free++;
+        brute += sim.brute(i); count += (sim.P[i] + 1) >> 1;
+        if (sim.P[i] > sim.P[best]) best = i;
+      }
+      const f = (x) => x.toLocaleString('en-US');
+      $('tCentres').textContent = sim.settled + ' / ' + (sim.n ? sim.m : 0);
+      $('tFree').textContent = f(free); $('tLooks').textContent = f(sim.looks);
+      $('tBrute').textContent = f(brute); $('tCount').textContent = f(count);
+      $('tLong').textContent = sim.settled && sim.P[best] ? sim.P[best] + (sim.P[best] === 1 ? ' letter' : ' letters') : '—';
+      dirty = true;
+    }
+    const word = (i) => sim.s.slice((i - sim.P[i]) / 2, (i + sim.P[i]) / 2).join('');
+    const quote = (w) => '“' + w + '”';
+    const place = (i) => i % 2 ? 'the ' + quote(sim.s[(i - 1) / 2]) + ' at letter ' + ((i + 1) / 2) : 'the gap ' + (i === 0 ? 'before the first letter' : i === 2 * sim.n ? 'after the last letter' : 'after letter ' + i / 2);
+    function status(cls, head, text) { statusEl.className = 'panel status ' + cls; statusEl.children[0].textContent = head; statusEl.children[1].textContent = text; }
+    function say() {
+      if (!sim.n) return status('walk', 'Nothing to mirror yet', 'Type a few letters or numbers.');
+      if (sim.done) {
+        let brute = 0, free = 0; sim.how.forEach((h, i) => { brute += sim.brute(i); if (h === 'copy' || h === 'trim') free++; });
+        return status('done', 'Every centre settled', 'Compared ' + sim.looks + (sim.looks === 1 ? ' pair' : ' pairs') + ' of letters; from scratch it would have been ' + brute + '. ' + free + ' of ' + sim.m + ' centres were settled without reading anything.');
+      }
+      if (!ev) return status('walk', 'No mirror yet', 'Start at the far left and work right, one centre at a time.');
+      const at = place(ev.i);
+      if (ev.k === 'fresh') return status('walk', 'Beyond the mirror', 'Nothing known about ' + at + '. Read outwards from here.');
+      if (ev.k === 'tip') return status('walk', 'At the end of the text', 'There is no pair of letters around ' + at + ' to compare.');
+      if (ev.k === 'copy') return status('done', 'Already in the mirror', 'The reflection of ' + at + ' sits well inside the left half, so its answer holds here too. Nothing read.');
+      if (ev.k === 'trim') return status('done', 'Cut at the edge', 'The reflection pokes out past the mirror’s left edge. Its copy can’t poke out on the right, or the mirror would be wider. Nothing read.');
+      if (ev.k === 'end') return status('done', 'Copied to the end of the text', 'The reflection fits exactly to the edge, and the text stops there. Nothing read.');
+      if (ev.k === 'edge') return status('closed', 'Exactly at the edge', 'The reflection reaches the mirror’s edge and no further. The copy is good that far; past it we have to look.');
+      const pair = quote(sim.s[ev.a]) + ' and ' + quote(sim.s[ev.b]);
+      if (!ev.match) return status('closed', pair + ' differ', 'That settles ' + at + (sim.P[ev.i] ? ': ' + quote(word(ev.i)) : ': nothing there') + '.' + (ev.moved ? ' It reaches furthest right, so it is the new mirror.' : ''));
+      return status('walk', pair + ' match', ev.wall ? 'The text ends there, so ' + at + ' is settled: ' + quote(word(ev.i)) + (ev.moved ? '. It is the new mirror.' : '.') : 'The palindrome at ' + at + ' grows to ' + quote(word(ev.i)) + '. Keep reading.');
+    }
+
+    // ---- geometry ----
+    const X = (idx) => (idx + 1) * u;
+    function layout() {
+      W = Math.max(260, $('wrap').clientWidth);
+      const m = Math.max(1, 2 * sim.n);
+      u = Math.min(24, W / (m + 2));
+      rowH = Math.max(14, Math.min(38, 2 * u));
+      topH = Math.round(Math.max(150, Math.min(W * 0.47, innerHeight * 0.46)));
+      billH = Math.round(Math.max(80, Math.min(140, innerHeight * 0.14)));
+      yk = Math.min(1, (topH - 14) / Math.max(1, sim.n * u));
+      rowY = topH; H = topH + rowH + billH + 12;
+      const d = Math.min(2, devicePixelRatio || 1);
+      canvas.width = Math.round(W * d); canvas.height = Math.round(H * d);
+      canvas.style.height = H + 'px';
+      ctx.setTransform(d, 0, 0, d, 0, 0); dirty = true;
+    }
+    const off = () => (W - u * (2 * sim.n + 2)) / 2;   // centre short texts
+    function dome(i, p, scaleX) {
+      ctx.beginPath();
+      ctx.ellipse(X(i), rowY, Math.max(0.01, p * u * (scaleX === undefined ? 1 : scaleX)), p * u * yk, 0, Math.PI, 2 * Math.PI);
+    }
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+      ctx.save(); ctx.translate(off(), 0);
+      const s = sim, t = ev ? Math.min(1, (now - evT) / evDur) : 1;
+      const inMirror = ev && 'j' in ev;
+      const C = inMirror ? ev.C : s.C, R = inMirror ? ev.R : s.R;
+      // the mirror in use
+      if (!s.done && R > C) {
+        dome(C, R - C); ctx.fillStyle = 'rgba(124,124,255,0.09)'; ctx.fill();
+        ctx.setLineDash([4, 5]); ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(X(C), rowY - (R - C) * u * yk - 8); ctx.lineTo(X(C), rowY + rowH + 4); ctx.stroke(); ctx.setLineDash([]);
+      }
+      // settled domes, widest first so small ones stay readable
+      const order = [];
+      for (let i = 0; i < s.settled; i++) if (s.P[i] > 0) order.push(i);
+      order.sort((a, b) => s.P[b] - s.P[a]);
+      const swinging = inMirror && t < 1 ? ev.i : -1;
+      for (const i of order) {
+        if (i === swinging) continue;
+        const c = COL[s.how[i]];
+        dome(i, s.P[i]);
+        ctx.globalAlpha = hover >= 0 ? (i === hover ? 0.4 : 0.03) : s.done ? 0.1 : 0.075; ctx.fillStyle = c; ctx.fill();
+        ctx.globalAlpha = hover >= 0 ? (i === hover ? 1 : 0.22) : 0.85; ctx.strokeStyle = c; ctx.lineWidth = i === hover ? 2.4 : 1.3; ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      // the swing across the mirror, like a door on a hinge at C
+      if (inMirror) {
+        const e = t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t), cos = Math.cos(Math.PI * e);
+        const pj = s.P[ev.j], c = COL[ev.k === 'trim' ? 'trim' : ev.k === 'edge' ? 'both' : 'copy'];
+        dome(ev.j, pj); ctx.strokeStyle = '#fff'; ctx.globalAlpha = 0.75; ctx.lineWidth = 2; if (pj) ctx.stroke();
+        ctx.globalAlpha = 1;
+        if (pj && t < 1) {
+          dome(C - (C - ev.j) * cos, pj, Math.abs(cos)); ctx.fillStyle = c; ctx.globalAlpha = 0.35; ctx.fill();
+          ctx.globalAlpha = 1; ctx.strokeStyle = c; ctx.lineWidth = 2.2; ctx.stroke();
+        } else if (pj && ev.k === 'trim') {   // the part that was cut away
+          ctx.save(); ctx.beginPath(); ctx.rect(X(R), 0, W * 2, rowY); ctx.clip();
+          dome(ev.i, pj); ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore();
+          ctx.setLineDash([]);
+        }
+      }
+      // the dome being grown
+      if (s.open !== null && s.P[s.i] > 0 && !(inMirror && t < 1)) {
+        dome(s.i, s.P[s.i]); ctx.strokeStyle = COL[s.open === 'edge' ? 'both' : 'read']; ctx.lineWidth = 2.4; ctx.stroke();
+      }
+      // letters
+      const fs = Math.min(19, u * 1.5);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '600 ' + fs + 'px ui-monospace, Menlo, Consolas, monospace';
+      for (let k = 0; k < s.n; k++) {
+        const x = X(2 * k), hue = hues.get(s.s[k]), held = hover >= 0 && (2 * k < hover - s.P[hover] || 2 * k + 2 > hover + s.P[hover]);
+        ctx.globalAlpha = held ? 0.28 : 1;
+        ctx.fillStyle = 'hsl(' + hue + ' 48% 30%)';
+        ctx.fillRect(x + 0.5, rowY + 2, 2 * u - 1, rowH - 2);
+        if (fs >= 7) { ctx.fillStyle = '#fff'; ctx.fillText(s.s[k], x + u, rowY + rowH / 2 + 1.5); }
+      }
+      ctx.globalAlpha = 1;
+      if (ev && ev.k === 'look') {
+        const c = ev.match ? '#6ee7c8' : '#ff5f7a';
+        ctx.strokeStyle = c; ctx.lineWidth = 2.5;
+        for (const k of [ev.a, ev.b]) ctx.strokeRect(X(2 * k) + 1, rowY + 2, 2 * u - 2, rowH - 2);
+        ctx.setLineDash([2, 4]); ctx.lineWidth = 1.2; ctx.beginPath();
+        ctx.ellipse(X(ev.i), rowY, (ev.b * 2 + 1 - ev.i) * u, (ev.b * 2 + 1 - ev.i) * u * yk, 0, Math.PI, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+      }
+      // the bill
+      const y0 = rowY + rowH + 8, unit = Math.min(14, billH / Math.max(1, s.n / 2 + 1)), bw = Math.max(1.5, u * 0.62);
+      for (let i = 0; i <= Math.min(s.settled, s.m - 1); i++) {
+        const live = i === s.settled;
+        if (live && s.open === null) break;
+        if (!live) { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(X(i) - bw / 2, y0, bw, s.brute(i) * unit); }
+        ctx.fillStyle = '#ff7cc3'; ctx.fillRect(X(i) - bw / 2, y0, bw, s.looksAt[i] * unit);
+      }
+      // the centre being settled
+      const cur = s.done ? -1 : ev ? ev.i : 0;
+      if (cur >= 0 && s.n) {
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(X(cur), rowY + 1); ctx.lineTo(X(cur) - 5, rowY - 8); ctx.lineTo(X(cur) + 5, rowY - 8); ctx.fill();
+      }
+      ctx.restore();
+      dirty = t < 1;
+    }
+    const gap = () => 900 * Math.pow(0.012, +speedEl.value / 100);
+    function advance(now) {
+      ev = sim.next();
+      evT = now; evDur = calm ? 1 : 'j' in (ev || {}) && sim.P[ev.j] ? Math.max(40, gap() * 1.05) : 1;
+      if (sim.done) { if (evDur < 2) ev = null; playing = false; }
+      nextAt = now + gap() * (evDur > 1 ? 1.6 : 1);
+      labels(); say();
+    }
+    function frame(now) {
+      if (playing && !sim.done && now >= nextAt && !story.classList.contains('open')) advance(now);
+      if (sim.done && ev && now - evT > evDur) { ev = null; dirty = true; }
+      if (dirty) draw(now);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- controls ----
+    PRESETS.forEach(([name, make]) => {
+      const b = document.createElement('button'); b.textContent = name;
+      b.onclick = () => { textEl.value = make(); press(b); setText(textEl.value); };
+      $('presets').append(b);
+    });
+    function press(b) { for (const c of $('presets').children) c.setAttribute('aria-pressed', c === b); }
+    textEl.oninput = () => { press(null); setText(textEl.value); };
+    speedEl.oninput = labels;
+    $('play').onclick = () => { if (sim.done) return setText(textEl.value); playing = !playing; nextAt = 0; labels(); };
+    $('step').onclick = () => { playing = false; if (!sim.done) advance(performance.now()); };
+    $('finish').onclick = () => { while (!sim.done) sim.next(); ev = null; playing = false; labels(); say(); };
+    $('restart').onclick = () => setText(textEl.value);
+
+    function pick(e) {
+      const r = canvas.getBoundingClientRect(), x = e.clientX - r.left - off(), y = e.clientY - r.top;
+      const inRow = y >= rowY && y <= rowY + rowH;
+      const k = Math.floor((x - u) / (2 * u));
+      if (inRow) return { letter: k >= 0 && k < sim.n ? k : -1, dome: -1 };
+      let best = -1;
+      if (y < rowY) {                                // the smallest dome holding the pointer
+        for (let i = 0; i < sim.settled; i++) {
+          const p = sim.P[i]; if (!p) continue;
+          const dx = (x - X(i)) / (p * u), dy = (rowY - y) / (p * u * yk);
+          if (dx * dx + dy * dy <= 1 && (best < 0 || p < sim.P[best])) best = i;
+        }
+      } else {
+        const i = Math.round(x / u - 1); if (i >= 0 && i < sim.settled) best = i;
+      }
+      return { letter: -1, dome: best };
+    }
+    function inspect(e) {
+      const q = pick(e);
+      canvas.style.cursor = q.letter >= 0 ? 'pointer' : 'crosshair';
+      if (q.dome === hover) return q;
+      hover = q.dome; dirty = true;
+      if (hover >= 0) {
+        const p = sim.P[hover], n = sim.looksAt[hover];
+        inspectEl.textContent = (p ? quote(word(hover)) + ', ' + p + (p === 1 ? ' letter' : ' letters') : 'No palindrome') + ', centred on ' + place(hover) + '. ' +
+          (p || n ? HOW[sim.how[hover]][0].toUpperCase() + HOW[sim.how[hover]].slice(1) + ': ' + n + (n === 1 ? ' pair' : ' pairs') + ' compared, ' + sim.brute(hover) + ' from scratch.' : '');
+      }
+      return q;
+    }
+    canvas.addEventListener('pointermove', inspect);
+    canvas.addEventListener('pointerleave', () => { hover = -1; dirty = true; });
+    canvas.addEventListener('click', (e) => {
+      const q = inspect(e);
+      if (q.letter < 0) return;
+      const all = [...new Set(sim.s)].sort();          // swap for the next letter in use
+      if (all.length < 2) all.push(all[0] === 'b' ? 'c' : 'b');
+      const letters = sim.s.slice(), was = letters[q.letter];
+      letters[q.letter] = all[(all.indexOf(was) + 1) % all.length];
+      const done = sim.done;
+      textEl.value = letters.join(''); press(null); setText(textEl.value, done);
+      inspectEl.textContent = 'Letter ' + (q.letter + 1) + ' changed from ' + quote(was) + ' to ' + quote(letters[q.letter]) + '. Click it again for the next one.';
+    });
+    window.addEventListener('resize', layout);
+    textEl.value = PRESETS[0][1](); press($('presets').children[0]);
+    setText(textEl.value);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
