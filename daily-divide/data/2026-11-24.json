@@ -1,0 +1,401 @@
+{
+  "date": "2026-11-24",
+  "topic": "Trump orders federal contractors to clear Congress's requests with the White House: protecting executive privilege, or blocking oversight before Democrats take over?",
+  "question": "Do the claims on each side about executive privilege, Congress's power and what contractors must do match the law and the record?",
+  "summary": "On Friday, Nov. 20, six weeks before Democrats take control of Congress, President Trump ordered federal contractors and subcontractors to notify the White House of any congressional request about their government work and to follow instructions on withholding material it or an agency deems privileged. Firms that refuse risk losing contracts or being barred from new ones. The White House says it is protecting confidential deliberations from 'congressional overreach.' Incoming House Judiciary chair Jamie Raskin calls the order 'blatantly unlawful.'\n\nThe White House stands on real ground when it says Congress's power is limited and privilege exists: the Supreme Court said both in 2020. But the Court also calls the power to obtain information 'broad' and 'indispensable,' and said in 1957 that it covers probes of federal departments for 'corruption, inefficiency or waste.' In July the D.C. Circuit held that privilege must be invoked by a president or authorized designee and cannot excuse wholesale defiance. The order lets agencies make determinations, and its fact sheet puts no number on the efficiency it promises.\n\nDemocrats overstate too. An order backed by debarment is more than 'an interoffice memo,' and its text is narrower than a gag: it ties withholding to privileged communications. No court has ruled. How much secrecy a president needs, and how far an opposition Congress should press, are value questions the evidence does not settle.",
+  "needle": -13,
+  "verdict": "Leans left. The order's critics are better supported on who may invoke privilege, Congress's authority to examine contracting, contractors' contempt exposure and whistleblower protection. The White House is right that oversight needs a legislative purpose and that some contractor communications may be privileged, but it asserts an efficiency rationale without figures and cites no specific intrusion in the order. Democrats lose ground for treating an untested order as settled illegality and for understating its practical force. None of this says which branch should win the larger contest, and courts may yet uphold parts of the order, especially the notice rule.",
+  "weights": {
+    "factualAccuracy": 0.6,
+    "reasoningHonesty": 0.4
+  },
+  "verificationNote": "The order, fact sheet, statutes and Supreme Court opinions were opened at source through a fetch tool that returns excerpts and summaries, so quotations are short and full texts were not read end to end. The July Navarro ruling was read only in a DLA Piper summary, and the August Justice Department opinion only through Just Security and Gibson Dunn. CNN's own page returned a 451 error; its analysis was read on Yahoo. OAN and the Washington Times returned 403 errors, NPR timed out, and the Washington Post was not read. No Republican lawmaker's statement defending the contractor order was found, so the right's case rests on the White House and one conservative outlet. Politimix is a small newsletter whose author says he is not a lawyer; the statute was checked directly.",
+  "sources_consulted": [
+    "2 U.S.C. 192, Cornell LII",
+    "41 U.S.C. 4712, Cornell LII",
+    "9th Circuit, No. 22-15518 (2023), FindLaw",
+    "CBS News",
+    "CNBC",
+    "CNN (via Yahoo News)",
+    "Conservative Institute",
+    "Crooks and Liars",
+    "DLA Piper",
+    "Executive Order, Nov. 20, 2026 (White House)",
+    "Georgia v. President, 11th Circuit (2022), FindLaw",
+    "Gibson Dunn",
+    "Government Executive",
+    "House Oversight Committee (Republican majority)",
+    "House Oversight Democrats",
+    "HuffPost",
+    "Just Security",
+    "Morrison Foerster",
+    "Newsweek",
+    "PBS News",
+    "Politimix",
+    "Snell & Wilmer",
+    "Sullivan & Cromwell",
+    "The Gateway Pundit",
+    "The Philadelphia Inquirer",
+    "Trump v. Mazars (2020), Cornell LII",
+    "UPI",
+    "Washington Examiner",
+    "Washington Technology",
+    "Watkins v. United States (1957), Cornell LII",
+    "White House fact sheet",
+    "Yahoo News"
+  ],
+  "sides": {
+    "left": {
+      "label": "Congress's right to know",
+      "framing": "Congress oversees public money, and contractors spend it. The order is a lawless attempt to hide corruption weeks before Democrats gain subpoena power, forcing companies to choose between their contracts and the law.",
+      "factualAccuracy": 69,
+      "reasoningHonesty": 55,
+      "score": 63,
+      "strongestPoint": "Watkins (1957) says oversight 'comprehends probes into departments of the Federal Government to expose corruption, inefficiency or waste.' The D.C. Circuit held in July that privilege must be invoked by a president or designee and that sincere belief in it may not excuse default.",
+      "weakestPoint": "Raskin calls the order both 'a lawless royal edict' and no more than 'an interoffice memo.' Debarment gives it real force, no court has ruled, and the text ties withholding to privileged communications. Democrats defended Biden's privilege claim in 2024."
+    },
+    "right": {
+      "label": "Protect executive privilege",
+      "framing": "Presidents and agencies must be able to confide in the firms that do the government's work. Democrats have promised a subpoena barrage; contractors should not become a back door to privileged material or a target for harassment.",
+      "factualAccuracy": 54,
+      "reasoningHonesty": 44,
+      "score": 50,
+      "strongestPoint": "Mazars (2020) requires a 'valid legislative purpose,' bars subpoenas for law enforcement, and recognizes that recipients can raise executive privilege. A notice rule lets the government assert that privilege before it is lost.",
+      "weakestPoint": "The order lets agencies decide what is privileged, names no specific intrusion, sets no review deadline and mentions neither subpoenas nor whistleblowers. The fact sheet promises efficiency without a single figure tied to the order."
+    }
+  },
+  "facts": [
+    {
+      "claim": "Congress cannot seek executive-branch information without a valid legislative purpose, and its power is limited.",
+      "side": "right",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "Mazars: a subpoena needs a 'valid legislative purpose' and cannot serve 'law enforcement'; recipients keep privileges for 'governmental communications protected by executive privilege.' Same opinion: the power is 'broad' and 'indispensable.'",
+      "explanation": "The limits are real. The order adds that the purpose must not 'intrude on core Executive functions,' a phrase procurement scholar Jessica Tillipman argues would put much contracting oversight off-limits. Watkins expressly covers probes of federal departments. The order presents the limit without the breadth.",
+      "source": "Trump v. Mazars (2020), Cornell LII",
+      "url": "https://www.law.cornell.edu/supremecourt/text/19-715",
+      "corroboration": [
+        {
+          "source": "Watkins v. United States (1957), Cornell LII",
+          "url": "https://www.law.cornell.edu/supremecourt/text/354/178"
+        },
+        {
+          "source": "Conservative Institute",
+          "url": "https://conservativeinstitute.org/politics/trump-order-requires-federal-contractors-to-clear-congress-requests-with-white-house.htm"
+        },
+        {
+          "source": "Government Executive",
+          "url": "https://www.govexec.com/oversight/2026/11/trumps-new-contractor-executive-order-affront-congress-oversight-authority/417398/"
+        }
+      ]
+    },
+    {
+      "claim": "The order applies executive privilege in the way the courts recognize it.",
+      "side": "right",
+      "verdict": "mixed",
+      "confidence": "medium",
+      "evidence": "Order, Sec. 2(a): withhold what 'the White House or the agency has determined are protected by executive privilege.' Navarro (D.C. Cir. 2026), per DLA Piper: privilege must be invoked by the President, a former President or an authorized designee.",
+      "explanation": "Agency determinations fit only if agencies count as authorized designees, which is untested; the order may be read to delegate that authority. Even a valid claim must be weighed against Congress's need, and Navarro rejected a 'wholesale default.' A petition in the case is pending at the Supreme Court, according to search results not opened.",
+      "source": "Executive Order, Nov. 20, 2026 (White House)",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/11/protecting-the-executives-privileges-and-enhancing-efficiencies-in-federal-contracting/",
+      "corroboration": [
+        {
+          "source": "DLA Piper",
+          "url": "https://www.dlapiper.com/en/insights/publications/2026/07/congressional-subpoenas-dc-circuit-decision"
+        },
+        {
+          "source": "Snell & Wilmer",
+          "url": "https://www.swlaw.com/publication/between-two-branches-what-federal-contractors-should-do-now-under-the-new-executive-privilege-order/"
+        },
+        {
+          "source": "Government Executive",
+          "url": "https://www.govexec.com/oversight/2026/11/trumps-new-contractor-executive-order-affront-congress-oversight-authority/417398/"
+        }
+      ]
+    },
+    {
+      "claim": "The order bars contractors from telling Congress anything without White House permission.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "high",
+      "evidence": "Sec. 2(a) requires notice of 'any pending or future congressional request' and compliance with instructions on privileged communications. Snell & Wilmer: it does not bar responses but may have a similar practical effect, because it sets no deadline for review.",
+      "explanation": "Several headlines and accounts describe a requirement to get clearance. The operative text demands notice and obedience on privileged material, and 'consistent with applicable law.' But the stated policy targets all 'uncoordinated disclosures,' and an open-ended review backed by debarment could work like a permission rule.",
+      "source": "Executive Order, Nov. 20, 2026 (White House)",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/11/protecting-the-executives-privileges-and-enhancing-efficiencies-in-federal-contracting/",
+      "corroboration": [
+        {
+          "source": "Snell & Wilmer",
+          "url": "https://www.swlaw.com/publication/between-two-branches-what-federal-contractors-should-do-now-under-the-new-executive-privilege-order/"
+        },
+        {
+          "source": "Yahoo News",
+          "url": "https://www.yahoo.com/news/politics/articles/trump-executive-order-seeks-block-171557212.html"
+        },
+        {
+          "source": "Conservative Institute",
+          "url": "https://conservativeinstitute.org/politics/trump-order-requires-federal-contractors-to-clear-congress-requests-with-white-house.htm"
+        }
+      ]
+    },
+    {
+      "claim": "The order 'has all the force of an interoffice memo.'",
+      "side": "left",
+      "verdict": "mostly-false",
+      "confidence": "high",
+      "evidence": "Order, Sec. 4: agencies must consider 'the potential termination or cancellation of contracts and the potential debarment or suspension of contractors.' Tillipman: 'the executive branch can punish a company first, long before any contempt case can be resolved.'",
+      "explanation": "Raskin is right that an order cannot repeal Congress's subpoena power or bind it. But contractors depend on federal business, and even critics of the order say the threat may work whether or not it survives in court. Enforcement is discretionary, not automatic.",
+      "source": "Executive Order, Nov. 20, 2026 (White House)",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/11/protecting-the-executives-privileges-and-enhancing-efficiencies-in-federal-contracting/",
+      "corroboration": [
+        {
+          "source": "Washington Technology",
+          "url": "https://www.washingtontechnology.com/companies/2026/11/trump-exec-order-pushes-white-house-gatekeeper-between-contractors-and-congress/417406/"
+        },
+        {
+          "source": "CNN (via Yahoo News)",
+          "url": "https://www.yahoo.com/news/politics/articles/trump-showdown-congress-catching-fire-050017159.html"
+        },
+        {
+          "source": "Newsweek",
+          "url": "https://www.newsweek.com/trump-tightens-grip-on-information-shared-with-congress-12751539"
+        }
+      ]
+    },
+    {
+      "claim": "Contractors who obey an instruction to defy a valid subpoena risk contempt.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "2 U.S.C. 192: a summoned witness who 'willfully makes default' is guilty of a misdemeanor, with one to twelve months in jail. Just Security: good-faith belief in privilege is not a defense. Tillipman: an 'impossible position.'",
+      "explanation": "The exposure is real, and Navarro's conviction was affirmed in July. Two caveats: most requests are letters, not subpoenas, and prosecution belongs to the Justice Department, which CNN's analysis calls unlikely to charge executives. Snell & Wilmer cites a five-year limitations period, which outlasts this administration.",
+      "source": "2 U.S.C. 192, Cornell LII",
+      "url": "https://www.law.cornell.edu/uscode/text/2/192",
+      "corroboration": [
+        {
+          "source": "DLA Piper",
+          "url": "https://www.dlapiper.com/en/insights/publications/2026/07/congressional-subpoenas-dc-circuit-decision"
+        },
+        {
+          "source": "Just Security",
+          "url": "https://www.justsecurity.org/155622/olc-opinion-congressional-oversight-private-sector/"
+        },
+        {
+          "source": "CNN (via Yahoo News)",
+          "url": "https://www.yahoo.com/news/politics/articles/trump-showdown-congress-catching-fire-050017159.html"
+        }
+      ]
+    },
+    {
+      "claim": "Contractor employees keep a legal right to report waste or lawbreaking to Congress.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "41 U.S.C. 4712: an employee 'may not be discharged, demoted, or otherwise discriminated against as a reprisal' for covered disclosures to 'A Member of Congress or a representative of a committee of Congress.' Rights 'may not be waived.'",
+      "explanation": "The statute protects individual employees from reprisal; the order regulates firms and does not mention whistleblowers. An order cannot override a statute. Protection covers specific subjects such as gross mismanagement or violations of law, not any document Congress wants. Politimix's author is not a lawyer.",
+      "source": "41 U.S.C. 4712, Cornell LII",
+      "url": "https://www.law.cornell.edu/uscode/text/41/4712",
+      "corroboration": [
+        {
+          "source": "Politimix",
+          "url": "https://politimix.net/p/trump-told-contractors-to-clear-congress"
+        },
+        {
+          "source": "Yahoo News",
+          "url": "https://www.yahoo.com/news/politics/articles/trump-executive-order-seeks-block-171557212.html"
+        }
+      ]
+    },
+    {
+      "claim": "The rule will make contracting more economical and efficient.",
+      "side": "right",
+      "verdict": "unverifiable",
+      "confidence": "medium",
+      "evidence": "Fact sheet: 'A lack of coordination ... substantially undermines the ability of contractors to provide economical and efficient work.' It gives no savings figure for the order. The order warns of 'separate litigation.'",
+      "explanation": "Uncoordinated disclosures could cause some litigation, so the claim is plausible in part. But no example or estimate is offered, and law firms expect the order itself to bring suits and added costs. The rationale matters because the procurement act is the order's main statutory basis.",
+      "source": "White House fact sheet",
+      "url": "https://www.whitehouse.gov/fact-sheets/2026/11/fact-sheet-president-donald-j-trump-protects-the-executives-privileges-and-enhances-efficiencies-in-federal-contracting/",
+      "corroboration": [
+        {
+          "source": "Executive Order, Nov. 20, 2026 (White House)",
+          "url": "https://www.whitehouse.gov/presidential-actions/2026/11/protecting-the-executives-privileges-and-enhancing-efficiencies-in-federal-contracting/"
+        },
+        {
+          "source": "Government Executive",
+          "url": "https://www.govexec.com/oversight/2026/11/trumps-new-contractor-executive-order-affront-congress-oversight-authority/417398/"
+        },
+        {
+          "source": "CNBC",
+          "url": "https://www.cnbc.com/2026/11/21/trump-orders-federal-contractors-to-notify-white-house-before-giving-congress-information.html"
+        }
+      ]
+    },
+    {
+      "claim": "Congressional leaders have threatened to intrude on executive prerogatives and harass private companies.",
+      "side": "right",
+      "verdict": "mixed",
+      "confidence": "medium",
+      "evidence": "The order and fact sheet both accuse leaders of 'harassing private companies.' Rep. Jared Huffman sent 36 preservation requests to agencies, companies and others with certification sought by Nov. 23. Rep. Robert Garcia sent 12 preservation letters and told officials 'Lawyer up.'",
+      "explanation": "Demands on companies are documented and broad, and minority members cannot compel answers. But preservation letters are not disclosures of privileged material, and the order cites no specific instance. Scharf's suggestion of 'blatant criminality' is called dubious by legal experts, the Inquirer reports.",
+      "source": "Executive Order, Nov. 20, 2026 (White House)",
+      "url": "https://www.whitehouse.gov/presidential-actions/2026/11/protecting-the-executives-privileges-and-enhancing-efficiencies-in-federal-contracting/",
+      "corroboration": [
+        {
+          "source": "The Philadelphia Inquirer",
+          "url": "https://www.inquirer.com/politics/trump-executive-order-contractors-white-house-permission-congress-oversight-20261122.html"
+        },
+        {
+          "source": "Sullivan & Cromwell",
+          "url": "https://www.sullcrom.com/insights/memo/2026/November/White-House-Challenges-Democrats-Planned-Congressional-Investigations"
+        },
+        {
+          "source": "The Gateway Pundit",
+          "url": "https://thegatewaypundit.com/2026/11/white-house-counsel-fires-back-democrats-document-requests"
+        },
+        {
+          "source": "CBS News",
+          "url": "https://www.cbsnews.com/news/white-house-counsel-will-scharf-house-oversight-committee-robert-garcia-investigations/"
+        }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Would each side keep its position with a Democrat in the White House and Republicans holding subpoenas? That was 2024. President Biden asserted privilege over recordings of his interview with special counsel Robert Hur; Republicans moved to hold the attorney general in contempt while Democrats said he had cooperated enough.",
+    "precedent": {
+      "case": "The 2024 fight over the Hur recordings",
+      "what": "On May 16, 2024, Biden asserted executive privilege hours before House committees voted 18-15 and 24-20 to advance contempt against Attorney General Merrick Garland, who had already provided the transcript.",
+      "mirror": "Then Republicans said the executive does not choose how to answer a subpoena, and Democrats called the demand pointless. The scope differs: Biden's claim covered recordings already transcribed, while Trump's order covers all federal contractors in advance.",
+      "source": "CBS News",
+      "url": "https://www.cbsnews.com/news/merrick-garland-contempt-of-congress-house",
+      "corroboration": [
+        {
+          "source": "House Oversight Committee (Republican majority)",
+          "url": "https://oversight.house.gov/release/comer-opens-markup-initiating-contempt-of-congress-proceedings-against-attorney-general-garland%ef%bf%bc"
+        },
+        {
+          "source": "House Oversight Democrats",
+          "url": "https://oversightdemocrats.house.gov/news/press-releases/ranking-member-raskins-opening-remarks-during-contempt-proceeding-against"
+        }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Right (Republican committee leaders and the Trump White House)",
+        "then": "May 2024: Rep. James Comer said 'It is not the Department of Justice's decision how to cooperate with a subpoena' and 'The Department of Justice is not above Congress.'",
+        "now": "Nov. 2026: Trump's White House tells contractors to follow its instructions on what to withhold. No statement from Comer on the order was found.",
+        "source": "House Oversight Committee (Republican majority)",
+        "url": "https://oversight.house.gov/release/comer-opens-markup-initiating-contempt-of-congress-proceedings-against-attorney-general-garland%ef%bf%bc",
+        "corroboration": [
+          {
+            "source": "CNN (via Yahoo News)",
+            "url": "https://www.yahoo.com/news/politics/articles/trump-showdown-congress-catching-fire-050017159.html"
+          }
+        ]
+      },
+      {
+        "who": "Left (Rep. Jamie Raskin)",
+        "then": "2022, as quoted by Comer, Raskin on getting a congressional subpoena: 'You have a legal responsibility to go.' May 2024, with Biden withholding audio: 'There is plainly nothing relevant or material that our Committee can learn from an audiotape.'",
+        "now": "Nov. 2026: 'Every U.S. company, every citizen owes Congress his or her truthful, honest testimony when called.' The 2024 case involved partial compliance, so the reversal is one of emphasis.",
+        "source": "House Oversight Committee (Republican majority)",
+        "url": "https://oversight.house.gov/release/comer-opens-markup-initiating-contempt-of-congress-proceedings-against-attorney-general-garland%ef%bf%bc",
+        "corroboration": [
+          {
+            "source": "House Oversight Democrats",
+            "url": "https://oversightdemocrats.house.gov/news/press-releases/ranking-member-raskins-opening-remarks-during-contempt-proceeding-against"
+          },
+          {
+            "source": "Crooks and Liars",
+            "url": "https://crooksandliars.com/2026/11/raskin-trumps-executive-order-meaningless"
+          }
+        ]
+      }
+    ],
+    "longRun": "Presidents of both parties claim privilege when investigated, and the opposing Congress calls it obstruction. Judges rejected the blanket claims in Fast and Furious and Navarro, but it took years. Expect the same quarrel, with the same quotations swapped, when the branches change hands.",
+    "appliedToScore": "Both sides lose reasoning credit for selective conviction. The right's lapse is larger because its present claim is far wider than the one its members rejected in 2024. The needle rests on present-tense facts."
+  },
+  "pattern": {
+    "thesis": "The order is the latest of several steps since the midterms, and part of a longer history of presidents using broad privilege claims and procurement power. Viewed alone it looks like a contracting rule; in sequence it is one layer of a wider defense.",
+    "campaigns": [
+      {
+        "where": "Justice Department, August 2026",
+        "what": "An Office of Legal Counsel opinion said privilege can cover presidential communications with 'anyone the President consults outside the Executive Branch.' Analysts say it does not cover agency communications generally, so it is narrower than the order.",
+        "authorization": "Executive-branch opinion; not binding on courts",
+        "source": "Just Security",
+        "url": "https://www.justsecurity.org/155622/olc-opinion-congressional-oversight-private-sector/",
+        "corroboration": [
+          {
+            "source": "Gibson Dunn",
+            "url": "https://www.gibsondunn.com/doj-office-of-legal-counsel-memo-on-executive-privilege/"
+          }
+        ]
+      },
+      {
+        "where": "White House, Nov. 9-16, 2026",
+        "what": "Counsel Will Scharf warned Garcia that probes 'may cross the line into blatant criminality,' then required agencies to get approval before employees agree to testify, calling it an 'established' consultation process.",
+        "authorization": "In effect",
+        "source": "PBS News",
+        "url": "https://www.pbs.org/newshour/politics/read-the-full-white-house-memo-requiring-agencies-to-get-approval-before-testifying-in-front-of-congress",
+        "corroboration": [
+          {
+            "source": "Washington Examiner",
+            "url": "https://www.washingtonexaminer.com/news/white-house/4804846/white-house-tightens-grip-agency-testimony-ahead-of-democratic-investigations/"
+          },
+          {
+            "source": "CBS News",
+            "url": "https://www.cbsnews.com/news/white-house-counsel-will-scharf-house-oversight-committee-robert-garcia-investigations/"
+          }
+        ]
+      },
+      {
+        "where": "White House, April 2019",
+        "what": "Facing a Democratic House, Trump said 'We're fighting all the subpoenas' and sued to block one to his accountants, the case that became Mazars.",
+        "authorization": "Litigated",
+        "source": "CNBC",
+        "url": "https://www.cnbc.com/2019/04/24/trump-were-fighting-all-the-subpoenas-from-house-democrats.html",
+        "corroboration": [
+          {
+            "source": "Trump v. Mazars (2020), Cornell LII",
+            "url": "https://www.law.cornell.edu/supremecourt/text/19-715"
+          }
+        ]
+      },
+      {
+        "where": "Obama administration, 2012-2016",
+        "what": "Obama's Justice Department withheld Fast and Furious records under privilege. A judge he appointed rejected the blanket claim in January 2016, more than three years after Republicans sued.",
+        "authorization": "Blanket claim rejected",
+        "source": "CBS News",
+        "url": "https://www.cbsnews.com/news/judge-rules-doj-must-share-documents-from-fast-and-furious-scandal",
+        "corroboration": [
+          {
+            "source": "UPI",
+            "url": "https://www.upi.com/Top_News/US/2016/01/20/Obama-must-give-Fast-and-Furious-records-to-Congress-says-federal-judge/7981453296016/"
+          }
+        ]
+      },
+      {
+        "where": "Biden administration, 2021-2023",
+        "what": "Biden used the same procurement act to require contractor vaccinations. The 11th Circuit found he 'likely exceeded his authority'; the 9th Circuit held the mandate fell within it. Later history was not checked.",
+        "authorization": "Courts split",
+        "source": "Georgia v. President, 11th Circuit (2022), FindLaw",
+        "url": "https://caselaw.findlaw.com/court/us-11th-circuit/2184975.html",
+        "corroboration": [
+          {
+            "source": "9th Circuit, No. 22-15518 (2023), FindLaw",
+            "url": "https://caselaw.findlaw.com/court/us-9th-circuit/2197292.html"
+          },
+          {
+            "source": "Morrison Foerster",
+            "url": "https://www.mofo.com/resources/insights/220830-eleventh-circuit-preliminary-injunction-contractor-vax-mandate"
+          }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is whether a president may use contracts and privilege to set the terms of scrutiny, and who decides while the courts deliberate. The 'one-off' tell is an account that calls the tactic unprecedented, or routine, without mentioning the last president who tried something similar."
+  },
+  "notAdjudicable": [
+    "How much confidentiality a president needs from advisers and contractors weighs candid decision-making against public accountability.",
+    "How aggressively an opposition Congress should investigate a president is a judgment about politics and priorities as well as law.",
+    "Whether companies taking public money should owe first loyalty to the executive that hires them or the Congress that funds them is a question of constitutional values.",
+    "Whether it is better to risk excessive secrecy or excessive investigation depends on which abuse one fears more."
+  ],
+  "biasWatch": "The bias at work is motive substitution: deciding what a rule does from what we believe its author wants. Critics see a cover-up and so read a notice-and-privilege rule as a total gag. Defenders see partisan harassment and so treat every request as illegitimate before it is made. The tell: look for an argument that moves straight from 'they are hiding something' or 'they are out to get him' to a conclusion about legality without quoting the order or a ruling. Then swap the names. If a Democratic president ordered contractors to check with him before answering a Republican committee, would the same sentence still sound right to you?"
+}
