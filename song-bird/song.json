@@ -1,57 +1,57 @@
 {
-  "date": "2026-11-23",
+  "date": "2026-11-24",
   "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
   "generatedBy": "world-mode-score",
-  "title": "What the Breath Carried",
+  "title": "Only Part of It Back",
   "mood": {
-    "label": "Heavy going",
-    "score": -0.28,
-    "summary": "Heavy going (36): COP31 collapsed after two days of overtime, Asian markets fell, and strikes, fighting, fire and storm took lives on several continents. Modest relief came from a blood-pressure drug and whale genomes sequenced from breath.",
+    "label": "Fragile relief",
+    "score": -0.22,
+    "summary": "Fragile relief (39): markets won back part of last week's loss while war widened around Hormuz and Ukraine, fighting trapped Ebola responders, and Florida flooded. A spacecraft reaching Mercury and a protected walrus refuge gave the day some air.",
     "palette": {
-      "bg": "#0c1418",
-      "bg2": "#17262c",
-      "accent": "#7fb2b8",
-      "accent2": "#c98f7a",
-      "text": "#e3ebec"
+      "bg": "#10151b",
+      "bg2": "#1b242b",
+      "accent": "#d8a657",
+      "accent2": "#6f9fa8",
+      "text": "#eee8dc"
     }
   },
   "style": {
-    "genre": "12/8 slow ballad — saxello, vibraphone, frame drum, RhythmAce",
-    "key": "Ab",
-    "scale": "dorian",
-    "bpm": 72,
+    "genre": "dub — harmonica, clavisynth skank, Roland CR-1000",
+    "key": "Eb",
+    "scale": "melodic minor",
+    "bpm": 90,
     "swing": 0
   },
   "sampleSources": [
-    "Strudel default library (VCSL saxello, soft vibraphone, FM piano, frame drum, tubular bells, ocean drum; Ace Tone RhythmAce drum machine), sine-oscillator bass"
+    "Strudel default library (VCSL Super 64 harmonica, TX81Z clavisynth and piano, cabasa, woodblock, flexatone; Roland CompuRhythm 1000 drum machine), triangle-oscillator bass"
   ],
-  "pattern": "stack(s(\"[bd ~ ~] ~ [~ ~ bd] ~\").bank(\"RhythmAce\").gain(0.42).lpf(3000), s(\"~ sd ~ sd\").bank(\"RhythmAce\").gain(0.2).room(0.35).mask(\"<0 0 1 1>/4\"), s(\"[hh ~ hh]*4\").bank(\"RhythmAce\").gain(\"0.1 0.06\").hpf(5000).pan(0.62), s(\"[framedrum:5 ~ framedrum:0] [~ ~ framedrum:0] [framedrum:5 ~ ~] [~ framedrum:0 framedrum:0]\").gain(0.2).room(0.4).pan(0.4), note(\"<[af1 ~ ~ ef2] [df2 ~ ~ af1] [gf1 ~ ~ df2] [ef2 ~ ~ bf1]>\").s(\"sine\").attack(0.04).sustain(0.7).release(0.6).lpf(220).gain(0.45), note(\"<[af2,ef3,gf3,b3] [df3,f3,af3,ef4] [gf2,df3,f3,bf3] [ef3,gf3,bf3,df4]>\").s(\"fmpiano\").attack(0.02).release(1.2).gain(0.2).room(0.5).lpf(sine.range(900,2600).slow(16)), note(\"<[af3 b3 ef4]*4 [af3 df4 f4]*4 [bf3 df4 gf4]*4 [bf3 ef4 gf4]*4>\").s(\"vibraphone_soft\").gain(\"0.15 0.1\").room(0.6).pan(sine.range(0.25,0.75).slow(8)), note(\"<[[ef4 ~ gf4] [af4@2 ~] [gf4 ~ f4] ef4] [[f4 ~ ef4] df4 ~ ~] [[~ ~ bf3] [df4 ~ f4] gf4 ~] [[bf4 ~ af4] gf4 [f4 ~ gf4] ef4]>\").s(\"saxello\").attack(0.06).release(0.4).mask(\"<0 1 1 1>/4\").gain(0.24).lpf(2800).room(0.5).delay(0.22).delaytime(0.556).pan(0.55), note(\"<~ ~ ~ ~ af3 ~ gf3 ~>\").s(\"tubularbells\").gain(0.1).room(0.8), s(\"<oceandrum ~ ~ ~ ~ ~ ~ ~>\").n(0).gain(0.14).lpf(3500).room(0.4))",
+  "pattern": "stack(s(\"~ ~ bd ~\").bank(\"RolandCompurhythm1000\").gain(0.55).lpf(3000), s(\"~ ~ rim ~\").bank(\"RolandCompurhythm1000\").gain(0.24).room(0.35).delay(0.3).delaytime(0.5).delayfeedback(0.35), s(\"[hh ~ hh hh]*4\").bank(\"RolandCompurhythm1000\").gain(\"0.11 0.06\").hpf(5500).pan(0.6), s(\"~ cabasa ~ cabasa\").n(\"<0 1>\").gain(0.13).pan(0.3), s(\"<~ ~ ~ [~ ~ ~ woodblock:3]>\").gain(0.16).room(0.5).delay(0.45).delaytime(0.5).delayfeedback(0.5).pan(0.72), note(\"<[ef2 ~ ~ gf1 bf1 ~ c2 ~] [af1 ~ ~ c2 ef2 ~ c2 ~] [f1 ~ ~ af1 c2 ~ ef2 ~] [bf1 ~ d2 ~ f2 ~ ~ ~]>\").s(\"triangle\").attack(0.01).decay(0.3).sustain(0.6).release(0.15).lpf(360).gain(0.55), note(\"<[ef3,gf3,bf3,c4] [ef3,gf3,af3,c4] [ef3,f3,af3,c4] [d3,f3,af3,bf3]>\").struct(\"~ x ~ x ~ x ~ [x x]\").s(\"clavisynth\").clip(0.5).gain(0.2).hpf(250).lpf(sine.range(1100,2600).slow(16)).room(0.3).delay(0.2).delaytime(0.5).delayfeedback(0.4).pan(0.38), note(\"<[ef4,gf4,bf4] ~ [f4,af4,c5] ~>\").s(\"piano1\").gain(0.14).lpf(1800).room(0.6).rsize(4).jux(rev), note(\"<[bf4 ~ ~ c5 ~ bf4 gf4 ~] [~ ~ af4 ~ gf4 ~ ef4 ~] [c5 ~ d5 ~ ef5 ~ c5 ~] [d5 ~ ~ bf4 ~ ~ ~ ~]>\").s(\"super64_vib\").mask(\"<0 1>/4\").clip(1).attack(0.04).release(0.3).gain(0.24).lpf(2800).room(0.45).delay(0.35).delaytime(0.5).delayfeedback(0.45).pan(0.56), s(\"<~ ~ ~ ~ ~ ~ ~ flexatone:4>\").gain(0.07).room(0.7).lpf(3000).pan(0.8))",
   "lyrics": [
     {
       "section": "Verse 1",
       "lines": [
-        "They carried the talks two days past the end,",
-        "then Antalya folded its chairs.",
-        "The word they had fought for was not on the page,",
-        "so Europe said no to it there."
+        "The man came back and the numbers rose,",
+        "green from Wall Street to Seoul.",
+        "They cheered the part of the fall they'd regained",
+        "and stepped around the hole."
       ]
     },
     {
       "section": "Verse 2",
       "lines": [
-        "Ukraine asks for shields while it buries its own,",
-        "smoke lies on the Hormuz tide,",
-        "Ebola workers take shelter from guns,",
-        "and the searchers go on where the fire has died."
+        "Three tankers burn on the Hormuz mines,",
+        "near Kyiv they count fifteen.",
+        "The doctors wait for the guns to pass,",
+        "and the water stands where the road had been."
       ]
     },
     {
       "section": "Chorus",
       "lines": [
-        "But out on the water a whale came to breathe,",
-        "and a small drone caught what it gave —",
-        "a whole life written in one breath of air,",
-        "lifted up off the wave."
+        "Only part of it back, only part,",
+        "but a shore is kept where the walrus lie,",
+        "and after eight years of falling toward the sun",
+        "a small machine has Mercury in its eye."
       ]
     }
   ]
