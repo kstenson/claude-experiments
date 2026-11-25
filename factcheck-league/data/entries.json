@@ -40,7 +40,7 @@
         "color": "#7a0a12"
       }
     ],
-    "lastUpdated": "2026-11-24",
+    "lastUpdated": "2026-11-25",
     "note": "Every figure below is anchored to a named primary or established secondary source (linked). Where a claim's accuracy depends on the time period or a definition, that is stated explicitly. Verdicts should be re-confirmed against the linked sources before publication."
   },
   "entries": [
@@ -5936,7 +5936,7 @@
     {
       "id": "2026-11-24",
       "date": "2026-11-24",
-      "headline": true,
+      "headline": false,
       "topic": "Whether UK industry pays the highest energy prices among advanced economies",
       "claim": "We have the highest industrial energy prices among advanced economies.",
       "speaker": "Louise Haigh",
@@ -5984,6 +5984,68 @@
         {
           "title": "Gazette — Public control should not alarm businesses, Haigh tells CBI",
           "url": "https://www.gazette-news.co.uk/news/national/26753092.public-control-not-alarm-businesses-haigh-tells-cbi/"
+        }
+      ]
+    },
+    {
+      "id": "2026-11-25",
+      "date": "2026-11-25",
+      "headline": true,
+      "topic": "Household cost of linking the UK and EU carbon markets",
+      "claim": "Just think about the sheer idiocy, idiocy, of joining the EU's carbon tax regime, that alone, because of the higher carbon basis price that they use, will cost the average household an extra 350 pounds every single year.",
+      "speaker": "Nigel Farage",
+      "party": "Reform UK",
+      "role": "Leader of Reform UK",
+      "discussionScore": 72,
+      "discussionNote": "From Farage’s 24 November Westminster press conference attacking Burnham’s EU deal. The line led the Telegraph’s live blog summary and a GB News headline, amid continuing argument over the 20 November summit.",
+      "score": 12,
+      "verdict": "False",
+      "explanation": "Linking could raise UK carbon prices, but nothing we found supports £350. Ordinary home heating and the EU’s separate heating and road-fuel scheme are outside the deal. The Prosperity Institute, which opposes carbon taxes, puts the price rise at around 32%: roughly £20 a tonne on a £60 price. Our calculation: if gas plants set every price, that adds about £18 to typical household electricity. Spreading £20 across every tonne covered by the UK scheme in 2025, including industry and flights, gives about £55 per household. Those sums are illustrative, and higher power prices for firms could add more. But Prosperity says abolishing three existing carbon levies entirely would save about £250 per household, around £60 of it on energy bills. Reform’s own estimate is reported as £150. In fairness, an official impact assessment is pending, and future EU prices could rise sharply.",
+      "evidence": [
+        "Government explainer: covers electricity and industrial heat, “excluding the individual heating of houses”; ETS2, covering buildings and road transport, is “not in scope”.",
+        "Around 20 November, UK allowances were reported near £60 and EU allowances near €82. Prices were already converging before the 2028 link.",
+        "Electricity: 2,500kWh typical use × 365g/kWh for gas generation × £20/tonne ≈ £18 a year. Reaching £350 needs about £384/tonne.",
+        "Whole scheme: 79.7m tonnes in 2025 across 29.0m households, 2.75 tonnes each; £20/tonne ≈ £55. Reaching £350 needs about £127/tonne.",
+        "Prosperity Institute: abolishing the UK ETS, Carbon Price Support and Climate Change Levy saves over £250 per household, around £60 directly off bills.",
+        "Politics UK reports Reform’s estimate as £150 on household energy bills, without a method."
+      ],
+      "confidence": "High that £350 is unsupported; medium on the true cost, as Reform’s method and the official assessment are unavailable.",
+      "sources": [
+        {
+          "title": "GOV.UK — UK-EU ETS linking agreement explainer",
+          "url": "https://www.gov.uk/government/publications/uk-eu-linking-agreement-explainer/uk-eu-linking-agreement-explainer"
+        },
+        {
+          "title": "UK ETS Authority — Functioning of the UK carbon market 2025",
+          "url": "https://assets.publishing.service.gov.uk/media/6aeafe3419b57f95dc2b80d1/report-on-the-functioning-of-the-UK-carbon-market-for-2025.pdf"
+        },
+        {
+          "title": "DESNZ — Fuel mix disclosure data table",
+          "url": "https://www.gov.uk/government/publications/fuel-mix-disclosure-data-table/fuel-mix-disclosure-data-table"
+        },
+        {
+          "title": "Ofgem — Energy price cap summary, October to December 2026",
+          "url": "https://www.ofgem.gov.uk/sites/default/files/2026-08/Summary-of-changes-to-energy-price-cap-1-October-to-31-December-2026.pdf"
+        },
+        {
+          "title": "ONS — Families and households in the UK 2025",
+          "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/families/bulletins/familiesandhouseholds/2025"
+        },
+        {
+          "title": "Prosperity Institute — Not Zero: green taxes and energy bills",
+          "url": "https://www.prosperity.com/media-publications/not-zero-how-green-taxes-put-british-energy-bills-in-the-red/"
+        },
+        {
+          "title": "Energy News Beat — UK and EU are linking carbon markets",
+          "url": "https://energynewsbeat.co/energy-policy/the-uk-and-eu-are-linking-carbon-markets-the-factory-power-bill-came-first/"
+        },
+        {
+          "title": "Politics UK — Economic consequences of Burnham’s EU deal",
+          "url": "https://www.politicsuk.com/p/the-economic-consequences-of-burnhams?action=share"
+        },
+        {
+          "title": "Telegraph via Yahoo — Farage press conference live",
+          "url": "https://www.yahoo.com/news/politics/articles/farage-don-t-want-divisive-111236505.html"
         }
       ]
     }
