@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>First to Leave — Experiment 124</title>
+<meta name="description" content="Interval scheduling: one room, too many requests, and the greedy rule that always fits in the most: book whoever finishes first, with a proof made of nails." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+
+  .seg { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 6px; }
+  .seg.two { grid-template-columns: repeat(2, 1fr); }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 0; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+  .seg button:hover { border-color: rgba(124,124,255,0.45); }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 6px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+  .btn:hover:not(:disabled) { background: rgba(124,124,255,0.28); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; }
+
+  /* ---- Status ---- */
+  .status { min-height: 88px; }
+  .status b { display: block; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; }
+  .status span { display: block; margin-top: 5px; font-size: 0.86rem; line-height: 1.55; color: #b9b9ca; overflow-wrap: anywhere; }
+  .status.walk b { color: #a9a9ff; }
+  .status.closed b { color: #ff9fd2; }
+  .status.done b { color: #6ee7c8; }
+
+  .board { padding: 10px; }
+  .canvas-wrap { position: relative; }
+  #board { display: block; border-radius: 10px; width: 100%; touch-action: pan-y; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 14px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+  .inspect { min-height: 2.6em; padding: 8px 6px 0; font-size: 0.8rem; line-height: 1.45; color: #b9b9ca; overflow-wrap: anywhere; }
+  .inspect em { color: #ff9fd2; font-style: normal; }
+
+  .row.pair { grid-template-columns: 1fr 1fr; }
+  .check { display: flex; align-items: center; justify-content: center; gap: 7px; }
+  .check input { accent-color: #ffc46b; }
+  .race { display: grid; gap: 7px; }
+  .lap { display: grid; grid-template-columns: 112px 1fr 64px; gap: 12px; align-items: center; font-size: 0.82rem; color: #9a9ab0; }
+  .lap i { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.07); overflow: hidden; }
+  .lap em { display: block; height: 100%; border-radius: 4px; background: #ff7cc3; transition: width 0.3s ease; }
+  .lap.full em { background: #6ee7c8; }
+  .lap b { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .lap.on span, .lap.on b { color: #fff; }
+  button:focus-visible, input:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .panel { padding: 14px 14px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>First to Leave</h1>
+      <p class="sub">Experiment № 124 · November 25, 2026</p>
+      <p class="lede">Interval scheduling: one room, too many requests. Fit in <b>as many as possible</b>. Four sensible rules compete for the job, and only one of them can never be beaten: always book whoever finishes first.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div>
+          <span class="cap">Book first</span>
+          <div class="seg two" id="rules"></div>
+        </div>
+        <div>
+          <span class="cap">The day</span>
+          <div class="seg two" id="days"></div>
+        </div>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="40" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">❚❚ Pause</button>
+          <button class="btn" id="step">Step</button>
+          <button class="btn" id="finish">Finish</button>
+        </div>
+        <button class="btn" id="swap">⇄ Swap one toward ends-first</button>
+        <div class="row pair">
+          <label class="btn check"><input type="checkbox" id="nails" checked /> Show nails</label>
+          <button class="btn" id="remove" disabled>Remove request</button>
+        </div>
+        <p class="note"><b>How to play.</b> Choose <b>Your own pick</b> and click requests to book them. <b>Drag</b> a request to move it, drag its right end to resize it, or drag across empty space to add one.</p>
+        <p class="note"><b>Reading it.</b> The top strip is the room. Each amber line is a nail, driven through the last quarter hour of an ends-first booking. Every request is caught by at least one.</p>
+        <p class="note"><b>Why it's worth knowing:</b> two bookings can't share a nail, so no plan can hold more bookings than there are nails. Ends-first books exactly one per nail. The picture is the proof.</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel board">
+        <div class="canvas-wrap" id="wrap">
+          <canvas id="board" aria-label="Booking requests drawn as bars across a day, with the booked ones repeated in a strip along the top"></canvas>
+        </div>
+        <div class="legend">
+          <span><i style="background:#7c7cff"></i>waiting</span>
+          <span><i style="background:#6ee7c8"></i>booked</span>
+          <span><i style="background:#ff7cc3"></i>just turned away</span>
+          <span><i style="background:#3a3a4c"></i>turned away</span>
+          <span><i style="background:#ffc46b"></i>nail</span>
+        </div>
+        <div class="inspect" id="inspect"></div>
+      </div>
+
+      <div class="panel status walk" id="status"><b>—</b><span>—</span></div>
+
+      <div class="panel">
+        <div class="race" id="race"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 124 · The story</p>
+      <h2>First to Leave</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I like problems where everyone has an answer ready. One room, a pile of requests, fit in as many as you can. Take them in the order they start. Take the short ones. Take the ones that get in the fewest people's way. All three sound right, and all three can lose. The rule that can't lose sounds almost too plain to be a rule: book whoever will be out soonest, then repeat with what still fits.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>How narrowly the best impostor fails. I ran 20,000 random days of 22 requests each. Earliest start was best on about 23% of them and shortest on about 90%. Fewest clashes was best on 99.9%. You could use that rule for years and never catch it out. Then load <em>Quiet middle</em>, eleven requests arranged with a little malice, and it books three when four would fit. Testing would probably have told me it was correct. Only an argument could tell me it wasn't going to be.</p>
+      <p>And the argument is so physical. Drive a nail through the end of each booking you made. Anything you turned away was still running when that nail went in, so it's pinned too. Nobody can book two requests through one nail. Count the nails and you're done. Or make your own plan and press the swap button: each press trades one of your bookings for an ends-first one, and the plan never gets shorter.</p>
+      <p>The rule is narrower than it looks. If the bookings pay different amounts, it can fail badly, and you need dynamic programming instead. It also needs to see every request before it starts.</p>
+
+      <h3>Something you might take away</h3>
+      <p>It's easy to judge a choice by how big it is, or how much trouble it causes. This rule asks something else: how much is left afterwards? Finishing first doesn't win because it's efficient. It wins because, whatever anyone else chose, you have at least as much of the day still open as they do. When you can't see which choice is best, look for the one that can't leave you behind.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- CORE: one room, many requests {s, e} in quarter hours, half-open [s, e) ----
+  const clash = (a, b) => a.s < b.e && b.s < a.e;
+  const byEnd = (a, b) => a.e - b.e || b.s - a.s || a.id - b.id;
+  const RULES = {
+    ends: () => 0,                       // ties below already prefer the earliest finish
+    starts: (r) => r.s,
+    short: (r) => r.e - r.s,
+    clashes: (r, left) => left.reduce((n, q) => n + (q !== r && clash(r, q)), 0),
+  };
+  // Book by a rule until nothing fits: [{pick, dropped, left}], scores re-read every round.
+  function greedy(reqs, rule) {
+    let left = reqs.slice().sort(byEnd);
+    const steps = [];
+    while (left.length) {
+      let pick = null, best = Infinity;
+      for (const r of left) { const v = RULES[rule](r, left); if (v < best) { best = v; pick = r; } }
+      const dropped = left.filter((r) => r !== pick && clash(r, pick));
+      left = left.filter((r) => r !== pick && !clash(r, pick));
+      steps.push({ pick, dropped, score: best, left: left.length });
+    }
+    return steps;
+  }
+  // The true maximum by dynamic programming, with no greedy choice in it.
+  function most(reqs) {
+    const r = reqs.slice().sort(byEnd), M = [0];
+    for (let i = 0; i < r.length; i++) {
+      let p = i; while (p > 0 && r[p - 1].e > r[i].s) p--;
+      M.push(Math.max(M[i], 1 + M[p]));
+    }
+    return M[r.length];
+  }
+  // A nail goes in the last quarter hour of each ends-first pick.
+  const nailsOf = (steps) => steps.map((t) => t.pick.e);
+  const hit = (r, nail) => r.s < nail && nail <= r.e;
+  // Swap the first place a plan differs from ends-first. It stays legal and never shrinks.
+  function swapOne(plan, reqs) {
+    const p = plan.slice().sort(byEnd), g = greedy(reqs, 'ends').map((t) => t.pick);
+    for (let i = 0; i < g.length; i++) if (p[i] !== g[i]) {
+      const out = p[i] || null;
+      return { plan: [...p.slice(0, i), g[i], ...p.slice(i + 1)], out, into: g[i], i };
+    }
+    return null;
+  }
+  // ---- END CORE ----
+
+  // ---- DAYS: each is a list of [start, end] ----
+  const DAY = 48;
+  function randomDay(n, rnd) {
+    return Array.from({ length: n }, () => {
+      const len = 2 + Math.floor(Math.pow(rnd(), 1.6) * 13), s = Math.floor(rnd() * (DAY - len + 1));
+      return [s, s + len];
+    });
+  }
+  const DAYS = [
+    ['Ordinary', () => [[0, 5], [1, 3], [2, 9], [4, 7], [6, 14], [7, 10], [9, 12], [8, 20], [11, 17], [13, 16], [15, 23], [17, 19], [18, 26], [20, 25], [22, 24], [24, 31], [23, 36], [27, 29], [28, 34], [32, 36], [30, 41], [35, 39], [37, 45], [40, 42], [41, 48], [43, 47]]],
+    ['Early bird', () => [[0, 46], ...Array.from({ length: 12 }, (_, i) => [2 + i * 3 + (i > 5 ? 2 : 0), 4 + i * 3 + (i > 5 ? 2 : 0)])]],
+    ['Short straddles', () => [0, 16, 32].flatMap((o) => [[o, o + 8], [o + 8, o + 16], [o + 7, o + 9]])],
+    ['Quiet middle', () => [[0, 11], [12, 23], [25, 36], [37, 48], [22, 26], ...Array(3).fill([10, 13]), ...Array(3).fill([35, 38])]],
+    ['Random day', () => randomDay(22, Math.random)],
+    ['Packed', () => randomDay(40, Math.random)],
+  ];
+  // ---- END DAYS ----
+
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const NAMES = { ends: 'Ends first', starts: 'Starts first', short: 'Shortest', clashes: 'Fewest clashes', hand: 'Your own pick' };
+    const MAX = 60;
+    const canvas = $('board'), ctx = canvas.getContext('2d'), speedEl = $('speed');
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let reqs = [], nextId = 0, rule = 'ends', steps = [], k = 0, plan = [], playing = true, nextAt = 0;
+    let best = 0, nails = [], sel = null, hover = null, drag = null, flights = new Map(), said = null;
+    let W = 600, H = 400, laneH = 24, lanes = 1, dirty = true;
+    const ROOM = 46, TOP = 22, GAP = 14;
+
+    const clock = (q) => { const h = 9 + (q >> 2), m = (q & 3) * 15; return h + ':' + String(m).padStart(2, '0'); };
+    const span = (r) => clock(r.s) + '–' + clock(r.e);
+    const lasts = (r) => { const q = r.e - r.s, h = q >> 2, m = (q & 3) * 15; return (h ? h + ' h' : '') + (h && m ? ' ' : '') + (m ? m + ' min' : ''); };
+    const many = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+
+    // ---- state ----
+    function pack() {                                  // fewest lanes: first free lane, by start time
+      const free = [];
+      for (const r of reqs.slice().sort((a, b) => a.s - b.s || a.e - b.e)) {
+        let l = free.findIndex((t) => t <= r.s); if (l < 0) l = free.length;
+        free[l] = r.e; r.lane = l;
+      }
+      lanes = Math.max(4, free.length) + 2;
+      layout();
+    }
+    function load(list) {
+      nextId = 0; reqs = list.map(([s, e]) => ({ s, e, id: nextId++ }));
+      sel = hover = null; plan = []; pack(); rerun(true);
+    }
+    function rerun(animate) {
+      best = most(reqs); nails = nailsOf(greedy(reqs, 'ends')); said = null; flights.clear();
+      if (rule === 'hand') plan = plan.filter((r) => reqs.includes(r));
+      else { steps = greedy(reqs, rule); k = animate ? 0 : steps.length; plan = steps.slice(0, k).map((t) => t.pick); playing = !!animate; }
+      nextAt = performance.now() + 700; labels();
+    }
+    const done = () => rule !== 'hand' && k >= steps.length;
+    function advance() {
+      const t = steps[k++]; if (!t) return;
+      plan.push(t.pick); flights.set(t.pick.id, performance.now());
+      nextAt = performance.now() + 1500 * Math.pow(0.05, +speedEl.value / 100);
+      if (done()) playing = false;
+      labels();
+    }
+    function setRule(r) {
+      rule = r; $('nails').checked = r !== 'hand'; if (r === 'hand') plan = [];
+      rerun(true);
+    }
+    const blocked = (r) => !plan.includes(r) && plan.some((p) => clash(p, r));
+
+    // ---- words ----
+    function status(cls, head, text) { $('status').className = 'panel status ' + cls; $('status').children[0].textContent = head; $('status').children[1].textContent = text; }
+    function verdict() {
+      const n = plan.length;
+      if (n === best) return ['done', 'Booked ' + n + ', and nobody can do better', 'There are ' + many(best, 'nail') + ', every request is caught by one, and no two bookings can share.'];
+      return ['closed', 'Booked ' + n + ', but ' + best + ' would fit', 'This rule left ' + many(best - n, 'booking') + ' on the table. Press swap to see the plan mended without ever losing one.'];
+    }
+    function say() {
+      if (said) return status(...said);
+      if (!reqs.length) return status('walk', 'An empty day', 'Drag across the board to add a request, or load a day.');
+      if (rule === 'hand') {
+        if (plan.length === best) return status('done', 'Booked ' + plan.length + ', and nobody can do better', 'You match ends-first. Turn on the nails to see why that is the limit.');
+        const open = reqs.filter((r) => !plan.includes(r) && !blocked(r)).length;
+        if (!plan.length) return status('walk', 'Your turn', 'Click requests to book them. The room takes one at a time; back to back is fine.');
+        return open ? status('walk', 'Booked ' + plan.length + ' so far', many(open, 'request') + ' would still fit. Click a booking to cancel it.')
+          : status('closed', 'Booked ' + plan.length + ', but ' + best + ' would fit', 'Nothing else fits beside these. Cancel something, or press swap to trade your way up.');
+      }
+      if (done()) return status(...verdict());
+      if (!k) return status('walk', 'Nothing booked yet', many(reqs.length, 'request') + ' for one room. Rule: ' + NAMES[rule].toLowerCase() + '.');
+      const t = steps[k - 1], r = t.pick;
+      const why = rule === 'ends' ? 'the first to finish of those left' : rule === 'starts' ? 'the first to start of those left' : rule === 'short' ? 'the shortest left, at ' + lasts(r) : 'the least in the way, clashing with ' + t.score;
+      status('walk', 'Booked ' + span(r), 'It was ' + why + '. ' + (t.dropped.length ? 'Turned away ' + t.dropped.length + '; ' : 'Nobody turned away; ') + many(t.left, 'request') + ' left.');
+    }
+    function labels() {
+      for (const b of $('rules').children) b.setAttribute('aria-pressed', b.dataset.r === rule);
+      $('speedOut').textContent = +speedEl.value < 25 ? 'slow' : +speedEl.value < 65 ? 'steady' : 'fast';
+      const hand = rule === 'hand';
+      $('play').textContent = done() ? '↺ Replay' : playing ? '❚❚ Pause' : '▶ Play';
+      if (hand) $('play').textContent = '↺ Clear';
+      $('step').disabled = $('finish').disabled = hand || done();
+      $('swap').disabled = !(hand || done()) || !swapOne(plan, reqs);
+      $('remove').disabled = !sel;
+      const rows = ['ends', 'starts', 'short', 'clashes'].map((r) => [NAMES[r], greedy(reqs, r).length, r === rule]);
+      if (hand) rows.push(['Your plan', plan.length, true]);
+      $('race').replaceChildren(...rows.map(([name, n, on]) => {
+        const row = document.createElement('div'); row.className = 'lap' + (on ? ' on' : '') + (n === best ? ' full' : '');
+        const a = document.createElement('span'), bar = document.createElement('i'), fill = document.createElement('em'), c = document.createElement('b');
+        a.textContent = name; fill.style.width = (best ? 100 * n / best : 0) + '%'; c.textContent = n + ' of ' + best; bar.append(fill); row.append(a, bar, c); return row;
+      }));
+      inspect(); say(); dirty = true;
+    }
+    function inspect() {
+      const r = hover || sel;
+      $('inspect').textContent = !r ? 'Hover or tap a request to read it.' : span(r) + ', ' + lasts(r) + '. Clashes with ' + many(reqs.filter((q) => q !== r && clash(q, r)).length, 'other') + '. ' +
+        (plan.includes(r) ? 'Booked.' : blocked(r) ? 'Turned away.' : 'Waiting.') + (r === sel ? ' Selected.' : '');
+    }
+
+    // ---- drawing ----
+    const X = (q) => 4 + q / DAY * (W - 8);
+    const Y = (lane) => TOP + ROOM + GAP + lane * laneH;
+    function layout() {
+      W = Math.max(260, $('wrap').clientWidth);
+      const room = Math.max(220, Math.min(innerHeight * 0.52, 520));
+      laneH = Math.max(15, Math.min(30, room / lanes));
+      H = Y(lanes) + 6;
+      const d = Math.min(2, devicePixelRatio || 1);
+      canvas.width = Math.round(W * d); canvas.height = Math.round(H * d); canvas.style.height = H + 'px';
+      ctx.setTransform(d, 0, 0, d, 0, 0); dirty = true;
+    }
+    function bar(x, y, w, h, fill, edge, lw) {
+      ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, Math.min(6, h / 3)); else ctx.rect(x, y, w, h);
+      ctx.fillStyle = fill; ctx.fill(); if (edge) { ctx.strokeStyle = edge; ctx.lineWidth = lw || 1.2; ctx.stroke(); }
+    }
+    function draw(now) {
+      dirty = false;
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif'; ctx.textBaseline = 'middle';
+      const every = W < 480 ? 12 : W < 640 ? 8 : 4;
+      for (let q = 0; q <= DAY; q += 4) {
+        ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(X(q), TOP, 1, H - TOP);
+        if (q % every === 0) { ctx.fillStyle = '#9a9ab0'; ctx.textAlign = q === 0 ? 'left' : q === DAY ? 'right' : 'center'; ctx.fillText(clock(q), X(q), 10); }
+      }
+      bar(X(0), TOP, X(DAY) - X(0), ROOM, 'rgba(110,231,200,0.05)', 'rgba(110,231,200,0.35)');
+      const last = rule !== 'hand' && k && !done() ? steps[k - 1] : null;
+      for (const r of reqs) {
+        const on = plan.includes(r), no = blocked(r), fresh = last && last.dropped.includes(r);
+        const x = X(r.s) + 1, w = X(r.e) - X(r.s) - 2, y = Y(r.lane) + 2, h = laneH - 4;
+        let f = 'rgba(124,124,255,0.42)', e = '#7c7cff';
+        if (on) { f = 'rgba(110,231,200,0.45)'; e = '#6ee7c8'; } else if (fresh) { f = 'rgba(255,124,195,0.35)'; e = '#ff7cc3'; } else if (no) { f = 'rgba(255,255,255,0.05)'; e = 'rgba(255,255,255,0.16)'; }
+        bar(x, y, w, h, f, r === sel ? '#fff' : e, r === sel || r === hover ? 2.2 : 1.2);
+        if (on) {
+          const t0 = flights.get(r.id), t = t0 === undefined || calm ? 1 : Math.min(1, (now - t0) / 420), z = 1 - Math.pow(1 - t, 3);
+          if (t < 1) dirty = true;
+          bar(x, y + (TOP + 6 - y) * z, w, h + (ROOM - 12 - h) * z, '#3fae94', '#6ee7c8');
+        }
+      }
+      const show = $('nails').checked ? rule === 'ends' && !done() ? nails.slice(0, k) : rule === 'hand' || done() ? nails : [] : [];
+      for (const q of show) {
+        const x = X(q - 0.5);
+        ctx.strokeStyle = '#ffc46b'; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x, TOP - 2); ctx.lineTo(x, H - 4); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#ffc46b'; ctx.beginPath(); ctx.arc(x, TOP - 2, 3.5, 0, 7); ctx.fill();
+        for (const r of reqs) if (hit(r, q)) { ctx.beginPath(); ctx.arc(x, Y(r.lane) + laneH / 2, 2.6, 0, 7); ctx.fill(); }
+      }
+      if (drag && drag.ghost) bar(X(drag.ghost[0]), Y(drag.lane) + 2, X(drag.ghost[1]) - X(drag.ghost[0]), laneH - 4, 'rgba(255,255,255,0.1)', '#fff');
+    }
+    function frame(now) {
+      if (playing && rule !== 'hand' && !done() && now >= nextAt && !story.classList.contains('open')) advance();
+      if (dirty) draw(now);
+      requestAnimationFrame(frame);
+    }
+
+    // ---- pointer ----
+    function at(e) {
+      const b = canvas.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+      const q = (x - 4) / (W - 8) * DAY, lane = Math.floor((y - Y(0)) / laneH);
+      let r = null;
+      if (lane >= 0) r = reqs.find((a) => a.lane === lane && q >= a.s && q < a.e) || null;
+      else if (y >= TOP && y <= TOP + ROOM) r = plan.find((a) => q >= a.s && q < a.e) || null;
+      const end = !!r && lane >= 0 && X(r.e) - x < Math.min(9, (X(r.e) - X(r.s)) / 3);
+      return { q, lane, r, end, x };
+    }
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      const p = at(e);
+      if (!p.r && (p.lane < 0 || p.lane >= lanes)) return;
+      drag = { r: p.r, lane: p.lane, q: p.q, x: p.x, mode: p.r ? p.lane < 0 ? 'tap' : p.end ? 'end' : 'move' : 'new', s: p.r && p.r.s, e: p.r && p.r.e, moved: false, ghost: null };
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      const p = at(e);
+      if (!drag) {
+        canvas.style.cursor = p.r ? p.end ? 'ew-resize' : 'pointer' : p.lane >= 0 ? 'crosshair' : 'default';
+        if (p.r !== hover) { hover = p.r; inspect(); dirty = true; }
+        return;
+      }
+      if (!drag.moved && Math.abs(p.x - drag.x) < 5) return;
+      if (drag.mode === 'tap') return;
+      drag.moved = true; dirty = true;
+      const r = drag.r, dq = Math.round(p.q - drag.q);
+      if (drag.mode === 'new') {
+        const a = Math.max(0, Math.min(DAY, Math.round(drag.q))), b = Math.max(0, Math.min(DAY, Math.round(p.q)));
+        drag.ghost = a === b ? null : [Math.min(a, b), Math.max(a, b)];
+      } else {
+        if (drag.mode === 'end') r.e = Math.max(drag.s + 1, Math.min(DAY, drag.e + dq));
+        else { const d = Math.max(-drag.s, Math.min(DAY - drag.e, dq)); r.s = drag.s + d; r.e = drag.e + d; }
+        if (plan.includes(r)) plan = plan.filter((b) => b === r || !clash(b, r));
+        sel = hover = r; rerun(false);
+      }
+    });
+    function release(e, cancelled) {
+      if (!drag) return;
+      const d = drag; drag = null; dirty = true;
+      if (cancelled) { if (d.moved && d.r) { d.r.s = d.s; d.r.e = d.e; pack(); rerun(false); } return; }
+      if (d.ghost) {
+        if (reqs.length >= MAX) { said = ['walk', 'The board is full', 'It holds ' + MAX + ' requests. Remove one first.']; return labels(); }
+        const r = { s: d.ghost[0], e: d.ghost[1], id: nextId++ }; reqs.push(r); sel = r; press(null); pack(); return rerun(false);
+      }
+      if (d.moved) { if (d.r) { press(null); pack(); rerun(false); } return; }
+      sel = d.r; said = null;
+      if (d.r && rule === 'hand') {
+        if (plan.includes(d.r)) plan = plan.filter((r) => r !== d.r);
+        else {
+          const inWay = plan.filter((r) => clash(r, d.r));
+          if (inWay.length) said = ['closed', 'The room is taken', span(d.r) + ' clashes with ' + inWay.map(span).join(' and ') + '. Click a booking to cancel it.'];
+          else { plan.push(d.r); flights.set(d.r.id, performance.now()); }
+        }
+      }
+      labels();
+    }
+    canvas.addEventListener('pointerup', (e) => release(e, false));
+    canvas.addEventListener('pointercancel', (e) => release(e, true));
+    canvas.addEventListener('pointerleave', () => { if (!drag) { hover = null; inspect(); dirty = true; } });
+
+    // ---- controls ----
+    const button = (box, text) => { const b = document.createElement('button'); b.textContent = text; $(box).append(b); return b; };
+    for (const r in NAMES) { const b = button('rules', NAMES[r]); b.dataset.r = r; b.onclick = () => setRule(r); }
+    DAYS.forEach(([name, make]) => { const b = button('days', name); b.onclick = () => { press(b); load(make()); }; });
+    function press(b) { for (const c of $('days').children) c.setAttribute('aria-pressed', c === b); }
+    speedEl.oninput = labels;
+    $('nails').onchange = () => { dirty = true; };
+    $('play').onclick = () => {
+      if (rule === 'hand') { plan = []; said = null; return labels(); }
+      if (done()) return rerun(true);
+      playing = !playing; nextAt = 0; labels();
+    };
+    $('step').onclick = () => { playing = false; advance(); };
+    $('finish').onclick = () => { playing = false; k = steps.length; plan = steps.map((t) => t.pick); labels(); };
+    $('swap').onclick = () => {
+      const c = swapOne(plan, reqs); if (!c) return;
+      rule = 'hand'; plan = c.plan; flights.set(c.into.id, performance.now());
+      said = plan.length === best && !swapOne(plan, reqs)
+        ? ['done', 'Now it is the ends-first plan', (c.out ? span(c.out) + ' made way for ' + span(c.into) : span(c.into) + ' was added') + '. ' + many(plan.length, 'booking') + ', the most possible.']
+        : c.out ? ['walk', span(c.out) + ' out, ' + span(c.into) + ' in', 'The new one ends ' + (c.into.e < c.out.e ? 'earlier' : 'no later') + ', so everything after it still fits. Still ' + many(plan.length, 'booking') + '.']
+          : ['walk', span(c.into) + ' added', 'There was room for it at the end of the day. Now ' + many(plan.length, 'booking') + '.'];
+      labels();
+    };
+    $('remove').onclick = () => { if (!sel) return; reqs = reqs.filter((r) => r !== sel); plan = plan.filter((r) => r !== sel); sel = hover = null; press(null); pack(); rerun(false); };
+    window.addEventListener('resize', layout);
+    press($('days').children[0]);
+    load(DAYS[0][1]());
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
