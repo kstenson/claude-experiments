@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-25",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "The Tide Took Monday Back",
+  "mood": {
+    "label": "Relief reversed",
+    "score": -0.22,
+    "summary": "Relief reversed (39): Asian markets sank on AI doubts, Hodeidah was struck, Moscow promised retaliation and California braced for its highest tides since 1983. A halted advance on Bunia, a dengue success and a first foreign astronaut aboard Tiangong eased it.",
+    "palette": {
+      "bg": "#0d1020",
+      "bg2": "#1a1f38",
+      "accent": "#5fb8c9",
+      "accent2": "#d0718a",
+      "text": "#e8eaf2"
+    }
+  },
+  "style": {
+    "genre": "darkwave — strumstick, alto recorder, darbuka, Casio RZ-1",
+    "key": "Bb",
+    "scale": "phrygian",
+    "bpm": 112,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (VCSL strumstick, alto recorder, darbuka, wine glass, suspended cymbal; Casio RZ-1 drum machine), triangle-oscillator bass, sawtooth pad"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ bd ~ ~ bd ~\").bank(\"CasioRZ1\").gain(0.5), s(\"~ ~ sd ~ ~ ~ sd ~\").bank(\"CasioRZ1\").gain(0.3).room(0.4), s(\"hh*8\").bank(\"CasioRZ1\").gain(\"0.13 0.07 0.1 0.07\").hpf(5000).pan(0.62), s(\"<~ ~ ~ [~ ~ ~ ~ ~ ~ ht lt]>\").bank(\"CasioRZ1\").gain(0.22).room(0.4), s(\"darbuka:2 ~ darbuka:9 darbuka:1 ~ darbuka:9 darbuka:3 ~\").gain(0.2).room(0.3).pan(0.36), note(\"<[bf1 bf1 ~ bf1 ~ df2 f2 ~] [b1 b1 ~ b1 ~ ef2 gf2 ~] [gf1 gf1 ~ gf1 ~ bf1 df2 ~] [af1 af1 ~ af1 ~ b1 ef2 b1]>\").s(\"triangle\").attack(0.01).decay(0.2).sustain(0.5).release(0.1).lpf(480).gain(0.5), note(\"<[bf3 f4 df4 bf3 f4 df4 bf3 f4] [b3 gf4 ef4 b3 gf4 ef4 b3 gf4] [bf3 gf4 df4 bf3 gf4 df4 bf3 gf4] [b3 ef4 af4 b3 ef4 af4 b3 ef4]>\").s(\"strumstick\").clip(1.2).gain(\"0.24 0.17 0.2 0.24 0.17 0.2 0.24 0.17\").lpf(sine.range(1400,3600).slow(16)).room(0.35).delay(0.2).delaytime(0.402).pan(0.4), note(\"<[bf2,f3,df4] [b2,gf3,ef4] [gf2,df3,bf3] [af2,ef3,b3]>\").s(\"sawtooth\").attack(0.6).sustain(0.6).release(0.8).lpf(sine.range(350,900).slow(12)).gain(0.12).room(0.6).rsize(4), note(\"<[f5@3 ef5 df5@2 b4 ~] [ef5@3 gf5 ef5@2 ~ ~] [df5@3 bf4 gf4@2 bf4 ~] [b4@2 af4@2 b4@2 ~ ~]>\").s(\"recorder_alto_vib\").mask(\"<0 1 1 0 1 1>/4\").clip(1).attack(0.04).release(0.25).gain(0.22).lpf(3600).room(0.55).delay(0.25).delaytime(0.402).delayfeedback(0.35).pan(0.58), note(\"<f4 ~ ~ ~ ~ ~ af4 ~>\").s(\"wineglass\").gain(0.08).room(0.7).lpf(2600).pan(0.7), s(\"<~ ~ ~ ~ ~ ~ ~ sus_cymbal2:3>\").gain(0.1).room(0.5).lpf(5000))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "Monday's relief came in like a wave,",
+        "by Wednesday it ran for the sea.",
+        "Taipei went down, and Seoul went down,",
+        "on what the machines might not be."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Strikes fall on Hodeidah's harbor,",
+        "California watches the shore,",
+        "and shoppers in Cartagena held still",
+        "with gunmen between them and the door."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "Oh, the tide took Monday back,",
+        "but it left some things on the sand:",
+        "a halted march on Bunia's road,",
+        "mosquitoes bred to do less harm,",
+        "and a door in the sky for a stranger's hand."
+      ]
+    }
+  ]
+}
