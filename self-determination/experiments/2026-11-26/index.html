@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Snakes Are Free — Experiment 125</title>
+<meta name="description" content="Myers' 1986 diff algorithm, the one under git diff: search an edit graph by number of edits, keep only the furthest point on each diagonal, and slide for free down every run of matches." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff;
+    border-radius: 11px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  input[type=text] {
+    width: 100%; margin-top: 6px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14); color: #e9e9f0;
+    border-radius: 9px; padding: 8px 10px; font: inherit; font-size: 0.86rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  input[type=text]:focus { border-color: rgba(124,124,255,0.6); outline: none; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; }
+  .seg.two { grid-template-columns: repeat(2, 1fr); }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 2px; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+  .seg button:hover { border-color: rgba(124,124,255,0.45); }
+
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 6px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 6px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+  .warn { font-size: 0.74rem; color: #ffc46b; min-height: 1em; }
+
+  /* ---- Stage ---- */
+  .status { min-height: 84px; }
+  .status b { display: block; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; color: #a9a9ff; }
+  .status span { display: block; margin-top: 5px; font-size: 0.86rem; line-height: 1.55; color: #b9b9ca; overflow-wrap: anywhere; }
+  .status.done b { color: #6ee7c8; }
+
+  .board { padding: 10px; }
+  #board { display: block; border-radius: 10px; width: 100%; touch-action: pan-y; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 14px; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
+  .inspect { min-height: 2.6em; padding: 8px 6px 0; font-size: 0.8rem; line-height: 1.45; color: #b9b9ca; overflow-wrap: anywhere; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat .cap { display: block; }
+  .stat b { display: block; font-size: 1.3rem; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat small { display: block; font-size: 0.74rem; color: #8d8da3; margin-top: 2px; }
+  .meter { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; margin-top: 6px; }
+  .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7c7cff, #ff7cc3); transition: width 0.25s ease; }
+
+  .diff { margin-top: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92rem; line-height: 1.9; overflow-wrap: anywhere; color: #d7d7e4; min-height: 1.9em; }
+  .diff .del { background: rgba(255,124,195,0.18); color: #ffb3dc; text-decoration: line-through; border-radius: 3px; padding: 1px 1px; }
+  .diff .ins { background: rgba(110,231,200,0.16); color: #9ff3dc; border-radius: 3px; padding: 1px 1px; }
+  .diff .wait { color: #5d5d72; }
+  .script { margin-top: 6px; font-size: 0.78rem; color: #8d8da3; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+
+  button:focus-visible, input:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .panel { padding: 14px 14px; }
+    .stat b { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Snakes Are Free</h1>
+      <p class="sub">Experiment № 125 · November 26, 2026</p>
+      <p class="lede">Myers, 1986: the diff under <b>git diff</b>. Walk a grid from one text to the other. Stepping right deletes, stepping down inserts, and every diagonal is a match you get for free. Search by number of edits, and on each diagonal keep only the point that got furthest.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div>
+          <span class="cap">Pairs</span>
+          <div class="seg" id="presets"></div>
+        </div>
+        <div>
+          <span class="cap">Compare by</span>
+          <div class="seg two" id="modes"></div>
+        </div>
+        <label class="field"><span>Before (across the top)</span>
+          <input type="text" id="inA" spellcheck="false" autocomplete="off" />
+        </label>
+        <label class="field"><span>After (down the side)</span>
+          <input type="text" id="inB" spellcheck="false" autocomplete="off" />
+        </label>
+        <p class="warn" id="warn"></p>
+        <label class="field">
+          <span>Speed<b id="speedOut"></b></span>
+          <input type="range" id="speed" min="0" max="100" step="1" value="35" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">❚❚ Pause</button>
+          <button class="btn" id="step">Round</button>
+          <button class="btn" id="finish">Finish</button>
+          <button class="btn" id="again">↺</button>
+        </div>
+        <p class="note"><b>Reading it.</b> Round <b>d</b> tries every diagonal from −d to d. Each one takes a single step, right or down, from whichever neighbour got further, then slides down matches as far as they go. Hover the grid to read any point.</p>
+        <p class="note"><b>Why it's worth knowing:</b> when two files are nearly the same, d is small, and the search only ever visits a thin band around the main diagonal. Its cost grows with the size of the change, not the size of the files.</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel board">
+        <canvas id="board" aria-label="An edit graph: the first text across the top, the second down the side, with the search spreading out from the top-left corner"></canvas>
+        <div class="legend">
+          <span><i style="background:#3d3d6a"></i>match (free diagonal)</span>
+          <span><i style="background:linear-gradient(90deg,#7c7cff,#ff7cc3)"></i>explored, by round</span>
+          <span><i style="background:#ff7cc3"></i>delete</span>
+          <span><i style="background:#6ee7c8"></i>insert</span>
+          <span><i style="background:#fff"></i>keep</span>
+        </div>
+        <div class="inspect" id="inspect">Hover or tap a point on the grid.</div>
+      </div>
+
+      <div class="panel status" id="status"><b>—</b><span>—</span></div>
+
+      <div class="panel">
+        <div class="stats">
+          <div class="stat"><span class="cap">Edits so far</span><b id="sD">0</b><small id="sDsub">round 0</small></div>
+          <div class="stat"><span class="cap">Points visited</span><b id="sV">0</b><small id="sVsub">of 0</small><div class="meter"><i id="sVbar"></i></div></div>
+          <div class="stat"><span class="cap">Kept</span><b id="sK">—</b><small id="sKsub">longest common run</small></div>
+        </div>
+        <div class="diff" id="diff"></div>
+        <div class="script" id="script"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 125 · The story</p>
+      <h2>Snakes Are Free</h2>
+
+      <h3>Why I picked it</h3>
+      <p>Every one of these pages arrives as a diff. Before anything here is merged, someone runs <em>git diff</em> and reads a column of red and green lines, and I had never once looked at what draws them. It turns out to be a six-page paper from 1986 by Eugene Myers, and the algorithm in it is a dozen lines long. It felt rude to keep using it without saying hello.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The reframing. Comparing two texts sounds like a problem about text. Myers turns it into a walk across a grid: right is a deletion, down is an insertion, and wherever the two texts agree there is a diagonal you can slide down at no cost. The best diff is just the path with the fewest straight steps. He calls each free slide a <em>snake</em>.</p>
+      <p>Then the trick that makes it fast. Search by number of edits: everywhere you can reach with zero, then with one, then two. And on each diagonal, remember only the point that got furthest, because anything a shorter reach could do, the longer one can do too. Load <em>Nearly same</em> and watch: two sentences of 54 letters each, a grid of 3,025 points, and the search touches 364 of them. A full table would fill every one.</p>
+      <p>It finds the fewest edits, not always the diff a person would write. When several scripts tie, it settles on one by a fixed rule, which is part of why git's output sometimes splits a change in an odd place.</p>
+
+      <h3>Something you might take away</h3>
+      <p>The cost of comparing two things doesn't have to depend on how big they are. It can depend on how different they are. If most of what you're checking is the same, you can find a way to agree on that part for free, and spend your effort only where the two really part ways.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') story.classList.remove('open');
+  });
+
+  // ---- CORE: Myers' greedy O(ND) shortest edit script, recording every move ----
+  // a runs along x (right = delete a[x]); b runs along y (down = insert b[y]); k = x - y.
+  function myers(a, b) {
+    const N = a.length, M = b.length, MAX = N + M;
+    const V = new Map();
+    const rounds = [];                   // rounds[d] = Map k -> segment
+    const segs = [];
+    for (let d = 0; d <= MAX; d++) {
+      const round = new Map();
+      rounds.push(round);
+      for (let k = -d; k <= d; k += 2) {
+        let x, px, py, move;
+        if (d === 0) { x = 0; px = 0; py = 0; move = null; }
+        else if (k === -d || (k !== d && V.get(k - 1) < V.get(k + 1))) {
+          px = V.get(k + 1); py = px - (k + 1); x = px; move = 'down';
+        } else {
+          px = V.get(k - 1); py = px - (k - 1); x = px + 1; move = 'right';
+        }
+        let y = x - k;
+        // Stepped off the grid: remember it so neighbours can compare, but
+        // nothing that starts out here can ever come back to the far corner.
+        if (x > N || y > M) { V.set(k, x); continue; }
+        const mx = x, my = y;
+        while (x < N && y < M && a[x] === b[y]) { x++; y++; }
+        V.set(k, x);
+        const s = { d, k, move, px, py, mx, my, x, y, prevK: move === 'down' ? k + 1 : move === 'right' ? k - 1 : null };
+        round.set(k, s);
+        segs.push(s);
+        if (x >= N && y >= M) {
+          // Walk back through the rounds to recover the path.
+          const path = [];
+          let cur = s;
+          for (let dd = d; dd >= 0; dd--) {
+            path.push(cur);
+            if (dd > 0) cur = rounds[dd - 1].get(cur.prevK);
+          }
+          path.reverse();
+          return { D: d, segs, path };
+        }
+      }
+    }
+    return { D: 0, segs, path: [] };
+  }
+  // ---- END CORE ----
+
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const MAXTOK = 60;
+    const PRESETS = [
+      ['Myers', 'chars', 'ABCABBA', 'CBABAC'],
+      ['Anagram', 'chars', 'algorithm', 'logarithm'],
+      ['Weekend', 'chars', 'SATURDAY', 'SUNDAY'],
+      ['Fox', 'words', 'the quick brown fox jumps over the lazy dog', 'the quick red fox leaps over the very lazy dog'],
+      ['Nearly same', 'chars', 'a diff is cheap when the two files are nearly the same', 'a diff is fast when two files are mostly the same, see'],
+      ['Strangers', 'chars', 'keep it simple', 'zxqv wjbf yuh'],
+    ];
+    const canvas = $('board'), ctx = canvas.getContext('2d');
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const st = {
+      mode: 'chars', preset: 0, a: [], b: [], res: null,
+      shown: 0, t: 0, playing: !calm, pathT: 0, hover: null,
+      layout: null, visited: new Set(),
+    };
+
+    // ---- helpers ----
+    const tokens = (s, mode) => mode === 'words' ? s.split(/\s+/).filter(Boolean) : Array.from(s);
+    const show = (tok) => tok === ' ' ? '␣' : tok;
+    const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    function mix(t) {
+      const A = [124, 124, 255], B = [255, 124, 195];
+      return A.map((v, i) => Math.round(v + (B[i] - v) * t));
+    }
+    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+    // ---- UI ----
+    const presetsEl = $('presets');
+    PRESETS.forEach((p, i) => {
+      const bt = document.createElement('button');
+      bt.textContent = p[0];
+      bt.addEventListener('click', () => loadPreset(i));
+      presetsEl.appendChild(bt);
+    });
+    const modesEl = $('modes');
+    [['chars', 'Letters'], ['words', 'Words']].forEach(([m, label]) => {
+      const bt = document.createElement('button');
+      bt.textContent = label; bt.dataset.mode = m;
+      bt.addEventListener('click', () => { st.mode = m; st.preset = -1; rebuild(); });
+      modesEl.appendChild(bt);
+    });
+    function syncButtons() {
+      [...presetsEl.children].forEach((b, i) => b.setAttribute('aria-pressed', String(i === st.preset)));
+      [...modesEl.children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === st.mode)));
+      $('play').textContent = st.playing ? '❚❚ Pause' : '▶ Play';
+    }
+    function loadPreset(i) {
+      const p = PRESETS[i];
+      st.preset = i; st.mode = p[1];
+      $('inA').value = p[2]; $('inB').value = p[3];
+      rebuild();
+    }
+    $('inA').addEventListener('input', () => { st.preset = -1; rebuild(); });
+    $('inB').addEventListener('input', () => { st.preset = -1; rebuild(); });
+
+    const speedEl = $('speed');
+    const rate = () => 0.6 * Math.pow(80, speedEl.value / 100);       // segments per second
+    function speedLabel() { $('speedOut').textContent = rate().toFixed(rate() < 10 ? 1 : 0) + ' / s'; }
+    speedEl.addEventListener('input', speedLabel);
+
+    $('play').addEventListener('click', () => {
+      if (done()) restart();
+      st.playing = !st.playing; syncButtons();
+    });
+    $('step').addEventListener('click', () => {
+      st.playing = false;
+      const segs = st.res.segs;
+      if (st.shown >= segs.length) { st.pathT = 1; syncButtons(); update(); return; }
+      const d = segs[st.shown].d;
+      while (st.shown < segs.length && segs[st.shown].d === d) st.shown++;
+      st.t = 0; syncButtons(); update();
+    });
+    $('finish').addEventListener('click', () => {
+      st.shown = st.res.segs.length; st.t = 0; st.pathT = 1; st.playing = false; syncButtons(); update();
+    });
+    $('again').addEventListener('click', () => { restart(); st.playing = true; syncButtons(); });
+
+    function restart() { st.shown = 0; st.t = 0; st.pathT = 0; update(); }
+    const done = () => st.shown >= st.res.segs.length && st.pathT >= 1;
+
+    function rebuild() {
+      let a = tokens($('inA').value, st.mode), b = tokens($('inB').value, st.mode);
+      const cut = a.length > MAXTOK || b.length > MAXTOK;
+      a = a.slice(0, MAXTOK); b = b.slice(0, MAXTOK);
+      $('warn').textContent = cut ? `Only the first ${MAXTOK} ${st.mode === 'words' ? 'words' : 'letters'} of each are used.` : '';
+      st.a = a; st.b = b;
+      st.res = myers(a, b);
+      st.shown = 0; st.t = 0; st.pathT = 0;
+      if (calm) { st.shown = st.res.segs.length; st.pathT = 1; }
+      syncButtons(); layout(); update();
+    }
+
+    // ---- layout ----
+    function layout() {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const W = canvas.parentElement.clientWidth - 0;
+      const N = st.a.length, M = st.b.length;
+      const words = st.mode === 'words';
+      ctx.font = '12px ui-monospace, Menlo, monospace';
+      const longest = (arr) => arr.reduce((m, t) => Math.max(m, ctx.measureText(show(t)).width), 0);
+      const lm = words ? Math.min(90, longest(st.b) + 14) : 22;
+      const tm = words ? Math.min(80, longest(st.a) * 0.75 + 18) : 22;
+      const maxH = Math.max(260, Math.min(window.innerHeight * 0.66, 720));
+      let cell = Math.min((W - lm - 14) / Math.max(1, N), (maxH - tm - 14) / Math.max(1, M), 54);
+      cell = Math.max(4, cell);
+      const gw = cell * N, gh = cell * M;
+      const H = Math.ceil(tm + gh + 14);
+      const ox = Math.max(lm, Math.floor((W - gw) / 2 + (lm - 14) / 2));
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      st.layout = { W, H, cell, ox, oy: tm, N, M, words };
+    }
+    window.addEventListener('resize', () => { layout(); draw(); });
+
+    // ---- drawing ----
+    const P = (x, y) => [st.layout.ox + x * st.layout.cell, st.layout.oy + y * st.layout.cell];
+    function line(x0, y0, x1, y1) {
+      const [ax, ay] = P(x0, y0), [bx, by] = P(x1, y1);
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    }
+    // Draw part of a segment: the single move then the snake, up to fraction f.
+    function segPart(s, f) {
+      const moveLen = s.move ? 1 : 0, snake = s.x - s.mx, total = moveLen + snake;
+      if (total === 0) return;
+      let left = f * total;
+      ctx.beginPath();
+      let [cx, cy] = P(s.px, s.py);
+      ctx.moveTo(cx, cy);
+      if (moveLen) {
+        const g = Math.min(1, left); left -= g;
+        const [tx, ty] = P(s.mx, s.my);
+        cx = cx + (tx - cx) * g; cy = cy + (ty - cy) * g;
+        ctx.lineTo(cx, cy);
+      }
+      if (left > 0 && snake) {
+        const g = Math.min(1, left / snake);
+        const [sx, sy] = P(s.mx, s.my), [ex, ey] = P(s.x, s.y);
+        ctx.lineTo(sx + (ex - sx) * g, sy + (ey - sy) * g);
+      }
+      ctx.stroke();
+    }
+    function tip(s, f) {
+      const moveLen = s.move ? 1 : 0, snake = s.x - s.mx, total = moveLen + snake;
+      if (total === 0) return P(s.x, s.y);
+      let left = f * total;
+      if (moveLen && left <= 1) {
+        const [a0, a1] = P(s.px, s.py), [b0, b1] = P(s.mx, s.my);
+        return [a0 + (b0 - a0) * left, a1 + (b1 - a1) * left];
+      }
+      left -= moveLen;
+      const [a0, a1] = P(s.mx, s.my), [b0, b1] = P(s.x, s.y);
+      const g = snake ? left / snake : 1;
+      return [a0 + (b0 - a0) * g, a1 + (b1 - a1) * g];
+    }
+
+    function draw() {
+      const L = st.layout, { N, M, cell } = L;
+      ctx.clearRect(0, 0, L.W, L.H);
+      const segs = st.res.segs, D = Math.max(1, st.res.D);
+      const fs = Math.max(8, Math.min(15, cell * 0.55));
+
+      // labels
+      ctx.fillStyle = '#9a9ab0';
+      ctx.font = `${L.words ? 12 : fs}px ui-monospace, Menlo, monospace`;
+      ctx.textBaseline = 'middle';
+      const labelEvery = cell < 9 ? Math.ceil(9 / cell) : 1;
+      for (let i = 0; i < N; i++) {
+        if (!L.words && i % labelEvery) continue;
+        const [x0, y0] = P(i + 0.5, 0);
+        if (L.words) {
+          ctx.save(); ctx.translate(x0, y0 - 8); ctx.rotate(-Math.PI / 4);
+          ctx.textAlign = 'left'; ctx.fillText(show(st.a[i]), 0, 0); ctx.restore();
+        } else { ctx.textAlign = 'center'; ctx.fillText(show(st.a[i]), x0, y0 - 11); }
+      }
+      for (let j = 0; j < M; j++) {
+        if (!L.words && j % labelEvery) continue;
+        const [x0, y0] = P(0, j + 0.5);
+        ctx.textAlign = 'right'; ctx.fillText(show(st.b[j]), x0 - 7, y0);
+      }
+
+      // grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= N; i++) { const [x0, y0] = P(i, 0), [, y1] = P(i, M); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); }
+      for (let j = 0; j <= M; j++) { const [x0, y0] = P(0, j), [x1] = P(N, j); ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); }
+      ctx.stroke();
+
+      // free diagonals
+      ctx.strokeStyle = '#3d3d6a'; ctx.lineWidth = Math.max(1, cell * 0.08);
+      ctx.beginPath();
+      for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) if (st.a[i] === st.b[j]) {
+        const [x0, y0] = P(i, j), [x1, y1] = P(i + 1, j + 1);
+        ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+      }
+      ctx.stroke();
+
+      // explored segments
+      ctx.lineCap = 'round';
+      const w = Math.max(1.5, Math.min(5, cell * 0.16));
+      const curD = st.shown < segs.length ? segs[st.shown].d : st.res.D;
+      for (let i = 0; i < Math.min(st.shown + 1, segs.length); i++) {
+        const s = segs[i];
+        const f = i < st.shown ? 1 : st.t;
+        if (f <= 0) continue;
+        const c = mix(s.d / D);
+        const fresh = s.d === curD && st.pathT === 0;
+        ctx.strokeStyle = rgba(c, fresh ? 0.95 : 0.55);
+        ctx.lineWidth = w;
+        segPart(s, f);
+      }
+      // frontier dots: latest endpoint per diagonal in the current round
+      for (let i = 0; i < Math.min(st.shown + 1, segs.length); i++) {
+        const s = segs[i];
+        if (s.d !== curD || st.pathT > 0) continue;
+        const f = i < st.shown ? 1 : st.t;
+        if (f <= 0) continue;
+        const [x0, y0] = tip(s, f);
+        const c = mix(s.d / D);
+        ctx.fillStyle = rgba(c, 0.25);
+        ctx.beginPath(); ctx.arc(x0, y0, w * 2.4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(x0, y0, w * 0.9, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // final path
+      if (st.pathT > 0) {
+        const path = st.res.path, n = path.length;
+        const upto = st.pathT * n;
+        ctx.lineWidth = w * 1.6;
+        for (let i = 0; i < n; i++) {
+          const f = Math.max(0, Math.min(1, upto - i));
+          if (f <= 0) break;
+          const s = path[i];
+          const moveLen = s.move ? 1 : 0, snake = s.x - s.mx, total = moveLen + snake;
+          let left = f * total;
+          if (moveLen) {
+            const g = Math.min(1, left); left -= g;
+            ctx.strokeStyle = s.move === 'right' ? '#ff7cc3' : '#6ee7c8';
+            ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 10;
+            const [ax, ay] = P(s.px, s.py), [bx, by] = P(s.mx, s.my);
+            ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + (bx - ax) * g, ay + (by - ay) * g); ctx.stroke();
+          }
+          if (left > 0 && snake) {
+            const g = Math.min(1, left / snake);
+            ctx.strokeStyle = '#ffffff'; ctx.shadowColor = '#b9b9ff'; ctx.shadowBlur = 10;
+            const [ax, ay] = P(s.mx, s.my), [bx, by] = P(s.x, s.y);
+            ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + (bx - ax) * g, ay + (by - ay) * g); ctx.stroke();
+          }
+        }
+        ctx.shadowBlur = 0;
+      }
+
+      // corners
+      const [sx, sy] = P(0, 0), [ex, ey] = P(N, M);
+      ctx.fillStyle = '#7c7cff'; ctx.beginPath(); ctx.arc(sx, sy, w * 1.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ff7cc3'; ctx.beginPath(); ctx.arc(ex, ey, w * 1.4, 0, Math.PI * 2); ctx.fill();
+
+      // hover
+      if (st.hover) {
+        const [hx, hy] = P(st.hover[0], st.hover[1]);
+        ctx.strokeStyle = 'rgba(255,196,107,0.9)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(hx, hy, Math.max(5, w * 1.8), 0, Math.PI * 2); ctx.stroke();
+      }
+    }
+
+    // ---- text panels ----
+    function visitedCount() {
+      const seen = new Set(['0,0']);
+      const segs = st.res.segs;
+      for (let i = 0; i < Math.min(st.shown, segs.length); i++) {
+        const s = segs[i];
+        for (let x = s.mx, y = s.my; x <= s.x; x++, y++) seen.add(x + ',' + y);
+      }
+      st.visited = seen;
+      return seen.size;
+    }
+    function opsFromPath() {
+      const ops = [];
+      for (const s of st.res.path) {
+        if (s.move === 'right') ops.push(['del', st.a[s.px]]);
+        if (s.move === 'down') ops.push(['ins', st.b[s.py]]);
+        for (let x = s.mx; x < s.x; x++) ops.push(['eq', st.a[x]]);
+      }
+      return ops;
+    }
+    function update() {
+      const segs = st.res.segs, N = st.a.length, M = st.b.length;
+      const finished = st.shown >= segs.length;
+      const v = visitedCount(), total = (N + 1) * (M + 1);
+      const cur = finished ? null : segs[st.shown];
+      const dNow = finished ? st.res.D : cur.d;
+      $('sD').textContent = finished ? st.res.D : Math.max(0, dNow);
+      $('sDsub').textContent = finished ? 'the fewest possible' : `round ${dNow}, diagonal ${cur.k}`;
+      $('sV').textContent = v;
+      $('sVsub').textContent = `of ${total} a full table fills`;
+      $('sVbar').style.width = (100 * v / total).toFixed(1) + '%';
+
+      const status = $('status');
+      const sep = st.mode === 'words' ? ' ' : '';
+      if (finished) {
+        const ops = opsFromPath();
+        const keep = ops.filter((o) => o[0] === 'eq').length;
+        $('sK').textContent = keep;
+        $('sKsub').textContent = `of ${N} → ${M}`;
+        status.className = 'panel status done';
+        status.querySelector('b').textContent = `Reached the far corner in ${st.res.D} edit${st.res.D === 1 ? '' : 's'}.`;
+        status.querySelector('span').textContent = st.res.D === 0
+          ? 'The two are identical: one snake from corner to corner, no straight steps at all.'
+          : `Then walk back round by round: each endpoint remembers which neighbour it stepped from. Pink steps delete, green steps insert, and the ${keep} white diagonal${keep === 1 ? '' : 's'} are kept as they are.`;
+        $('diff').innerHTML = ops.map(([t, tok]) => {
+          const s = esc(st.mode === 'words' ? tok : (tok === ' ' ? ' ' : tok));
+          return t === 'eq' ? `<span>${s}</span>` : `<span class="${t}">${s === ' ' ? '&nbsp;' : s}</span>`;
+        }).join(sep === ' ' ? ' ' : '');
+        let edits = [];
+        for (const s of st.res.path) {
+          if (s.move === 'right') edits.push(`−${show(st.a[s.px])}@${s.px + 1}`);
+          if (s.move === 'down') edits.push(`+${show(st.b[s.py])}@${s.py + 1}`);
+        }
+        $('script').textContent = edits.length ? 'edit script: ' + edits.join('  ') : 'edit script: (nothing to do)';
+      } else {
+        $('sK').textContent = '—';
+        $('sKsub').textContent = 'longest common run';
+        status.className = 'panel status';
+        const s = cur;
+        let what;
+        if (!s.move) what = 'Start at the top-left corner and slide down every free match.';
+        else {
+          const from = `diagonal ${s.prevK}`;
+          const step = s.move === 'right' ? `steps right from ${from}, deleting “${show(st.a[s.px])}”` : `steps down from ${from}, inserting “${show(st.b[s.py])}”`;
+          const snake = s.x - s.mx;
+          what = `Diagonal ${s.k} ${step}${snake ? `, then slides ${snake} match${snake === 1 ? '' : 'es'} for free` : ''}.`;
+        }
+        status.querySelector('b').textContent = s.d === 0 ? 'Round 0: no edits at all.' : `Round ${s.d}: everywhere ${s.d} edit${s.d === 1 ? '' : 's'} can reach.`;
+        status.querySelector('span').textContent = what + (s.d > 0 && (s.k === -s.d || s.k === s.d) ? ' (An outermost diagonal has only one neighbour to come from.)' : s.d > 0 ? ' It picks whichever neighbour reached further.' : '');
+        $('diff').innerHTML = '<span class="wait">the diff appears when the search reaches the far corner</span>';
+        $('script').textContent = '';
+      }
+      updateInspect();
+      draw();
+    }
+
+    // ---- hover / tap ----
+    function updateInspect() {
+      const el = $('inspect');
+      if (!st.hover) { el.textContent = 'Hover or tap a point on the grid.'; return; }
+      const [x, y] = st.hover, k = x - y;
+      const pa = st.a.slice(0, x).map(show).join(st.mode === 'words' ? ' ' : '');
+      const pb = st.b.slice(0, y).map(show).join(st.mode === 'words' ? ' ' : '');
+      const seen = st.visited.has(x + ',' + y);
+      el.innerHTML = `Point (${x}, ${y}) on diagonal <b>${k}</b>: turning “${esc(pa) || '∅'}” into “${esc(pb) || '∅'}”. ` +
+        (seen ? '<span style="color:#a9a9ff">The search has been here.</span>' : '<span style="color:#6d6d82">Not visited.</span>');
+    }
+    function pointer(e) {
+      const r = canvas.getBoundingClientRect(), L = st.layout;
+      const x = Math.round((e.clientX - r.left - L.ox) / L.cell), y = Math.round((e.clientY - r.top - L.oy) / L.cell);
+      if (x < 0 || y < 0 || x > L.N || y > L.M) { st.hover = null; }
+      else st.hover = [x, y];
+      updateInspect(); draw();
+    }
+    canvas.addEventListener('pointermove', pointer);
+    canvas.addEventListener('pointerdown', pointer);
+    canvas.addEventListener('pointerleave', () => { st.hover = null; updateInspect(); draw(); });
+
+    // ---- animation ----
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      if (st.playing && st.res) {
+        const segs = st.res.segs;
+        if (st.shown < segs.length) {
+          st.t += dt * rate();
+          let changed = false;
+          while (st.t >= 1 && st.shown < segs.length) { st.t -= 1; st.shown++; changed = true; }
+          if (st.shown >= segs.length) st.t = 0;
+          if (changed) update(); else draw();
+        } else if (st.pathT < 1) {
+          st.pathT = Math.min(1, st.pathT + dt / 1.4);
+          if (st.pathT >= 1) { st.playing = false; syncButtons(); update(); } else draw();
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    speedLabel();
+    loadPreset(0);
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
