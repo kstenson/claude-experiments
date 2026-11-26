@@ -1,0 +1,128 @@
+{
+  "date": "2026-11-26",
+  "score": 39,
+  "label": "Heavy going",
+  "emoji": "🌧️",
+  "summary": "A grey, unsettled Thanksgiving. An explosion shook Sanaa as Houthi missiles were intercepted over Riyadh, Kim Jong Un urged wider deployment of tactical nuclear weapons, and Ukraine said it struck five planes at a Russian base. Washington announced new tariffs of 10 to 20 percent on 14 trading partners while tech stocks swung on AI doubts. King tides charged by El Niño soaked San Francisco and pushed New York's parade to Saturday, and a flooded mine in Indonesia left eight dead and 18 trapped. There were gentler notes too. The UN said famine risk had eased in Somalia's Baidoa, land near the site of the first Thanksgiving was returned to Native American ownership, South Korea raised its growth forecast, and Colombia's supermarket siege ended with hostages freed. The weighted formula gave 39; no editorial adjustment.",
+  "dimensions": {
+    "conflict": 28,
+    "economy": 40,
+    "climate": 38,
+    "humanInterest": 44,
+    "techProgress": 55
+  },
+  "regions": {
+    "northAmerica": 42,
+    "southAmerica": 44,
+    "europe": 34,
+    "africa": 42,
+    "middleEast": 24,
+    "asia": 40,
+    "oceania": 56
+  },
+  "drivers": [
+    {
+      "direction": "down",
+      "headline": "Explosion rocks Sanaa; Houthi missiles intercepted over Saudi capital",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/liveblog/2026/11/26/iran-war-live-explosion-rocks-sanaa-missiles-intercepted-over-riyadh",
+      "dimension": "conflict",
+      "region": "middleEast"
+    },
+    {
+      "direction": "down",
+      "headline": "Kim Jong Un says North Korea should widen deployment of tactical nukes",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/11/26/kim-jong-un-says-north-korea-should-widen-deployment-of-tactical-nukes",
+      "dimension": "conflict",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "Ukraine attacks Russian military base, says five planes struck",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/news/2026/11/26/ukraine-attacks-russian-military-base-says-five-planes-struck",
+      "dimension": "conflict",
+      "region": "europe"
+    },
+    {
+      "direction": "up",
+      "headline": "Colombia police reveal 76 hostages were caught in supermarket siege",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/world/2785616/colombia-police-reveal-76-hostages-were-caught-in-supermarket-siege",
+      "dimension": "conflict",
+      "region": "southAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Trump unveils suite of new tariffs on major trading partners",
+      "source": "RNZ (ABC News)",
+      "url": "https://www.rnz.co.nz/news/world/2778991/trump-unveils-suite-of-new-tariffs-on-major-trading-partners",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Tech stocks are volatile as AI fears overshadow Huang's Nvidia return",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/world/2788854/tech-stocks-are-volatile-as-ai-fears-overshadow-huang-s-nvidia-return",
+      "dimension": "economy",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "South Korea's central bank hikes interest rates, raises GDP growth forecast",
+      "source": "Al Jazeera",
+      "url": "https://www.aljazeera.com/economy/2026/11/26/south-koreas-central-bank-hikes-interest-rates-raises-gdp-growth-forecast",
+      "dimension": "economy",
+      "region": "asia"
+    },
+    {
+      "direction": "down",
+      "headline": "'King tide' waves batter California coast, soaking San Francisco",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/world/2794579/king-tide-waves-batter-california-coast-soaking-san-francisco",
+      "dimension": "climate",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "down",
+      "headline": "Eight dead, 18 trapped after Indonesia mine floods, agency says",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/world/2777485/eight-dead-18-trapped-after-indonesia-mine-floods-agency-says",
+      "dimension": "humanInterest",
+      "region": "asia"
+    },
+    {
+      "direction": "up",
+      "headline": "Somalia: Famine risk decreases in Baidoa, but millions still going hungry",
+      "source": "UN News",
+      "url": "https://news.un.org/en/story/2026/11/1168874",
+      "dimension": "humanInterest",
+      "region": "africa"
+    },
+    {
+      "direction": "up",
+      "headline": "Land Returned to Native American Ownership 400 Years After the First Thanksgiving",
+      "source": "Good News Network",
+      "url": "https://www.goodnewsnetwork.org/land-returned-indigenous-care-first-encounter-beach/",
+      "dimension": "humanInterest",
+      "region": "northAmerica"
+    },
+    {
+      "direction": "up",
+      "headline": "Relief as Kaikōura penguins test negative for bird flu",
+      "source": "RNZ",
+      "url": "https://www.rnz.co.nz/news/environment/2799551/relief-as-kaikoura-penguins-test-negative-for-bird-flu",
+      "dimension": "climate",
+      "region": "oceania"
+    }
+  ],
+  "sources_consulted": [
+    "Al Jazeera",
+    "RNZ",
+    "ABC News",
+    "UN News",
+    "Good News Network"
+  ]
+}
