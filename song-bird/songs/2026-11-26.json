@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-26",
+  "source": "https://kstenson.github.io/claude-experiments/world-mode-score/",
+  "generatedBy": "world-mode-score",
+  "title": "The Parade Waits for Saturday",
+  "mood": {
+    "label": "Heavy going",
+    "score": -0.22,
+    "summary": "Heavy going (39): a grey Thanksgiving of strikes over Sanaa and Riyadh, nuclear talk from Pyongyang, new US tariffs, and king tides that soaked San Francisco and pushed back New York's parade. Eased by Baidoa's falling famine risk and land returned near the first Thanksgiving.",
+    "palette": {
+      "bg": "#12151a",
+      "bg2": "#232a33",
+      "accent": "#9fb4c7",
+      "accent2": "#c9a46a",
+      "text": "#e6e8eb"
+    }
+  },
+  "style": {
+    "genre": "chamber drone — tenor recorder, hand chimes, tubular bells, DR-55",
+    "key": "F",
+    "scale": "aeolian",
+    "bpm": 64,
+    "swing": 0
+  },
+  "sampleSources": [
+    "Strudel default library (VCSL tenor recorder, hand chimes, tubular bells, ocean drum, timpani roll; Boss DR-55 drum machine), sine sub-bass, triangle pad"
+  ],
+  "pattern": "stack(s(\"bd ~ ~ ~ ~ ~ bd ~\").bank(\"BossDR55\").gain(0.32).lpf(900), s(\"~ ~ ~ ~ rim ~ ~ ~\").bank(\"BossDR55\").gain(0.14).room(0.5), s(\"hh*4\").bank(\"BossDR55\").gain(\"0.07 0.04 0.06 0.04\").hpf(6000).pan(0.65), note(\"<f1 df1 af1 ef1>\").s(\"sine\").attack(0.3).sustain(0.8).release(1.2).gain(0.4).lpf(220), note(\"<[f2,c3,af3] [df2,af2,f3] [af2,ef3,c4] [ef2,bf2,g3]>\").s(\"triangle\").attack(1.2).sustain(0.7).release(2).lpf(sine.range(400,1100).slow(16)).gain(0.12).room(0.7).rsize(5), note(\"<[f4 ~ c5 af4 ~ c5 ~ af4] [df4 ~ af4 f4 ~ af4 ~ f4] [ef4 ~ c5 af4 ~ c5 ~ af4] [ef4 ~ bf4 g4 ~ bf4 ~ g4]>\").s(\"handchimes\").gain(0.16).lpf(sine.range(1800,4200).slow(20)).room(0.6).delay(0.25).delaytime(0.469).delayfeedback(0.3).jux(rev), note(\"<[c5@3 af4 bf4@2 g4 ~] [af4@3 f4 df4@2 ~ ~] [ef4@3 af4 c5@2 bf4 ~] [bf4@2 g4@2 f4@4]>\").s(\"recorder_tenor_vib\").mask(\"<0 0 1 1 1 1 0 1>/4\").clip(1).attack(0.08).release(0.4).gain(0.2).lpf(3200).room(0.55).delay(0.2).delaytime(0.469).pan(0.42), note(\"<f3 ~ af3 ~>\").s(\"tubularbells\").gain(0.13).room(0.8).rsize(6).pan(0.6), s(\"<oceandrum:0 ~ oceandrum:2 ~ oceandrum:1 ~ ~ ~>\").gain(0.14).lpf(2400).room(0.5).pan(sine.range(0.3,0.7).slow(8)), s(\"<~ ~ ~ timpani_roll:3 ~ ~ ~ timpani_roll:8>\").gain(0.11).lpf(1500).room(0.6))",
+  "lyrics": [
+    {
+      "section": "Verse 1",
+      "lines": [
+        "The sea came up the Embarcadero,",
+        "the parade folded its balloons,",
+        "Sanaa shook while Riyadh watched the sky",
+        "fill up with someone else's moons."
+      ]
+    },
+    {
+      "section": "Verse 2",
+      "lines": [
+        "Eight lie still beneath the water",
+        "in a mine that wouldn't drain,",
+        "and the toll on every crossing",
+        "went up ten, then twenty, again."
+      ]
+    },
+    {
+      "section": "Chorus",
+      "lines": [
+        "So set a place for the ones still waiting,",
+        "for land come home four hundred years on,",
+        "for Baidoa's hunger growing thinner —",
+        "the parade waits for Saturday,",
+        "and so do we, till the grey is gone."
+      ]
+    }
+  ]
+}
