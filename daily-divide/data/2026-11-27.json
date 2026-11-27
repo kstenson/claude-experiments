@@ -1,0 +1,320 @@
+{
+  "date": "2026-11-27",
+  "topic": "Trump calls pre-election GDP figures 'fake' after growth is revised up to 4.3%: a 'purposeful' error, or a routine revision?",
+  "question": "Do the claims on each side about the size, timing and cause of the third-quarter GDP revision, and what it says about the integrity of federal statistics, hold up?",
+  "summary": "On Nov. 25 the Bureau of Economic Analysis, part of the Commerce Department, published its second estimate of third-quarter growth: 4.3% at an annual rate, up 0.9 points from the 3.4% advance estimate released Oct. 29, five days before the midterms. On Thanksgiving, President Trump wrote that the pre-election numbers 'were FAKE,' called the revision 'a massive, and purposeful, error' and a 'RECORD SETTING ERROR,' asked why the correct number was not issued before the election, and demanded 'an immediate investigation.' Critics call it a routine, pre-scheduled revision and the latest in a string of attacks on statistical agencies.\n\nThe record mostly supports the critics on the specifics. The revision is real and upward, and the economy did grow faster than first reported. But the change ties for 16th largest since 1990, a bigger one came in 2020 under Trump, the release date was announced before the election, and the White House itself hailed the 3.4% figure as 'the strongest pace in a year.' No evidence of intent has been offered. Critics are on firmer ground about a pattern than about any proven manipulation.\n\nHow far presidents should be able to direct or criticize statistical agencies is a value question the meter does not settle.",
+  "needle": -24,
+  "verdict": "Leans left. The administration is right that growth was revised up substantially and that the economy is stronger than first reported. But its central claims, that the revision was record-setting, purposeful and could have come before the election, are contradicted by the agency's own schedule, its history of revisions, and the White House's October praise for the first number. Critics are right that the revision was routine, but overstate when they imply data are already being manipulated; no evidence of that exists either.",
+  "weights": {
+    "factualAccuracy": 0.6,
+    "reasoningHonesty": 0.4
+  },
+  "verificationNote": "BEA's Oct. 29 advance and Nov. 25 second-estimate releases, its 2020 second-quarter release, and its 2021 study of revisions were opened directly, as was the White House's Oct. 29 release. Trump's post was checked in Fox Business, Al Jazeera, AP (via PBS), UPI and Bloomberg (via Yahoo). The revision ranking was read in CNBC. Axios, The Hill, the Washington Times and the Washington Post returned 403 errors. Commerce's revised integrity policy was not read; the change is reported by NPR. No Democratic lawmaker's reaction to the GDP post could be found by publication, so the left side is scored on critics' and Democrats' documented positions.",
+  "sides": {
+    "left": {
+      "label": "Critics: a routine revision, and a pattern",
+      "framing": "Statistical agencies revise first estimates as fuller data arrive, on a published schedule. Calling an upward revision 'fake' because it came after an election continues a pattern of attacking agencies whose numbers displease the president.",
+      "factualAccuracy": 76,
+      "reasoningHonesty": 56,
+      "score": 68,
+      "strongestPoint": "BEA's schedule set Nov. 25 for the second estimate when the advance estimate came out, a larger revision came in 2020 under Trump, and the White House praised the 3.4% number in October. The attack follows the 2025 firing of the labor statistics chief after a weak jobs report.",
+      "weakestPoint": "'Routine' undersells it: 0.9 points is above BEA's long-run average revision of about 0.6. Critics' broader suggestion that data are being cooked has no evidence, and Democratic voters' distrust of unemployment data rose once Trump took office."
+    },
+    "right": {
+      "label": "Trump: a 'purposeful' undercount before the election",
+      "framing": "The government's own agency understated the strength of the Trump economy days before the midterms, then corrected it after the votes were cast. A miss that large, at that moment, deserves an investigation.",
+      "factualAccuracy": 50,
+      "reasoningHonesty": 35,
+      "score": 44,
+      "strongestPoint": "Growth was revised up to 4.3%, and the economy is stronger than the pre-election figure showed. A 0.9-point miss is larger than average, and asking how first estimates are built is legitimate.",
+      "weakestPoint": "Calling it a record, purposeful and avoidable is contradicted by BEA's revision history and schedule. The agency is run by Trump's own Commerce Department, and his White House called the 'fake' number a surge."
+    }
+  },
+  "facts": [
+    {
+      "claim": "Third-quarter GDP growth was revised up to 4.3% from 3.4%.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "BEA, Nov. 25: 'Real gross domestic product (GDP) increased at an annual rate of 4.3 percent'; 'Real GDP was revised up 0.9 percentage point from the advance estimate,' reflecting 'upward revisions to investment and consumer spending.'",
+      "explanation": "Trump's figures are accurate. A third estimate is due Dec. 23 and could move the number again.",
+      "source": "Bureau of Economic Analysis, GDP (Second Estimate), 3rd Quarter 2026",
+      "url": "https://www.bea.gov/news/2026/gdp-second-estimate-and-corporate-profits-3rd-quarter-2026",
+      "corroboration": [
+        {
+          "source": "Fox Business",
+          "url": "https://www.foxbusiness.com/politics/trump-demands-probe-pre-election-gdp-data-revision"
+        },
+        {
+          "source": "AP (via PBS NewsHour)",
+          "url": "https://pbs.org/newshour/politics/trump-calls-gdp-figures-fake-and-demands-an-investigation-of-commerce-department"
+        }
+      ]
+    },
+    {
+      "claim": "The revision was a 'RECORD SETTING' and 'massive' error.",
+      "side": "right",
+      "verdict": "false",
+      "confidence": "high",
+      "evidence": "CNBC: the revision 'tied for 16th among all revisions from the advance estimate to the second release since 1990.' BEA, Aug. 2020: second-quarter 2020 GDP was 'an upward revision of 1.2 percentage points from the previous estimate.'",
+      "explanation": "It is not a record even within Trump's own presidencies: the 2020 revision, during his first term, was larger. 'Massive' is a judgment, but the ranking shows revisions of this size are not unusual.",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/2026/11/26/trump-gdp-revision-investigation.html",
+      "corroboration": [
+        {
+          "source": "BEA (2020 release)",
+          "url": "https://www.bea.gov/news/2020/gross-domestic-product-2nd-quarter-2020-second-estimate-corporate-profits-2nd-quarter"
+        },
+        {
+          "source": "The Daily Beast (via Yahoo)",
+          "url": "https://nz.news.yahoo.com/trump-attacks-howard-lutnicks-commerce-205728682.html"
+        }
+      ]
+    },
+    {
+      "claim": "The 0.9-point revision was ordinary in size.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "BEA's 2021 study: the mean absolute revision of real GDP growth from advance to second estimate was 0.59 point (1996–2018), and mean revisions 'are not statistically different than zero.' Al Jazeera cites a 0.52-point typical difference in a study co-authored by BEA's director.",
+      "explanation": "Revisions of this size happen regularly, and BEA's research finds no systematic bias up or down. But 0.9 is about half again the average, so critics who call it unremarkable overstate a little.",
+      "source": "BEA, Survey of Current Business (Jan. 2021)",
+      "url": "https://apps.bea.gov/scb/issues/2021/01-january/0121-revisions-to-gdp-gdi.htm",
+      "corroboration": [
+        {
+          "source": "Al Jazeera",
+          "url": "https://www.aljazeera.com/economy/2026/11/26/trump-calls-gdp-data-released-before-midterms-fake-demands-investigation"
+        },
+        {
+          "source": "CNBC",
+          "url": "https://www.cnbc.com/2026/11/26/trump-gdp-revision-investigation.html"
+        }
+      ]
+    },
+    {
+      "claim": "The correct number could have been issued before the election.",
+      "side": "right",
+      "verdict": "false",
+      "confidence": "high",
+      "evidence": "BEA's Oct. 29 advance release: 'Next release: November 25, 2026,' and 'With the next release of GDP, today's data will be superseded.' Al Jazeera: updates 'occur on a prescheduled basis without regard to the political calendar.'",
+      "explanation": "The second-estimate date was public before the vote. Advance estimates are built before full data on trade, inventories and services spending arrive; the higher figure depended on data that came later.",
+      "source": "BEA, GDP (Advance Estimate), 3rd Quarter 2026",
+      "url": "https://www.bea.gov/news/2026/gdp-advance-estimate-3rd-quarter-2026/",
+      "corroboration": [
+        {
+          "source": "Al Jazeera",
+          "url": "https://www.aljazeera.com/economy/2026/11/26/trump-calls-gdp-data-released-before-midterms-fake-demands-investigation"
+        },
+        {
+          "source": "AP (via PBS NewsHour)",
+          "url": "https://pbs.org/newshour/politics/trump-calls-gdp-figures-fake-and-demands-an-investigation-of-commerce-department"
+        }
+      ]
+    },
+    {
+      "claim": "The pre-election estimate was a 'purposeful' undercount.",
+      "side": "right",
+      "verdict": "mostly-false",
+      "confidence": "medium",
+      "evidence": "Bloomberg: Trump alleged a 'purposeful' move 'without evidence.' AP: Commerce 'did not immediately respond.' Fox Business: BEA attributed the change to 'more complete source data.'",
+      "explanation": "Intent cannot be fully disproved, so confidence is medium. But no evidence has been offered, the agency sits in a department led by Trump's own appointee, Howard Lutnick, and BEA's research shows first estimates are not biased in either direction.",
+      "source": "Bloomberg (via Yahoo Finance)",
+      "url": "https://finance.yahoo.com/economy/articles/trump-says-revised-gdp-numbers-150335514.html",
+      "corroboration": [
+        {
+          "source": "Fox Business",
+          "url": "https://www.foxbusiness.com/politics/trump-demands-probe-pre-election-gdp-data-revision"
+        },
+        {
+          "source": "UPI (via Yahoo)",
+          "url": "https://www.yahoo.com/news/politics/articles/trump-demands-probe-revision-gross-211905095.html"
+        }
+      ]
+    },
+    {
+      "claim": "Trump's White House hailed the 3.4% figure he now calls fake.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "White House, Oct. 29: 'The U.S. economy grew at a strong annual rate of 3.4% in the third quarter of 2026 — the strongest pace in a year.'",
+      "explanation": "This undercuts the claim that the first number was designed to hurt the administration; its own messaging treated it as good news before the election.",
+      "source": "White House release, Oct. 29, 2026",
+      "url": "https://www.whitehouse.gov/releases/2026/10/president-trump-unleashes-the-american-economy-gdp-surges-as-investment-hits-multi-year-high/",
+      "corroboration": [
+        {
+          "source": "Newsweek",
+          "url": "https://www.newsweek.com/trump-calls-gdp-fake-his-white-house-called-it-a-surge-in-october-12772108"
+        }
+      ]
+    },
+    {
+      "claim": "Trump has repeatedly called unfavorable official data rigged, without evidence.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Fox News, Aug. 2024: Trump said Biden's team was 'caught fraudulently manipulating Job Statistics.' PolitiFact rated his 2025 'rigged' claim Pants on Fire: the revision was 'part of a standard, annual review process.' AP: he fired the labor statistics chief in August 2025.",
+      "explanation": "The pattern is documented across outlets. The 2024 jobs revision was large and real; the fraud claim attached to it was not supported, and its final size was smaller.",
+      "source": "PolitiFact",
+      "url": "https://www.politifact.com/factchecks/2025/aug/05/donald-trump/bls-firing-jobs-revision-election/",
+      "corroboration": [
+        {
+          "source": "Fox News (2024)",
+          "url": "https://www.foxnews.com/politics/trump-accuses-biden-admin-massive-scandal-after-new-jobs-numbers-dramatically-revised-downward"
+        },
+        {
+          "source": "AP (via PBS NewsHour)",
+          "url": "https://pbs.org/newshour/politics/trump-calls-gdp-figures-fake-and-demands-an-investigation-of-commerce-department"
+        }
+      ]
+    },
+    {
+      "claim": "Commerce removed protection from political interference from its scientific integrity policy.",
+      "side": "left",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "NPR: the policy revised Aug. 19, 2026 'no longer lists \"protection from inappropriate influence\" among the \"hallmarks of scientific integrity.\"' Commerce did not respond to requests for comment.",
+      "explanation": "The change is real as reported, but the policy text itself was not read. A wording change shows weakened safeguards, not that any figure, including GDP, has been manipulated.",
+      "source": "NPR (via WFAE)",
+      "url": "https://www.wfae.org/united-states-world/2026-09-24/warren-demands-trump-officials-explain-removing-a-ban-on-interference-in-census-data",
+      "corroboration": [
+        {
+          "source": "Senate Banking Committee Democrats (party source)",
+          "url": "https://www.banking.senate.gov/newsroom/minority/warren-questions-trump-administration-on-political-interference-with-commerce-departments-economic-and-census-data-collection-reporting"
+        }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Would each side treat a suspicious-looking pre-election number the same way if the other party ran the agency? In October 2012, a month before Obama's re-election, a drop in unemployment below 8% drew charges from conservatives that the numbers were cooked; Democrats defended the agency. Today the roles of accuser and defender are similar, but the president is accusing his own government.",
+    "precedent": {
+      "case": "Jack Welch and the September 2012 jobs report",
+      "what": "Former GE chief Jack Welch tweeted: 'Unbelievable jobs numbers..these Chicago guys will do anything..can't debate so change numbers.' He offered no evidence and later defended the claim.",
+      "mirror": "Then, a Republican-aligned critic accused a Democratic administration of shaping data before an election. Now, the president claims his own agency shaded data against him; the shared assumption is that an inconvenient number must be political.",
+      "source": "Fortune (2025)",
+      "url": "https://fortune.com/2025/08/04/ge-ceo-jack-welch-jobs-numbers-faked",
+      "corroboration": [
+        {
+          "source": "NBC Chicago (2012)",
+          "url": "https://www.nbcchicago.com/news/local/exec-suggests-unemployment-numbers-arrived-at-the-chicago-way/1941202/?amp=1"
+        }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Right (Trump White House, 2017)",
+        "then": "2016 campaign: Trump called the 5% unemployment figure 'one of the biggest hoaxes in modern politics.'",
+        "now": "March 2017, Spicer relaying Trump on the first jobs report of his term: 'They may have been phony in the past, but it's very real now.' In 2026 the same White House hailed the 3.4% figure, then called it fake.",
+        "source": "Fox Business (2017)",
+        "url": "https://www.foxbusiness.com/features/on-similar-job-market-administration-has-different-rhetoric",
+        "corroboration": [
+          {
+            "source": "Talking Points Memo (2017)",
+            "url": "https://talkingpointsmemo.com/livewire/spicer-trump-jobs-numbers-very-real"
+          }
+        ]
+      },
+      {
+        "who": "Left (Democratic voters, 2025)",
+        "then": "Under Biden, more Republicans than Democrats told pollsters the government undercounts unemployment.",
+        "now": "August 2025 Economist/YouGov poll: 54% of Democrats said the government undercounts unemployment, versus 32% of Republicans. This is a voter reversal, not a statement by Democratic officials.",
+        "source": "The Hill (via Yahoo)",
+        "url": "https://www.yahoo.com/news/articles/slightly-more-americans-distrust-federal-153014569.html",
+        "corroboration": [
+          {
+            "source": "YouGov (Economist/YouGov poll)",
+            "url": "https://yougov.com/en-us/articles/52716-unemployment-concerns-gaza-israelis-palestinians-jeffrey-epstein-investigation-trust-medicine-health-vaccines-guns-team-names-nfl-mlb-commanders-guardians-august-1-4-2025-economist-yougov-poll"
+          }
+        ]
+      }
+    ],
+    "longRun": "Trust in official statistics tracks who holds power: each side doubts numbers produced under the other. The durable protection is a schedule and method fixed in advance and applied regardless of outcome. The test comes when Democrats hold the White House and a first estimate disappoints them.",
+    "appliedToScore": "The right loses reasoning credit for embracing the number in October and rejecting it in November. The left loses some for its voters' partisan swing in data trust. The needle rests on the revision's documented size, schedule and cause."
+  },
+  "pattern": {
+    "thesis": "The GDP post is the fourth time in about two years that Trump has cast an unfavorable or awkward official statistic as rigged. In isolation it looks like a holiday outburst; in sequence it is a recurring way of treating statistical agencies as political actors.",
+    "campaigns": [
+      {
+        "where": "BLS jobs benchmark revision, Aug. 2024",
+        "what": "After a preliminary 818,000-job downward revision under Biden, Trump said the administration was 'caught fraudulently manipulating Job Statistics.'",
+        "authorization": "Fraud claim; no evidence found",
+        "source": "Fox News (2024)",
+        "url": "https://www.foxnews.com/politics/trump-accuses-biden-admin-massive-scandal-after-new-jobs-numbers-dramatically-revised-downward",
+        "corroboration": [
+          {
+            "source": "PolitiFact",
+            "url": "https://www.politifact.com/factchecks/2025/aug/05/donald-trump/bls-firing-jobs-revision-election/"
+          }
+        ]
+      },
+      {
+        "where": "BLS commissioner fired, Aug. 2025",
+        "what": "After a report showing 73,000 jobs and 258,000 fewer in May and June than first reported, Trump called it 'rigged' and fired Erika McEntarfer.",
+        "authorization": "Official fired; no evidence of rigging",
+        "source": "AP (via PBS NewsHour)",
+        "url": "https://pbs.org/newshour/politics/trump-calls-gdp-figures-fake-and-demands-an-investigation-of-commerce-department",
+        "corroboration": [
+          {
+            "source": "PolitiFact",
+            "url": "https://www.politifact.com/factchecks/2025/aug/05/donald-trump/bls-firing-jobs-revision-election/"
+          }
+        ]
+      },
+      {
+        "where": "Commerce integrity policy, Aug. 2026",
+        "what": "The department dropped 'protection from inappropriate influence' from its list of scientific-integrity hallmarks.",
+        "authorization": "Policy change; reported, not read",
+        "source": "NPR (via WFAE)",
+        "url": "https://www.wfae.org/united-states-world/2026-09-24/warren-demands-trump-officials-explain-removing-a-ban-on-interference-in-census-data",
+        "corroboration": [
+          {
+            "source": "Senate Banking Committee Democrats (party source)",
+            "url": "https://www.banking.senate.gov/newsroom/minority/warren-questions-trump-administration-on-political-interference-with-commerce-departments-economic-and-census-data-collection-reporting"
+          }
+        ]
+      },
+      {
+        "where": "Third-quarter GDP revision, Nov. 2026",
+        "what": "Trump called the pre-election estimate 'FAKE' and demanded an investigation of an upward revision.",
+        "authorization": "Investigation demanded; none opened as of Nov. 26",
+        "source": "Fox Business",
+        "url": "https://www.foxbusiness.com/politics/trump-demands-probe-pre-election-gdp-data-revision",
+        "corroboration": [
+          {
+            "source": "Al Jazeera",
+            "url": "https://www.aljazeera.com/economy/2026/11/26/trump-calls-gdp-data-released-before-midterms-fake-demands-investigation"
+          }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is whether official statistics can stay independent of the officials they describe. This case is unusual because the revision flattered the president. The 'one-off' tell is coverage that treats the post as a stray holiday remark, or that cites every revision as proof of manipulation."
+  },
+  "notAdjudicable": [
+    "How much a president should be allowed to criticize or direct the agencies that measure his own record is a question about institutional independence, not fact.",
+    "Whether fast, rougher first estimates are worth the later revisions, or agencies should wait for fuller data, trades timeliness against accuracy.",
+    "Whether a strong GDP number means the economy is 'good' when many voters say conditions are poor depends on what one thinks matters most in an economy.",
+    "Whether investigating a statistical agency over a single revision is reasonable oversight or intimidation turns on judgments about motive and restraint."
+  ],
+  "biasWatch": "The bias at work is motivated reasoning about numbers: a figure is trusted when it helps one's side and suspected when it does not. Here it shows in an unusual form, since the revision helped the president and he still called the earlier figure fake because of when it appeared. Critics are not immune: Democratic voters' doubts about unemployment data rose once Trump took office. The tell: notice whether someone's view of an agency's honesty changed with the latest number. Then swap the names: if a Democratic president's growth were revised up after an election he lost, would you call it a plot?",
+  "sources_consulted": [
+    "Al Jazeera",
+    "AP (via PBS NewsHour)",
+    "Bloomberg (via Yahoo Finance)",
+    "Bureau of Economic Analysis",
+    "CNBC",
+    "Fortune (2025)",
+    "Fox Business",
+    "Fox News (2024)",
+    "NBC Chicago (2012)",
+    "Newsweek",
+    "NPR (via WFAE)",
+    "PolitiFact",
+    "Senate Banking Committee Democrats",
+    "Talking Points Memo (2017)",
+    "The Daily Beast (via Yahoo)",
+    "The Hill (via Yahoo)",
+    "The Korea Times",
+    "UPI (via Yahoo)",
+    "White House",
+    "YouGov"
+  ]
+}
