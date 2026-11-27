@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Only Next Door — Experiment 126</title>
+<meta name="description" content="Bentley and Ottmann's 1979 sweep line: find every crossing in a tangle of segments by sweeping a line across them and only ever testing segments that sit next to each other on it." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 2px; font: inherit; font-size: 0.78rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+  .seg button:hover { border-color: rgba(124,124,255,0.45); }
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 6px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .row { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 6px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+
+  /* ---- Stage ---- */
+  .status { min-height: 84px; }
+  .status b { display: block; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; color: #a9a9ff; }
+  .status span { display: block; margin-top: 5px; font-size: 0.86rem; line-height: 1.55; color: #b9b9ca; }
+  .status.done b { color: #6ee7c8; }
+  .board { padding: 10px; }
+  #board { display: block; border-radius: 10px; width: 100%; touch-action: none; cursor: crosshair; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
+  .legend i.ring { background: transparent; border: 2px solid #a9a9ff; }
+  .legend i.dot { background: #ff7cc3; box-shadow: 0 0 8px #ff7cc3; }
+  .legend i.bar { width: 3px; height: 12px; border-radius: 2px; background: linear-gradient(#7c7cff, #ff7cc3); }
+  .legend i.test { width: 12px; height: 3px; border-radius: 2px; background: #6ee7c8; }
+  .line-order { padding: 12px 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; min-height: 24px; align-items: center; }
+  .chip {
+    font-size: 0.72rem; font-variant-numeric: tabular-nums; font-weight: 600;
+    padding: 3px 7px; border-radius: 7px; color: #05050a;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .chip.hot { transform: translateY(-3px); box-shadow: 0 0 0 2px #fff; }
+  .chips .empty { font-size: 0.8rem; color: #5d5d72; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat .cap { display: block; }
+  .stat b { display: block; font-size: 1.3rem; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat small { display: block; font-size: 0.74rem; color: #8d8da3; margin-top: 2px; }
+  .meter { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; margin-top: 6px; }
+  .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7c7cff, #ff7cc3); transition: width 0.25s ease; }
+  button:focus-visible, input:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .panel { padding: 14px 14px; }
+    .stat b { font-size: 1.1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chip, .meter i, .story, .story-card { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Only Next Door</h1>
+      <p class="sub">Experiment № 126 · November 27, 2026</p>
+      <p class="lede">Bentley and Ottmann, 1979: to find every crossing in a tangle of segments, sweep a line across them and keep the segments it touches in top-to-bottom order. Two segments can only cross once nothing lies between them, so the sweep only ever tests <b>neighbours</b>.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div>
+          <span class="cap">Tangle</span>
+          <div class="seg" id="presets"></div>
+        </div>
+        <label class="field"><span>Segments <b id="nOut">40</b></span>
+          <input type="range" id="nIn" min="6" max="120" step="1" value="40" />
+        </label>
+        <label class="field"><span>Sweep speed <b id="vOut">90</b></span>
+          <input type="range" id="vIn" min="15" max="400" step="5" value="90" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">Pause</button>
+          <button class="btn" id="step" title="Jump to the next event (→)">Step</button>
+          <button class="btn" id="restart" title="Sweep again from the left">Again</button>
+          <button class="btn" id="fresh" title="A new random tangle">New</button>
+        </div>
+        <button class="btn" id="clear">Clear and draw my own</button>
+        <p class="note"><b>Drag on the picture</b> to add a segment of your own; the sweep starts over. <b>Space</b> plays or pauses, <b>→</b> steps one event.</p>
+        <p class="note">The line stops at only three kinds of place: where a segment <b>starts</b> (test it against the two it lands between), where one <b>ends</b> (the two either side are now neighbours, so test them), and at a <b>crossing</b> (the pair swap places, and each gets one new neighbour to test).</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel status" id="status">
+        <b id="sTitle">Ready</b>
+        <span id="sText"></span>
+      </div>
+      <div class="panel board">
+        <canvas id="board" aria-label="Line segments with a vertical sweep line moving left to right, marking crossings as it finds them"></canvas>
+        <div class="legend">
+          <span><i class="bar"></i>sweep line</span>
+          <span><i class="test"></i>a neighbour test</span>
+          <span><i class="ring"></i>crossing predicted, not reached</span>
+          <span><i class="dot"></i>crossing found</span>
+        </div>
+      </div>
+      <div class="panel line-order">
+        <span class="cap">On the line now, top to bottom</span>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="panel stats">
+        <div class="stat">
+          <span class="cap">Pair tests</span>
+          <b id="tOut">0</b>
+          <small id="tSmall">checking every pair: 0</small>
+          <div class="meter"><i id="tMeter"></i></div>
+        </div>
+        <div class="stat">
+          <span class="cap">Crossings found</span>
+          <b id="kOut">0</b>
+          <small id="kSmall">of 0 that exist</small>
+          <div class="meter"><i id="kMeter"></i></div>
+        </div>
+        <div class="stat">
+          <span class="cap">Events</span>
+          <b id="eOut">0</b>
+          <small id="eSmall">0 waiting in the queue</small>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 126 · The story</p>
+      <h2>Only Next Door</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I had drawn plenty of geometry in this series, from hulls to triangulations to clipping, and every time I needed to know whether two lines crossed I just checked them all against each other. That was fine for a dozen lines. Bentley and Ottmann's sweep is the answer to the question I kept putting off: what do you do when there are ten thousand lines on a map or a circuit board, and checking every pair would take all afternoon? It's also the oldest clear case I know of an algorithm being built around the size of its answer.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>The violet rings. Every time two segments become neighbours on the line, the sweep works out where they will cross and puts a ring there, well ahead of itself. So you can see what it already knows before it gets there. I also like that the order on the line is all it ever looks at. It never measures distance or thinks about the picture as a whole. A segment starts, ends, or swaps places with the one beside it, and that is enough to find every crossing. Try the Weave preset and watch the line-order chips keep swapping.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Before two things can collide there has to be a moment when nothing lies between them. If you keep things in order, you only ever have to compare neighbours, and the work follows how much is actually happening rather than how many things there are. The counter shows the honest part too. In a dense weave almost every pair does cross, and then no method can beat checking them all, because the answer itself is that big. The sweep wins when crossings are rare, which in real data they usually are.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') story.classList.remove('open'); });
+
+  // ---- Bentley–Ottmann sweep ----
+  (() => {
+    const W = 1000, H = 625, EPS = 1e-9;
+    const cv = document.getElementById('board');
+    const ctx = cv.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---------- random ----------
+    let seed = (Date.now() ^ 0x9e3779b9) >>> 0;
+    const rnd = () => { seed = (seed + 0x6d2b79f5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const R = (a, b) => a + (b - a) * rnd();
+
+    // ---------- state ----------
+    let segs = [];           // {x1,y1,x2,y2,col,id}
+    let preset = 'scatter';
+    let n = 40;
+    let speed = 90;
+    let playing = true;
+    let sweepX = 0, done = false;
+    let queue = [];          // sorted by x descending; pop() gives the next event
+    let status = [];         // segment indices, top to bottom
+    let scheduled = new Set();
+    let found = [];          // {x,y,a,b,t}
+    let tests = 0, events = 0, trueCount = 0;
+    let flashes = [];        // {x, y1, y2, hit, t}
+    let hot = new Set();
+
+    const PRESETS = [
+      ['scatter', 'Scatter'],
+      ['shards', 'Shards'],
+      ['weave', 'Weave'],
+    ];
+
+    function colourFor(i, total) {
+      const f = total > 1 ? i / (total - 1) : 0;
+      // teal → blue → violet → pink, left to right
+      const h = 180 + f * 160;
+      return `hsl(${h}, 85%, 72%)`;
+    }
+
+    function makeSeg(x1, y1, x2, y2) {
+      if (Math.abs(x2 - x1) < 0.5) x2 = x1 + (x2 >= x1 ? 0.5 : -0.5);
+      if (x2 < x1) { [x1, x2] = [x2, x1]; [y1, y2] = [y2, y1]; }
+      return { x1, y1, x2, y2 };
+    }
+
+    function generate() {
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        if (preset === 'scatter') {
+          const cx = R(60, W - 60), cy = R(50, H - 50), L = R(70, 280), a = R(0, Math.PI);
+          out.push(makeSeg(cx - Math.cos(a) * L / 2, cy - Math.sin(a) * L / 2, cx + Math.cos(a) * L / 2, cy + Math.sin(a) * L / 2));
+        } else if (preset === 'shards') {
+          const cx = R(40, W - 40), cy = R(30, H - 30), L = R(25, 90), a = R(-1.2, 1.2);
+          out.push(makeSeg(cx - Math.cos(a) * L / 2, cy - Math.sin(a) * L / 2, cx + Math.cos(a) * L / 2, cy + Math.sin(a) * L / 2));
+        } else {
+          out.push(makeSeg(R(20, 260), R(30, H - 30), R(W - 260, W - 20), R(30, H - 30)));
+        }
+      }
+      for (const s of out) { s.x1 = clamp(s.x1, 4, W - 4); s.x2 = clamp(s.x2, 4, W - 4); s.y1 = clamp(s.y1, 4, H - 4); s.y2 = clamp(s.y2, 4, H - 4); }
+      setSegs(out);
+    }
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    function setSegs(list) {
+      list.sort((a, b) => a.x1 - b.x1);
+      segs = list.map((s, i) => ({ ...s, id: i + 1, col: colourFor(i, list.length) }));
+      trueCount = 0;
+      for (let i = 0; i < segs.length; i++) for (let j = i + 1; j < segs.length; j++) if (intersect(segs[i], segs[j])) trueCount++;
+      reset();
+    }
+
+    // ---------- geometry ----------
+    function yAt(s, x) {
+      if (s.x2 === s.x1) return s.y1;
+      return s.y1 + (s.y2 - s.y1) * (x - s.x1) / (s.x2 - s.x1);
+    }
+    function intersect(a, b) {
+      const dax = a.x2 - a.x1, day = a.y2 - a.y1, dbx = b.x2 - b.x1, dby = b.y2 - b.y1;
+      const d = dax * dby - day * dbx;
+      if (Math.abs(d) < 1e-12) return null;
+      const ex = b.x1 - a.x1, ey = b.y1 - a.y1;
+      const t = (ex * dby - ey * dbx) / d;
+      const u = (ex * day - ey * dax) / d;
+      if (t <= EPS || t >= 1 - EPS || u <= EPS || u >= 1 - EPS) return null;
+      return { x: a.x1 + t * dax, y: a.y1 + t * day };
+    }
+
+    // ---------- event queue ----------
+    // type order at equal x: start (0), crossing (1), end (2)
+    function before(e, f) { return e.x < f.x || (e.x === f.x && e.type < f.type); }
+    function push(ev) {
+      let lo = 0, hi = queue.length;
+      while (lo < hi) { const m = (lo + hi) >> 1; if (before(queue[m], ev)) hi = m; else lo = m + 1; }
+      queue.splice(lo, 0, ev);
+    }
+
+    function reset() {
+      queue = []; status = []; scheduled = new Set(); found = []; flashes = []; hot = new Set();
+      tests = 0; events = 0; sweepX = 0; done = false;
+      segs.forEach((s, i) => { push({ type: 0, x: s.x1, s: i }); push({ type: 2, x: s.x2, s: i }); });
+      if (segs.length) say('Ready', `${segs.length} segments. The line starts on the left and stops only at events: ${segs.length * 2} endpoints so far, and every crossing it discovers on the way.`);
+      else say('An empty page', 'Drag on the picture to draw segments. The sweep starts again each time you add one.');
+      updateUI();
+    }
+
+    // ---------- the algorithm ----------
+    const name = (i) => i == null ? '' : '#' + segs[i].id;
+    function test(a, b) {
+      if (a == null || b == null) return null;
+      tests++;
+      const p = intersect(segs[a], segs[b]);
+      const ya = yAt(segs[a], sweepX), yb = yAt(segs[b], sweepX);
+      const key = a < b ? a + ',' + b : b + ',' + a;
+      let res = 'miss';
+      if (p && p.x > sweepX + EPS) {
+        if (!scheduled.has(key)) { scheduled.add(key); push({ type: 1, x: p.x, y: p.y, s: a, t: b }); res = 'new'; }
+        else res = 'known';
+      }
+      flashes.push({ x: sweepX, y1: ya, y2: yb, hit: res !== 'miss', t: performance.now() });
+      return res;
+    }
+    function outcome(a, b, r) {
+      if (r == null) return '';
+      if (r === 'new') return ` ${name(a)} and ${name(b)} will cross ahead, so a ring goes on the queue.`;
+      if (r === 'known') return ` ${name(a)} and ${name(b)} cross ahead, but that's already on the queue.`;
+      return ` ${name(a)} and ${name(b)} never meet to the right.`;
+    }
+    function insertPos(i) {
+      const s = segs[i], x = s.x1, y = s.y1;
+      const slope = (s.y2 - s.y1) / (s.x2 - s.x1);
+      let k = 0;
+      while (k < status.length) {
+        const o = segs[status[k]], yo = yAt(o, x);
+        if (yo > y + 1e-9) break;
+        if (Math.abs(yo - y) <= 1e-9 && (o.y2 - o.y1) / (o.x2 - o.x1) > slope) break;
+        k++;
+      }
+      return k;
+    }
+
+    function process(ev) {
+      sweepX = ev.x; events++;
+      hot = new Set();
+      if (ev.type === 0) {
+        const k = insertPos(ev.s);
+        status.splice(k, 0, ev.s);
+        const up = status[k - 1], dn = status[k + 1];
+        hot.add(ev.s);
+        let msg = `${name(ev.s)} joins the line`;
+        if (up == null && dn == null) msg += ' with nobody else on it, so there is nothing to test.';
+        else if (up == null) msg += ` at the top, above ${name(dn)}. One test.`;
+        else if (dn == null) msg += ` at the bottom, under ${name(up)}. One test.`;
+        else msg += ` between ${name(up)} and ${name(dn)}. Two tests, not ${status.length - 1}.`;
+        const r1 = test(up, ev.s), r2 = test(ev.s, dn);
+        say(`Start of ${name(ev.s)}`, msg + outcome(up, ev.s, r1) + outcome(ev.s, dn, r2));
+      } else if (ev.type === 2) {
+        const k = status.indexOf(ev.s);
+        if (k < 0) return;
+        const up = status[k - 1], dn = status[k + 1];
+        status.splice(k, 1);
+        let msg = `${name(ev.s)} leaves the line.`;
+        if (up != null && dn != null) {
+          hot.add(up); hot.add(dn);
+          msg += ` That makes ${name(up)} and ${name(dn)} neighbours, so they get one test.`;
+          msg += outcome(up, dn, test(up, dn));
+        } else msg += ' It was on the edge, so no one new is side by side.';
+        say(`End of ${name(ev.s)}`, msg);
+      } else {
+        let i = status.indexOf(ev.s), j = status.indexOf(ev.t);
+        if (i < 0 || j < 0) return;
+        if (i > j) [i, j] = [j, i];
+        const a = status[i], b = status[j];
+        status[i] = b; status[j] = a;
+        found.push({ x: ev.x, y: ev.y, a, b, t: performance.now() });
+        hot.add(a); hot.add(b);
+        const up = status[i - 1], dn = status[j + 1];
+        let msg = `${name(a)} and ${name(b)} swap places on the line.`;
+        if (up == null && dn == null) msg += ' They are the only two there, so nothing new to test.';
+        else msg += ' Each now has one new neighbour to test.';
+        const r1 = test(up, status[i]), r2 = test(status[j], dn);
+        say(`Crossing ${found.length}: ${name(a)} × ${name(b)}`, msg + outcome(up, status[i], r1) + outcome(status[j], dn, r2));
+      }
+      updateUI();
+    }
+
+    // ---------- UI text ----------
+    function say(t, s) { $('sTitle').textContent = t; $('sText').textContent = s; $('status').classList.toggle('done', done); }
+    const fmt = (v) => v.toLocaleString('en-US');
+    let lastChips = '';
+    function updateUI() {
+      const brute = segs.length * (segs.length - 1) / 2;
+      $('tOut').textContent = fmt(tests);
+      $('tSmall').textContent = `checking every pair: ${fmt(brute)}`;
+      $('tMeter').style.width = brute ? Math.min(100, 100 * tests / brute) + '%' : '0';
+      $('kOut').textContent = fmt(found.length);
+      $('kSmall').textContent = `of ${fmt(trueCount)} that exist`;
+      $('kMeter').style.width = trueCount ? (100 * found.length / trueCount) + '%' : '0';
+      $('eOut').textContent = fmt(events);
+      $('eSmall').textContent = `${fmt(queue.length)} waiting in the queue`;
+      const sig = status.join(',') + '|' + [...hot].join(',');
+      if (sig !== lastChips) {
+        lastChips = sig;
+        const box = $('chips');
+        box.textContent = '';
+        if (!status.length) {
+          const e = document.createElement('span'); e.className = 'empty';
+          e.textContent = done ? 'the line has passed everything' : 'nothing yet';
+          box.appendChild(e);
+        }
+        for (const i of status) {
+          const c = document.createElement('span');
+          c.className = 'chip' + (hot.has(i) ? ' hot' : '');
+          c.style.background = segs[i].col;
+          c.textContent = segs[i].id;
+          box.appendChild(c);
+        }
+      }
+      $('play').textContent = done ? 'Replay' : (playing ? 'Pause' : 'Play');
+    }
+
+    function finish() {
+      done = true; sweepX = W; hot = new Set();
+      const brute = segs.length * (segs.length - 1) / 2;
+      let verdict;
+      if (!segs.length) verdict = 'Nothing to sweep.';
+      else if (tests < brute) verdict = `${fmt(found.length)} crossings from ${fmt(tests)} pair tests, where checking every pair takes ${fmt(brute)}.`;
+      else verdict = `${fmt(found.length)} crossings from ${fmt(tests)} pair tests, no fewer than checking all ${fmt(brute)} pairs. When nearly everything crosses, the answer is that big and nothing can beat it.`;
+      say('Swept', verdict + (found.length === trueCount ? ' Every crossing found.' : ''));
+      updateUI();
+    }
+
+    function stepOnce() {
+      if (done) return;
+      if (queue.length) process(queue.pop());
+      if (!queue.length) finish();
+    }
+
+    // ---------- drawing ----------
+    let scale = 1, dpr = 1;
+    function resize() {
+      const w = cv.clientWidth || 600;
+      const maxH = Math.max(260, window.innerHeight * 0.62);
+      let h = w * H / W;
+      if (h > maxH) h = maxH;
+      cv.style.height = h + 'px';
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      scale = Math.min(w / W, h / H);
+    }
+    function offX() { return (cv.width / dpr - W * scale) / 2; }
+    function offY() { return (cv.height / dpr - H * scale) / 2; }
+
+    function draw(now) {
+      const cw = cv.width / dpr, ch = cv.height / dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#08080f';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.save();
+      ctx.translate(offX(), offY());
+      ctx.scale(scale, scale);
+      const lw = 1 / scale;
+
+      // faint grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.035)'; ctx.lineWidth = lw;
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 50) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+      for (let y = 0; y <= H; y += 50) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+      ctx.stroke();
+
+      // swept region tint
+      const g = ctx.createLinearGradient(0, 0, sweepX, 0);
+      g.addColorStop(0, 'rgba(124,124,255,0.0)'); g.addColorStop(1, 'rgba(124,124,255,0.06)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, sweepX, H);
+
+      ctx.lineCap = 'round';
+      const active = new Set(status);
+      segs.forEach((s, i) => {
+        // ahead of the sweep: faint
+        const sx = clamp(sweepX, s.x1, s.x2);
+        if (sx < s.x2) {
+          ctx.strokeStyle = 'rgba(200,200,230,0.16)'; ctx.lineWidth = 1.4 * lw;
+          ctx.beginPath(); ctx.moveTo(sx, yAt(s, sx)); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+        }
+        // behind the sweep: coloured
+        if (sx > s.x1) {
+          ctx.strokeStyle = s.col;
+          ctx.globalAlpha = active.has(i) ? 1 : 0.62;
+          ctx.lineWidth = (active.has(i) ? 2.6 : 1.8) * lw * (hot.has(i) ? 1.5 : 1);
+          ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(sx, yAt(s, sx)); ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+        // endpoints
+        ctx.fillStyle = sweepX >= s.x1 ? s.col : 'rgba(200,200,230,0.3)';
+        ctx.beginPath(); ctx.arc(s.x1, s.y1, 2.2 * lw, 0, 7); ctx.fill();
+        ctx.fillStyle = sweepX >= s.x2 ? s.col : 'rgba(200,200,230,0.3)';
+        ctx.beginPath(); ctx.arc(s.x2, s.y2, 2.2 * lw, 0, 7); ctx.fill();
+      });
+
+      // labels for small tangles
+      if (segs.length <= 45 && scale > 0.45) {
+        ctx.font = `${11 * lw}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        segs.forEach((s) => {
+          ctx.fillStyle = sweepX >= s.x1 ? s.col : 'rgba(200,200,230,0.35)';
+          ctx.fillText(s.id, s.x1 - 5 * lw, s.y1);
+        });
+      }
+
+      // predicted crossings: rings
+      ctx.lineWidth = 1.6 * lw;
+      for (const e of queue) {
+        if (e.type !== 1) continue;
+        ctx.strokeStyle = 'rgba(169,169,255,0.85)';
+        ctx.beginPath(); ctx.arc(e.x, e.y, 5 * lw, 0, 7); ctx.stroke();
+      }
+
+      // found crossings: glowing dots
+      for (const f of found) {
+        const age = reduced ? 1 : Math.min(1, (now - f.t) / 380);
+        const pop = 1 + (1 - age) * 1.8;
+        ctx.fillStyle = 'rgba(255,124,195,0.16)';
+        ctx.beginPath(); ctx.arc(f.x, f.y, 9 * lw * pop, 0, 7); ctx.fill();
+        ctx.fillStyle = '#ff7cc3';
+        ctx.beginPath(); ctx.arc(f.x, f.y, 3.6 * lw, 0, 7); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(f.x, f.y, 1.4 * lw, 0, 7); ctx.fill();
+      }
+
+      // neighbour tests
+      flashes = flashes.filter((f) => now - f.t < 900);
+      for (const f of flashes) {
+        const a = 1 - (now - f.t) / 900;
+        ctx.strokeStyle = f.hit ? `rgba(110,231,200,${a})` : `rgba(160,160,190,${a * 0.7})`;
+        ctx.lineWidth = 2.4 * lw;
+        ctx.setLineDash([4 * lw, 3 * lw]);
+        ctx.beginPath(); ctx.moveTo(f.x, f.y1); ctx.lineTo(f.x, f.y2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // sweep line
+      if (!done && segs.length) {
+        const sg = ctx.createLinearGradient(0, 0, 0, H);
+        sg.addColorStop(0, '#7c7cff'); sg.addColorStop(1, '#ff7cc3');
+        ctx.strokeStyle = sg; ctx.lineWidth = 2 * lw;
+        ctx.beginPath(); ctx.moveTo(sweepX, 0); ctx.lineTo(sweepX, H); ctx.stroke();
+        ctx.fillStyle = 'rgba(124,124,255,0.08)';
+        ctx.fillRect(sweepX - 6 * lw, 0, 12 * lw, H);
+        // where the line meets each active segment
+        for (const i of status) {
+          ctx.fillStyle = segs[i].col;
+          ctx.beginPath(); ctx.arc(sweepX, yAt(segs[i], sweepX), 3.2 * lw, 0, 7); ctx.fill();
+        }
+      }
+
+      // segment being drawn
+      if (drag) {
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * lw; ctx.setLineDash([6 * lw, 4 * lw]);
+        ctx.beginPath(); ctx.moveTo(drag.x1, drag.y1); ctx.lineTo(drag.x2, drag.y2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
+    }
+
+    // ---------- loop ----------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (playing && !done && segs.length && !drag) {
+        const target = sweepX + speed * dt;
+        let guard = 0;
+        while (queue.length && queue[queue.length - 1].x <= target && guard++ < 400) process(queue.pop());
+        if (queue.length) sweepX = Math.max(sweepX, target);
+        else finish();
+      }
+      draw(now);
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- drawing your own ----------
+    let drag = null;
+    function toWorld(e) {
+      const r = cv.getBoundingClientRect();
+      return { x: clamp((e.clientX - r.left - offX()) / scale, 2, W - 2), y: clamp((e.clientY - r.top - offY()) / scale, 2, H - 2) };
+    }
+    cv.addEventListener('pointerdown', (e) => {
+      const p = toWorld(e);
+      drag = { x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+      cv.setPointerCapture(e.pointerId);
+    });
+    cv.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const p = toWorld(e); drag.x2 = p.x; drag.y2 = p.y;
+    });
+    const endDrag = () => {
+      if (!drag) return;
+      const d = drag; drag = null;
+      if (Math.hypot(d.x2 - d.x1, d.y2 - d.y1) < 12) return;
+      const list = segs.map(({ x1, y1, x2, y2 }) => ({ x1, y1, x2, y2 }));
+      list.push(makeSeg(d.x1, d.y1, d.x2, d.y2));
+      setSegs(list);
+      $('nIn').value = Math.min(120, segs.length); $('nOut').textContent = segs.length;
+      playing = true; updateUI();
+    };
+    cv.addEventListener('pointerup', endDrag);
+    cv.addEventListener('pointercancel', () => { drag = null; });
+
+    // ---------- controls ----------
+    const presetBox = $('presets');
+    PRESETS.forEach(([k, label]) => {
+      const b = document.createElement('button');
+      b.textContent = label; b.setAttribute('aria-pressed', k === preset);
+      b.addEventListener('click', () => {
+        preset = k;
+        presetBox.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+        playing = true; generate();
+      });
+      presetBox.appendChild(b);
+    });
+    $('nIn').addEventListener('input', (e) => { n = +e.target.value; $('nOut').textContent = n; playing = true; generate(); });
+    $('vIn').addEventListener('input', (e) => { speed = +e.target.value; $('vOut').textContent = speed; });
+    $('play').addEventListener('click', () => {
+      if (done) { reset(); playing = true; }
+      else playing = !playing;
+      updateUI();
+    });
+    $('step').addEventListener('click', () => { playing = false; stepOnce(); updateUI(); });
+    $('restart').addEventListener('click', () => { reset(); playing = true; updateUI(); });
+    $('fresh').addEventListener('click', () => { playing = true; generate(); });
+    $('clear').addEventListener('click', () => { playing = true; setSegs([]); });
+    window.addEventListener('keydown', (e) => {
+      if (story.classList.contains('open')) return;
+      if (e.target && e.target.tagName === 'INPUT') return;
+      if (e.target && e.target.tagName === 'BUTTON' && e.key === ' ') return;
+      if (e.key === ' ') { e.preventDefault(); $('play').click(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); $('step').click(); }
+    });
+    window.addEventListener('resize', resize);
+
+    resize();
+    generate();
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
