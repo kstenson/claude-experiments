@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Always a Corner — Experiment 127</title>
+<meta name="description" content="Dantzig's 1947 simplex method for linear programming: the best point of a region cut out by straight lines is always a corner, so walk from corner to corner along edges that go uphill until none does." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    min-height: 100%;
+    background: radial-gradient(1100px 700px at 75% -10%, rgba(124,124,255,0.08), transparent 70%), #05050a;
+    background-repeat: no-repeat;
+    color: #e9e9f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .page {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head stage" "ctrl stage";
+    gap: 16px 22px;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .head { grid-area: head; }
+  .ctrl { grid-area: ctrl; align-self: start; }
+  .stage { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+  .back { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ab0; text-decoration: none; }
+  .back:hover { color: #7c7cff; }
+  h1 { font-size: 1.4rem; margin: 12px 0 6px; letter-spacing: -0.01em; }
+  .sub { font-size: 0.85rem; color: #9a9ab0; }
+  .lede { font-size: 0.88rem; line-height: 1.5; color: #c7c7d6; margin-top: 12px; }
+
+  .story-btn {
+    margin-top: 16px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(120deg, rgba(124,124,255,0.22), rgba(255,124,195,0.22));
+    border: 1px solid rgba(179,136,255,0.45);
+    color: #e9d8ff; border-radius: 11px; padding: 11px 14px;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .story-btn:hover { background: linear-gradient(120deg, rgba(124,124,255,0.36), rgba(255,124,195,0.36)); }
+  .story-btn:active { transform: scale(0.97); }
+
+  /* ---- Controls ---- */
+  .controls { display: grid; gap: 13px; }
+  .cap { font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; }
+  .field > span { display: flex; justify-content: space-between; font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9a9ab0; margin-bottom: 6px; }
+  .field > span b { color: #e9e9f0; font-weight: 600; letter-spacing: 0.02em; font-size: 0.8rem; text-transform: none; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: #7c7cff; display: block; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; }
+  .seg.three { grid-template-columns: repeat(3, 1fr); }
+  .seg button {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: #b9b9ca;
+    border-radius: 9px; padding: 7px 2px; font: inherit; font-size: 0.76rem; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(124,124,255,0.22); border-color: rgba(124,124,255,0.55); color: #fff; }
+  .seg button:hover { border-color: rgba(124,124,255,0.45); }
+  .btn {
+    background: rgba(124,124,255,0.14); border: 1px solid rgba(124,124,255,0.38); color: #d7d7ff;
+    border-radius: 10px; padding: 9px 6px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .btn:hover { background: rgba(124,124,255,0.28); }
+  .btn.main { font-weight: 600; background: rgba(124,124,255,0.24); }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .note { font-size: 0.78rem; line-height: 1.5; color: #8d8da3; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px; }
+  .note b { color: #c7c7d6; font-weight: 600; }
+  .lp { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.76rem; line-height: 1.6; color: #c7c7d6; background: rgba(255,255,255,0.03); border-radius: 10px; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.07); }
+  .lp .k { color: #ff7cc3; }
+  .lp .d { color: #8d8da3; }
+
+  /* ---- Stage ---- */
+  .status { min-height: 84px; }
+  .status b { display: block; font-size: 1.04rem; font-weight: 600; letter-spacing: -0.01em; color: #a9a9ff; }
+  .status span { display: block; margin-top: 5px; font-size: 0.86rem; line-height: 1.55; color: #b9b9ca; }
+  .status.done b { color: #6ee7c8; }
+  .status.warn b { color: #ffb37c; }
+  .board { padding: 10px; }
+  #board { display: block; border-radius: 10px; width: 100%; touch-action: none; cursor: default; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 6px 2px; font-size: 0.76rem; color: #9a9ab0; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
+  .legend i.region { border-radius: 3px; background: rgba(124,124,255,0.35); border: 1px solid #7c7cff; }
+  .legend i.dot { background: #ff7cc3; box-shadow: 0 0 8px #ff7cc3; }
+  .legend i.ring { background: transparent; border: 2px solid #a9a9ff; }
+  .legend i.iso { width: 14px; height: 2px; border-radius: 1px; background: #ff7cc3; }
+  .legend i.hand { background: #05050a; border: 2px solid #c9a6ff; }
+
+  .tab-wrap { padding: 12px 14px; }
+  .scroll { overflow-x: auto; margin-top: 8px; }
+  table { border-collapse: separate; border-spacing: 2px; font-variant-numeric: tabular-nums; font-size: 0.76rem; }
+  th, td { padding: 4px 7px; text-align: right; border-radius: 6px; white-space: nowrap; transition: background 0.25s ease, color 0.25s ease; }
+  th { color: #8d8da3; font-weight: 600; font-size: 0.7rem; }
+  td { color: #b9b9ca; background: rgba(255,255,255,0.025); }
+  td.zero { color: #4d4d60; }
+  td.basis, th.basis { text-align: left; font-weight: 600; }
+  td.basis { background: transparent; }
+  td.rhs { color: #e9e9f0; }
+  td.ratio { background: transparent; color: #8d8da3; font-style: italic; }
+  td.ratio.min { color: #ff7cc3; font-style: normal; font-weight: 600; }
+  tr.z td { border-top: 1px solid rgba(255,255,255,0.15); background: rgba(124,124,255,0.06); }
+  tr.z td.neg { color: #ffb0dc; }
+  .colp { background: rgba(124,124,255,0.18) !important; color: #e9e9f0 !important; }
+  .rowp { background: rgba(255,124,195,0.12) !important; }
+  .cellp { background: rgba(255,124,195,0.55) !important; color: #05050a !important; font-weight: 700; }
+  th.colp { color: #fff !important; }
+  .tab-note { font-size: 0.74rem; color: #8d8da3; margin-top: 8px; line-height: 1.5; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat .cap { display: block; }
+  .stat b { display: block; font-size: 1.3rem; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .stat small { display: block; font-size: 0.74rem; color: #8d8da3; margin-top: 2px; }
+  .meter { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; margin-top: 6px; }
+  .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7c7cff, #ff7cc3); transition: width 0.25s ease; }
+  button:focus-visible, input:focus-visible { outline: 2px solid #7c7cff; outline-offset: 2px; }
+
+  /* ---- Narrative overlay ---- */
+  .story {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(5, 5, 10, 0.78);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .story.open { opacity: 1; pointer-events: auto; }
+  .story-card {
+    max-width: 620px; max-height: 84vh; overflow-y: auto;
+    background-color: #13131d;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 38px 40px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s ease;
+  }
+  .story.open .story-card { transform: none; }
+  .story-card .kicker { font-size: 0.75rem; letter-spacing: 0.22em; text-transform: uppercase; color: #7c7cff; margin: 0 0 8px; }
+  .story-card h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .story-card h3 { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: #ff7cc3; margin: 24px 0 8px; }
+  .story-card p { color: #c7c7d6; font-size: 0.98rem; line-height: 1.7; margin: 0 0 14px; }
+  .story-card .close {
+    margin-top: 26px;
+    background: rgba(124,124,255,0.16);
+    border: 1px solid rgba(124,124,255,0.4);
+    color: #cfcfff; border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+  }
+  .story-card .close:hover { background: rgba(124,124,255,0.3); }
+
+  @media (max-width: 800px) {
+    .page { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "stage" "ctrl"; padding: 16px; gap: 12px; min-height: 0; }
+    .story { padding: 14px; }
+    .story-card { padding: 26px 22px; }
+    .board { padding: 6px; }
+    .panel { padding: 14px 14px; }
+    .stat b { font-size: 1.1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    th, td, .meter i, .story, .story-card { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="panel head">
+      <a class="back" href="../../index.html">← all experiments</a>
+      <h1>Always a Corner</h1>
+      <p class="sub">Experiment № 127 · November 28, 2026</p>
+      <p class="lede">Dantzig, 1947: to find the best point in a region cut out by straight lines, never search the inside. The best is always at a <b>corner</b>, so start at one and walk along any edge that goes <b>uphill</b>, until no edge does. The table underneath is the same walk written as arithmetic.</p>
+      <button class="story-btn" id="openStory">✎ the story behind this one</button>
+    </section>
+
+    <section class="panel ctrl">
+      <div class="controls">
+        <div>
+          <span class="cap">Region</span>
+          <div class="seg" id="presets"></div>
+        </div>
+        <label class="field"><span>Uphill points <b id="aOut">40°</b></span>
+          <input type="range" id="aIn" min="0" max="359" step="1" value="40" />
+        </label>
+        <div>
+          <span class="cap">Which edge to take</span>
+          <div class="seg three" id="rules"></div>
+        </div>
+        <label class="field"><span>Speed <b id="vOut">1×</b></span>
+          <input type="range" id="vIn" min="0.25" max="3" step="0.25" value="1" />
+        </label>
+        <div class="row">
+          <button class="btn main" id="play">Pause</button>
+          <button class="btn" id="step" title="Do the next pivot (→)">Step</button>
+          <button class="btn" id="restart" title="Walk again from the origin">Again</button>
+        </div>
+        <div class="row2">
+          <button class="btn" id="add">Add a line</button>
+          <button class="btn" id="fresh">New region</button>
+        </div>
+        <div class="lp" id="lp"></div>
+        <p class="note"><b>Drag the round handles</b> to move a line; the walk starts over. <b>Double-click</b> a handle to remove its line. Each line keeps the side the origin is on. <b>Space</b> plays or pauses, <b>→</b> steps.</p>
+        <p class="note">Every line gets a <b>slack</b> variable: how much room is left before you hit it. At a corner, two variables are zero. A <b>pivot</b> lets one of them grow (walking along an edge) until another one runs out (the next corner). The bottom row of the table says which way is uphill.</p>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="panel status" id="status">
+        <b id="sTitle">Ready</b>
+        <span id="sText"></span>
+      </div>
+      <div class="panel board">
+        <canvas id="board" aria-label="A shaded polygon bounded by draggable lines, with a dot walking from corner to corner towards the best corner in the uphill direction"></canvas>
+        <div class="legend">
+          <span><i class="region"></i>allowed region</span>
+          <span><i class="hand"></i>drag a line</span>
+          <span><i class="ring"></i>corner visited</span>
+          <span><i class="dot"></i>where the walk is</span>
+          <span><i class="iso"></i>points as good as it</span>
+        </div>
+      </div>
+      <div class="panel tab-wrap">
+        <span class="cap">The tableau — the same walk, as arithmetic</span>
+        <div class="scroll"><table id="tab"></table></div>
+        <p class="tab-note" id="tabNote"></p>
+      </div>
+      <div class="panel stats">
+        <div class="stat">
+          <span class="cap">Pivots</span>
+          <b id="pOut">0</b>
+          <small id="pSmall">steps to the top</small>
+        </div>
+        <div class="stat">
+          <span class="cap">Corners visited</span>
+          <b id="cOut">1</b>
+          <small id="cSmall">of 0 the region has</small>
+          <div class="meter"><i id="cMeter"></i></div>
+        </div>
+        <div class="stat">
+          <span class="cap">Objective</span>
+          <b id="zOut">0</b>
+          <small id="zSmall">at the origin</small>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="story" id="story">
+    <div class="story-card">
+      <p class="kicker">Experiment № 127 · The story</p>
+      <h2>Always a Corner</h2>
+
+      <h3>Why I picked it</h3>
+      <p>I had done plenty of searching in this series: mazes, game trees, a triangle feeling its way down a landscape. All of them were hunting through a space that could hide its best point anywhere. Linear programming is the case where it can't, and the simplex method has quietly run more of the world than almost anything else here. Dantzig built it in 1947 to plan US Air Force logistics, and some descendant of it is still deciding airline crews, refinery blends and shipping routes this morning. It felt wrong to keep it out.</p>
+
+      <h3>What I enjoy about it</h3>
+      <p>That the picture and the table are the same thing, and neither looks like the other. On the board a dot slides along an edge. In the table a column lights up, a ratio wins, and a whole row is divided and subtracted from everything else. I like setting the uphill slider and guessing the route before pressing play. The Round preset is the patient one: the dot can only ever step to a neighbouring corner, so it has to crawl halfway round the rim, one short edge at a time, and switching rules sends it round the other side. Degenerate is my favourite. With the biggest-gain rule, the very first pivot has length zero: the table changes, the dot doesn't move, and for one step the arithmetic and the geometry come apart.</p>
+
+      <h3>Something you might take away</h3>
+      <p>Sometimes the clever move is noticing where an answer <em>can't</em> be. Once you see that a straight-line objective over a straight-edged region peaks at a corner, an infinite search becomes a finite walk, and convexity tells you that a corner with no better neighbour is the best of all. The catch is honest too. In 1972 Klee and Minty built squashed cubes where the walk visits every single corner, so in theory simplex can be exponentially slow. In practice it almost never is, and it took until 2001 for Spielman and Teng to explain why: those bad cases fall apart if you nudge them even slightly.</p>
+
+      <button class="close" id="closeStory">Back to it</button>
+    </div>
+  </div>
+
+<script>
+  // ---- Narrative overlay wiring (keep) ----
+  const story = document.getElementById('story');
+  document.getElementById('openStory').addEventListener('click', () => story.classList.add('open'));
+  document.getElementById('closeStory').addEventListener('click', () => story.classList.remove('open'));
+  story.addEventListener('click', (e) => { if (e.target === story) story.classList.remove('open'); });
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') story.classList.remove('open'); });
+
+  // ---- The simplex method, drawn ----
+  (() => {
+    const EPS = 1e-9;
+    const BIG = 80;           // the "infinite" box used to draw unbounded regions
+    const VIEW = 10;          // world shown: 0..VIEW on both axes, plus a margin
+    const MAXLINES = 12;
+
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      lines: [],              // { p1:{x,y}, p2:{x,y} }
+      angle: 40,
+      rule: 'dantzig',
+      speed: 1,
+      playing: true,
+      steps: [],
+      poly: [],
+      corners: 0,
+      k: 0,                   // current step index
+      t: 0,                   // phase within the step: 0..THINK = thinking, THINK..THINK+MOVE = moving
+      drag: null,
+      hover: null,
+      preset: 'polygon',
+    };
+    const THINK = 0.75, MOVE = 0.95;
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---------- helpers ----------
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const fmt = (v) => {
+      if (!isFinite(v)) return '∞';
+      if (Math.abs(v) < 5e-7) return '0';
+      const s = v.toFixed(2);
+      return s.replace(/\.?0+$/, '') || '0';
+    };
+    const varName = (j) => j === 0 ? 'x' : j === 1 ? 'y' : 's' + (j - 1);
+    const lineHue = (i) => 250 + (i * 41) % 85;
+    const lineColor = (i, a = 1) => `hsla(${lineHue(i)}, 85%, 74%, ${a})`;
+
+    function constraintOf(L) {
+      // a·x + b·y <= c, on whichever side the origin is
+      let a = -(L.p2.y - L.p1.y), b = L.p2.x - L.p1.x;
+      let c = a * L.p1.x + b * L.p1.y;
+      // a line through the origin keeps the side its handles' order gives it
+      if (Math.abs(c) < 1e-7 * Math.max(1, Math.hypot(a, b))) c = 0;
+      if (c < 0) { a = -a; b = -b; c = -c; }
+      const m = Math.max(Math.abs(a), Math.abs(b));
+      if (m < EPS) return null;
+      a /= m; b /= m; c /= m;
+      if (c < 1e-7) c = 0;
+      return { a, b, c };
+    }
+
+    function clipHalf(poly, a, b, c) {
+      const out = [];
+      for (let i = 0; i < poly.length; i++) {
+        const P = poly[i], Q = poly[(i + 1) % poly.length];
+        const fp = a * P.x + b * P.y - c, fq = a * Q.x + b * Q.y - c;
+        const pin = fp <= 1e-9, qin = fq <= 1e-9;
+        if (pin) out.push(P);
+        if (pin !== qin) {
+          const t = fp / (fp - fq);
+          out.push({ x: P.x + t * (Q.x - P.x), y: P.y + t * (Q.y - P.y) });
+        }
+      }
+      return out;
+    }
+
+    function region(cons) {
+      let poly = [{ x: 0, y: 0 }, { x: BIG, y: 0 }, { x: BIG, y: BIG }, { x: 0, y: BIG }];
+      for (const k of cons) { if (k) poly = clipHalf(poly, k.a, k.b, k.c); if (!poly.length) break; }
+      // dedupe near-identical vertices
+      const out = [];
+      for (const p of poly) {
+        const q = out[out.length - 1];
+        if (!q || Math.hypot(p.x - q.x, p.y - q.y) > 1e-6) out.push(p);
+      }
+      if (out.length > 1 && Math.hypot(out[0].x - out[out.length - 1].x, out[0].y - out[out.length - 1].y) < 1e-6) out.pop();
+      return out;
+    }
+    const isRealCorner = (p) => p.x < BIG - 1e-6 && p.y < BIG - 1e-6;
+
+    // ---------- the simplex method ----------
+    function pointOf(T, basis, n) {
+      let x = 0, y = 0;
+      basis.forEach((bv, i) => { if (bv === 0) x = T[i][n]; else if (bv === 1) y = T[i][n]; });
+      return { x, y };
+    }
+    function edgeDir(T, basis, j) {
+      // how x and y change per unit increase of non-basic variable j
+      let dx = j === 0 ? 1 : 0, dy = j === 1 ? 1 : 0;
+      basis.forEach((bv, i) => { if (bv === 0) dx = -T[i][j]; else if (bv === 1) dy = -T[i][j]; });
+      return { x: dx, y: dy };
+    }
+
+    function solve(cons, cvec, rule) {
+      const m = cons.length, n = 2 + m;
+      const T = cons.map((k, i) => {
+        const r = new Array(n + 1).fill(0);
+        r[0] = k.a; r[1] = k.b; r[2 + i] = 1; r[n] = k.c; return r;
+      });
+      const z = new Array(n + 1).fill(0);
+      z[0] = -cvec.x; z[1] = -cvec.y;
+      const basis = cons.map((_, i) => 2 + i);
+      const steps = [];
+      for (let iter = 0; iter < 80; iter++) {
+        const pt = pointOf(T, basis, n);
+        const snap = { T: T.map(r => r.slice()), z: z.slice(), basis: basis.slice(), pt, n };
+        const isBasic = new Set(basis);
+        const cand = [];
+        for (let j = 0; j < n; j++) if (!isBasic.has(j) && z[j] < -1e-9) cand.push(j);
+        if (!cand.length) { snap.kind = 'optimal'; steps.push(snap); return steps; }
+
+        let e;
+        if (rule === 'bland') e = cand[0];
+        else if (rule === 'steep') {
+          let best = -Infinity;
+          for (const j of cand) {
+            const d = edgeDir(T, basis, j);
+            const s = -z[j] / Math.max(Math.hypot(d.x, d.y), 1e-9);
+            if (s > best + 1e-12) { best = s; e = j; }
+          }
+        } else {
+          let best = Infinity;
+          for (const j of cand) if (z[j] < best - 1e-12) { best = z[j]; e = j; }
+        }
+        snap.enter = e;
+        snap.dir = edgeDir(T, basis, e);
+        snap.gain = -z[e];
+
+        const ratios = T.map(r => r[e] > 1e-9 ? r[n] / r[e] : null);
+        snap.ratios = ratios;
+        let r = -1, best = Infinity;
+        ratios.forEach((q, i) => {
+          if (q === null) return;
+          if (q < best - 1e-9 || (Math.abs(q - best) <= 1e-9 && basis[i] < basis[r])) { best = q; r = i; }
+        });
+        if (r < 0) { snap.kind = 'unbounded'; steps.push(snap); return steps; }
+        snap.kind = 'pivot'; snap.leave = r; snap.leaveVar = basis[r]; snap.amount = best;
+
+        // pivot on (r, e)
+        const pv = T[r][e];
+        for (let j = 0; j <= n; j++) T[r][j] /= pv;
+        for (let i = 0; i < m; i++) {
+          if (i === r) continue;
+          const f = T[i][e];
+          if (Math.abs(f) > 0) for (let j = 0; j <= n; j++) T[i][j] -= f * T[r][j];
+        }
+        const f = z[e];
+        for (let j = 0; j <= n; j++) z[j] -= f * T[r][j];
+        for (let i = 0; i < m; i++) for (let j = 0; j <= n; j++) if (Math.abs(T[i][j]) < 1e-12) T[i][j] = 0;
+        basis[r] = e;
+        snap.next = pointOf(T, basis, n);
+        steps.push(snap);
+      }
+      const pt = pointOf(T, basis, n);
+      steps.push({ T: T.map(r => r.slice()), z: z.slice(), basis: basis.slice(), pt, n, kind: 'stalled' });
+      return steps;
+    }
+
+    // ---------- presets ----------
+    function tangentLine(C, r, phiDeg, half) {
+      const phi = phiDeg * Math.PI / 180;
+      const u = { x: Math.cos(phi), y: Math.sin(phi) };
+      const P = { x: C.x + r * u.x, y: C.y + r * u.y };
+      const d = { x: -u.y, y: u.x };
+      return { p1: { x: P.x - d.x * half, y: P.y - d.y * half }, p2: { x: P.x + d.x * half, y: P.y + d.y * half } };
+    }
+    const clampPt = (p) => ({ x: Math.min(VIEW + 0.3, Math.max(-0.3, p.x)), y: Math.min(VIEW + 0.3, Math.max(-0.3, p.y)) });
+    function clampLine(L) { return { p1: clampPt(L.p1), p2: clampPt(L.p2) }; }
+
+    const presets = {
+      polygon: () => {
+        const C = { x: rand(3.8, 5.2), y: rand(3.8, 5.2) };
+        const n = 5 + Math.floor(Math.random() * 3);
+        const out = [];
+        for (let i = 0; i < n; i++) {
+          const phi = -45 + (180 / (n - 1)) * i + rand(-9, 9);
+          out.push(clampLine(tangentLine(C, rand(2.6, 4.2), phi, 1.5)));
+        }
+        return { lines: out, angle: Math.round(rand(20, 70)) };
+      },
+      round: () => {
+        const C = { x: 4.7, y: 4.7 }, out = [];
+        for (let i = 1; i <= 11; i++) out.push(tangentLine(C, 4.6, -90 + i * 270 / 12, 1.15));
+        return { lines: out, angle: 62 };
+      },
+      degenerate: () => ({
+        lines: [
+          { p1: { x: 1.5, y: 1.2 }, p2: { x: 4.5, y: 3.6 } },   // through the origin: y ≤ 0.8x
+          { p1: { x: 8.4, y: 1.2 }, p2: { x: 8.4, y: 3.4 } },
+          { p1: { x: 4.6, y: 7.6 }, p2: { x: 8.6, y: 5.2 } },
+          { p1: { x: 3.2, y: 6.4 }, p2: { x: 1.4, y: 8.2 } },
+        ],
+        angle: 70,
+      }),
+      open: () => ({
+        lines: [
+          { p1: { x: 1, y: 5 }, p2: { x: 3.6, y: 6.6 } },
+          { p1: { x: 5, y: 1.8 }, p2: { x: 7.2, y: 2.6 } },
+          { p1: { x: 0.4, y: 7.6 }, p2: { x: 1.6, y: 9.6 } },
+        ],
+        angle: 30,
+      }),
+    };
+    const presetNames = { polygon: 'Random', round: 'Round', degenerate: 'Degenerate', open: 'Open' };
+
+    // ---------- recompute ----------
+    function cvec() { const a = state.angle * Math.PI / 180; return { x: Math.cos(a), y: Math.sin(a) }; }
+    function recompute(restart) {
+      const cons = state.lines.map(constraintOf);
+      const valid = [];
+      cons.forEach((k, i) => { if (k) valid.push({ ...k, idx: i }); });
+      state.cons = valid;
+      state.poly = region(valid);
+      state.corners = state.poly.filter(isRealCorner).length;
+      state.steps = solve(valid, cvec(), state.rule);
+      if (restart) { state.k = 0; state.t = 0; }
+      else { state.k = state.steps.length - 1; state.t = 0; }
+      state.k = Math.min(state.k, state.steps.length - 1);
+      renderLP();
+      renderPanels();
+    }
+
+    // ---------- canvas geometry ----------
+    let W = 0, H = 0, S = 1, OX = 0, OY = 0, DPR = 1;
+    function resize() {
+      const w = canvas.parentElement.clientWidth - 20 + (window.innerWidth <= 800 ? 8 : 0);
+      const h = Math.min(w * 0.82, Math.max(320, window.innerHeight * 0.66), 640);
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(w * DPR); canvas.height = Math.round(h * DPR);
+      canvas.style.height = h + 'px';
+      W = w; H = h;
+      const span = VIEW + 1.4;
+      S = Math.min(W / span, H / span);
+      OX = (W - VIEW * S) / 2 + 0.1 * S;
+      OY = H - (H - VIEW * S) / 2 + 0.1 * S;
+    }
+    const X = (x) => OX + x * S, Y = (y) => OY - y * S;
+    const toWorld = (px, py) => ({ x: (px - OX) / S, y: (OY - py) / S });
+
+    function lineAcross(a, b, c) {
+      // endpoints of a·x + b·y = c across a generous box
+      const pts = [];
+      const lo = -2, hi = VIEW + 2;
+      if (Math.abs(b) > EPS) { pts.push({ x: lo, y: (c - a * lo) / b }, { x: hi, y: (c - a * hi) / b }); }
+      else { pts.push({ x: c / a, y: lo }, { x: c / a, y: hi }); }
+      return pts;
+    }
+
+    // ---------- drawing ----------
+    function walkPos() {
+      const s = state.steps[state.k];
+      if (!s) return { x: 0, y: 0 };
+      if (s.kind === 'pivot' && state.t > THINK) {
+        const u = ease(Math.min(1, (state.t - THINK) / MOVE));
+        return { x: s.pt.x + (s.next.x - s.pt.x) * u, y: s.pt.y + (s.next.y - s.pt.y) * u };
+      }
+      if (s.kind === 'unbounded' && state.t > THINK) {
+        const u = (state.t - THINK) * 3;
+        const d = s.dir, l = Math.hypot(d.x, d.y) || 1;
+        return { x: s.pt.x + d.x / l * u, y: s.pt.y + d.y / l * u };
+      }
+      return s.pt;
+    }
+    const ease = (u) => u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+
+    function draw() {
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#080810';
+      ctx.fillRect(0, 0, W, H);
+
+      // grid
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= VIEW; i++) {
+        ctx.strokeStyle = i === 0 ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.045)';
+        ctx.beginPath(); ctx.moveTo(X(i), Y(-0.4)); ctx.lineTo(X(i), Y(VIEW + 0.4)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(X(-0.4), Y(i)); ctx.lineTo(X(VIEW + 0.4), Y(i)); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('x', X(VIEW + 0.25), Y(0) + 4);
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText('y', X(0) - 6, Y(VIEW + 0.25));
+
+      ctx.save();
+      ctx.beginPath(); ctx.rect(X(-0.6), Y(VIEW + 0.6), (VIEW + 1.2) * S, (VIEW + 1.2) * S); ctx.clip();
+
+      const c = cvec();
+      const cur = walkPos();
+      const curVal = c.x * cur.x + c.y * cur.y;
+
+      // the allowed region
+      if (state.poly.length > 2) {
+        const g = ctx.createLinearGradient(X(0), Y(0), X(c.x * 10), Y(c.y * 10));
+        g.addColorStop(0, 'rgba(124,124,255,0.10)');
+        g.addColorStop(1, 'rgba(255,124,195,0.20)');
+        ctx.beginPath();
+        state.poly.forEach((p, i) => i ? ctx.lineTo(X(p.x), Y(p.y)) : ctx.moveTo(X(p.x), Y(p.y)));
+        ctx.closePath();
+        ctx.fillStyle = g; ctx.fill();
+      }
+
+      // level lines of the objective (only inside the region)
+      if (state.poly.length > 2) {
+        ctx.save();
+        ctx.beginPath();
+        state.poly.forEach((p, i) => i ? ctx.lineTo(X(p.x), Y(p.y)) : ctx.moveTo(X(p.x), Y(p.y)));
+        ctx.closePath(); ctx.clip();
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1;
+        const perp = { x: -c.y, y: c.x };
+        for (let v = -16; v <= 16; v += 0.7) {
+          const p0 = { x: c.x * v, y: c.y * v };
+          ctx.beginPath();
+          ctx.moveTo(X(p0.x - perp.x * 30), Y(p0.y - perp.y * 30));
+          ctx.lineTo(X(p0.x + perp.x * 30), Y(p0.y + perp.y * 30));
+          ctx.stroke();
+        }
+        ctx.restore();
+        // the current level line, full length
+        const p0 = { x: c.x * curVal, y: c.y * curVal };
+        ctx.strokeStyle = 'rgba(255,124,195,0.55)';
+        ctx.setLineDash([6, 6]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(X(p0.x - perp.x * 30), Y(p0.y - perp.y * 30));
+        ctx.lineTo(X(p0.x + perp.x * 30), Y(p0.y + perp.y * 30));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // the constraint lines
+      const s = state.steps[state.k];
+      const leaveIdx = s && s.kind === 'pivot' ? s.leaveVar - 2 : -1;
+      const enterIdx = s && (s.kind === 'pivot' || s.kind === 'unbounded') ? s.enter - 2 : -1;
+      state.cons.forEach((k, ci) => {
+        const pts = lineAcross(k.a, k.b, k.c);
+        const hot = ci === leaveIdx && state.t <= THINK + MOVE;
+        const leaving = ci === enterIdx;
+        ctx.strokeStyle = hot ? '#ff7cc3' : lineColor(k.idx, leaving ? 0.85 : 0.5);
+        ctx.lineWidth = hot ? 2.4 : 1.4;
+        ctx.beginPath(); ctx.moveTo(X(pts[0].x), Y(pts[0].y)); ctx.lineTo(X(pts[1].x), Y(pts[1].y)); ctx.stroke();
+      });
+
+      // region outline
+      if (state.poly.length > 2) {
+        ctx.beginPath();
+        state.poly.forEach((p, i) => i ? ctx.lineTo(X(p.x), Y(p.y)) : ctx.moveTo(X(p.x), Y(p.y)));
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(169,169,255,0.9)'; ctx.lineWidth = 1.6; ctx.stroke();
+        for (const p of state.poly) {
+          if (!isRealCorner(p)) continue;
+          ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), 2.6, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(233,233,240,0.55)'; ctx.fill();
+        }
+      }
+
+      // the edge being walked
+      if (s && (s.kind === 'pivot' || s.kind === 'unbounded')) {
+        const d = s.dir, l = Math.hypot(d.x, d.y) || 1;
+        const end = s.kind === 'pivot' ? s.next : { x: s.pt.x + d.x / l * 40, y: s.pt.y + d.y / l * 40 };
+        const a = state.t < THINK ? 0.35 + 0.5 * Math.sin(Math.min(1, state.t / THINK) * Math.PI) : 0.9;
+        ctx.strokeStyle = `rgba(110,231,200,${a})`;
+        ctx.lineWidth = 4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(X(s.pt.x), Y(s.pt.y)); ctx.lineTo(X(end.x), Y(end.y)); ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+
+      // path so far
+      const visited = [];
+      for (let i = 0; i <= state.k && i < state.steps.length; i++) visited.push(state.steps[i].pt);
+      if (visited.length > 1 || state.t > THINK) {
+        ctx.strokeStyle = 'rgba(255,124,195,0.9)'; ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        visited.forEach((p, i) => i ? ctx.lineTo(X(p.x), Y(p.y)) : ctx.moveTo(X(p.x), Y(p.y)));
+        ctx.lineTo(X(cur.x), Y(cur.y));
+        ctx.stroke();
+      }
+      visited.forEach((p, i) => {
+        ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), 7, 0, Math.PI * 2);
+        ctx.strokeStyle = '#a9a9ff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#c9c9ff';
+        ctx.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        if (i > 0) ctx.fillText(String(i), X(p.x) + 8, Y(p.y) - 5);
+      });
+
+      // the walker
+      const done = s && s.kind === 'optimal';
+      const glow = ctx.createRadialGradient(X(cur.x), Y(cur.y), 0, X(cur.x), Y(cur.y), done ? 26 : 18);
+      glow.addColorStop(0, done ? 'rgba(110,231,200,0.6)' : 'rgba(255,124,195,0.6)');
+      glow.addColorStop(1, 'rgba(255,124,195,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(X(cur.x), Y(cur.y), done ? 26 : 18, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(X(cur.x), Y(cur.y), 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = done ? '#6ee7c8' : '#ff7cc3'; ctx.fill();
+
+      ctx.restore();
+
+      // handles and labels (outside the clip so they stay grabbable)
+      state.lines.forEach((L, i) => {
+        const k = constraintOf(L);
+        const mid = { x: (L.p1.x + L.p2.x) / 2, y: (L.p1.y + L.p2.y) / 2 };
+        ctx.strokeStyle = lineColor(i, 0.95); ctx.lineWidth = 2.6;
+        ctx.beginPath(); ctx.moveTo(X(L.p1.x), Y(L.p1.y)); ctx.lineTo(X(L.p2.x), Y(L.p2.y)); ctx.stroke();
+        for (const which of ['p1', 'p2']) {
+          const p = L[which];
+          const hov = state.hover && state.hover.i === i && state.hover.which === which;
+          const drg = state.drag && state.drag.i === i && state.drag.which === which;
+          ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), hov || drg ? 8.5 : 6.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#05050a'; ctx.fill();
+          ctx.strokeStyle = lineColor(i); ctx.lineWidth = 2.4; ctx.stroke();
+        }
+        if (k) {
+          const ci = state.cons.findIndex(q => q.idx === i);
+          const off = 14 / S;
+          const lx = mid.x + k.a / Math.hypot(k.a, k.b) * off, ly = mid.y + k.b / Math.hypot(k.a, k.b) * off;
+          ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = lineColor(i);
+          ctx.fillText('s' + (ci + 1), X(lx), Y(ly));
+        }
+      });
+
+      // uphill compass
+      const cx = W - 44, cy = 44, R = 26;
+      ctx.beginPath(); ctx.arc(cx, cy, R + 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(10,10,18,0.75)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
+      const ax = cx + c.x * R, ay = cy - c.y * R;
+      ctx.strokeStyle = '#ff7cc3'; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(cx - c.x * R * 0.6, cy + c.y * R * 0.6); ctx.lineTo(ax, ay); ctx.stroke();
+      const ang = Math.atan2(-(c.y), c.x);
+      ctx.fillStyle = '#ff7cc3';
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(ax - 9 * Math.cos(ang - 0.45), ay - 9 * Math.sin(ang - 0.45));
+      ctx.lineTo(ax - 9 * Math.cos(ang + 0.45), ay - 9 * Math.sin(ang + 0.45));
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('uphill', cx, cy + R + 9);
+    }
+
+    // ---------- panels ----------
+    function renderLP() {
+      const c = cvec();
+      const term = (v, name, first) => {
+        const sgn = v < 0 ? '− ' : first ? '' : '+ ';
+        const mag = fmt(Math.abs(v));
+        return `${sgn}${mag === '1' ? '' : mag}${name}`;
+      };
+      let html = `<span class="k">maximise</span> ${term(c.x, 'x', true)} ${term(c.y, 'y')}<br><span class="k">subject to</span><br>`;
+      state.cons.forEach((k, i) => {
+        html += `&nbsp;&nbsp;${term(k.a, 'x', true)} ${term(k.b, 'y')} ≤ ${fmt(k.c)} <span class="d">(s${i + 1})</span><br>`;
+      });
+      html += `&nbsp;&nbsp;x, y ≥ 0`;
+      $('lp').innerHTML = html;
+    }
+
+    let lastPanelKey = '';
+    function renderPanels() {
+      const s = state.steps[state.k];
+      if (!s) return;
+      const moving = state.t > THINK;
+      const key = state.k + '|' + (moving ? 1 : 0) + '|' + state.steps.length + '|' + state.rule;
+      if (key === lastPanelKey) return;
+      lastPanelKey = key;
+
+      // tableau
+      const n = s.n, m = s.T.length;
+      const showPivot = s.kind === 'pivot' || s.kind === 'unbounded';
+      let h = '<tr><th class="basis">basis</th>';
+      for (let j = 0; j < n; j++) h += `<th class="${showPivot && j === s.enter ? 'colp' : ''}">${varName(j)}</th>`;
+      h += '<th>rhs</th><th>ratio</th></tr>';
+      for (let i = 0; i < m; i++) {
+        const pr = s.kind === 'pivot' && i === s.leave;
+        h += `<tr class="${pr ? 'rowp' : ''}"><td class="basis" style="color:${basisColor(s.basis[i])}">${varName(s.basis[i])}</td>`;
+        for (let j = 0; j <= n; j++) {
+          const v = s.T[i][j];
+          let cls = Math.abs(v) < 5e-7 ? 'zero' : '';
+          if (j === n) cls += ' rhs';
+          if (showPivot && j === s.enter) cls += pr ? ' cellp' : ' colp';
+          else if (pr) cls += ' rowp';
+          h += `<td class="${cls}">${fmt(v)}</td>`;
+        }
+        let rt = '';
+        if (showPivot) {
+          const q = s.ratios[i];
+          rt = q === null ? '—' : fmt(q);
+          h += `<td class="ratio${pr ? ' min' : ''}">${rt}</td>`;
+        } else h += '<td class="ratio"></td>';
+        h += '</tr>';
+      }
+      h += '<tr class="z"><td class="basis">z</td>';
+      for (let j = 0; j <= n; j++) {
+        const v = s.z[j];
+        let cls = Math.abs(v) < 5e-7 ? 'zero' : (v < 0 && j < n ? 'neg' : '');
+        if (j === n) cls += ' rhs';
+        if (showPivot && j === s.enter) cls += ' colp';
+        h += `<td class="${cls}">${fmt(v)}</td>`;
+      }
+      h += '<td class="ratio"></td></tr>';
+      $('tab').innerHTML = h;
+
+      // status
+      const st = $('status');
+      st.classList.remove('done', 'warn');
+      const c = cvec();
+      const val = c.x * s.pt.x + c.y * s.pt.y;
+      let title = '', text = '', note = '';
+      const ruleWord = { dantzig: 'the most negative number in the bottom row', bland: 'the first negative number in the bottom row', steep: 'the edge that climbs fastest per unit of distance' }[state.rule];
+      if (s.kind === 'pivot') {
+        const ent = varName(s.enter), lv = varName(s.leaveVar);
+        const degenerate = s.amount < 1e-7;
+        if (state.k === 0 && !moving) title = 'Start at the origin, a corner for free';
+        else title = degenerate ? `Pivot ${state.k + 1}: a step of length zero` : `Pivot ${state.k + 1}: ${ent} enters, ${lv} leaves`;
+        if (degenerate) {
+          text = `Three or more lines meet at this corner, so the ratio test comes out at 0. The basis swaps ${lv} for ${ent}, but the dot doesn't move. The table changed and the picture didn't, and the next pivot can now leave by a different edge.`;
+        } else if (!moving) {
+          text = `${state.k === 0 ? 'With x = y = 0, every slack is simply the right-hand side. ' : ''}Picking ${ruleWord}: ${ent} adds ${fmt(s.gain)} per unit. The ratio test asks how far it can grow before a basic variable hits zero; ${lv} runs out first, after ${fmt(s.amount)}.`;
+        } else {
+          text = `Walking the green edge: ${ent} grows from 0 to ${fmt(s.amount)} while ${lv} shrinks to 0. Divide the pink row by the pivot, subtract it from every other row, and the table describes the next corner.`;
+        }
+        note = `Highlighted: column <b>${ent}</b> (entering), row <b>${lv}</b> (leaving), and their crossing, the pivot.`;
+      } else if (s.kind === 'optimal') {
+        st.classList.add('done');
+        title = state.k === 0 ? 'The origin is already the best corner' : `Optimal after ${state.k} pivot${state.k === 1 ? '' : 's'}`;
+        text = `No number in the bottom row is negative, so no edge out of this corner goes uphill. The region is convex, so a corner with no better neighbour is the best point anywhere: value ${fmt(val)} at (${fmt(s.pt.x)}, ${fmt(s.pt.y)}).`;
+        note = 'The bottom row now holds the reduced costs: what it would cost per unit to make each zero variable positive. All of them are ≥ 0.';
+      } else if (s.kind === 'unbounded') {
+        st.classList.add('warn');
+        title = 'Unbounded: uphill forever';
+        text = `${varName(s.enter)} improves the objective, but nothing in its column is positive, so no line ever stops it. The region is open in the uphill direction and there is no best point.`;
+        note = `Column <b>${varName(s.enter)}</b> has no positive entry, so the ratio test has nothing to compare.`;
+      } else {
+        st.classList.add('warn');
+        title = 'Going round in circles';
+        text = 'The walk hit its step limit. With degenerate corners, the largest-coefficient rule can cycle; Bland’s rule never does.';
+      }
+      $('sTitle').textContent = title;
+      $('sText').textContent = text;
+      $('tabNote').innerHTML = note;
+
+      // stats
+      const total = state.steps.filter(q => q.kind === 'pivot').length;
+      const done = Math.min(state.k + (moving && s.kind === 'pivot' ? 1 : 0), total);
+      $('pOut').textContent = done;
+      $('pSmall').textContent = state.steps[state.steps.length - 1].kind === 'unbounded' ? `${total} before it ran off` : `${total} to the top with this rule`;
+      const seen = new Set();
+      for (let i = 0; i <= state.k; i++) { const p = state.steps[i].pt; seen.add(p.x.toFixed(5) + ',' + p.y.toFixed(5)); }
+      if (moving && s.kind === 'pivot') seen.add(s.next.x.toFixed(5) + ',' + s.next.y.toFixed(5));
+      $('cOut').textContent = seen.size;
+      $('cSmall').textContent = `of ${state.corners} the region has`;
+      $('cMeter').style.width = (state.corners ? Math.min(100, 100 * seen.size / state.corners) : 0) + '%';
+      const shown = moving && s.kind === 'pivot' ? c.x * s.next.x + c.y * s.next.y : val;
+      $('zOut').textContent = s.kind === 'unbounded' && moving ? '∞' : fmt(shown);
+      $('zSmall').textContent = s.kind === 'optimal' ? 'the maximum' : state.k === 0 && !moving ? 'at the origin' : 'and climbing';
+      $('play').textContent = state.playing && !finished() ? 'Pause' : finished() ? 'Replay' : 'Play';
+    }
+    function basisColor(v) {
+      if (v < 2) return '#e9e9f0';
+      const k = state.cons[v - 2];
+      return k ? lineColor(k.idx) : '#e9e9f0';
+    }
+
+    function finished() {
+      const s = state.steps[state.k];
+      return !s || s.kind === 'optimal' || s.kind === 'stalled' || (s.kind === 'unbounded' && state.t >= THINK + MOVE);
+    }
+
+    // ---------- animation ----------
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (state.playing && !state.drag) advance(dt * state.speed);
+      renderPanels();
+      draw();
+      requestAnimationFrame(frame);
+    }
+    function advance(dt) {
+      const s = state.steps[state.k];
+      if (!s) return;
+      if (s.kind === 'pivot') {
+        state.t += dt;
+        if (state.t >= THINK + MOVE) { state.k++; state.t = 0; }
+      } else if (s.kind === 'unbounded') {
+        state.t = Math.min(THINK + MOVE, state.t + dt);
+      }
+    }
+    function stepOnce() {
+      const s = state.steps[state.k];
+      if (!s) return;
+      if (s.kind === 'pivot') { state.k++; state.t = 0; }
+      else if (s.kind === 'unbounded') state.t = THINK + MOVE;
+      state.playing = false;
+    }
+
+    // ---------- interaction ----------
+    function pick(px, py) {
+      let best = null, bd = 16;
+      state.lines.forEach((L, i) => {
+        for (const which of ['p1', 'p2']) {
+          const d = Math.hypot(X(L[which].x) - px, Y(L[which].y) - py);
+          if (d < bd) { bd = d; best = { i, which }; }
+        }
+      });
+      return best;
+    }
+    function evtPos(e) {
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    let wasPlaying = true;
+    canvas.addEventListener('pointerdown', (e) => {
+      const p = evtPos(e);
+      const h = pick(p.x, p.y);
+      if (!h) return;
+      state.drag = h;
+      wasPlaying = state.playing;
+      canvas.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      const p = evtPos(e);
+      if (state.drag) {
+        const w = clampPt(toWorld(p.x, p.y));
+        const L = state.lines[state.drag.i];
+        const other = L[state.drag.which === 'p1' ? 'p2' : 'p1'];
+        if (Math.hypot(w.x - other.x, w.y - other.y) > 0.25) {
+          L[state.drag.which] = w;
+          recompute(false);
+        }
+      } else {
+        state.hover = pick(p.x, p.y);
+        canvas.style.cursor = state.hover ? 'grab' : 'default';
+      }
+    });
+    const endDrag = () => {
+      if (!state.drag) return;
+      state.drag = null;
+      state.playing = true;
+      recompute(true);
+    };
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+    canvas.addEventListener('dblclick', (e) => {
+      const p = evtPos(e);
+      const h = pick(p.x, p.y);
+      if (!h || state.lines.length <= 1) return;
+      state.lines.splice(h.i, 1);
+      state.hover = null;
+      state.playing = true;
+      recompute(true);
+    });
+
+    function setPreset(name) {
+      state.preset = name;
+      const p = presets[name]();
+      state.lines = p.lines;
+      state.angle = p.angle;
+      $('aIn').value = p.angle; $('aOut').textContent = p.angle + '°';
+      document.querySelectorAll('#presets button').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === name));
+      state.playing = true;
+      recompute(true);
+    }
+    const ruleNames = { dantzig: 'Biggest gain', bland: 'Bland', steep: 'Steepest' };
+    function setRule(r, quiet) {
+      state.rule = r;
+      document.querySelectorAll('#rules button').forEach(b => b.setAttribute('aria-pressed', b.dataset.r === r));
+      if (!quiet) { state.playing = true; recompute(true); }
+    }
+
+    const pre = $('presets');
+    for (const k of Object.keys(presetNames)) {
+      const b = document.createElement('button');
+      b.textContent = presetNames[k]; b.dataset.p = k;
+      b.addEventListener('click', () => setPreset(k));
+      pre.appendChild(b);
+    }
+    const ru = $('rules');
+    for (const k of Object.keys(ruleNames)) {
+      const b = document.createElement('button');
+      b.textContent = ruleNames[k]; b.dataset.r = k;
+      b.title = { dantzig: 'Dantzig’s rule: the most negative bottom-row number', bland: 'Bland’s rule, 1977: the first negative number; never cycles', steep: 'Steepest edge: most gain per unit of distance walked' }[k];
+      b.addEventListener('click', () => setRule(k));
+      ru.appendChild(b);
+    }
+
+    $('aIn').addEventListener('input', (e) => {
+      state.angle = +e.target.value;
+      $('aOut').textContent = state.angle + '°';
+      state.playing = true;
+      recompute(true);
+    });
+    $('vIn').addEventListener('input', (e) => {
+      state.speed = +e.target.value;
+      $('vOut').textContent = state.speed + '×';
+    });
+    $('play').addEventListener('click', () => {
+      if (finished()) { state.k = 0; state.t = 0; state.playing = true; }
+      else state.playing = !state.playing;
+      lastPanelKey = '';
+    });
+    $('step').addEventListener('click', () => { stepOnce(); lastPanelKey = ''; });
+    $('restart').addEventListener('click', () => { state.k = 0; state.t = 0; state.playing = true; lastPanelKey = ''; });
+    $('fresh').addEventListener('click', () => setPreset('polygon'));
+    $('add').addEventListener('click', () => {
+      if (state.lines.length >= MAXLINES) return;
+      const C = { x: rand(4, 5.5), y: rand(4, 5.5) };
+      state.lines.push(clampLine(tangentLine(C, rand(2.5, 4), rand(-40, 130), 1.5)));
+      state.playing = true;
+      recompute(true);
+      $('add').disabled = state.lines.length >= MAXLINES;
+    });
+    window.addEventListener('keydown', (e) => {
+      if (story.classList.contains('open')) return;
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') && e.key === ' ') return;
+      if (e.key === ' ') { e.preventDefault(); $('play').click(); }
+      if (e.key === 'ArrowRight' && !(e.target && e.target.tagName === 'INPUT')) { e.preventDefault(); stepOnce(); lastPanelKey = ''; }
+    });
+    window.addEventListener('resize', resize);
+
+    resize();
+    setRule('dantzig', true);
+    setPreset('polygon');
+    if (reduced) state.speed = 0.6;
+    requestAnimationFrame(frame);
+  })();
+</script>
+</body>
+</html>
