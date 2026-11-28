@@ -1,0 +1,310 @@
+{
+  "date": "2026-11-28",
+  "topic": "AR-15 bans at the Supreme Court: 'common use' rifles owned by millions, or uniquely lethal weapons of mass shooters?",
+  "question": "Ahead of the Dec. 2 argument over Connecticut's and Cook County's bans, do each side's claims about how many Americans own AR-15s, how they are used in crime, mass shootings and self-defense, and what past law did hold up?",
+  "summary": "On Wednesday the Supreme Court hears Grant v. Higgins and Viramontes v. Cook County, consolidated challenges to Connecticut's and Cook County, Illinois's bans on AR-15-style rifles. The question is whether the Second Amendment protects semiautomatic rifles 'in common use.' The Trump Justice Department has filed a brief and will argue against the bans; 27 Republican-led states also back the challengers, while 18 Democratic-led states and D.C. back the bans. A lead petitioner withdrew in November and Cook County says its case is moot; the Court deferred that question to argument. Appeals courts are split: the 2nd and 7th Circuits upheld bans, and the full 3rd Circuit struck New Jersey's in July.\n\nOn the checkable facts both sides are mostly right about different things. AR-15s are widely owned, by an estimated 16 to 25 million Americans, and rifles of all kinds appear in about 3% of homicides. They are also over-represented in public mass shootings, and those shootings are deadlier. Connecticut's brief misstates what the 1994 federal ban did, and the Justice Department's brief miscounts the states with bans. Whether bans reduce deaths is unproven either way.\n\nWhich test the Constitution requires, and how to weigh rare mass killings against broad lawful ownership, are legal and value questions the meter does not settle.",
+  "needle": 6,
+  "verdict": "Leans slightly right. Challengers' core factual premise, that AR-15s are owned by millions and rarely used in ordinary homicide, is well supported. Defenders are right that these rifles are disproportionately used in public mass shootings, which are deadlier with them, but overstate in claiming they are rarely used for self-defense and in describing the 1994 ban. Both sides lean on data answering different questions. The gap is small, and the legal test the Court adopts is not a factual question.",
+  "weights": {
+    "factualAccuracy": 0.6,
+    "reasoningHonesty": 0.4
+  },
+  "verificationNote": "The Justice Department's amicus brief and Connecticut's corrected merits brief were read in full text from the Supreme Court docket, as were the docket entries, the 1995 Federal Register notice on the 1994 ban, Justice Kavanaugh's 2025 Snope statement and the 2024 Biden remarks. FBI homicide figures are cited as the Justice Department reported them; the FBI Crime Data Explorer was not opened directly. Mass-shooting shares come from Connecticut's expert record and a JAMA study as described by Scientific American. CNN (451 error), The Trace, Axios and JURIST (403 errors) could not be read. Cook County's brief was read only through Reason's and CT Mirror's coverage.",
+  "sides": {
+    "left": {
+      "label": "Defenders of the bans: a uniquely lethal weapon",
+      "framing": "AR-15s are military-style weapons designed for rapid, lethal fire, the preferred tool of mass shooters, and poorly suited to home defense. Elected legislatures may restrict them, as they have historically restricted unusually dangerous weapons.",
+      "factualAccuracy": 70,
+      "reasoningHonesty": 56,
+      "score": 64,
+      "strongestPoint": "AR-15-type rifles are about 5% of privately owned guns but appear in roughly a quarter of public mass shootings, and in most of the deadliest since 2012; shootings involving semiautomatic rifles average more deaths and injuries.",
+      "weakestPoint": "Connecticut's brief says federal law banned AR-15 possession from 1994 to 2004, omitting that existing rifles were grandfathered. 'Rarely used for self-defense' rests on reported incidents, while most owners say defense is a main reason they own one, and evidence that bans reduce deaths is inconclusive."
+    },
+    "right": {
+      "label": "Challengers and the Justice Department: a rifle in common use",
+      "framing": "The AR-15 is the most popular rifle in America, owned by millions of law-abiding people for defense, hunting and sport. Under Heller, an arm in common use cannot be banned because some criminals misuse it, and rifles are rarely used in murders.",
+      "factualAccuracy": 78,
+      "reasoningHonesty": 58,
+      "score": 70,
+      "strongestPoint": "Ownership estimates of 16 to 25 million people and more than 28 million rifles are well documented, and FBI figures put rifles of all kinds in about 3% of homicides, far fewer than handguns.",
+      "weakestPoint": "The homicide statistic answers a different question from the one ban supporters ask, which is about mass casualties; the brief's own count of states with bans is off by one; and the administration defended a federal gun restriction in the Court this year while asking for a categorical rule against states."
+    }
+  },
+  "facts": [
+    {
+      "claim": "AR-15-style rifles are owned by millions of Americans and are among the most popular rifles in the country.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "high",
+      "evidence": "Ipsos: the Washington Post-Ipsos poll of 2,104 gun owners included '399 own an AR-15-style rifle'; DOJ brief cites it for 'At least 16 million Americans—about 1 in 20.' Reason: survey data suggest '16 million and 25 million' owners and NSSF counts more than 32 million rifles.",
+      "explanation": "Estimates vary with method; the higher figures come from an industry group and one academic survey. But even the lowest estimate supports 'millions,' and Kavanaugh wrote in 2025 that 'millions of Americans own AR–15s.'",
+      "source": "Ipsos (Washington Post-Ipsos poll, March 2023)",
+      "url": "https://www.ipsos.com/en-us/most-ar-15-gun-owners-own-ar-15s-protect-their-self-family-and-property",
+      "corroboration": [
+        {
+          "source": "Reason",
+          "url": "https://reason.com/2026/10/22/defending-its-ar-15-ban-cook-county-urges-scotus-to-ignore-the-rifles-popularity/"
+        },
+        {
+          "source": "Supreme Court, Snope v. Brown statement (via Cornell LII)",
+          "url": "https://www.law.cornell.edu/supremecourt/text/24-203"
+        }
+      ]
+    },
+    {
+      "claim": "Rifles of any kind are used in about 3% of U.S. homicides, far fewer than handguns.",
+      "side": "right",
+      "verdict": "supported",
+      "confidence": "medium",
+      "evidence": "DOJ brief: 'of the 13,674 homicides committed in 2025, 5179 (about 38%) were committed with handguns, while 363 (about 3%) were committed with rifles of any kind.' FEE (2019): rifles were 'a mere 3.2 percent of all homicides on average.'",
+      "explanation": "Consistent over years. Many homicides record no gun type, so the true rifle share is somewhat higher, and the figure says nothing about mass shootings, which are the bans' main target. FBI data were not read directly.",
+      "source": "U.S. Justice Department amicus brief (Sept. 2026)",
+      "url": "https://www.supremecourt.gov/DocketPDF/25/25-238/423192/20260904171730387_25-238GovtAmicusBr.pdf",
+      "corroboration": [
+        {
+          "source": "CT Mirror",
+          "url": "https://ctmirror.org/2026/11/25/scotus-assault-weapons-bans-ct-cook-county/"
+        },
+        {
+          "source": "Foundation for Economic Education",
+          "url": "https://fee.org/articles/are-ar-15-rifles-a-public-safety-threat-heres-what-the-data-say/"
+        }
+      ]
+    },
+    {
+      "claim": "AR-15-type rifles are used in public mass shootings far out of proportion to their share of guns.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Connecticut brief: these rifles 'constitute only about 5% of privately owned firearms, but have been used in 24% of public mass shootings,' and in 'twelve of the seventeen deadliest mass killings' since 2012. CT Mirror: in the 2010s 'just over a third' of public mass shootings involved such weapons.",
+      "explanation": "Shares depend on definitions of 'mass shooting' and 'assault weapon,' and the 5% and 24% figures come from the state's expert record. A libertarian critic concedes AR-15s have 'seemingly become' mass shooters' weapon of choice. Handguns are still used in most mass shootings.",
+      "source": "Connecticut merits brief, Grant v. Higgins (corrected, Oct. 2026)",
+      "url": "https://www.supremecourt.gov/DocketPDF/25/25-238/430313/20261027093044577_Grant%20v.%20Higgins%20-%20Connecticut%20Response%20Brief%20-%20CORRECTED.pdf",
+      "corroboration": [
+        {
+          "source": "CT Mirror",
+          "url": "https://ctmirror.org/2026/11/25/scotus-assault-weapons-bans-ct-cook-county/"
+        },
+        {
+          "source": "Foundation for Economic Education",
+          "url": "https://fee.org/articles/are-ar-15-rifles-a-public-safety-threat-heres-what-the-data-say/"
+        }
+      ]
+    },
+    {
+      "claim": "Shootings involving semiautomatic rifles kill and wound more people.",
+      "side": "left",
+      "verdict": "mostly-supported",
+      "confidence": "medium",
+      "evidence": "Scientific American, on a 2018 JAMA study of 248 FBI active-shooter incidents: rifle incidents averaged four deaths versus two, and 'five injuries versus three.' The share of people hit who died was about the same, about 44%.",
+      "explanation": "The study covers all semiautomatic rifles, not just legally defined 'assault weapons,' and excludes the largest incidents. More casualties seem to come from more people being hit, not deadlier individual wounds, which complicates the 'more lethal' framing.",
+      "source": "Scientific American (on JAMA, 2018)",
+      "url": "https://www.scientificamerican.com/article/data-confirm-semiautomatic-rifles-linked-to-more-deaths-injuries/",
+      "corroboration": [
+        {
+          "source": "Foundation for Economic Education",
+          "url": "https://fee.org/articles/are-ar-15-rifles-a-public-safety-threat-heres-what-the-data-say/"
+        }
+      ]
+    },
+    {
+      "claim": "AR-15s are rarely used for self-defense.",
+      "side": "left",
+      "verdict": "mixed",
+      "confidence": "medium",
+      "evidence": "Connecticut brief: in a Heritage Foundation database of defensive gun uses, 'only 4% of defenders used a rifle—compared to 90% who employed a handgun.' Ipsos: 65% of AR-15 owners say protecting 'themselves, family, and their property' is a major reason they own one.",
+      "explanation": "Reported defensive uses do skew heavily to handguns. But the database captures news-reported incidents, not all uses, and owners' stated purpose is largely defense. 'Rarely used' is accurate; 'not suited to' or 'not owned for' self-defense is not established.",
+      "source": "Connecticut merits brief, Grant v. Higgins (corrected, Oct. 2026)",
+      "url": "https://www.supremecourt.gov/DocketPDF/25/25-238/430313/20261027093044577_Grant%20v.%20Higgins%20-%20Connecticut%20Response%20Brief%20-%20CORRECTED.pdf",
+      "corroboration": [
+        {
+          "source": "Ipsos (Washington Post-Ipsos poll)",
+          "url": "https://www.ipsos.com/en-us/most-ar-15-gun-owners-own-ar-15s-protect-their-self-family-and-property"
+        },
+        {
+          "source": "Reason",
+          "url": "https://reason.com/2026/10/22/defending-its-ar-15-ban-cook-county-urges-scotus-to-ignore-the-rifles-popularity/"
+        }
+      ]
+    },
+    {
+      "claim": "Federal law prohibited possessing AR-15s from 1994 to 2004, so few civilians owned them.",
+      "side": "left",
+      "verdict": "mostly-false",
+      "confidence": "high",
+      "evidence": "Federal Register, 1995: the law 'prohibits the manufacture, transfer, and possession of semiautomatic assault weapons' but 'grandfathers' those lawfully possessed on Sept. 13, 1994. DOJ brief: the law 'did not limit the possession or transfer of existing AR-15s.'",
+      "explanation": "Connecticut's brief quotes the prohibition but omits the grandfather clause, implying a possession ban that did not apply to existing rifles. New manufacture for civilians did stop, so ownership grew more slowly; the 'few civilians' point is partly true, the legal description is not.",
+      "source": "Federal Register, Vol. 60, No. 66 (April 6, 1995)",
+      "url": "https://www.govinfo.gov/content/pkg/FR-1995-04-06/html/95-8233.htm",
+      "corroboration": []
+    },
+    {
+      "claim": "Only ten states and D.C. ban AR-15s.",
+      "side": "right",
+      "verdict": "mostly-supported",
+      "confidence": "high",
+      "evidence": "DOJ brief: 'only ten States and the District of Columbia have banned them,' but its footnote cites laws in 11 states plus D.C., including Virginia. Connecticut brief: 'the 11 States that regulate AR-15s make up 35% of the Nation's population.' CT Mirror: Everytown counts 'Eleven states plus D.C.'",
+      "explanation": "The point that most states allow AR-15s holds, but the count is off by one after Virginia and Rhode Island acted. Connecticut notes the banning states hold about a third of the population, which the state count obscures.",
+      "source": "U.S. Justice Department amicus brief (Sept. 2026)",
+      "url": "https://www.supremecourt.gov/DocketPDF/25/25-238/423192/20260904171730387_25-238GovtAmicusBr.pdf",
+      "corroboration": [
+        {
+          "source": "CT Mirror",
+          "url": "https://ctmirror.org/2026/11/25/scotus-assault-weapons-bans-ct-cook-county/"
+        },
+        {
+          "source": "PBS NewsHour (AP)",
+          "url": "https://www.pbs.org/newshour/politics/supreme-court-will-consider-whether-ar-15-bans-violate-the-second-amendment"
+        }
+      ]
+    },
+    {
+      "claim": "Assault-weapon bans are proven public-safety measures that reduce gun deaths.",
+      "side": "left",
+      "verdict": "unverifiable",
+      "confidence": "medium",
+      "evidence": "RAND's Andrew Morral (2022): bans 'of the sort the United States had in place for the 10 years after 1994' 'don't yet provide enough scientific evidence to indicate what their effects might be.' Everytown, per AP: 'These laws are critical public safety measures.'",
+      "explanation": "Absence of evidence is not evidence of no effect; RAND notes mass shootings are too rare to measure easily. Claims that bans clearly save lives, or clearly do nothing, both outrun the research.",
+      "source": "RAND Corporation (commentary, May 2022)",
+      "url": "https://www.rand.org/pubs/commentary/2022/05/the-gun-laws-that-work-and-the-gun-laws-that-dont.html",
+      "corroboration": [
+        {
+          "source": "PBS NewsHour (AP)",
+          "url": "https://www.pbs.org/newshour/politics/supreme-court-will-consider-whether-ar-15-bans-violate-the-second-amendment"
+        }
+      ]
+    }
+  ],
+  "powerLens": {
+    "thesis": "Would each side hold its view of federal courts and state choice if the issue were reversed? On abortion, Democrats said rights must not vary by state and Republicans said states should decide; on AR-15s, the positions switch. And an administration's appetite for broad gun-rights rules has tracked whether its own laws were at risk.",
+    "precedent": {
+      "case": "District of Columbia v. Heller (2008)",
+      "what": "D.C. argued handguns could be banned as particularly dangerous. The Bush Justice Department backed an individual right but urged a remand under 'heightened scrutiny,' warning that a categorical approach 'could cast doubt on the constitutionality of existing federal legislation.' Vice President Cheney and 300 lawmakers asked for the ban to be struck 'per se.'",
+      "mirror": "Today's defenders make D.C.'s dangerousness argument about rifles, and the Justice Department asks for the categorical rule its predecessor resisted, now that state laws, not federal ones, are at stake.",
+      "source": "SCOTUSblog (2008)",
+      "url": "https://www.scotusblog.com/2008/01/us-supports-gun-rights-but-more-narrowly",
+      "corroboration": [
+        {
+          "source": "ABA Journal (2008)",
+          "url": "https://abajournal.com/news/article/vp_differs_with_sg_in_dueling_briefs_filed_in_supreme_court_gun_case"
+        }
+      ]
+    },
+    "flips": [
+      {
+        "who": "Left (Biden and Democratic-led states)",
+        "then": "Jan. 2024, Biden on abortion: 'we need these protections in every state' because access 'should not depend on your ZIP code.'",
+        "now": "Cook County argues 'democratically elected legislators are permitted to respond with appropriate regulation,' and 18 Democratic-led states defend letting the scope of a constitutional right vary by jurisdiction.",
+        "source": "Biden White House archive (2024)",
+        "url": "https://bidenwhitehouse.archives.gov/briefing-room/speeches-remarks/2024/01/22/remarks-by-president-biden-before-meeting-with-his-task-force-on-reproductive-healthcare-access",
+        "corroboration": [
+          {
+            "source": "CT Mirror",
+            "url": "https://ctmirror.org/2026/11/25/scotus-assault-weapons-bans-ct-cook-county/"
+          }
+        ]
+      },
+      {
+        "who": "Right (Trump Justice Department)",
+        "then": "June 2026, in U.S. v. Hemani, the administration 'had defended the 1968 law despite arguing against other gun restrictions,' a federal ban on gun possession by drug users; the Court ruled against it.",
+        "now": "Its AR-15 brief says 'perceived dangerousness alone cannot justify banning an arm that is in common use,' a rule aimed at state and local laws.",
+        "source": "PBS NewsHour (AP)",
+        "url": "https://www.pbs.org/newshour/politics/supreme-court-sides-with-texas-marijuana-user-who-says-its-not-a-crime-to-have-a-gun",
+        "corroboration": [
+          {
+            "source": "U.S. Justice Department amicus brief",
+            "url": "https://www.supremecourt.gov/DocketPDF/25/25-238/423192/20260904171730387_25-238GovtAmicusBr.pdf"
+          }
+        ]
+      }
+    ],
+    "longRun": "Both parties favor national constitutional rules for the rights they prize and local control for the ones they would limit. Whatever test the Court adopts will bind future administrations and could be used against the laws each side prefers, including federal ones.",
+    "appliedToScore": "Both sides lose some reasoning credit: the left for a federalism it rejects on abortion, the right for urging categorical limits on states while defending federal restrictions. The needle rests on ownership, crime and mass-shooting data."
+  },
+  "pattern": {
+    "thesis": "The case is the latest step in a Court-led expansion of Second Amendment rights since 2008, under a history-based test adopted in 2022. Read alone it looks like a fight about one rifle; in sequence it is about how far the 'common use' and 'historical tradition' tests reach.",
+    "campaigns": [
+      {
+        "where": "NYSRPA v. Bruen, 2022",
+        "what": "The Court struck New York's carry-permit law and required gun laws to fit the nation's historical tradition.",
+        "authorization": "Law struck, 6-3",
+        "source": "Supreme Court opinion",
+        "url": "https://www.supremecourt.gov/opinions/21pdf/20-843_7j80.pdf",
+        "corroboration": [
+          {
+            "source": "CBS News",
+            "url": "https://www.cbsnews.com/news/supreme-court-ar-15-bans/"
+          }
+        ]
+      },
+      {
+        "where": "United States v. Rahimi, 2024",
+        "what": "The Court upheld disarming people under domestic-violence restraining orders.",
+        "authorization": "Law upheld, 8-1",
+        "source": "Supreme Court opinion",
+        "url": "https://www.supremecourt.gov/opinions/23pdf/22-915_8o6b.pdf",
+        "corroboration": [
+          {
+            "source": "PBS NewsHour (AP)",
+            "url": "https://www.pbs.org/newshour/politics/supreme-court-will-consider-whether-ar-15-bans-violate-the-second-amendment"
+          }
+        ]
+      },
+      {
+        "where": "U.S. v. Hemani and Wolford v. Lopez, June 2026",
+        "what": "The Court barred prosecuting a marijuana user under the federal gun ban and struck Hawaii's default ban on carrying onto private property open to the public.",
+        "authorization": "Both struck",
+        "source": "National Constitution Center",
+        "url": "https://constitutioncenter.org/blog/supreme-court-strikes-down-hawaii-law-regulating-firearms-possession",
+        "corroboration": [
+          {
+            "source": "PBS NewsHour (AP)",
+            "url": "https://www.pbs.org/newshour/politics/supreme-court-sides-with-texas-marijuana-user-who-says-its-not-a-crime-to-have-a-gun"
+          }
+        ]
+      },
+      {
+        "where": "3rd Circuit, New Jersey, July 2026",
+        "what": "The full appeals court held New Jersey's assault-firearm and large-magazine restrictions unconstitutional, splitting with the 2nd and 7th Circuits.",
+        "authorization": "Law struck; ruling paused pending appeal",
+        "source": "Fox News",
+        "url": "https://www.foxnews.com/politics/major-appeals-court-declares-new-jersey-ar-15-ban-unconstitutional-landmark-second-amendment-ruling.print",
+        "corroboration": [
+          {
+            "source": "CT Mirror",
+            "url": "https://ctmirror.org/2026/11/25/scotus-assault-weapons-bans-ct-cook-county/"
+          }
+        ]
+      }
+    ],
+    "takeaway": "The recurring question is whether a weapon's popularity or its potential for harm decides its constitutional status, and who measures either. The 'one-off' tell is coverage that treats Wednesday's case as only about the AR-15, rather than about a test that will govern magazines, pistols and federal laws next."
+  },
+  "notAdjudicable": [
+    "Whether the Second Amendment protects arms by how commonly they are owned or permits bans on unusually dangerous ones is a question of constitutional interpretation, not of data.",
+    "How to weigh rare but catastrophic mass killings against tens of millions of lawful owners is a judgment about acceptable risk and liberty.",
+    "Whether the scope of a constitutional right may differ by state or must be uniform nationally is a dispute about federalism.",
+    "Whether recreation, hunting and the ability to resist tyranny, not only self-defense, are purposes the right protects turns on values and historical reading."
+  ],
+  "biasWatch": "The bias at work is denominator choice: each side picks the base rate that flatters its case. Challengers cite rifles' 3% share of all homicides; defenders cite AR-15s' share of the deadliest mass shootings. Both numbers are roughly right, and they answer different questions: how much everyday violence these rifles cause, and how much worse the rare worst events are. The tell: when someone gives a percentage, ask 'percent of what?' If the denominator switches between all murders and mass shootings mid-argument, the number is doing persuasive rather than descriptive work.",
+  "sources_consulted": [
+    "ABA Journal",
+    "Biden White House archive",
+    "CBS News",
+    "Connecticut Office of the Attorney General (merits brief)",
+    "Cornell Legal Information Institute",
+    "CT Mirror",
+    "Federal Register",
+    "Foundation for Economic Education",
+    "Fox News",
+    "Ipsos",
+    "National Constitution Center",
+    "NBC News",
+    "PBS NewsHour (AP)",
+    "RAND Corporation",
+    "Reason",
+    "Scientific American",
+    "SCOTUSblog",
+    "Supreme Court of the United States (docket and opinions)",
+    "U.S. Department of Justice (amicus brief)"
+  ]
+}
